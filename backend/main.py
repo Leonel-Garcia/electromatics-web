@@ -13,8 +13,17 @@ app = FastAPI()
 # CORS Configuration - Allow frontend origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:8001",
+        "http://127.0.0.1:8001",
+        "https://electromatics.com.ve",
+        "https://www.electromatics.com.ve",
+        "https://electromatics-web.onrender.com",
+        "https://electromatics-api.onrender.com"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -146,8 +155,7 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
     }
 
 @app.get("/")
-def read_root():
-    return {"message": "Electromatics API is running - CORS Fixed (Wildcard)"}
+    return {"message": "Electromatics API is running - CORS Fixed (Explicit List)"}
 
 if __name__ == "__main__":
     import uvicorn
