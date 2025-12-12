@@ -175,15 +175,28 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
 @app.get("/debug-db")
 def debug_db(db: Session = Depends(database.get_db)):
     try:
-        from sqlalchemy import text
+        from sqlalchemy import text, inspect
+        # Test connection
         db.execute(text("SELECT 1"))
-        return {"status": "success", "message": "Database connection successful!"}
+        
+        # Inspect schema
+        inspector = inspect(database.engine)
+        columns = []
+        if inspector.has_table("users"):
+            columns = [col['name'] for col in inspector.get_columns("users")]
+        
+        return {
+            "status": "success", 
+            "message": "Connected!",
+            "table_exists": inspector.has_table("users"),
+            "columns": columns
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 @app.get("/")
 def read_root():
-    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce) + Auth Fix + Debug Mode"}
+    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce) + Auth Fix + Debug Mode v2"}
 
 if __name__ == "__main__":
     import uvicorn
