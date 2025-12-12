@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--medium-bg-hex);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--electric-blue);
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .user-list {
+            background: var(--medium-bg-hex);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-primary);
+        }
+        th, td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            color: var(--safety-orange);
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-verified { background: rgba(0, 230, 118, 0.15); color: #00E676; }
+        .status-pending { background: rgba(255, 152, 0, 0.15); color: #FF9800; }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics Admin</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="index.html">Volver al Sitio</a>
+                <a href="#" onclick="SimpleAuth.logout()" class="btn btn-secondary" style="margin-left: 20px;">Cerrar Sesión</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container" style="padding-top: 50px;">
+        <div class="section-title">
+            <h1>Dashboard <span style="color: var(--safety-orange);">Administrativo</span></h1>
+            <p>Métricas de usuarios en tiempo real</p>
+        </div>
+
+        <div id="loading" style="text-align: center; font-size: 24px;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Cargando datos...
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- Stats Cards -->
+            <div class="admin-grid">
+                <div class="stat-card">
+                    <i class="fa-solid fa-users" style="font-size: 24px; color: #fff;"></i>
+                    <div class="stat-value" id="total-users">0</div>
+                    <div class="stat-label">Usuarios Registrados</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-crown" style="font-size: 24px; color: #FFD700;"></i>
+                    <div class="stat-value" id="premium-users">0</div>
+                    <div class="stat-label">Suscriptores Premium</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-check-circle" style="font-size: 24px; color: #00E676;"></i>
+                    <div class="stat-value" id="verified-users">0</div>
+                    <div class="stat-label">Emails Verificados</div>
+                </div>
+            </div>
+
+            <!-- Recent Users -->
+            <h3 style="margin-bottom: 20px; color: var(--electric-blue);">Usuarios Recientes</h3>
+            <div class="user-list">
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Rol</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/simple-auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('total-users').textContent = data.total_users;
+                    document.getElementById('premium-users').textContent = data.premium_users;
+                    document.getElementById('verified-users').textContent = data.verified_users;
+
+                    const tbody = document.querySelector('#users-table tbody');
+                    data.recent_users.forEach(user => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>#${user.id}</td>
+                            <td>${user.full_name || 'N/A'}</td>
+                            <td>${user.email}</td>
+                            <td><span class="status-badge ${user.email_verified ? 'status-verified' : 'status-pending'}">${user.email_verified ? 'Verificado' : 'Pendiente'}</span></td>
+                            <td style="color: ${user.is_admin ? '#FFD700' : '#fff'}">${user.is_admin ? 'Admin' : 'Usuario'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+                } else {
+                    alert('Acceso denegado. Se requieren permisos de administrador.');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error(error);
+                alert('No se pudo conectar con el servidor.');
+            }
+        });
+    </script>
+</body>
+</html>

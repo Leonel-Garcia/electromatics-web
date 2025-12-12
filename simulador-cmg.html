@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Campo Magnético Giratorio - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .sim-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .controls-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .viz-panel {
+            display: grid;
+            grid-template-rows: 200px 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vector-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+
+        .slider-group {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 15px;
+        }
+
+        .slider-value {
+            color: var(--safety-orange);
+            font-family: monospace;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #2c3e50;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--safety-orange);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 16px; 
+            width: 16px; 
+            left: 4px; 
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-round { background-color: var(--safety-orange); }
+        input:checked + .slider-round:before { transform: translateX(26px); }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        .color-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="proyectos.html">Proyectos</a>
+          <a href="formacion.html">Formación</a>
+          <a href="museo.html">Museo</a>
+          <a href="simuladores.html" class="active">Simuladores</a>
+          <a href="calculadora.html">Plataforma IA</a>
+          <a
+            href="#"
+            id="login-btn"
+            class="btn btn-primary"
+            style="padding: 6px 16px; margin-left: 20px; font-size: 14px"
+            >Acceder</a
+          >
+        </div>
+      </nav>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <a href="simuladores.html" style="color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; margin-bottom: 20px;">
+            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Volver al Laboratorio
+        </a>
+
+        <div class="section-title">
+            <h1>Campo Magnético <span style="color: var(--safety-orange);">Giratorio</span></h1>
+            <p>Visualiza cómo tres corrientes alternas desfasadas crean un campo magnético rotativo constante, el principio de los motores AC.</p>
+        </div>
+
+        <div class="sim-container">
+            <!-- Controls -->
+            <div class="controls-panel">
+                <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Parámetros</h3>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Frecuencia (Hz)</span>
+                        <span id="val-freq" class="slider-value">60</span>
+                    </div>
+                    <input type="range" id="param_freq" min="1" max="100" step="1" value="60">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Velocidad Animación</span>
+                        <span id="val-speed" class="slider-value">10%</span>
+                    </div>
+                    <!-- Internal speed multiplier, not physics Hz -->
+                    <input type="range" id="param_speed" min="1" max="100" step="1" value="10">
+                    <p style="font-size: 12px; color: #aaa; margin-top: 5px;">Ajusta para ver en cámara lenta</p>
+                </div>
+
+                <div class="control-row">
+                    <span style="color: white; font-weight: 500;">Invertir Giro (Secuencia)</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="param_reverse">
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+                <p id="seq-label" style="text-align: right; font-size: 12px; color: var(--electric-blue); margin-top: 5px;">Secuencia ABC</p>
+
+                <div class="control-row" style="margin-top: 20px;">
+                    <span style="color: white; font-weight: 500;">Mostrar Vectores de Fase</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="param_vectors" checked>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                 <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Leyenda</h3>
+                 <div class="legend-item"><div class="color-dot" style="background: #FF5252;"></div>Fase A (0°)</div>
+                 <div class="legend-item"><div class="color-dot" style="background: #448aff;"></div>Fase B (-120°)</div>
+                 <div class="legend-item"><div class="color-dot" style="background: #00E676;"></div>Fase C (+120°)</div>
+                 <div class="legend-item"><div class="color-dot" style="background: #ffffff; border: 2px solid white;"></div>Resultante (Giratorio)</div>
+
+            </div>
+
+            <!-- Visualization -->
+            <div class="viz-panel">
+                <!-- Time Domain -->
+                <div class="chart-container">
+                    <canvas id="waveformChart"></canvas>
+                </div>
+                <!-- Space Domain (Motor) -->
+                <div class="vector-container">
+                    <canvas id="motorCanvas" width="400" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theory Section -->
+        <section style="margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 40px;">
+            <h2 style="margin-bottom: 30px; font-size: 28px;">El Teorema de <span style="color: var(--safety-orange);">Ferraris</span></h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        Galileo Ferraris y Nikola Tesla descubrieron independientemente que al alimentar tres bobinas dispuestas a 120° geométricos con tres corrientes desfasadas 120° eléctricos, se genera un campo magnético de magnitud constante que gira en el espacio.
+                    </p>
+                    <p style="color: var(--text-secondary); line-height: 1.7;">
+                        Este campo magnético giratorio "arrastra" al rotor (en motores de inducción o síncronos), convirtiendo energía eléctrica en mecánica sin contacto físico directo (escobillas).
+                    </p>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 8px; border-left: 4px solid var(--electric-blue);">
+                    <h4 style="margin-bottom: 15px; color: var(--text-primary);">Ecuaciones de Fase</h4>
+                    <p style="font-family: monospace; color: #FF5252;">Ia = Im · cos(ωt)</p>
+                    <p style="font-family: monospace; color: #448aff;">Ib = Im · cos(ωt - 120°)</p>
+                    <p style="font-family: monospace; color: #00E676;">Ic = Im · cos(ωt - 240°)</p>
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 0;">
+                    <p style="font-family: monospace; color: #fff; font-weight: bold;">|B_total| = 1.5 · B_max</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+          <div class="footer-bottom">
+            <p>&copy; 2025 Electromatics.com.ve.</p>
+          </div>
+        </div>
+    </footer>
+
+    <script src="js/simple-auth.js"></script>
+    <script src="js/simulators/cmg.js?v=1.0"></script>
+</body>
+</html>

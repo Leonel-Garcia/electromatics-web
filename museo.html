@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museo de la Electricidad - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.1">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="museum-body">
+    <!-- Header -->
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics.com.ve</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="index.html">Inicio</a>
+                <a href="servicios.html">Servicios</a>
+                <a href="proyectos.html">Proyectos</a>
+                <a href="formacion.html">Formación</a>
+                <a href="museo.html" class="active">Museo</a>
+                <a href="simuladores.html">Simuladores</a>
+                <a href="calculadora.html">Plataforma IA</a>
+                <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="museum-main">
+        <section class="container" style="padding-top: 120px; padding-bottom: 60px;">
+            <div class="section-title" style="text-align: center; margin-bottom: 50px;">
+                <h1 style="font-size: 3rem; margin-bottom: 10px;">Salón de los Maestros</h1>
+                <p style="color: var(--text-secondary); font-size: 1.2rem;">Los pioneros que iluminaron el mundo.</p>
+            </div>
+
+            <!-- Gallery Grid -->
+            <div id="museum-grid" class="museum-grid">
+                <!-- Cards injected by JS -->
+            </div>
+        </section>
+
+        <!-- Hero Modal (Hidden by default) -->
+        <div id="hero-modal" class="hero-modal">
+            <button id="close-modal" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="modal-content-wrapper">
+                <button id="prev-modal" class="nav-btn prev"><i class="fa-solid fa-chevron-left"></i></button>
+                
+                <div id="modal-content" class="modal-content">
+                    <!-- Dynamic Content -->
+                </div>
+
+                <button id="next-modal" class="nav-btn next"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/simple-auth.js"></script>
+    <script src="js/museum.js?v=1.0"></script>
+</body>
+</html>

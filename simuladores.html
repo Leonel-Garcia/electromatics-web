@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laboratorio de Simulaciones - Electromatics</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+        .sim-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 40px 0;
+        }
+        .sim-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .sim-card:hover {
+        }
+        .sim-preview i {
+            font-size: 64px;
+            color: rgba(255,255,255,0.2);
+            transition: color 0.3s ease;
+        }
+        .sim-card:hover .sim-preview i {
+            color: var(--safety-orange);
+        }
+        .sim-content {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .sim-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        .sim-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            flex-grow: 1;
+            line-height: 1.6;
+        }
+        .sim-tags {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .sim-tag {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--safety-orange);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="proyectos.html">Proyectos</a>
+          <a href="formacion.html">Formación</a>
+          <a href="museo.html">Museo</a>
+          <a href="simuladores.html" class="active">Simuladores</a>
+          <a href="calculadora.html">Plataforma IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <div class="section-title">
+            <h1 style="font-size: 42px; margin-bottom: 15px;">Laboratorio de <span style="color: var(--safety-orange);">Simulación</span></h1>
+            <p style="font-size: 18px; color: var(--text-secondary); max-width: 700px; margin: 0 auto;">
+                Herramientas interactivas para visualizar y comprender conceptos complejos de ingeniería eléctrica y control. Experimenta en tiempo real.
+            </p>
+        </div>
+
+        <div class="sim-grid">
+            <!-- PID Simulator -->
+            <div class="sim-card">
+                <div class="sim-preview">
+                    <!-- Custom SVG: PID Control -->
+                    <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Grid Background -->
+                        <defs>
+                            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid)" />
+                        
+                        <!-- Axis -->
+                        <line x1="10" y1="110" x2="190" y2="110" stroke="#555" stroke-width="2"/>
+                        <line x1="10" y1="10" x2="10" y2="110" stroke="#555" stroke-width="2"/>
+                        
+                        <!-- Setpoint -->
+                        <line x1="10" y1="50" x2="190" y2="50" stroke="rgba(255,255,255,0.3)" stroke-dasharray="5,5" stroke-width="1"/>
+                        
+                        <!-- PID Response Curve -->
+                        <path d="M10,110 C40,110 50,20 80,20 S110,60 130,50 S160,50 190,50" fill="none" stroke="#FF5252" stroke-width="3"/>
+                        
+                        <!-- Area Fill -->
+                        <path d="M10,110 C40,110 50,20 80,20 S110,60 130,50 S160,50 190,50 L190,110 L10,110 Z" fill="url(#gradPID)" opacity="0.2"/>
+                        <defs>
+                            <linearGradient id="gradPID" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#FF5252" />
+                                <stop offset="100%" stop-color="transparent" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag">Control Automático</span>
+                        <span class="sim-tag">Sistemas Dinámicos</span>
+                    </div>
+                    <h3 class="sim-title">Controlador PID Interactivo</h3>
+                    <p class="sim-desc">
+                        Ajusta las ganancias Proporcional, Integral y Derivativa (PID) en tiempo real y observa cómo afectan la respuesta transitoria del sistema ante una entrada escalón.
+                    </p>
+                    <a href="simulador-pid.html" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Iniciar Simulación
+                    </a>
+                </div>
+            </div>
+
+            <!-- Power Factor Simulator (Preview) -->
+            <div class="sim-card">
+                <div class="sim-preview">
+                    <!-- Custom SVG: Power Factor -->
+                    <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Triangle -->
+                        <path d="M30,100 L170,100 L170,20 Z" fill="rgba(0, 230, 118, 0.1)" stroke="#00E676" stroke-width="2"/>
+                        
+                        <!-- P Vector -->
+                        <line x1="30" y1="100" x2="170" y2="100" stroke="#4CAF50" stroke-width="3"/>
+                        <text x="100" y="115" fill="#4CAF50" font-size="12" font-weight="bold" text-anchor="middle">P (Activa)</text>
+                        
+                        <!-- Q Vector -->
+                        <line x1="170" y1="100" x2="170" y2="20" stroke="#FF5252" stroke-width="3" stroke-dasharray="5,5"/>
+                        <text x="185" y="60" fill="#FF5252" font-size="12" font-weight="bold" text-anchor="middle" transform="rotate(90, 185, 60)">Q (Reactiva)</text>
+                        
+                        <!-- S Vector -->
+                        <line x1="30" y1="100" x2="170" y2="20" stroke="#FFC107" stroke-width="3"/>
+                        <text x="90" y="50" fill="#FFC107" font-size="12" font-weight="bold" text-anchor="middle" transform="rotate(-28, 90, 50)">S (Aparente)</text>
+
+                        <!-- Capacitor Correction Arrow -->
+                        <path d="M160,90 L160,70 L155,75 M160,70 L165,75" stroke="#448aff" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag">Potencia AC</span>
+                        <span class="sim-tag">Eficiencia</span>
+                    </div>
+                    <h3 class="sim-title">Corrección de Factor de Potencia</h3>
+                    <p class="sim-desc">
+                        Visualiza el triángulo de potencias. Agrega cargas inductivas y bancos de capacitores para compensar la energía reactiva y mejorar el factor de potencia.
+                    </p>
+                    <a href="simulador-fp.html" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Iniciar Simulación
+                    </a>
+                </div>
+            </div>
+
+            <!-- RLC Simulator (Preview) -->
+            <div class="sim-card">
+                <div class="sim-preview">
+                    <!-- Custom SVG: RLC Circuit -->
+                    <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Resistor Symbol -->
+                        <polyline points="40,60 45,50 55,70 65,50 75,70 80,60" fill="none" stroke="#FF5252" stroke-width="2"/>
+                        <!-- Inductor Symbol -->
+                        <path d="M80,60 Q85,40 90,60 T100,60 T110,60 T120,60" fill="none" stroke="#FFC107" stroke-width="2"/>
+                        <!-- Capacitor Symbol -->
+                        <line x1="120" y1="60" x2="130" y2="60" stroke="#448aff" stroke-width="2"/>
+                        <line x1="130" y1="45" x2="130" y2="75" stroke="#448aff" stroke-width="2"/>
+                        <line x1="136" y1="45" x2="136" y2="75" stroke="#448aff" stroke-width="2"/>
+                        <line x1="136" y1="60" x2="160" y2="60" stroke="#448aff" stroke-width="2"/>
+                        
+                        <!-- Wires -->
+                        <line x1="20" y1="60" x2="40" y2="60" stroke="#aaa" stroke-width="2"/>
+                        <line x1="160" y1="60" x2="180" y2="60" stroke="#aaa" stroke-width="2"/>
+                        
+                        <!-- Damped Wave overlay -->
+                         <path d="M20,100 C50,100 60,30 80,30 S110,90 130,80 S160,50 180,60" fill="none" stroke="rgba(255, 255, 255, 0.5)" stroke-width="1" stroke-dasharray="2,2"/>
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag">Circuitos</span>
+                        <span class="sim-tag">Resonancia</span>
+                    </div>
+                    <h3 class="sim-title">Respuesta RLC Serie/Paralelo</h3>
+                    <p class="sim-desc">
+                        Analiza el comportamiento de circuitos RLC. Observa el sobreamortiguamiento, subamortiguamiento y la resonancia variando R, L y C.
+                    </p>
+                    <a href="simulador-rlc.html" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Iniciar Simulación
+                    </a>
+                </div>
+            </div>
+
+            <!-- Magnetic Field Simulator (Preview) -->
+            <div class="sim-card">
+                <div class="sim-preview">
+                    <!-- Custom SVG: Rotating Field -->
+                     <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Stator Ring -->
+                        <circle cx="100" cy="60" r="40" stroke="#334155" stroke-width="4" fill="none"/>
+                        
+                        <!-- Coils -->
+                        <circle cx="100" cy="20" r="5" fill="#FF5252"/> <!-- A -->
+                        <circle cx="135" cy="80" r="5" fill="#448aff"/> <!-- B -->
+                        <circle cx="65" cy="80" r="5" fill="#00E676"/> <!-- C -->
+                        
+                        <!-- Vectors -->
+                        <line x1="100" y1="60" x2="100" y2="30" stroke="#FF5252" stroke-width="2" opacity="0.5"/>
+                        <line x1="100" y1="60" x2="125" y2="75" stroke="#448aff" stroke-width="2" opacity="0.5"/>
+                        <line x1="100" y1="60" x2="75" y2="75" stroke="#00E676" stroke-width="2" opacity="0.5"/>
+                        
+                        <!-- Resultant Vector (White) -->
+                        <line x1="100" y1="60" x2="130" y2="40" stroke="#ffffff" stroke-width="3" marker-end="url(#arrowhead)"/>
+                        
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#ffffff" />
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag">Máquinas Eléctricas</span>
+                        <span class="sim-tag">Trifásico</span>
+                    </div>
+                    <h3 class="sim-title">Campo Magnético Giratorio</h3>
+                    <p class="sim-desc">
+                        Animación vectorial que demuestra cómo tres corrientes desfasadas 120° crean un campo magnético rotativo constante en el estator de un motor.
+                    </p>
+                    <a href="simulador-cmg.html" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Iniciar Simulación
+                    </a>
+                </div>
+            </div>
+            <!-- Transformer Bank Simulator -->
+            <div class="sim-card">
+                <div class="sim-preview">
+                    <!-- Custom SVG: Transformer Bank -->
+                    <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Trafo Icons -->
+                        <rect x="40" y="40" width="30" height="40" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+                        <rect x="85" y="40" width="30" height="40" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+                        <rect x="130" y="40" width="30" height="40" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+                        
+                        <!-- Wires -->
+                        <path d="M55,40 L55,20 L145,20 L145,40" stroke="#FF5252" stroke-width="2" fill="none"/>
+                        <path d="M55,80 L55,100 L145,100 L145,80" stroke="#448aff" stroke-width="2" fill="none"/>
+                        
+                        <!-- Symbol -->
+                        <text x="100" y="65" fill="#fff" font-size="20" font-weight="bold" text-anchor="middle">Δ-Y</text>
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag">Distribución</span>
+                        <span class="sim-tag">Transformadores</span>
+                    </div>
+                    <h3 class="sim-title">Banco de Transformadores</h3>
+                    <p class="sim-desc">
+                        Simula conexiones de bancos trifásicos (Delta, Estrella). Visualiza el cableado de bushings H y X y los voltajes resultantes.
+                    </p>
+                    <a href="simulador-transformadores.html" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Iniciar Simulación
+                    </a>
+                </div>
+            </div>
+                <!-- Nuevo Simulador: Línea de Producción -->
+            <div class="sim-card">
+                <div class="sim-preview">
+                    <!-- Custom SVG: Production Line -->
+                    <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Conveyor Belt -->
+                        <rect x="20" y="70" width="160" height="10" rx="5" fill="#333" />
+                        <circle cx="30" cy="75" r="8" fill="#555" />
+                        <circle cx="170" cy="75" r="8" fill="#555" />
+                        <line x1="30" y1="75" x2="170" y2="75" stroke="#222" stroke-width="2" stroke-dasharray="5,5" />
+
+                        <!-- Box -->
+                        <rect x="50" y="45" width="25" height="25" fill="#FF5252" stroke="#fff" stroke-width="1" />
+                        
+                        <!-- Sensor Beam -->
+                        <path d="M100,20 L100,70" stroke="#00E676" stroke-width="2" stroke-dasharray="4,2" opacity="0.6"/>
+                        <rect x="95" y="10" width="10" height="15" fill="#333" /> <!-- Sensor Body -->
+                        
+                        <!-- Piston/Actuator -->
+                        <rect x="130" y="40" width="40" height="10" fill="#555" />
+                        <rect x="120" y="42" width="10" height="6" fill="#ccc" /> <!-- Piston Head -->
+
+                        <!-- Arrow indicating motion -->
+                         <path d="M150,95 L170,95 L165,90 M170,95 L165,100" stroke="#fff" stroke-width="2" fill="none" opacity="0.5"/>
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag">Automatización</span>
+                        <span class="sim-tag">Sensores</span>
+                    </div>
+                    <h3 class="sim-title">Línea de Producción</h3>
+                    <p class="sim-desc">
+                        Simulación 3D de automatización industrial. Configura sensores y actuadores para clasificar objetos en una banda transportadora.
+                    </p>
+                    <a href="simulador-produccion.html" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Iniciar Simulación
+                    </a>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+          <div class="footer-content">
+            <div class="footer-info">
+              <h3>Electromatics.com.ve</h3>
+              <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+              <div style="margin-top: 20px">
+                <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="https://tiktok.com/@electrum69" target="_blank" style="font-size: 20px; color: #000000;"><i class="fa-brands fa-tiktok"></i></a>
+              </div>
+            </div>
+            <div class="footer-links">
+              <h4>Plataforma</h4>
+              <a href="calculadora.html">Calculadora 220/430</a>
+              <a href="formacion.html">Formación Técnica</a>
+              <a href="simuladores.html">Simuladores</a>
+              <a href="proyectos.html">Proyectos</a>
+            </div>
+            <div class="footer-links">
+              <h4>Empresa</h4>
+              <a href="nosotros.html">Nosotros</a>
+              <a href="servicios.html">Servicios</a>
+              <a href="contacto.html">Contacto</a>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </footer>
+  
+      <script src="js/simple-auth.js"></script>
+      <script src="js/ai-chat.js?v=7.0"></script>
+  </body>
+</html>

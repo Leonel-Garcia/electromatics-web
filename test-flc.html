@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FLC Test</title>
+</head>
+<body>
+    <h1>Test de Extracción FLC</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Tabla FLC
+        const flcTable = {
+            '10-240-3ph': 28,
+            '10-460-3ph': 14
+        };
+        
+        // Test 1: Motor 10HP, 460V, Trifásico
+        const hp1 = 10;
+        const voltage1 = 460;
+        const phase1 = 3;
+        
+        let key1 = `${hp1}-${voltage1}`;
+        if (phase1 === 3) key1 += '-3ph';
+        else key1 += '-1ph';
+        
+        const flc1 = flcTable[key1];
+        
+        // Test 2: Motor 10HP, 240V, Trifásico
+        const hp2 = 10;
+        const voltage2 = 240;
+        const phase2 = 3;
+        
+        let key2 = `${hp2}-${voltage2}`;
+        if (phase2 === 3) key2 += '-3ph';
+        else key2 += '-1ph';
+        
+        const flc2 = flcTable[key2];
+        
+        // Mostrar resultados
+        document.getElementById('result').innerHTML = `
+            <h2>Test 1: 10HP, 460V, Trifásico</h2>
+            <p>Key: "${key1}"</p>
+            <p>FLC: ${flc1} A</p>
+            <p>Esperado: 14 A</p>
+            <p>✅ ${flc1 === 14 ? 'CORRECTO' : '❌ ERROR'}</p>
+            
+            <h2>Test 2: 10HP, 240V, Trifásico</h2>
+            <p>Key: "${key2}"</p>
+            <p>FLC: ${flc2} A</p>
+            <p>Esperado: 28 A</p>
+            <p>✅ ${flc2 === 28 ? 'CORRECTO' : '❌ ERROR'}</p>
+        `;
+        
+        console.log('Test 1 - Key:', key1, 'FLC:', flc1);
+        console.log('Test 2 - Key:', key2, 'FLC:', flc2);
+    </script>
+</body>
+</html>

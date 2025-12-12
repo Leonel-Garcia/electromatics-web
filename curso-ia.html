@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CursoAPP - Crea tu Curso con IA | Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.1">
+    <link rel="stylesheet" href="css/curso-ia.css?v=1.0">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics.com.ve</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="index.html">Inicio</a>
+                <a href="servicios.html">Servicios</a>
+                <a href="proyectos.html">Proyectos</a>
+                <a href="formacion.html" class="active">Formación</a>
+                <a href="museo.html">Museo</a>
+                <a href="simuladores.html">Simuladores</a>
+                <a href="calculadora.html">Plataforma IA</a>
+                <a href="#" id="login-btn" class="btn btn-primary"
+                    style="padding: 6px 16px; margin-left: 20px; font-size: 14px;">Acceder</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container curso-app-container">
+        <!-- Progress Stepper -->
+        <div class="stepper-container">
+            <div class="stepper">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Tema Central</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Variaciones</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Curso</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Topic Input -->
+        <section id="step-1" class="step-content active">
+            <div class="step-header">
+                <div class="ai-avatar">
+                    <img src="images/electria-avatar.png" alt="ElectrIA">
+                </div>
+                <div class="step-intro">
+                    <h1>¡Hola! Soy <span class="highlight">ElectrIA</span></h1>
+                    <p>Voy a ayudarte a crear un curso personalizado en el área de ingeniería eléctrica, electrónica, automatización o inteligencia artificial.</p>
+                </div>
+            </div>
+
+            <div class="topic-input-container">
+                <label for="topic-input">¿Sobre qué tema te gustaría aprender?</label>
+                <div class="input-wrapper">
+                    <input type="text" id="topic-input" placeholder="Ej: Control de motores con PLC, Circuitos electrónicos, Redes neuronales..." autocomplete="off">
+                    <button id="generate-pillars-btn" class="btn btn-primary">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Generar Temas</span>
+                    </button>
+                </div>
+                <div class="topic-suggestions">
+                    <span>Sugerencias:</span>
+                    <button class="suggestion-chip" onclick="CursoIA.setTopic('Programación de PLC Siemens')">PLC Siemens</button>
+                    <button class="suggestion-chip" onclick="CursoIA.setTopic('Diseño de circuitos con Arduino')">Arduino</button>
+                    <button class="suggestion-chip" onclick="CursoIA.setTopic('Protecciones eléctricas industriales')">Protecciones</button>
+                    <button class="suggestion-chip" onclick="CursoIA.setTopic('Inteligencia artificial en automatización')">IA Industrial</button>
+                </div>
+            </div>
+
+            <!-- Pillar Topics Container -->
+            <div id="pillars-container" class="options-grid hidden">
+                <h2><i class="fa-solid fa-lightbulb"></i> Selecciona un Tema Pilar</h2>
+                <p class="subtitle">Basándome en tu interés, he generado estos 5 temas principales. Selecciona uno para continuar.</p>
+                <div id="pillars-list" class="cards-grid"></div>
+            </div>
+        </section>
+
+        <!-- Step 2: Lesson Variations -->
+        <section id="step-2" class="step-content">
+            <div class="step-navigation">
+                <button class="btn btn-secondary back-btn" onclick="CursoIA.goToStep(1)">
+                    <i class="fa-solid fa-arrow-left"></i> Volver a Temas
+                </button>
+            </div>
+
+            <div class="selected-topic-display">
+                <span class="label">Tema seleccionado:</span>
+                <span id="selected-pillar-name" class="topic-name"></span>
+            </div>
+
+            <div id="variations-container" class="options-grid">
+                <h2><i class="fa-solid fa-layer-group"></i> Variaciones de Lección</h2>
+                <p class="subtitle">Aquí tienes 3 enfoques diferentes para tu curso. Selecciona el que más te interese.</p>
+                <div id="variations-list" class="cards-grid"></div>
+            </div>
+        </section>
+
+        <!-- Step 3: Full Course -->
+        <section id="step-3" class="step-content">
+            <div class="step-navigation">
+                <button class="btn btn-secondary back-btn" onclick="CursoIA.goToStep(2)">
+                    <i class="fa-solid fa-arrow-left"></i> Volver a Variaciones
+                </button>
+                <button class="btn btn-primary" onclick="CursoIA.downloadCourse()">
+                    <i class="fa-solid fa-download"></i> Descargar PDF
+                </button>
+            </div>
+
+            <div class="course-header">
+                <h1 id="course-title"></h1>
+                <p id="course-description" class="course-description"></p>
+            </div>
+
+            <!-- Course Tabs -->
+            <div class="course-tabs">
+                <button class="tab-btn active" data-tab="content">
+                    <i class="fa-solid fa-book"></i> Contenido
+                </button>
+                <button class="tab-btn" data-tab="examples">
+                    <i class="fa-solid fa-flask"></i> Ejemplos
+                </button>
+                <button class="tab-btn" data-tab="quiz">
+                    <i class="fa-solid fa-question-circle"></i> Quiz
+                </button>
+                <button class="tab-btn" data-tab="resources">
+                    <i class="fa-solid fa-link"></i> Recursos
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="tab-content" class="tab-content active">
+                <div id="course-blocks"></div>
+            </div>
+
+            <div id="tab-examples" class="tab-content">
+                <div id="course-examples"></div>
+            </div>
+
+            <div id="tab-quiz" class="tab-content">
+                <div id="quiz-container"></div>
+            </div>
+
+            <div id="tab-resources" class="tab-content">
+                <div id="course-resources"></div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p id="loading-text">Generando contenido...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>Electromatics.com.ve</h3>
+                    <p>Formación técnica potenciada con IA.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js?v=7.1"></script>
+    <script src="js/simple-auth.js?v=7.2"></script>
+    <script src="js/curso-ia.js?v=1.0"></script>
+</body>
+
+</html>

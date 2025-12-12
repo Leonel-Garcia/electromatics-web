@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto - Electromatics.com.ve</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=2.1">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+</head>
+<body>
+
+    <!-- Header y Navegación -->
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics.com.ve</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="index.html">Inicio</a>
+                <a href="nosotros.html">Nosotros</a>
+                <a href="servicios.html">Servicios</a>
+                <a href="proyectos.html">Proyectos</a>
+                <a href="formacion.html">Formación</a>
+                <a href="museo.html">Museo</a>
+                <a href="simuladores.html">Simuladores</a>
+                <a href="calculadora.html">Plataforma IA</a>
+                <a href="contacto.html" class="active">Contacto</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container" style="padding-top: 40px; padding-bottom: 40px;">
+        <h1 style="text-align: center; font-size: 36px; font-weight: 700; margin-bottom: 60px;">Ponerse en Contacto</h1>
+        <div class="contact-form-container" style="max-width: 900px; margin: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            
+            <!-- Información de Contacto -->
+            <div>
+                <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">Información de Contacto</h2>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <p>Email: <a href="mailto:electromatics.info@gmail.com">electromatics.info@gmail.com</a></p>
+                    <p>Teléfono: <a href="tel:+584165837132">+58 416-5837132</a></p>
+                    <p>Ubicación: Anaco, Edo. Anzoátegui, Venezuela</p>
+                </div>
+            </div>
+
+            <!-- Formulario de Contacto -->
+            <div>
+                <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">Enviar un Mensaje</h2>
+                <form id="contact-form" action="#" method="POST">
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message" name="message" rows="4" required></textarea>
+                    </div>
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            <span>Enviar</span>
+                            <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Success Message (Hidden by default) -->
+                <div id="success-message" style="display: none; margin-top: 20px; padding: 15px; background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 8px; color: #4CAF50; text-align: center;">
+                    <i class="fa-solid fa-check-circle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    <p style="margin: 0; font-weight: 600;">¡Mensaje Enviado!</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Nos pondremos en contacto contigo pronto.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>Electromatics.com.ve</h3>
+                    <p>Soluciones de ingeniería para un futuro eficiente.</p>
+                    <div style="margin-top: 20px">
+                        <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;"
+                            ><i class="fa-brands fa-youtube"></i
+                        ></a>
+                        <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;"
+                            ><i class="fa-brands fa-whatsapp"></i
+                        ></a>
+                        <a href="https://tiktok.com/@electrum69" target="_blank" style="font-size: 20px; color: #000000;"
+                            ><i class="fa-brands fa-tiktok"></i
+                        ></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <a href="nosotros.html">Nosotros</a>
+                    <a href="servicios.html">Servicios</a>
+                    <a href="contacto.html">Contacto</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="chat-widget-container"></div>
+    <script src="js/config.js"></script>
+    <script src="js/ai-chat.js"></script>
+    <script src="js/simple-auth.js"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="js/contact.js?v=2.0"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyectos - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics.com.ve</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="index.html">Inicio</a>
+                <a href="servicios.html">Servicios</a>
+                <a href="proyectos.html" class="active">Proyectos</a>
+                <a href="formacion.html">Formación</a>
+                <a href="museo.html">Museo</a>
+                <a href="simuladores.html">Simuladores</a>
+                <a href="calculadora.html">Plataforma IA</a>
+                <a href="#" id="login-btn" class="btn btn-primary"
+                    style="padding: 6px 16px; margin-left: 20px; font-size: 14px;">Acceder</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="container">
+            <div class="section-title">
+                <h1>Proyectos Destacados</h1>
+                <p>Experiencia comprobada en el campo industrial y residencial.</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="card">
+                    <div
+                        style="height: 200px; background-color: #2C3A47; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-industry" style="font-size: 60px; color: rgba(255,255,255,0.1);"></i>
+                    </div>
+                    <h3>Automatización Planta de Tratamiento</h3>
+                    <p style="font-size: 14px; color: var(--electric-blue); margin-bottom: 10px;">Sector: Industrial /
+                        Agua</p>
+                    <p>Modernización del sistema de control SCADA para una planta de tratamiento de aguas residuales,
+                        implementando PLCs Siemens S7-1500 y monitoreo remoto.</p>
+                </div>
+
+                <div class="card">
+                    <div
+                        style="height: 200px; background-color: #2C3A47; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-building" style="font-size: 60px; color: rgba(255,255,255,0.1);"></i>
+                    </div>
+                    <h3>Diseño Eléctrico Residencial "Los Roques"</h3>
+                    <p style="font-size: 14px; color: var(--electric-blue); margin-bottom: 10px;">Sector: Residencial
+                    </p>
+                    <p>Ingeniería de detalle para complejo habitacional de 50 unidades. Cálculo de acometidas, tableros
+                        y sistema de puesta a tierra según Fondonorma 200-2009.</p>
+                </div>
+
+                <div class="card">
+                    <div
+                        style="height: 200px; background-color: #2C3A47; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-bolt" style="font-size: 60px; color: rgba(255,255,255,0.1);"></i>
+                    </div>
+                    <h3>Subestación Compacta 13.8kV</h3>
+                    <p style="font-size: 14px; color: var(--electric-blue); margin-bottom: 10px;">Sector: Comercial</p>
+                    <p>Instalación y pruebas de puesta en servicio de subestación compacta para centro comercial,
+                        incluyendo celdas de media tensión y transformador de 500kVA.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>Electromatics.com.ve</h3>
+                    <p>Construyendo el futuro.</p>
+                    <div style="margin-top: 20px">
+                        <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;"
+                            ><i class="fa-brands fa-youtube"></i
+                        ></a>
+                        <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;"
+                            ><i class="fa-brands fa-whatsapp"></i
+                        ></a>
+                        <a href="https://tiktok.com/@electrum69" target="_blank" style="font-size: 20px; color: #000000;"
+                            ><i class="fa-brands fa-tiktok"></i
+                        ></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="chat-widget-container"></div>
+    <script src="js/config.js"></script>
+    <script src="js/ai-chat.js"></script>
+    <script src="js/simple-auth.js"></script>
+</body>
+
+</html>

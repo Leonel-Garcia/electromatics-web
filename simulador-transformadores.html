@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Banco de Transformadores - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .simulator-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            height: calc(100vh - 140px);
+        }
+
+        @media (max-width: 1024px) {
+            .simulator-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+
+        .controls-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .visualization-panel {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .control-group {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .control-group h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            color: #38bdf8; /* Bright Cyan/Blue for visibility */
+            font-size: 15px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+        }
+
+        .data-display {
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #4ade80; /* Green terminal text */
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="simuladores.html" class="btn-text"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+                <span style="opacity: 0.5;">|</span>
+                <span style="font-weight: 600;">Banco de Transformadores</span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="simulator-container">
+            <!-- Controls -->
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Configuración del Banco</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label>Conexión Primaria (HV)</label>
+                        <select id="conn-primary" disabled>
+                            <option value="delta">Delta (Δ)</option>
+                        </select>
+                        <small style="color: #aaa; display: block; margin-top: 5px;">Tensión: 13.8 kV</small>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label>Conexión Secundaria (LV)</label>
+                        <select id="conn-secondary">
+                            <option value="star-series">Estrella (Y) - Serie Interna (415.7/240 V)</option> 
+                            <!-- User asked for 120/240. 
+                                 Usually 3x transformers 120/240.
+                                 If Star with Series coils: V_phase = 240, V_line = 416?
+                                 If Star with Parallel coils: V_phase = 120, V_line = 208.
+                            -->
+                            <option value="star-parallel" selected>Estrella (Y) - Bobinas Paralelo (208/120V)</option>
+                            <option value="delta-series">Delta (Δ) - Serie Interna (240V)</option>
+                            <option value="delta-parallel">Delta (Δ) - Bobinas Paralelo (120V)</option>
+                            <option value="delta-open">Delta Abierta (V-V)</option>
+                            <option value="delta-open-parallel">Delta Abierta (V-V) - Bobinas Paralelo</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>
+                            <input type="checkbox" id="show-wiring" checked> Mostrar Cableado
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Mediciones (Tiempo Real)</h3>
+                    <div class="data-display" id="measurements">
+                        <!-- Populated by JS -->
+                        <div class="data-row"><span>V_pri (L-L):</span> <span>13.8 kV</span></div>
+                        <div class="data-row"><span>V_sec (L-L):</span> <span id="val-vll">--</span></div>
+                        <div class="data-row"><span>V_sec (L-N):</span> <span id="val-vln">--</span></div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Información</h3>
+                    <p style="font-size: 13px; color: #ccc; line-height: 1.5;">
+                        Banco de 3 transformadores monofásicos.<br>
+                        <strong>Relación:</strong> 13800 / 120-240 V<br>
+                        <strong>Terminales:</strong><br>
+                        HV: H1 - H2<br>
+                        LV: X1 - X2 (Bobina 1), X3 - X4 (Bobina 2)
+                    </p>
+                </div>
+            </div>
+
+            <!-- Visualization -->
+            <div class="visualization-panel">
+                <div class="canvas-container">
+                    <canvas id="transformerCanvas"></canvas>
+                    
+                    <div class="legend">
+                        <div class="legend-item"><div class="dot" style="background: #FF5252;"></div> Fase A / a</div>
+                        <div class="legend-item"><div class="dot" style="background: #448aff;"></div> Fase B / b</div>
+                        <div class="legend-item"><div class="dot" style="background: #00E676;"></div> Fase C / c</div>
+                        <div class="legend-item"><div class="dot" style="background: #e2e8f0;"></div> Neutro</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/simulators/transformers.js"></script>
+</body>
+</html>

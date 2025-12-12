@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Línea de Producción - Electromatics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Simple OrbitControls CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        .simulation-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #a0a0a0;
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .color-btn.active {
+            transform: scale(1.1);
+            border-color: white;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .colors-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            color: #00ff88;
+            font-family: monospace;
+            border: 1px solid #00ff8844;
+        }
+
+        .logic-display {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .keyword { color: #ff79c6; }
+        .variable { color: #8be9fd; }
+        .string { color: #f1fa8c; }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="proyectos.html">Proyectos</a>
+          <a href="formacion.html">Formación</a>
+          <a href="museo.html">Museo</a>
+          <a href="simuladores.html" class="active">Simuladores</a>
+          <a href="calculadora.html">Plataforma IA</a>
+          <a
+            href="#"
+            id="login-btn"
+            class="btn btn-primary"
+            style="padding: 6px 16px; margin-left: 20px; font-size: 14px"
+            >Acceder</a
+          >
+        </div>
+      </nav>
+    </header>
+
+    <main class="page-header">
+        <div class="header-content">
+            <h1>Línea de Producción Automatizada</h1>
+            <p>Programa sensores y actuadores para clasificar objetos en un entorno 3D industrial.</p>
+        </div>
+    </main>
+
+    <div class="container">
+        <div class="simulation-container">
+            <div id="canvas-container"></div>
+            
+            <div class="status-panel">
+                <div>Objetos Totales: <span id="total-count">0</span></div>
+                <div>Clasificados: <span id="sorted-count">0</span></div>
+            </div>
+
+            <div class="controls-overlay">
+                <div class="control-group">
+                    <label>Condición del Sensor (Detectar Color)</label>
+                    <div class="colors-container">
+                        <button class="color-btn" style="background: #ff4444;" onclick="setSensorRule('red', this)" data-color="0xff0000"></button>
+                        <button class="color-btn" style="background: #44ff44;" onclick="setSensorRule('green', this)" data-color="0x00ff00"></button>
+                        <button class="color-btn" style="background: #4444ff;" onclick="setSensorRule('blue', this)" data-color="0x0000ff"></button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Lógica de Control</label>
+                    <div class="logic-display">
+                        <span class="keyword">IF</span> sensor.detects(<span class="variable" id="logic-color">NONE</span>) <br>
+                        <span class="keyword">THEN</span> cylinder.extend()
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Velocidad de Banda</label>
+                    <input type="range" min="1" max="5" value="2" step="0.5" id="speed-control">
+                </div>
+                
+                <button class="cta-button" id="start-btn" onclick="toggleSimulation()">
+                    <i class="fas fa-play"></i> Iniciar
+                </button>
+            </div>
+        </div>
+
+        <section class="info-section">
+            <div class="card">
+                <h2><i class="fas fa-cogs"></i> Principios de Automatización</h2>
+                <p>
+                    Esta simulación demuestra los componentes básicos de un sistema de automatización industrial:
+                </p>
+                <ul class="feature-list">
+                    <li><strong>Sensores:</strong> Dispositivos que detectan propiedades físicas (en este caso, color/luz reflejada) y envían señales eléctricas.</li>
+                    <li><strong>Controlador (Lógica):</strong> El "cerebro" que procesa las entradas (Si detecta color X) y decide las salidas (Activar pistón).</li>
+                    <li><strong>Actuadores:</strong> Dispositivos mecatrónicos como pistones neumáticos o cilindros que ejecutan la acción física.</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Electromatics</h3>
+                <p>Innovación en ingeniería eléctrica y automatización.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Enlaces</h3>
+                <a href="simuladores.html">Simuladores</a>
+                <a href="formacion.html">Formación</a>
+                <a href="contacto.html">Contacto</a>
+            </div>
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <a href="#">Privacidad</a>
+                <a href="#">Términos</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Electromatics. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Auth Scripts -->
+    <script src="js/auth-mock.js"></script>
+    <script src="js/simple-auth.js"></script>
+    <!-- Simulator Script -->
+    <script src="js/simulators/produccion.js"></script>
+</body>
+</html>
