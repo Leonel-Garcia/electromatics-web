@@ -173,6 +173,7 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
     }
 
 @app.get("/")
+def read_root():
     return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce)"}
 
 if __name__ == "__main__":
