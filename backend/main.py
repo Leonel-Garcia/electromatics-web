@@ -11,8 +11,11 @@ models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI()
 
 # CORS Configuration - Allow frontend origins
-    allow_origins=["*"],
-    allow_credentials=False,
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[],  # Empty list because we use allow_origin_regex
+    allow_origin_regex=r"https?://.*",  # Allow all http and https origins
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
