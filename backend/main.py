@@ -11,20 +11,8 @@ models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI()
 
 # CORS Configuration - Allow frontend origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:8001",
-        "http://127.0.0.1:8001",
-        "https://electromatics.com.ve",
-        "https://www.electromatics.com.ve",
-        "https://electromatics-web.onrender.com",
-        "https://electromatics-api.onrender.com"
-    ],
-    allow_origin_regex="https://.*\.onrender\.com",
-    allow_credentials=True,  # Enable credentials for authentication
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
