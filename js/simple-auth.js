@@ -3,9 +3,8 @@
  * Sistema de Autenticación Conectado al Backend (FastAPI)
  */
 
-const API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
-    ? 'http://127.0.0.1:8001' 
-    : 'https://electromatics-api.onrender.com'; // Change this to your actual Render API name later
+// Usar configuración global de js/config.js
+const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:8001';
 
 const SimpleAuth = {
     state: {
@@ -254,9 +253,10 @@ const SimpleAuth = {
                 const data = await response.json();
                 return { success: false, message: data.detail || 'Error al registrar' };
             }
+            return { success: false, message: 'Error de conexión. Verifica tu red.' };
         } catch (error) {
-            console.error('Register Error:', error);
-            return { success: false, message: `Error: ${error.message}` };
+            console.error(`Register Error trying to fetch ${API_URL}/register:`, error);
+            return { success: false, message: `Error de conexión: ${error.message}` };
         }
     },
 
@@ -383,6 +383,17 @@ const SimpleAuth = {
             e.preventDefault(); 
             SimpleAuth.switchTab('login'); 
         };
+        
+        if(subscribeBtn) {
+            subscribeBtn.onclick = (e) => {
+                e.preventDefault();
+                if (SimpleAuth.state.isLoggedIn && SimpleAuth.state.user?.isPremium) { // Fixed property access
+                    alert("¡Ya tienes una suscripción activa!");
+                } else {
+                    window.openAuthModal('register');
+                }
+            };
+        }
 
         // Login form
         if (loginForm) loginForm.onsubmit = async (e) => {
