@@ -3,9 +3,8 @@
  * Real Authentication System using FastAPI Backend
  */
 
-const API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
-    ? 'http://127.0.0.1:8001' 
-    : 'https://electromatics-api.onrender.com'; // Change this to your actual Render API name later
+// API_BASE_URL is now defined in config.js
+const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:8001';
 
 const Auth = {
     state: {
@@ -167,8 +166,10 @@ const Auth = {
                 const error = await response.json();
                 return { success: false, message: error.detail || 'Error en el registro' };
             }
-        } catch (error) {
             return { success: false, message: 'Error de conexión. Verifica tu red.' };
+        } catch (error) {
+            console.error(`Register Error trying to fetch ${API_URL}/register:`, error);
+            return { success: false, message: `Error de conexión al servidor: ${API_URL}. Verifica que el backend esté corriendo.` };
         }
     },
 

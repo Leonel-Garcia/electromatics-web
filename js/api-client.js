@@ -3,9 +3,11 @@
  * API Client for communicating with FastAPI backend
  */
 
-const API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
+// Use global API_BASE_URL from config.js if available
+const API_BASE_URL = typeof window.API_BASE_URL !== 'undefined' ? window.API_BASE_URL : 
+    ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
     ? 'http://127.0.0.1:8001' 
-    : 'https://electromatics-api.onrender.com';
+    : 'https://electromatics-api.onrender.com');
 
 const ApiClient = {
     /**

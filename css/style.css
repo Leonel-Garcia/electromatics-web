@@ -1271,6 +1271,7 @@ main {
   to { transform: rotate(360deg); }
 }
 
+
 /* Responsive Auth Modal */
 @media (max-width: 768px) {
   .auth-content {
@@ -1281,4 +1282,143 @@ main {
   .auth-form-container h2 {
     font-size: 24px;
   }
+}
+
+/* 11. Mobile Navigation & Responsive Global
+-------------------------------------------------- */
+.mobile-nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1002;
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    /* Header Adjustments */
+    .main-header .container {
+        padding: 0 15px;
+        height: 60px;
+    }
+
+    .mobile-nav-toggle {
+        display: block;
+    }
+
+    .desktop-nav {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 60px; /* Below header */
+        left: 0;
+        width: 100%;
+        background-color: var(--medium-bg-hex);
+        border-bottom: 1px solid var(--border-color);
+        flex-direction: column;
+        padding: 20px 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 999;
+    }
+
+    .desktop-nav.active {
+        display: flex;
+        animation: slideDownNav 0.3s ease;
+    }
+
+    @keyframes slideDownNav {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .desktop-nav a {
+        display: block;
+        padding: 15px 20px;
+        margin: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-size: 18px;
+        text-align: center;
+    }
+
+    .desktop-nav a:last-child {
+        border-bottom: none;
+    }
+    
+    .desktop-nav #login-btn {
+        margin: 20px auto;
+        display: inline-flex;
+        width: 80%;
+    }
+
+    .logo span {
+        font-size: 18px; /* Smaller logo text */
+    }
+
+    /* Hero Section */
+    .hero-content h1 {
+        font-size: 32px !important; /* Override inline styles */
+        line-height: 1.2;
+    }
+
+    .hero-content p {
+        font-size: 16px !important;
+        padding: 0 15px;
+    }
+
+    .hero-content div[style*="display: flex"] {
+        flex-direction: column;
+        gap: 15px !important;
+    }
+
+    .hero-content .btn {
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    /* Sections */
+    main {
+        padding: 40px 0;
+    }
+
+    .section-title h1 {
+        font-size: 32px;
+    }
+
+    .section-title p {
+        font-size: 16px;
+    }
+
+    /* Services Grid */
+    .services-grid {
+        grid-template-columns: 1fr; /* Stack vertically */
+    }
+
+    /* Calculator */
+    .calculator-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1 1 calc(50% - 10px); /* 2 per row */
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    /* Footer */
+    .footer-content {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .footer-info, .footer-links {
+        width: 100%;
+        text-align: center;
+    }
+
+    .footer-info div[style*="margin-top"] {
+        justify-content: center;
+        display: flex;
+    }
 }
