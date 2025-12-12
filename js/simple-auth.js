@@ -361,6 +361,7 @@ const SimpleAuth = {
         const registerForm = document.getElementById('register-form');
         const switchToRegister = document.getElementById('switch-to-register');
         const switchToLogin = document.getElementById('switch-to-login');
+        const subscribeBtn = document.getElementById('subscribe-btn');
 
         window.openAuthModal = (tab = 'login') => {
             modal.classList.add('active');
