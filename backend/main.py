@@ -172,9 +172,18 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
         "recent_users": recent_users
     }
 
+@app.get("/debug-db")
+def debug_db(db: Session = Depends(database.get_db)):
+    try:
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
+        return {"status": "success", "message": "Database connection successful!"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/")
 def read_root():
-    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce) + Auth Fix"}
+    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce) + Auth Fix + Debug Mode"}
 
 if __name__ == "__main__":
     import uvicorn
