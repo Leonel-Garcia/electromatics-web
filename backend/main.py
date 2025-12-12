@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -11,22 +12,39 @@ models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI()
 
 # CORS Configuration - Allow frontend origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:8001",
-        "http://127.0.0.1:8001",
-        "https://electromatics.com.ve",
-        "https://www.electromatics.com.ve",
-        "https://electromatics-web.onrender.com",
-        "https://electromatics-api.onrender.com"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Manual CORS Middleware - Brute Force
+@app.middleware("http")
+async def cors_middleware(request: Request, call_next):
+    # Handle preflight OPTIONS requests directly
+    if request.method == "OPTIONS":
+        return Response(
+            status_code=204,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+                "Access-Control-Allow-Headers": "*",
+            }
+        )
+    
+    # Handle normal requests
+    try:
+        response = await call_next(request)
+        # Force CORS headers on response
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+    except Exception as e:
+        # Fallback for errors to ensure they also get CORS headers
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(e)},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
 
 @app.post("/register", response_model=schemas.User)
 def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -155,7 +173,7 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
     }
 
 @app.get("/")
-    return {"message": "Electromatics API is running - CORS Fixed (Explicit List)"}
+    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce)"}
 
 if __name__ == "__main__":
     import uvicorn
