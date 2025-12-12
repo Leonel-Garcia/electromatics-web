@@ -20,8 +20,19 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password[:72], hashed_password)
 
 def get_password_hash(password):
-    # Bcrypt handles strict 72 byte limit
-    return pwd_context.hash(password[:72])
+    try:
+        # Debugging: Ensure password is string
+        if not isinstance(password, str):
+            password = str(password)
+        
+        # Bcrypt handles strict 72 byte limit
+        return pwd_context.hash(password[:72])
+    except Exception as e:
+        # Return detail about the failure
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Hash Error: {str(e)} | Input Type: {type(password)} | Length: {len(password)}"
+        )
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()

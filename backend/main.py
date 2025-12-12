@@ -196,7 +196,7 @@ def debug_db(db: Session = Depends(database.get_db)):
 
 @app.get("/")
 def read_root():
-    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce) + Auth Fix + Debug Mode v2"}
+    return {"message": "Electromatics API is running - CORS Fixed (Manual Bruteforce) + Auth Fix + Debug Mode v3 (HashDebug)"}
 
 if __name__ == "__main__":
     import uvicorn
