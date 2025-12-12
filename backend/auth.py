@@ -15,9 +15,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+import hashlib
+
 def verify_password(plain_password, hashed_password):
-    # Bcrypt handles strict 72 byte limit
-    return pwd_context.verify(plain_password[:72], hashed_password)
+    # Pre-hash with SHA256 to bypass bcrypt 72-byte limit
+    # This ensures a fixed 64-character hex digest input for bcrypt
+    plain_password_hash = hashlib.sha256(plain_password.encode('utf-8')).hexdigest()
+    return pwd_context.verify(plain_password_hash, hashed_password)
 
 def get_password_hash(password):
     try:
@@ -25,13 +29,14 @@ def get_password_hash(password):
         if not isinstance(password, str):
             password = str(password)
         
-        # Bcrypt handles strict 72 byte limit
-        return pwd_context.hash(password[:72])
+        # Pre-hash with SHA256 to bypass bcrypt 72-byte limit
+        password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        return pwd_context.hash(password_hash)
     except Exception as e:
         # Return detail about the failure
         raise HTTPException(
             status_code=500, 
-            detail=f"Hash Error: {str(e)} | Input Type: {type(password)} | Length: {len(password)}"
+            detail=f"Hash Error: {str(e)} | Input Type: {type(password)}"
         )
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
