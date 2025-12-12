@@ -233,9 +233,6 @@ const SimpleAuth = {
 
     // Registrar usuario (POST /register)
     register: async (name, email, password) => {
-        // DEBUG: Verificando conexión
-        alert(`DEBUG:\nIntento de registro.\n\nAPI URL: ${API_URL}\nOrigen: ${window.location.origin}`);
-        
         try {
             const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',
@@ -259,7 +256,6 @@ const SimpleAuth = {
             return { success: false, message: 'Error de conexión. Verifica tu red.' };
         } catch (error) {
             console.error(`Register Error trying to fetch ${API_URL}/register:`, error);
-            alert(`ERROR DE CONEXIÓN:\n${error.message}\n\nURL: ${API_URL}/register`);
             return { success: false, message: `Error de conexión: ${error.message}` };
         }
     },
