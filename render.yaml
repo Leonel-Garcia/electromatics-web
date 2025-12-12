@@ -13,7 +13,7 @@ services:
         fromDatabase:
           name: electromatics-db
           property: connectionString
-    autoDeploy: false
+    autoDeploy: true
 
   # 2. Start the Frontend Website (Static HTML/JS)
   - type: web
@@ -25,7 +25,7 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-    autoDeploy: false
+    autoDeploy: true
 
 databases:
   # 3. Create a Database (PostgreSQL)
