@@ -129,6 +129,7 @@
         </div>
     </main>
 
+    <script src="js/config.js"></script>
     <script src="js/simple-auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -140,7 +141,9 @@
             }
 
             try {
-                const response = await fetch('http://localhost:8000/admin/stats', {
+                // Use global API_BASE_URL from config.js or fallback
+                const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+                const response = await fetch(`${apiUrl}/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
