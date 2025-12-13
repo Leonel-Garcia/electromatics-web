@@ -192,8 +192,8 @@ async def generate_content_proxy(request: Request):
         if not api_key:
             raise HTTPException(status_code=500, detail="Server misconfiguration: No API Key")
 
-        # Switching to gemini-1.5-flash for better stability and free tier limits
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        # Using gemini-1.5-pro - most stable and widely available model
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
         
         # Forward the request to Google
         google_response = requests.post(
