@@ -192,8 +192,8 @@ async def generate_content_proxy(request: Request):
         if not api_key:
             raise HTTPException(status_code=500, detail="Server misconfiguration: No API Key")
 
-        # Using v1 API with -latest suffix for Google AI Studio compatibility
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
+        # Using gemini-2.5-flash - confirmed available via API test
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
         
         # Forward the request to Google
         google_response = requests.post(
