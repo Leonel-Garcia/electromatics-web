@@ -663,39 +663,37 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
         alert('Función de descarga PDF en desarrollo. Por ahora puedes usar Ctrl+P para imprimir la página.');
     },
 
-    // Call Gemini API
+    // Call Gemini API via Backend Proxy
     callGeminiAPI: async (prompt) => {
-        // Check for API key (config.js uses 'apiKey')
-        const key = typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : 
-                    (typeof apiKey !== 'undefined' ? apiKey : null);
-        
-        if (!key) {
-            throw new Error('API key no configurada');
-        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/generate-content`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 8192
+                    }
+                })
+            });
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 8192
+            if (!response.ok) {
+                if (response.status === 429) {
+                    throw new Error('Has excedido el límite de consultas de la IA (Error 429). Por favor espera un minuto e intenta de nuevo.');
                 }
-            })
-        });
-
-        if (!response.ok) {
-            if (response.status === 429) {
-                throw new Error('Has excedido el límite de consultas de la IA (Error 429). Por favor espera un minuto e intenta de nuevo.');
+                const errData = await response.json();
+                const errMsg = errData.error?.message || response.statusText;
+                throw new Error(`API error (${response.status}): ${errMsg}`);
             }
-            const errData = await response.json();
-            const errMsg = errData.error?.message || response.statusText;
-            throw new Error(`API error (${response.status}): ${errMsg}`);
-        }
 
-        const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            
+        } catch (error) {
+            console.error("Proxy Error:", error);
+            throw error;
+        }
     },
 
     // Parse JSON from AI response (handles markdown code blocks)

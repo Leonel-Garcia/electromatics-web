@@ -20,25 +20,25 @@ const ElectrIA = {
     history: [],
 
     callGeminiAPI: async (userMessage) => {
-        if (typeof apiKey === 'undefined' || !apiKey) {
-            console.error("API Key not found. Make sure config.js is loaded.");
-            return "Error de configuración: No se encontró la clave de API. Por favor contacta al administrador.";
+        // Use backend proxy to hide API key
+        if (typeof API_BASE_URL === 'undefined') {
+             console.error("API configuration not found.");
+             return "Error de configuración: No se encontró la URL de la API.";
         }
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+
+        const url = `${API_BASE_URL}/generate-content`;
+        
+        // Construct the prompt with system instructions
+        const fullPrompt = ElectrIA.systemPrompt + "\n\nUsuario: " + userMessage;
 
         const requestBody = {
             contents: [
                 {
                     role: "user",
-                    parts: [{ text: ElectrIA.systemPrompt + "\n\nUsuario: " + userMessage }]
+                    parts: [{ text: fullPrompt }]
                 }
             ]
         };
-
-        // If we had history, we would append it here, but for simplicity in this version we send system prompt + current message
-        // or we could maintain a session history. For now, let's keep it simple: System Prompt + User Query.
-        // A better approach for chat is to append previous messages. Let's try to do a basic history if possible, 
-        // but to avoid token limits in this simple implementation, we'll stick to single-turn context with system instruction.
         
         try {
             const response = await fetch(url, {
@@ -64,7 +64,7 @@ const ElectrIA = {
 
         } catch (error) {
             console.error("Error calling Gemini API:", error);
-            return `Error técnico: ${error.message}. Por favor verifica la consola o tu clave de API.`;
+            return `Error técnico: ${error.message}. Por favor intenta más tarde.`;
         }
     },
 

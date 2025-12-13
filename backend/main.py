@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import models, schemas, auth, database
 from email_service import email_service
+import requests
+import os
+import pydantic
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -171,6 +174,45 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
         "verified_users": verified_users,
         "recent_users": recent_users
     }
+
+class GeminiRequest(pydantic.BaseModel):
+    contents: list
+    generationConfig: dict = None
+
+@app.post("/generate-content")
+async def generate_content_proxy(request: Request):
+    """
+    Secure proxy for Gemini API calls.
+    Frontend sends the payload, Backend adds the key and calls Google.
+    """
+    try:
+        body = await request.json()
+        api_key = os.getenv("GEMINI_API_KEY")
+        
+        if not api_key:
+            raise HTTPException(status_code=500, detail="Server misconfiguration: No API Key")
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        
+        # Forward the request to Google
+        google_response = requests.post(
+            url, 
+            json=body,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if google_response.status_code != 200:
+            # Relay the error details from Google
+            return JSONResponse(
+                status_code=google_response.status_code,
+                content=google_response.json()
+            )
+            
+        return google_response.json()
+
+    except Exception as e:
+        print(f"Proxy Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 def read_root():

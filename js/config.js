@@ -3,7 +3,8 @@
 // NUNCA compartas este archivo ni lo subas a repositorios públicos como GitHub.
 // Si usas Git, asegúrate de que el archivo "js/config.js" esté en tu .gitignore
 
-const apiKey = "AIzaSyApTuw6vfjhS1ZwDv2yNl0FC3iimVtKi1U";
+// La clave de API ahora se maneja en el Backend por seguridad.
+// const apiKey = "..."; // REMOVED
 
 // Configuración Centralizada de la API
 // Detecta automáticamente si estamos en local (PC/Móvil) o en producción
