@@ -12,28 +12,19 @@ SECRET_KEY = "supersecretkeyforelectromatics"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Using pbkdf2_sha256 to avoid bcrypt length limits and environment issues
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-import hashlib
-
 def verify_password(plain_password, hashed_password):
-    # Pre-hash with SHA256 to bypass bcrypt 72-byte limit
-    # This ensures a fixed 64-character hex digest input for bcrypt
-    plain_password_hash = hashlib.sha256(plain_password.encode('utf-8')).hexdigest()
-    return pwd_context.verify(plain_password_hash, hashed_password)
+    return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
     try:
-        # Debugging: Ensure password is string
         if not isinstance(password, str):
             password = str(password)
-        
-        # Pre-hash with SHA256 to bypass bcrypt 72-byte limit
-        password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
-        return pwd_context.hash(password_hash)
+        return pwd_context.hash(password)
     except Exception as e:
-        # Return detail about the failure
         raise HTTPException(
             status_code=500, 
             detail=f"Hash Error: {str(e)} | Input Type: {type(password)}"
