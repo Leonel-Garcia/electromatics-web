@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Electro Info - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="css/electro-info.css" />
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body>
+    <!-- Header y Navegación -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        
+        <button class="mobile-nav-toggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="proyectos.html">Proyectos</a>
+          <a href="formacion.html">Formación</a>
+          <a href="museo.html">Museo</a>
+          <a href="simuladores.html">Simuladores</a>
+          <a href="electro-info.html" class="active">Electro Info</a>
+          <a href="calculadora.html">Plataforma IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <!-- Hero Section -->
+      <section class="info-hero">
+        <div class="info-hero-content">
+          <h1><i class="fa-solid fa-lightbulb"></i> Electro Info</h1>
+          <p>Tu centro de conocimiento en Ingeniería Eléctrica: fundamentos, software especializado y biblioteca técnica</p>
+        </div>
+      </section>
+
+      <section class="container">
+        <!-- Tab Navigation -->
+        <div class="info-tabs">
+          <button class="info-tab active" data-tab="tab-ingenieria">
+            <i class="fa-solid fa-bolt"></i>
+            Ingeniería Eléctrica
+          </button>
+          <button class="info-tab" data-tab="tab-proximamente">
+            <i class="fa-solid fa-gear"></i>
+            Próximamente
+          </button>
+          <button class="info-tab" data-tab="tab-libros">
+            <i class="fa-solid fa-book"></i>
+            Libros Icónicos
+          </button>
+        </div>
+
+        <!-- TAB 1: INGENIERÍA ELÉCTRICA -->
+        <div id="tab-ingenieria" class="tab-content active">
+          <div class="accordion-container">
+
+            <!-- Acordeón 1: ¿Qué es la Ingeniería Eléctrica? -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-question"></i></span>
+                  ¿Qué es la Ingeniería Eléctrica?
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La <strong>Ingeniería Eléctrica</strong> es una rama de la ingeniería que se ocupa del estudio y aplicación de la electricidad, la electrónica y el electromagnetismo. Es una de las profesiones más versátiles y esenciales en nuestro mundo moderno, abarcando desde la generación y distribución de energía eléctrica hasta el diseño de circuitos electrónicos y sistemas de control.
+                  </p>
+                  <p>
+                    Los ingenieros eléctricos son responsables de diseñar, desarrollar y mantener sistemas eléctricos y electrónicos que alimentan nuestras ciudades, industrias y hogares. Su trabajo es fundamental para el funcionamiento de la sociedad moderna, desde las redes eléctricas que iluminan nuestras calles hasta los microchips que impulsan nuestros dispositivos móviles.
+                  </p>
+                  <h4>Áreas Principales</h4>
+                  <ul>
+                    <li><strong>Sistemas de Potencia:</strong> Generación, transmisión y distribución de energía eléctrica</li>
+                    <li><strong>Electrónica:</strong> Diseño de circuitos y dispositivos electrónicos</li>
+                    <li><strong>Control y Automatización:</strong> Sistemas automáticos para procesos industriales</li>
+                    <li><strong>Telecomunicaciones:</strong> Transmisión de información a través de señales eléctricas</li>
+                    <li><strong>Instrumentación:</strong> Medición y control de variables físicas</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 2: Historia y Evolución -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                  Historia y Evolución
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La ingeniería eléctrica tiene raíces profundas que se remontan a los experimentos con electricidad estática en la antigüedad. Sin embargo, como disciplina formal, comenzó a tomar forma en el siglo XIX con descubrimientos revolucionarios.
+                  </p>
+                  <h4>Hitos Históricos Clave</h4>
+                  <ul>
+                    <li><strong>1800:</strong> Alessandro Volta inventa la pila voltaica, la primera batería química</li>
+                    <li><strong>1820:</strong> Hans Christian Ørsted descubre el electromagnetismo</li>
+                    <li><strong>1831:</strong> Michael Faraday descubre la inducción electromagnética</li>
+                    <li><strong>1873:</strong> James Clerk Maxwell unifica las leyes del electromagnetismo</li>
+                    <li><strong>1879:</strong> Thomas Edison patenta la lámpara incandescente práctica</li>
+                    <li><strong>1882:</strong> Primera central eléctrica comercial de Edison en Nueva York</li>
+                    <li><strong>1888:</strong> Nikola Tesla inventa el motor de inducción de corriente alterna</li>
+                    <li><strong>1947:</strong> Invención del transistor en Bell Labs - inicia la era electrónica</li>
+                    <li><strong>1971:</strong> Intel lanza el primer microprocesador comercial</li>
+                    <li><strong>2000-Presente:</strong> Era de las energías renovables, smart grids e IoT</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 3: Principios Fundamentales -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-atom"></i></span>
+                  Principios Fundamentales
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La ingeniería eléctrica se basa en un conjunto de principios fundamentales que rigen el comportamiento de la electricidad y sus aplicaciones.
+                  </p>
+                  <h4>Leyes Fundamentales</h4>
+                  <ul>
+                    <li><strong>Ley de Ohm (V = I × R):</strong> Relaciona voltaje, corriente y resistencia en un circuito</li>
+                    <li><strong>Leyes de Kirchhoff:</strong>
+                      <ul>
+                        <li>Ley de corrientes (KCL): La suma de corrientes en un nodo es cero</li>
+                        <li>Ley de voltajes (KVL): La suma de voltajes en una malla cerrada es cero</li>
+                      </ul>
+                    </li>
+                    <li><strong>Ecuaciones de Maxwell:</strong> Describen los campos eléctricos y magnéticos</li>
+                    <li><strong>Teorema de Thevenin:</strong> Simplifica redes complejas a una fuente y resistencia equivalentes</li>
+                    <li><strong>Teorema de Norton:</strong> Versión dual del teorema de Thevenin</li>
+                    <li><strong>Principio de Superposición:</strong> En circuitos lineales, la respuesta es la suma de respuestas individuales</li>
+                  </ul>
+                  <h4>Conceptos Clave</h4>
+                  <ul>
+                    <li>Corriente continua (DC) vs. Corriente alterna (AC)</li>
+                    <li>Potencia activa, reactiva y aparente</li>
+                    <li>Factor de potencia y su importancia</li>
+                    <li>Resonancia en circuitos RLC</li>
+                    <li>Análisis transitorio y de estado estable</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 4: ¿Qué Hace un Ingeniero Eléctrico? -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-user-tie"></i></span>
+                  ¿Qué Hace un Ingeniero Eléctrico?
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    Los ingenieros eléctricos desempeñan una amplia variedad de roles en diferentes industrias. Su trabajo es crucial para el desarrollo y mantenimiento de la infraestructura moderna.
+                  </p>
+                  <h4>Responsabilidades Principales</h4>
+                  <ul>
+                    <li><strong>Diseño de Sistemas:</strong> Creación de planos y especificaciones para sistemas eléctricos residenciales, comerciales e industriales</li>
+                    <li><strong>Análisis y Simulación:</strong> Uso de software especializado para predecir el comportamiento de sistemas eléctricos</li>
+                    <li><strong>Supervisión de Instalaciones:</strong> Gestión de la implementación de proyectos eléctricos en campo</li>
+                    <li><strong>Mantenimiento Predictivo:</strong> Planificación de estrategias para prevenir fallas en equipos</li>
+                    <li><strong>Innovación y Desarrollo:</strong> Investigación de nuevas tecnologías y soluciones eficientes</li>
+                    <li><strong>Cumplimiento Normativo:</strong> Asegurar que los diseños cumplan con códigos y estándares (NEC, IEC, etc.)</li>
+                    <li><strong>Optimización Energética:</strong> Mejora de la eficiencia en sistemas de potencia</li>
+                    <li><strong>Resolución de Problemas:</strong> Diagnóstico y solución de fallas en sistemas existentes</li>
+                  </ul>
+                  <h4>Un Día Típico</h4>
+                  <p>
+                    Un ingeniero eléctrico puede comenzar su día revisando especificaciones de un proyecto, realizar cálculos de carga, diseñar esquemas unifilares en AutoCAD Electrical, simular sistemas en ETAP, coordinar con contratistas, realizar inspecciones en sitio, y preparar reportes técnicos.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 5: Campos de Acción -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-network-wired"></i></span>
+                  Campos de Acción
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La ingeniería eléctrica ofrece múltiples caminos de especialización, cada uno con sus propios desafíos y oportunidades.
+                  </p>
+                  <h4>Principales Especialidades</h4>
+                  <ul>
+                    <li><strong>Sistemas de Potencia y Energía:</strong>
+                      <ul>
+                        <li>Generación de energía (térmica, hidroeléctrica, renovable)</li>
+                        <li>Transmisión y distribución eléctrica</li>
+                        <li>Subestaciones y protecciones</li>
+                        <li>Calidad de energía y armónicos</li>
+                      </ul>
+                    </li>
+                    <li><strong>Control y Automatización Industrial:</strong>
+                      <ul>
+                        <li>PLCs y SCADA</li>
+                        <li>Robótica industrial</li>
+                        <li>Sistemas de control de procesos</li>
+                        <li>Industria 4.0 e IoT industrial</li>
+                      </ul>
+                    </li>
+                    <li><strong>Electrónica de Potencia:</strong>
+                      <ul>
+                        <li>Convertidores AC/DC y DC/DC</li>
+                        <li>Variadores de frecuencia</li>
+                        <li>Inversores para energía solar</li>
+                        <li>Sistemas de carga para vehículos eléctricos</li>
+                      </ul>
+                    </li>
+                    <li><strong>Telecomunicaciones:</strong>
+                      <ul>
+                        <li>Redes de fibra óptica</li>
+                        <li>Sistemas de radiofrecuencia</li>
+                        <li>Redes inalámbricas 5G</li>
+                        <li>Sistemas de comunicación satelital</li>
+                      </ul>
+                    </li>
+                    <li><strong>Iluminación y Eficiencia Energética:</strong>
+                      <ul>
+                        <li>Diseño de sistemas LED</li>
+                        <li>Auditorías energéticas</li>
+                        <li>Edificación sustentable (LEED)</li>
+                      </ul>
+                    </li>
+                    <li><strong>Instalaciones Eléctricas:</strong>
+                      <ul>
+                        <li>Residenciales y comerciales</li>
+                        <li>Industriales y de alta tensión</li>
+                        <li>Hospitales y data centers (misión crítica)</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 6: Cursos y Asignaturas Clave -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+                  Cursos y Asignaturas Clave
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    El plan de estudios de Ingeniería Eléctrica combina fundamentos teóricos sólidos con habilidades prácticas esenciales para el ejercicio profesional.
+                  </p>
+                  <h4>Ciclo Básico</h4>
+                  <ul>
+                    <li>Cálculo Diferencial e Integral</li>
+                    <li>Álgebra Lineal</li>
+                    <li>Ecuaciones Diferenciales</li>
+                    <li>Física (Mecánica, Electricidad y Magnetismo)</li>
+                    <li>Química General</li>
+                    <li>Programación y Algoritmos</li>
+                  </ul>
+                  <h4>Ciencias de la Ingeniería</h4>
+                  <ul>
+                    <li><strong>Teoría de Circuitos I y II:</strong> Análisis DC y AC</li>
+                    <li><strong>Electromagnetismo:</strong> Campos eléctricos y magnéticos</li>
+                    <li><strong>Análisis de Señales y Sistemas:</strong> Fourier, Laplace, Z-Transform</li>
+                    <li><strong>Electrónica Analógica y Digital:</strong> Diseño de circuitos electrónicos</li>
+                    <li><strong>Máquinas Eléctricas:</strong> Transformadores, motores, generadores</li>
+                    <li><strong>Sistemas de Control:</strong> Control clásico y moderno</li>
+                  </ul>
+                  <h4>Especialización</h4>
+                  <ul>
+                    <li><strong>Sistemas de Potencia:</strong> Generación, transmisión, distribución</li>
+                    <li><strong>Protecciones Eléctricas:</strong> Relés, coordinación de protecciones</li>
+                    <li><strong>Instalaciones Eléctricas:</strong> Diseño según normativas</li>
+                    <li><strong>Electrónica de Potencia:</strong> Convertidores, inversores</li>
+                    <li><strong>Automatización Industrial:</strong> PLCs, SCADA, HMI</li>
+                    <li><strong>Energías Renovables:</strong> Solar fotovoltaica, eólica</li>
+                    <li><strong>Iluminación:</strong> Diseño lumínico, LEDs</li>
+                  </ul>
+                  <h4>Habilidades Complementarias</h4>
+                  <ul>
+                    <li>Software de simulación (MATLAB, PSpice, ETAP)</li>
+                    <li>CAD eléctrico (AutoCAD Electrical, EPLAN)</li>
+                    <li>Gestión de proyectos</li>
+                    <li>Normativa y códigos (NEC, IEC, CEN)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 7: Aplicaciones Prácticas -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-industry"></i></span>
+                  Aplicaciones Prácticas
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La ingeniería eléctrica tiene un impacto directo en prácticamente todos los aspectos de nuestra vida moderna.
+                  </p>
+                  <h4>Sector Residencial</h4>
+                  <ul>
+                    <li>Diseño de instalaciones eléctricas para viviendas</li>
+                    <li>Sistemas de domótica y automatización del hogar</li>
+                    <li>Instalaciones solares fotovoltaicas residenciales</li>
+                    <li>Cargadores para vehículos eléctricos domésticos</li>
+                  </ul>
+                  <h4>Sector Industrial</h4>
+                  <ul>
+                    <li>Automatización de líneas de producción completas</li>
+                    <li>Sistemas de control de motores de alta potencia</li>
+                    <li>Redes de distribución industrial en media tensión</li>
+                    <li>Sistemas de respaldo de energía (UPS, generadores)</li>
+                    <li>Monitoreo y análisis de consumo energético</li>
+                  </ul>
+                  <h4>Infraestructura Urbana</h4>
+                  <ul>
+                    <li>Redes de distribución eléctrica municipales</li>
+                    <li>Sistemas de iluminación LED inteligentes</li>
+                    <li>Semaforización y control de tráfico</li>
+                    <li>Estaciones de metro y transporte masivo</li>
+                  </ul>
+                  <h4>Energías Renovables</h4>
+                  <ul>
+                    <li>Parques solares fotovoltaicos de gran escala</li>
+                    <li>Granjas eólicas y su conexión a la red</li>
+                    <li>Sistemas de almacenamiento con baterías (BESS)</li>
+                    <li>Microrredes y generación distribuida</li>
+                  </ul>
+                  <h4>Telecomunicaciones</h4>
+                  <ul>
+                    <li>Torres de telefonía móvil y su alimentación</li>
+                    <li>Data centers y sistemas de energía crítica</li>
+                    <li>Redes de fibra óptica</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 8: Software Especializado -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-laptop-code"></i></span>
+                  Software Especializado
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    Los ingenieros eléctricos modernos dependen de herramientas de software especial izadas para diseño, simulación y análisis.
+                  </p>
+                  
+                  <div class="software-grid">
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #e97826 0%, #f39c12 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">MATLAB</div>
+                      <h5>MATLAB</h5>
+                      <p>Computación numérica y análisis de datos. Esencial para procesamiento de señales, control y algoritmos matemáticos complejos.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #0076a8 0%, #00a8e1 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">Simulink</div>
+                      <h5>Simulink</h5>
+                      <p>Simulación de sistemas dinámicos y control. Interface gráfica para modelar sistemas eléctricos, mecánicos y de control.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">AutoCAD</div>
+                      <h5>AutoCAD Electrical</h5>
+                      <p>Diseño de planos eléctricos y esquemas. Estándar de la industria para documentación técnica de instalaciones eléctricas.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">ETAP</div>
+                      <h5>ETAP</h5>
+                      <p>Análisis de sistemas de potencia. Flujo de carga, cortocircuito, coordinación de protecciones y análisis de armónicos.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #c62828 0%, #d32f2f 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">DIgSILENT</div>
+                      <h5>DIgSILENT PowerFactory</h5>
+                      <p>Simulación avanzada de redes eléctricas. Análisis de estabilidad, transitorios electromagnéticos y optimización de redes.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #388e3c 0%, #43a047 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">EPLAN</div>
+                      <h5>EPLAN Electric P8</h5>
+                      <p>Ingeniería de automatización. Diseño de esquemas eléctricos, armarios de control y documentación técnica integral.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #fbc02d 0%, #fdd835 100%); display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; font-size: 18px;">LabVIEW</div>
+                      <h5>LabVIEW</h5>
+                      <p>Instrumentación virtual y control. Adquisición de datos, control de procesos y automatización de pruebas.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #5e35b1 0%, #673ab7 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">PSpice</div>
+                      <h5>PSpice</h5>
+                      <p>Simulación de circuitos analógicos y digitales. Análisis AC/DC, transitorio y de Monte Carlo para diseño electrónico.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #00695c 0%, #00796b 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">OrCAD</div>
+                      <h5>OrCAD</h5>
+                      <p>Diseño de PCB y circuitos electrónicos. Captura de esquemáticos, simulación y layout de tarjetas de circuito impreso.</p>
+                    </div>
+
+                    <div class="software-card">
+                      <div class="software-logo" style="background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">SolidWorks</div>
+                      <h5>SolidWorks Electrical</h5>
+                      <p>Diseño eléctrico 3D integrado. Combina esquemas eléctricos con modelos 3D para diseño mecatrónico completo.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 9: Desafíos y Tendencias Futuras -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-rocket"></i></span>
+                  Desafíos y Tendencias Futuras
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La ingeniería eléctrica está en constante evolución, enfrentando nuevos desafíos y abrazando tecnologías emergentes.
+                  </p>
+                  <h4>Tendencias Principales</h4>
+                  <ul>
+                    <li><strong>Transición Energética:</strong>
+                      <ul>
+                        <li>Integración masiva de energías renovables</li>
+                        <li>Almacenamiento de energía a gran escala</li>
+                        <li>Redes eléctricas bidireccionales</li>
+                        <li>Generación distribuida y microrredes</li>
+                      </ul>
+                    </li>
+                    <li><strong>Smart Grids (Redes Inteligentes):</strong>
+                      <ul>
+                        <li>Medidores inteligentes y AMI</li>
+                        <li>Gestión activa de la demanda (DSM)</li>
+                        <li>Autorecuperación de redes</li>
+                        <li>Integración de Big Data y analytics</li>
+                      </ul>
+                    </li>
+                    <li><strong>Electromovilidad:</strong>
+                      <ul>
+                        <li>Infraestructura de carga para vehículos eléctricos</li>
+                        <li>Vehicle-to-Grid (V2G)</li>
+                        <li>Baterías de alto rendimiento</li>
+                      </ul>
+                    </li>
+                    <li><strong>Internet de las Cosas (IoT):</strong>
+                      <ul>
+                        <li>Dispositivos conectados en redes eléctricas</li>
+                        <li>Monitoreo remoto y predictivo</li>
+                        <li>Mantenimiento basado en condición</li>
+                      </ul>
+                    </li>
+                    <li><strong>Inteligencia Artificial:</strong>
+                      <ul>
+                        <li>Predicción de demanda energética</li>
+                        <li>Optimización de redes con machine learning</li>
+                        <li>Diagnóstico inteligente de fallas</li>
+                        <li>Gemelos digitales de sistemas eléctricos</li>
+                      </ul>
+                    </li>
+                    <li><strong>Ciberseguridad:</strong>
+                      <ul>
+                        <li>Protección de infraestructura crítica</li>
+                        <li>Seguridad en sistemas SCADA</li>
+                        <li>Resiliencia ante ciberataques</li>
+                      </ul>
+                    </li>
+                  </ul>
+                  <h4>Desafíos Globales</h4>
+                  <ul>
+                    <li>Descarbonización del sector energético</li>
+                    <li>Acceso universal a energía confiable y asequible</li>
+                    <li>Gestión de recursos limitados y economía circular</li>
+                    <li>Adaptación al cambio climático</li>
+                    <li>Formación continua en nuevas tecnologías</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acordeón 10: Conclusiones -->
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <h3 class="accordion-title">
+                  <span class="accordion-icon"><i class="fa-solid fa-lightbulb"></i></span>
+                  Conclusiones
+                </h3>
+                <div class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+              </div>
+              <div class="accordion-content">
+                <div class="accordion-body">
+                  <p>
+                    La <strong>Ingeniería Eléctrica</strong> es una profesión fundamental que impulsa el progreso tecnológico y el desarrollo sostenible de nuestra sociedad. Desde la generación de energía limpia hasta la automatización industrial, los ingenieros eléctricos son arquitectos del futuro energético.
+                  </p>
+                  <h4>Puntos Clave</h4>
+                  <ul>
+                    <li>Es una carrera versátil con múltiples caminos de especialización</li>
+                    <li>Combina fundamentos teóricos sólidos con aplicaciones prácticas inmediatas</li>
+                    <li>Requiere actualización constante debido al rápido avance tecnológico</li>
+                    <li>Ofrece oportunidades en diversos sectores: energía, automatización, telecomunicaciones, etc.</li>
+                    <li>Juega un rol crítico en la transición hacia un futuro sustentable</li>
+                  </ul>
+                  <h4>¿Por Qué Estudiar Ingeniería Eléctrica?</h4>
+                  <ul>
+                    <li><strong>Impacto Social:</strong> Contribuir a resolver desafíos globales como el cambio climático y el acceso a energía</li>
+                    <li><strong>Innovación Constante:</strong> Trabajar con tecnologías de vanguardia</li>
+                    <li><strong>Demanda Laboral:</strong> Alta empleabilidad en un sector en crecimiento</li>
+                    <li><strong>Diversidad de Aplicaciones:</strong> Desde diseño de chips hasta redes de alta tensión</li>
+                    <li><strong>Salarios Competitivos:</strong> Profesión bien remunerada a nivel global</li>
+                  </ul>
+                  <p>
+                    Si te apasiona la tecnología, disfrutas resolver problemas complejos y quieres contribuir a un futuro más sostenible, la Ingeniería Eléctrica es una excelente elección profesional.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 2: PRÓXIMAMENTE (Placeholder) -->
+        <div id="tab-proximamente" class="tab-content">
+          <div class="placeholder-section">
+            <div class="placeholder-icon">
+              <i class="fa-solid fa-hammer"></i>
+            </div>
+            <h3>Contenido en Desarrollo</h3>
+            <p>
+              Estamos trabajando en nueva contenido educativo de alta calidad para esta sección. 
+              ¡Vuelve pronto para descubrir más recursos sobre ingeniería eléctrica!
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 3: LIBROS ICÓNICOS -->
+        <div id="tab-libros" class="tab-content">
+          <div style="text-align: center; margin-bottom: 40px;">
+            <h2>Biblioteca de Libros Icónicos</h2>
+            <p style="max-width: 800px; margin: 0 auto; color: var(--text-secondary); font-size: 18px;">
+              Una colección curada de los libros más influyentes en ingeniería eléctrica, disponibles en español.
+            </p>
+          </div>
+
+          <div class="books-grid">
+            <!-- Libro 1 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Circuitos Eléctricos
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Circuitos Eléctricos</h4>
+                <p class="book-author">Dorf & Svoboda</p>
+                <p class="book-year">9ª Edición</p>
+                <p class="book-summary">
+                  Texto fundamental para análisis de circuitos AC y DC, con énfasis en aplicaciones prácticas y resolución de problemas.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 2 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 18px; font-weight: bold;">
+                Análisis de Circuitos en Ingeniería
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Análisis de Circuitos en Ingeniería</h4>
+                <p class="book-author">Hayt & Kemmerly</p>
+                <p class="book-year">8ª Edición</p>
+                <p class="book-summary">
+                  Enfoque metodológico para análisis de circuitos complejos con múltiples ejemplos resueltos paso a paso.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 3 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Máquinas Eléctricas
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Máquinas Eléctricas</h4>
+                <p class="book-author">Stephen J. Chapman</p>
+                <p class="book-year">5ª Edición</p>
+                <p class="book-summary">
+                  Referencia esencial sobre transformadores, motores y generadores con aplicaciones industriales modernas.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 4 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 18px; font-weight: bold;">
+                Sistemas de Control Automático
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Sistemas de Control Automático</h4>
+                <p class="book-author">Benjamin Kuo</p>
+                <p class="book-year">10ª Edición</p>
+                <p class="book-summary">
+                  Tratado completo sobre teoría de control clásico y moderno con MATLAB y Simulink.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 5 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Electromagnetismo
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Electromagnetismo</h4>
+                <p class="book-author">William Hayt</p>
+                <p class="book-year">8ª Edición</p>
+                <p class="book-summary">
+                  Fundamentos de campos eléctricos y magnéticos con aplicaciones en ondas electromagnéticas.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 6 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 17px; font-weight: bold;">
+                Instalaciones Eléctricas Interiores
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Instalaciones Eléctricas Interiores</h4>
+                <p class="book-author">Becerril L. Diego Onésimo</p>
+                <p class="book-year">14ª Edición</p>
+                <p class="book-summary">
+                  Guía práctica mexicana para diseño de instalaciones residenciales, comerciales e industriales.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 7 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 18px; font-weight: bold;">
+                Teoría Electromagnética
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Teoría Electromagnética</h4>
+                <p class="book-author">Reitz, Milford & Christy</p>
+                <p class="book-year">4ª Edición</p>
+                <p class="book-summary">
+                  Tratado avanzado de electromagnetismo con enfoque matemático riguroso y aplicaciones físicas.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 8 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 16px; font-weight: bold;">
+                Análisis de Sistemas Eléctricos de Potencia
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Análisis de Sistemas Eléctricos de Potencia</h4>
+                <p class="book-author">Grainger & Stevenson</p>
+                <p class="book-year">1ª Edición</p>
+                <p class="book-summary">
+                  Referencia clásica para análisis de redes de potencia, flujo de carga y cortocircuitos.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 9 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Electrónica de Potencia
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Electrónica de Potencia</h4>
+                <p class="book-author">Muhammad H. Rashid</p>
+                <p class="book-year">4ª Edición</p>
+                <p class="book-summary">
+                  Texto fundamental sobre convertidores, inversores y aplicaciones de electrónica de potencia.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 10 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Principios de Electrónica
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Principios de Electrónica</h4>
+                <p class="book-author">Albert Paul Malvino</p>
+                <p class="book-year">7ª Edición</p>
+                <p class="book-summary">
+                  Introducción práctica a componentes electrónicos, circuitos analógicos y digitales básicos.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 11 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 17px; font-weight: bold;">
+                Diseño de Circuitos Electrónicos
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Microelectrónica - Circuitos y Dispositivos</h4>
+                <p class="book-author">Sedra & Smith</p>
+                <p class="book-year">7ª Edición</p>
+                <p class="book-summary">
+                  Biblia de la microelectrónica, cubre desde transistores hasta circuitos integrados complejos.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 12 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Ingeniería de Control Moderna
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Ingeniería de Control Moderna</h4>
+                <p class="book-author">Katsuhiko Ogata</p>
+                <p class="book-year">5ª Edición</p>
+                <p class="book-summary">
+                  Enfoque moderno de sistemas de control con espacio de estados y diseño digital.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 13 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 17px; font-weight: bold;">
+                Máquinas Eléctricas y Transformadores
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Máquinas Eléctricas y Transformadores</h4>
+                <p class="book-author">Guru & Hiziroglu</p>
+                <p class="book-year">3ª Edición</p>
+                <p class="book-summary">
+                  Análisis detallado de máquinas rotativas y transformadores con ejemplos industriales.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 14 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 16px; font-weight: bold;">
+                Sistemas de Distribución de Energía Eléctrica
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Sistemas de Distribución de Energía Eléctrica</h4>
+                <p class="book-author">Enríquez Harper</p>
+                <p class="book-year">1ª Edición</p>
+                <p class="book-summary">
+                  Guía práctica sobre diseño y operación de redes de distribución eléctrica.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+            <!-- Libro 15 -->
+            <div class="book-card">
+              <div class="book-cover" style="background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); display: flex; align-items: center; justify-content: center; color: white; padding: 20px; text-align: center; font-size: 15px; font-weight: bold;">
+                Instalaciones Eléctricas: Residenciales, Industriales y Comerciales
+              </div>
+              <div class="book-info">
+                <h4 class="book-title">Instalaciones Eléctricas: Residenciales, Industriales y Comerciales</h4>
+                <p class="book-author">Guerrero & Martínez</p>
+                <p class="book-year">2ª Edición</p>
+                <p class="book-summary">
+                  Manual completo de instalaciones eléctricas conforme a normativas internacionales.
+                </p>
+                <a href="#" class="book-download">
+                  <i class="fa-solid fa-download"></i>
+                  Buscar PDF
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="text-align: center; margin-top: 50px; padding: 30px; background: rgba(255, 109, 0, 0.1); border-radius: 12px; border: 1px solid var(--safety-orange);">
+            <p style="color: var(--text-secondary); margin: 0;">
+              <i class="fa-solid fa-info-circle" style="color: var(--safety-orange); margin-right: 10px;"></i>
+              <strong>Nota Importante:</strong> Los enlaces de descarga dirigen a buscadores especializados. Asegúrese de respetar los derechos de autor y utilizar fuentes legales.
+            </p>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-info">
+            <h3>Electromatics.com.ve</h3>
+            <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+            <div style="margin-top: 20px">
+              <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;">
+                <i class="fa-brands fa-youtube"></i>
+              </a>
+              <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;">
+                <i class="fa-brands fa-whatsapp"></i>
+              </a>
+              <a href="https://tiktok.com/@electrum69" target="_blank" style="margin-right: 15px; font-size: 20px; color: #000000;">
+                <i class="fa-brands fa-tiktok"></i>
+              </a>
+              <a href="https://www.linkedin.com/in/leonel-garcía-0a1293b6" target="_blank" style="font-size: 20px; color: #0077b5;">
+                <i class="fa-brands fa-linkedin"></i>
+              </a>
+            </div>
+          </div>
+          <div class="footer-links">
+            <h4>Plataforma</h4>
+            <a href="calculadora.html">Calculadora 220/430</a>
+            <a href="formacion.html">Formación Técnica</a>
+            <a href="proyectos.html">Proyectos</a>
+          </div>
+          <div class="footer-links">
+            <h4>Empresa</h4>
+            <a href="nosotros.html">Nosotros</a>
+            <a href="servicios.html">Servicios</a>
+            <a href="contacto.html">Contacto</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 Electromatics.com.ve. Todos los derechos reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+      <div class="auth-content">
+        <button id="close-auth" class="close-auth"><i class="fa-solid fa-xmark"></i></button>
+        
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+          <button class="auth-tab" data-tab="register">Registrarse</button>
+        </div>
+
+        <div id="login-form-container" class="auth-form-container active">
+          <h2>Bienvenido de nuevo</h2>
+          <form id="login-form">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="login-password" required>
+                <i class="fa-solid fa-eye password-toggle" data-target="login-password"></i>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary full-width">Acceder</button>
+          </form>
+          <p class="auth-footer">¿No tienes cuenta? <a href="#" id="switch-to-register">Regístrate</a></p>
+        </div>
+
+        <div id="register-form-container" class="auth-form-container">
+          <h2>Crear Cuenta</h2>
+          <form id="register-form">
+            <div class="form-group">
+              <label>Nombre Completo</label>
+              <input type="text" id="reg-name" required>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="reg-email" required>
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="reg-password" required>
+                <i class="fa-solid fa-eye password-toggle" data-target="reg-password"></i>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary full-width">Registrarse</button>
+          </form>
+          <p class="auth-footer">¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/config.js?v=7.0"></script>
+    <script src="js/ai-chat.js?v=7.0"></script>
+    <script src="js/simple-auth.js?v=1.0"></script>
+    <script src="js/ui.js?v=1.0"></script>
+    <script src="js/electro-info.js"></script>
+  </body>
+</html>

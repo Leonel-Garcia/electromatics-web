@@ -1,0 +1,466 @@
+/*
+  ELECTRO-INFO.CSS
+  Estilos específicos para la sección Electro Info
+  Electromatics.com.ve
+*/
+
+/* ===================================
+   TAB SYSTEM
+   =================================== */
+.info-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 40px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0;
+}
+
+.info-tab {
+  background: transparent;
+  border: none;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border-bottom: 3px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.info-tab.active {
+  color: var(--electric-blue);
+  border-bottom-color: var(--electric-blue);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.info-tab i {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+  animation: fadeIn 0.5s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===================================
+   ACCORDION SYSTEM
+   =================================== */
+.accordion-container {
+  margin-top: 30px;
+}
+
+.accordion-item {
+  background: var(--medium-bg-hex);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.accordion-item:hover {
+  border-color: var(--electric-blue);
+  box-shadow: 0 5px 20px rgba(0, 229, 255, 0.1);
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 25px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--medium-bg-hex) 0%, rgba(22, 31, 41, 0.8) 100%);
+  transition: all 0.3s ease;
+}
+
+.accordion-header:hover {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.1) 0%, var(--medium-bg-hex) 100%);
+}
+
+.accordion-header.active {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, var(--medium-bg-hex) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.accordion-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.accordion-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--electric-blue), #00b0ff);
+  border-radius: 8px;
+  color: #000;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.accordion-toggle {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 229, 255, 0.1);
+  border-radius: 50%;
+  color: var(--electric-blue);
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.accordion-header.active .accordion-toggle {
+  transform: rotate(180deg);
+  background: var(--electric-blue);
+  color: #000;
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-content.active {
+  max-height: 5000px;
+}
+
+.accordion-body {
+  padding: 30px 25px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 16px;
+}
+
+.accordion-body h4 {
+  color: var(--electric-blue);
+  margin-top: 25px;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.accordion-body ul {
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+.accordion-body ul li {
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+}
+
+.accordion-body ul li strong {
+  color: var(--safety-orange);
+}
+
+/* ===================================
+   SOFTWARE CARDS
+   =================================== */
+.software-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin: 25px 0;
+}
+
+.software-card {
+  background: linear-gradient(135deg, var(--light-bg) 0%, var(--medium-bg-hex) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 25px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.software-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--electric-blue);
+  box-shadow: 0 10px 30px rgba(0, 229, 255, 0.15);
+}
+
+.software-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+.software-card h5 {
+  color: var(--electric-blue);
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.software-card p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ===================================
+   BOOKS LIBRARY
+   =================================== */
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 30px;
+  margin: 30px 0;
+}
+
+.book-card {
+  background: var(--medium-bg-hex);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--safety-orange);
+  box-shadow: 0 15px 40px rgba(255, 109, 0, 0.2);
+}
+
+.book-cover {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.book-info {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.book-author {
+  color: var(--safety-orange);
+  font-size: 14px;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.book-year {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.book-summary {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  flex: 1;
+}
+
+.book-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--safety-orange) 0%, #ff3d00 100%);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.book-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 109, 0, 0.4);
+  color: #fff;
+  text-shadow: none;
+}
+
+.book-download i {
+  font-size: 16px;
+}
+
+/* ===================================
+   PLACEHOLDER SECTION
+   =================================== */
+.placeholder-section {
+  text-align: center;
+  padding: 80px 20px;
+  background: linear-gradient(135deg, var(--medium-bg-hex) 0%, var(--light-bg) 100%);
+  border-radius: 16px;
+  border: 2px dashed var(--border-color);
+}
+
+.placeholder-icon {
+  font-size: 80px;
+  color: var(--electric-blue);
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.placeholder-section h3 {
+  color: var(--text-primary);
+  font-size: 28px;
+  margin-bottom: 15px;
+}
+
+.placeholder-section p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ===================================
+   HERO SECTION
+   =================================== */
+.info-hero {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, var(--dark-bg-hex) 0%, var(--medium-bg-hex) 100%);
+  border-radius: 16px;
+  margin-bottom: 50px;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-hero::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+  animation: pulse 15s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.info-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.info-hero h1 {
+  font-size: 48px;
+  margin-bottom: 15px;
+  background: linear-gradient(90deg, var(--text-primary), var(--electric-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.info-hero p {
+  font-size: 20px;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ===================================
+   RESPONSIVE
+   =================================== */
+@media (max-width: 768px) {
+  .info-tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .info-tab {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-color);
+    border-left: 3px solid transparent;
+  }
+
+  .info-tab.active {
+    border-bottom-color: var(--border-color);
+    border-left-color: var(--electric-blue);
+  }
+
+  .info-hero h1 {
+    font-size: 32px;
+  }
+
+  .info-hero p {
+    font-size: 16px;
+  }
+
+  .accordion-title {
+    font-size: 16px;
+  }
+
+  .accordion-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+
+  .software-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .books-grid {
+    grid-template-columns: 1fr;
+  }
+}
