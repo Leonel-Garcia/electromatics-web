@@ -53,7 +53,13 @@ const CursoIA = {
         }
 
         // Check immediately if already logged in (from localStorage fast path)
-        const token = localStorage.getItem('auth_token');
+        let token = null;
+        try {
+            token = localStorage.getItem('auth_token');
+        } catch (e) {
+            console.warn('Storage access disabled');
+        }
+
         if (token && SimpleAuth.state.isLoggedIn) {
             // Already logged in, no prompt needed
             return;

@@ -6,6 +6,53 @@
 // Usar configuración global de js/config.js
 const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:8001';
 
+/**
+ * SafeStorage
+ * Wrapper para manejar localStorage de forma segura en móviles/incógnito
+ */
+const SafeStorage = {
+    storage: null,
+    inMemoryStore: {},
+    
+    init: () => {
+        try {
+            const testKey = '__test__';
+            localStorage.setItem(testKey, testKey);
+            localStorage.removeItem(testKey);
+            SafeStorage.storage = localStorage;
+        } catch (e) {
+            console.warn('LocalStorage restricted, using memory store');
+            SafeStorage.storage = null;
+        }
+    },
+
+    getItem: (key) => {
+        if (SafeStorage.storage) {
+            return SafeStorage.storage.getItem(key);
+        }
+        return SafeStorage.inMemoryStore[key] || null;
+    },
+
+    setItem: (key, value) => {
+        if (SafeStorage.storage) {
+            SafeStorage.storage.setItem(key, value);
+        } else {
+            SafeStorage.inMemoryStore[key] = value;
+        }
+    },
+
+    removeItem: (key) => {
+        if (SafeStorage.storage) {
+            SafeStorage.storage.removeItem(key);
+        } else {
+            delete SafeStorage.inMemoryStore[key];
+        }
+    }
+};
+
+// Inicializar inmediatamente
+SafeStorage.init();
+
 const SimpleAuth = {
     state: {
         isLoggedIn: false,
@@ -196,7 +243,7 @@ const SimpleAuth = {
 
     // Cargar sesión desde LocalStorage (Token)
     loadSession: async () => {
-        const token = localStorage.getItem('auth_token');
+        const token = SafeStorage.getItem('auth_token');
         if (token) {
             SimpleAuth.state.token = token;
             // Validar token y obtener datos del usuario
@@ -280,7 +327,8 @@ const SimpleAuth = {
                 const token = data.access_token;
                 
                 // Guardar token
-                localStorage.setItem('auth_token', token);
+                // Guardar token
+                SafeStorage.setItem('auth_token', token);
                 SimpleAuth.state.token = token;
                 
                 // Cargar datos de usuario
@@ -328,7 +376,7 @@ const SimpleAuth = {
 
     // Logout
     logout: () => {
-        localStorage.removeItem('auth_token');
+        SafeStorage.removeItem('auth_token');
         SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null };
         SimpleAuth.updateUI();
         window.location.reload();
