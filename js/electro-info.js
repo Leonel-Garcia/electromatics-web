@@ -130,5 +130,32 @@ document.addEventListener('DOMContentLoaded', function() {
     observer.observe(card);
   });
 
+  // ===================================
+  // BOOK DOWNLOAD HANDLER
+  // ===================================
+  const downloadButtons = document.querySelectorAll('.book-download');
+
+  downloadButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Find the parent card
+      const card = this.closest('.book-card');
+      if (!card) return;
+
+      // Get title and author
+      const title = card.querySelector('.book-title').textContent.trim();
+      const author = card.querySelector('.book-author').textContent.trim();
+
+      // Construct search query
+      // Query: filetype:pdf "Book Title" "Author"
+      const query = `filetype:pdf "${title}" "${author}"`;
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+
+      // Open in new tab
+      window.open(searchUrl, '_blank');
+    });
+  });
+
   console.log('Electro Info page initialized successfully');
 });
