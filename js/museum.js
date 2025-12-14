@@ -27,6 +27,15 @@ const masters = [
         image: "images/museum/charles_coulomb.png"
     },
     {
+        name: "Pieter van Musschenbroek",
+        years: "1692 - 1761",
+        title: "El Padre del Condensador",
+        bio: "Científico neerlandés. Inventó la botella de Leyden, el primer dispositivo capaz de almacenar carga eléctrica, sentando las bases para los condensadores modernos.",
+        inventions: ["Botella de Leyden", "Almacenamiento de carga", "Primer condensador"],
+        quote: "He descubierto un terrible secreto: la electricidad puede ser acumulada.",
+        image: "images/museum/musschenbroek_portrait.png"
+    },
+    {
         name: "James Watt",
         years: "1736 - 1819",
         title: "El Motor de la Revolución",
