@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, Integer, String, DateTime
 from database import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -14,3 +15,14 @@ class User(Base):
     email_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True)
     verification_token_expires = Column(DateTime, nullable=True)
+
+class PageVisit(Base):
+    __tablename__ = "page_visits"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, index=True)
+    user_id = Column(Integer, nullable=True)
+    path = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    last_heartbeat = Column(DateTime, default=datetime.utcnow)
+    duration_seconds = Column(Integer, default=0)

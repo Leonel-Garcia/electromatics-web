@@ -94,37 +94,69 @@
                 <div class="stat-card">
                     <i class="fa-solid fa-users" style="font-size: 24px; color: #fff;"></i>
                     <div class="stat-value" id="total-users">0</div>
-                    <div class="stat-label">Usuarios Registrados</div>
+                    <div class="stat-label">Usuarios</div>
                 </div>
                 <div class="stat-card">
                     <i class="fa-solid fa-crown" style="font-size: 24px; color: #FFD700;"></i>
                     <div class="stat-value" id="premium-users">0</div>
-                    <div class="stat-label">Suscriptores Premium</div>
+                    <div class="stat-label">Premium</div>
                 </div>
                 <div class="stat-card">
                     <i class="fa-solid fa-check-circle" style="font-size: 24px; color: #00E676;"></i>
                     <div class="stat-value" id="verified-users">0</div>
-                    <div class="stat-label">Emails Verificados</div>
+                    <div class="stat-label">Verificados</div>
+                </div>
+                <!-- Analytics Cards -->
+                <div class="stat-card">
+                    <i class="fa-solid fa-eye" style="font-size: 24px; color: #00B4D8;"></i>
+                    <div class="stat-value" id="total-visits">0</div>
+                    <div class="stat-label">Visitas Totales</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-clock" style="font-size: 24px; color: #FF9800;"></i>
+                    <div class="stat-value" id="avg-duration">0</div>
+                    <div class="stat-label">Mins. Totales</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-signal" style="font-size: 24px; color: #F44336;"></i>
+                    <div class="stat-value" id="active-users">0</div>
+                    <div class="stat-label">Activos (5m)</div>
                 </div>
             </div>
 
-            <!-- Recent Users -->
-            <h3 style="margin-bottom: 20px; color: var(--electric-blue);">Usuarios Recientes</h3>
-            <div class="user-list">
-                <table id="users-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Estado</th>
-                            <th>Rol</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Rows injected by JS -->
-                    </tbody>
-                </table>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+                <!-- Top Pages -->
+                <div>
+                    <h3 style="margin-bottom: 20px; color: var(--electric-blue);">Páginas Más Visitadas</h3>
+                    <div class="user-list">
+                        <table id="pages-table">
+                            <thead>
+                                <tr>
+                                    <th>Página</th>
+                                    <th>Visitas</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Recent Users (Existing) -->
+                <div>
+                    <h3 style="margin-bottom: 20px; color: var(--electric-blue);">Usuarios Recientes</h3>
+                    <div class="user-list">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -153,16 +185,34 @@
                     document.getElementById('total-users').textContent = data.total_users;
                     document.getElementById('premium-users').textContent = data.premium_users;
                     document.getElementById('verified-users').textContent = data.verified_users;
+                    
+                    // Analytics Stats
+                    if (data.analytics) {
+                        document.getElementById('total-visits').textContent = data.analytics.total_visits;
+                        document.getElementById('avg-duration').textContent = data.analytics.total_duration_minutes;
+                        document.getElementById('active-users').textContent = data.analytics.active_users;
+
+                        // Top Pages
+                        const pagesBody = document.querySelector('#pages-table tbody');
+                        pagesBody.innerHTML = '';
+                        data.analytics.top_pages.forEach(page => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td style="color: var(--electric-blue);">${page.path}</td>
+                                <td>${page.views}</td>
+                            `;
+                            pagesBody.appendChild(tr);
+                        });
+                    }
 
                     const tbody = document.querySelector('#users-table tbody');
+                    tbody.innerHTML = '';
                     data.recent_users.forEach(user => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td>#${user.id}</td>
-                            <td>${user.full_name || 'N/A'}</td>
-                            <td>${user.email}</td>
-                            <td><span class="status-badge ${user.email_verified ? 'status-verified' : 'status-pending'}">${user.email_verified ? 'Verificado' : 'Pendiente'}</span></td>
-                            <td style="color: ${user.is_admin ? '#FFD700' : '#fff'}">${user.is_admin ? 'Admin' : 'Usuario'}</td>
+                            <td class="text-truncate" style="max-width: 150px;" title="${user.email}">${user.email}</td>
+                            <td style="color: ${user.is_admin ? '#FFD700' : '#fff'}">${user.is_admin ? 'Admin' : 'User'}</td>
                         `;
                         tbody.appendChild(tr);
                     });

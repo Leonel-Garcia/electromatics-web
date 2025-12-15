@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from datetime import datetime
+from sqlalchemy import func, text
+from datetime import datetime, timedelta
 import models, schemas, auth, database
 from email_service import email_service
 import requests
@@ -163,17 +164,80 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
     
+    today = datetime.utcnow().date()
+    start_of_day = datetime(today.year, today.month, today.day)
+    
+    # Basic User Stats
     total_users = db.query(models.User).count()
     premium_users = db.query(models.User).filter(models.User.is_premium == True).count()
     verified_users = db.query(models.User).filter(models.User.email_verified == True).count()
     recent_users = db.query(models.User).order_by(models.User.id.desc()).limit(5).all()
     
+    # Analytics Stats
+    total_visits = db.query(models.PageVisit).count()
+    
+    # Total time (sum of durations)
+    total_duration = db.query(func.sum(models.PageVisit.duration_seconds)).scalar() or 0
+    
+    # Active sessions (heartbeat in last 5 mins)
+    five_mins_ago = datetime.utcnow() - timedelta(minutes=5)
+    active_users = db.query(models.PageVisit.session_id).filter(models.PageVisit.last_heartbeat >= five_mins_ago).distinct().count()
+    
+    # Top Pages
+    top_pages = db.query(
+        models.PageVisit.path, 
+        func.count(models.PageVisit.id).label('count')
+    ).group_by(models.PageVisit.path).order_by(text('count DESC')).limit(5).all()
+    
+    # Format Top Pages
+    top_pages_list = [{"path": p.path, "views": p.count} for p in top_pages]
+
     return {
         "total_users": total_users,
         "premium_users": premium_users,
         "verified_users": verified_users,
-        "recent_users": recent_users
+        "recent_users": recent_users,
+        "analytics": {
+            "total_visits": total_visits,
+            "total_duration_minutes": round(total_duration / 60, 1),
+            "active_users": active_users,
+            "top_pages": top_pages_list
+        }
     }
+
+@app.post("/analytics/visit")
+def record_visit(visit: schemas.VisitCreate, db: Session = Depends(database.get_db), current_user_token: str = None):
+    # Try to identify user from token if present (optional)
+    user_id = None
+    if current_user_token:
+        # Simple decode user - in prod use proper dependecy but this is a tracking pixel essentially
+        pass 
+
+    new_visit = models.PageVisit(
+        session_id=visit.session_id,
+        path=visit.path,
+        user_id=user_id
+    )
+    db.add(new_visit)
+    db.commit()
+    db.refresh(new_visit)
+    return {"visit_id": new_visit.id}
+
+@app.post("/analytics/heartbeat/{visit_id}")
+def heartbeat(visit_id: int, db: Session = Depends(database.get_db)):
+    visit = db.query(models.PageVisit).filter(models.PageVisit.id == visit_id).first()
+    if not visit:
+        raise HTTPException(status_code=404, detail="Visit not found")
+    
+    now = datetime.utcnow()
+    visit.last_heartbeat = now
+    
+    # Update duration
+    delta = now - visit.timestamp
+    visit.duration_seconds = int(delta.total_seconds())
+    
+    db.commit()
+    return {"status": "ok"}
 
 class GeminiRequest(pydantic.BaseModel):
     contents: list

@@ -35,3 +35,10 @@ class EmailVerification(BaseModel):
 class VerificationResponse(BaseModel):
     success: bool
     message: str
+
+class VisitCreate(BaseModel):
+    path: str
+    session_id: str
+
+class VisitHeartbeat(BaseModel):
+    visit_id: int
