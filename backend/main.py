@@ -10,6 +10,10 @@ from email_service import email_service
 import requests
 import os
 import pydantic
+import migrations
+
+# Run migrations (Add missing columns if any)
+migrations.run_migrations(database.engine)
 
 models.Base.metadata.create_all(bind=database.engine)
 
