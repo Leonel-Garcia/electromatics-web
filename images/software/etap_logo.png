@@ -1,0 +1,946 @@
+ <!DOCTYPE html> <html lang="en"> <head> <meta charset="utf-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1"> <meta name="viewport" content="width=device-width, initial-scale=1"> <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png"> <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png"> <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png"> <link rel="manifest" href="/favicon/manifest.json" crossorigin="use-credentials"> <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#ff0000"> <meta name="msapplication-TileColor" content="#ffffff"> <meta name="theme-color" content="#ffffff"> <title>
+	Error
+</title>  <!-- custom CSS files  --> <link href="/ResourcePackages/Bootstrap/assets/dist/css/bundle.css?v=04172025" rel="preload stylesheet" as="style" type="text/css" media="all" /> <link href="/Content/Stylesheets/LoadableButton.css" rel="preload stylesheet" as="style" type="text/css" media="all" /> <link rel="stylesheet" type="text/css" href="/Content/Stylesheets/EtapCustomAntiSpamFieldWidget.css" /> <script src="/Content/Scripts/EtapCustomAntiSpamField.js" type="text/javascript"></script> <script src="/Content/Scripts/Common.js" type="text/javascript"></script> <script src="/ScriptResource.axd?d=ktXPS54N4JY6vbaCTPlT9Tkz6zpUPfvBICrJGDqQvYD6NvbqhQsHq378QW784Z18XhluhihibbRoxVqPV_FhRoBipJyuVdwneRdVKttzAPJd4nN4OqgFyYuCU6vjYub1K9U_Ceb9b_JMsLz1JpFsDv76UR21wEG2ygXvVLJjj2YEYdZWth_Nl4mB6oMcCdAE0&amp;t=760f9f32" type="text/javascript"></script><script src="/ScriptResource.axd?d=ePnjFy9PuY6CB3GWMX-b_25nJfl1hoKsXLpVQ4me7LrQUDea_fgmsDgTXC-fM6ncGN9VSHEXW94KdDs8KqLMQojbkkFf0Wc7RJQANsP400IudcPLwncsR_jTnkaxlbmOX4ejWd4PaYJncAHMdK9pqQYTWNOLMkzTp_mCuBsmLLgo1LhUH5eNmGkfFGbLWrVz0&amp;t=760f9f32" type="text/javascript"></script> <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]--> <!-- Google Tag Manager --> <script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">(
+    function(w,d,s,l,i)
+    {
+    w[l]=w[l]||[];
+    w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});
+                var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+            j.async=true;j.src= 'https://www.googletagmanager.com/gtm.js?id='+i+dl;var n=d.querySelector('[nonce]');
+            n&&j.setAttribute('nonce',n.nonce||n.getAttribute('nonce'));
+            f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-NZ42L6');</script> <!-- End Google Tag Manager --> <link rel="alternate" href="https://etap.com/error-pages/error" hreflang="x-default" /> <link rel="alternate" href="https://etap.com/error-pages/error" hreflang="en" /> <meta name="robots" content="noindex" /><meta property="og:title" content="Error" /><meta property="og:url" content="https://etap.com/error-pages/error" /><meta property="og:type" content="website" /><meta property="og:site_name" content="Default" /><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="all" rel="stylesheet" type="text/css" /><style type="text/css" media="all">#mini-basket{
+    display: inline-block;
+    padding: 0 3px;
+}
+#mini-basket .mini-basket-list{padding: 0;}
+#mini-basket .mini-basket-list li > p{
+    margin: 0 0 0 5px;
+    font-size: 0!important;
+}
+#mini-basket .mini-basket-list li > p a{
+    font-size:0;
+}
+#mini-basket .mini-basket-list li > p a > span:first-child{
+    font-size: 16px;
+}
+#mini-basket .js-mini-basket-number-of-items{
+    background: red;
+    display: inline-block;
+    color: white;
+    font-weight: bold;
+    width: 15px;
+    height: 15px;
+    border-radius: 50px;
+    text-align: center;
+    line-height: 1.3;
+    font-size: 12px;
+}
+#mini-basket .js-mini-basket-total{display:none;}
+
+/* Mini cart navigation */
+.js-mini-basket {
+  padding: 4px 7px!important;
+  background: white;
+  border-radius: 25px;
+}
+div#mini-basket-icon p {
+  line-height: 1;
+}
+
+
+</style><style type="text/css" media="all">#wrapper{
+    width:100%;
+    max-width: 1920px;
+    margin: 0 auto;
+}
+.container {
+    width: 100%;
+    max-width:89pc;
+}
+.my-3.has-float-label label.checkbox-inline {
+    top: -2em;
+}
+.swiper-slide-content{
+    width: 100%;
+}
+.swiper.mySwiperThumb .swiper-slide img{
+    display:none;
+}
+.swiper.mySwiperThumb .swiper-slide {
+    width: 50px !important;
+    height: 8px;
+    background: red;
+}
+/*Social Media Footer*/
+.social-wrapper{
+display:flex;
+margin: 15px 5px;
+}
+a.icon-social{
+flex: 1;
+color: #333;
+display: flex;
+font-size: 18px;
+flex-direction: column;
+}
+/*logo*/
+.etap-logo{
+max-width:155px;
+width:80%!important;
+min-height:80px;
+margin-top:10px;
+}
+@media(max-width:768px){
+.etap-logo{
+min-height:auto;
+}
+}
+.btn-learnmore svg{
+width:12px;
+}
+/*Large PageBanner Style*/
+.page-banner-heading-lg{
+background-position:center!important;
+}
+/*****/
+ul.sf-autocomplete {
+    max-width: 160px!important;
+    z-index: 1099;
+}
+ul.sf-autocomplete .ui-menu-item {
+  font-weight:400;
+    font-size: 11px;
+}
+.sflanguagesDropDownList select {
+    padding: 3px;
+}
+.btn-primary-2 {
+    background: #3588ca!important;
+    border-color: #3588ca!important;
+}
+.nav-item-catalog {
+    display: block;
+    margin: 15px auto;
+    width: 150px;
+}
+.navbar-default .navbar-collapse .navbar-nav>li>a {
+    font-weight: 600!important;
+    font-size: 16px!important;
+    letter-spacing: 0;
+}
+
+.dropdown-menu {
+
+}
+.dropdown-menu>li>a {
+    font-weight: 600!important;
+    font-size: 16px;
+    position: relative;
+    letter-spacing: 0;
+}
+.dropdown-menu.mega {
+    min-height: 545px;
+}
+.dropdown-submenu>.dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: 0;
+    margin-left: -1px;
+}
+.navbar-nav .show .dropdown-menu .dropdown-header, .navbar-nav .show .dropdown-menu>li>a {
+    padding: 10px 30px 10px 15px !important;
+    border: none!important;
+}
+.dropdown-menu > li > a:hover{
+    background-color: rgb(60 60 60 / 10%);
+}
+.navbar-nav > li > .dropdown-menu{
+border: .5px solid #ddd;
+box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
+}
+.navbar-nav .dropdown-submenu .dropdown-toggle::after {
+    content: "\e080"!important;
+    right: -5px!important;
+    top: 7px!important;
+    font-size: 8px!important;
+}
+.navbar-nav .dropdown-submenu.show .dropdown-toggle::after {
+    content: "\e113"!important;
+}
+.navbar-nav .dropdown-submenu .dropdown-toggle .nav-item-highlight {
+    font-size: 12px;
+}
+.dropdown-submenu>a::after {
+    background-color: transparent;
+    border-radius: 0;
+    color: #105cb6;
+    content: "\e080"!important;
+    float: right;
+    font-family: "Glyphicons Halflings";
+    font-size: 8px;
+    position: absolute;
+    right: 15px;
+    top: 14px;
+}
+.dropdown-submenu:hover>a:after {
+    border-left-color: #555;
+}
+.dropdown-submenu.pull-left {
+    float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+    left: -100%;
+    margin-left: 10px;
+    -webkit-border-radius: 6px 0 6px 6px;
+    -moz-border-radius: 6px 0 6px 6px;
+    border-radius: 6px 0 6px 6px;
+}
+.dropdown-submenu .dropdown-menu {
+    right: auto!important;
+    left: 100%!important;
+}
+.dropdown-submenu .dropdown-menu li a {
+    font-weight: 400!important;
+}
+
+.dropdown-submenu {
+    position: relative;
+}
+.navbar-nav .show .dropdown-menu > li:hover .dropdown-menu{
+display:block;
+}
+
+.dropdown-submenu.dropdown-sub-megamenu {
+    position: static;
+}
+.dropdown-submenu>.dropdown-menu.dropdown-megamenu-items {
+    position: absolute;
+    min-width: 450px;
+    background: #fff!important;
+    border-right: 15px solid #f5f5f5;
+    border-bottom: 15px solid #f5f5f5;
+    height: 100%
+}
+
+.dropdown-submenu>.dropdown-menu.dropdown-megamenu-items a {
+    font-weight: 400!important;
+}
+.dropdown.dropdown-menu.mega.show{
+    background: #f9f9f9;
+}
+li.dropdown-submenu.dropdown-sub-megamenu{
+    margin-left: 15px;
+}
+li.dropdown-submenu.dropdown-sub-megamenu a {
+    border: none;
+    padding: 10px 30px 10px 15px;
+    min-width: 235px;
+    position: relative;
+}
+.navbar-nav .show .dropdown-menu>li.dropdown-sub-megamenu {
+    margin-left: 15px;
+}
+.navbar-nav .show .dropdown-menu>li.dropdown-sub-megamenu>a:after {
+    position: absolute;
+}
+.navbar-nav .show .dropdown-menu>li.dropdown-sub-megamenu:hover, 
+.navbar-nav .show .dropdown-menu>li.dropdown-sub-megamenu:hover>a, 
+.navbar-default .navbar-nav .show .dropdown-menu>li.dropdown-sub-megamenu>a:hover {
+    background: #fff!important;
+    color: #105cb6!important;
+}
+.dropdown-submenu>.dropdown-menu>.nav-item-short-description {
+    font-size: 14px!important;
+    text-align: center;
+    color: #757575;
+    padding: 15px;
+    margin: 0;
+}
+@media screen and (min-width:768px) {
+    .dropdown-submenu:hover .dropdown-menu {
+    display: block;
+}
+.nav.navbar-right {
+    top: 0!important;
+}
+.navbar-fixed-bottom .navbar-collapse .btn, .navbar-fixed-top .navbar-collapse .btn {
+    font-size: 14px!important;
+}
+}
+@media(max-width:845px) {
+    .navbar-collapse {
+        max-height: 570px!important;
+        overflow: auto;
+    }
+    .navbar-nav .dropdown-submenu .dropdown-toggle::after {
+        right: auto;
+    }
+
+    .dropdown-submenu .dropdown-menu {
+        background: #e7e7e7 !important;
+    }
+.navbar-nav .dropdown-submenu .dropdown-toggle::after {
+    right: 15px!important;
+    content: "\e114"!important;
+}
+.navbar-nav .dropdown-submenu.show .dropdown-toggle::after {
+    content: "\e113"!important;
+}
+}.myaccount .dropdown .dropdown-menu span {
+    font-weight: 600;
+    padding: 5px 10px;
+    display: inline-block;
+}
+.sfInlineEditingPageMenu {
+    z-index: 9999!important;
+}
+.productov__btn, .productov__btnsm {
+    background-color: #f9f9f9;
+    font-size: 18px;
+    line-height: 1.4em;
+    padding: 12px 60px 12px 14px;
+    position: inherit;
+    right: 0;
+    top: 0;
+    display: inline-block;
+    border-radius: 3px;
+    margin-top: 30px;
+}
+.productov__btn:hover, .productov__btnsm:hover {
+    background-color: #eee;
+}
+.productov__btn .productov__btn--default::after, .productov__btnsm .productov__btn--default::after {
+    background-color: #105cb6;
+    border-bottom-right-radius: 3px;
+    border-top-right-radius: 3px;
+    color: #fff;
+    content: "\e080";
+    font-family: "glyphicons halflings";
+    padding: 12px 14px;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+.navbar-collapse.collapse.in {
+    max-height: 570px!important;
+    overflow: auto!important;
+}
+@media only screen and (min-width:480px) {
+    .navbar-collapse.collapse.in {
+    max-height: 245px!important;
+    overflow: auto!important;
+}
+}
+@media only screen and (min-width:320px) and (max-width:374px) {
+    .navbar-collapse.collapse.in {
+    max-height: 410px!important;
+    overflow: auto!important;
+}
+}
+@media only screen and (min-width:768px) {
+    .productov__btnsm {
+    position: inherit;
+    right: 0;
+    top: 0;
+}
+.productov__btn {
+    position: absolute;
+    right: 15px;
+    top: -145px;
+}
+}
+ @media only screen and (min-width:1200px) {
+    .productov__btnsm {
+    position: absolute;
+    top: -145px;
+}
+  .page-banner-heading{
+    height:250px;
+  }
+}</style><style type="text/css" media="all">.navbar-nav .dropdown .dropdown-toggle::after{
+  font-size: 8px;
+}
+.navbar-nav .dropdown .dropdown-toggle.show::after{
+  top: 5px;
+  right: -10px;
+  transform: rotate(180deg);
+}
+.dropdown-large {
+  position: static !important;
+}
+.dropdown-menu-large {
+  border: .5px solid #f0f0f0;
+  left: 0!important;
+  margin: 0 auto;
+}
+
+.dropdown-menu-large .col-products{
+  display: table-cell;
+  float: none;
+  padding: 15px;
+}
+.dropdown-menu-large .col-products .row{
+  display: flex;
+  flex-wrap: wrap;
+}
+.dropdown-menu-large .col-products .row [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+}  
+.dropdown-menu-large .col-explore{
+  display: table-cell;
+  float: none;
+  padding: 15px;
+  background: #f9f9f9;
+  vertical-align: top;
+}
+.dropdown-menu-large .col-pov{
+  background: #f9f9f9;
+  padding: 10px;
+}
+
+.dropdown-menu-large ul{
+  padding: 0;
+  list-style: none;
+}
+
+.dropdown-menu-large li{
+  line-height: 1em!important;
+}
+
+.dropdown-menu-large li a{
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+
+.dropdown-menu-large>li>ul {
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown-menu-large>li>ul>li {
+  list-style: none;
+  padding: 0 15px;
+
+}
+.dropdown-menu-large>li>ul>li a{
+  font-weight:400;
+  padding: 5px 0;
+}
+/* 
+.dropdown-menu-large>li>ul>li>a {
+  display: block;
+  padding: 3px 0;
+  clear: both;
+  font-weight: 300;
+  line-height: 1.428571429;
+  color: #333333;
+  white-space: normal;
+} */
+
+.dropdown-menu-large>li ul>li>ul>li:hover>a{
+  background: rgb(60 60 60 / 10%);
+}
+
+/* .dropdown-menu-large>li ul>li>a:hover,
+.dropdown-menu-large>li ul>li>a:focus {
+  text-decoration: none;
+  color: #fff!important;
+  background-color: #105cb6;
+} */
+
+.dropdown-menu-large .disabled>a,
+.dropdown-menu-large .disabled>a:hover,
+.dropdown-menu-large .disabled>a:focus {
+  color: #999999;
+}
+
+.dropdown-menu-large .disabled>a:hover,
+.dropdown-menu-large .disabled>a:focus {
+  text-decoration: none;
+  background-color: transparent;
+  background-image: none;
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+  cursor: not-allowed;
+}
+
+.dropdown-menu-large .dropdown-header {
+  color: #ed1c24;
+  font-size: 16px;
+  padding: 10px 0;
+  font-weight: 600;
+  white-space: break-spaces;
+  line-height: 1.2em !important;
+  min-height: 75px;
+  display: flex;
+  align-items: end;
+  border-bottom: .5px solid #ddd;
+  margin-bottom: 10px;
+  letter-spacing: 0;
+}
+.col-explore .explore li{
+  border-bottom: .5px solid #ddd;
+}
+select.languageSelector{
+  text-transform: capitalize;
+}
+
+@media(min-width: 992px){
+  .navbar {
+        min-height: auto;
+        padding-bottom: 22px;
+    }
+/*  
+.navbar-right li.dropdown-large:first-child .dropdown-menu {
+      left: 50%;
+      transform: translateX(-50%);
+  }
+*/
+}
+@media only screen and (min-width: 768px){
+  .demo-reg-btn .nav.navbar-nav{
+    top: -0;
+  }
+  .nav.navbar-nav{
+    margin-top: 30px;
+  }
+/*
+.navbar-right li.dropdown-large:first-child .dropdown-menu {
+      left: 50%;
+      transform: translateX(-50%);
+  }
+*/
+}
+
+@media (max-width: 1300px) {
+    .navbar-collapse .navbar-nav.navbar-right {
+        width: 100%;
+    }
+}
+
+@media(max-width: 992px){
+  .navbar-collapse .navbar-nav.navbar-right{
+      width: 100%;
+      margin-right: 0!important;
+  }
+}
+@media (max-width: 768px) {
+    .dropdown-menu.show,
+  .dropdown.dropdown-menu.show,
+  .dropdown-submenu .dropdown-menu.show {
+      position: static;
+      float: none;
+      width: auto;
+  }
+  .navbar-collapse .navbar-nav.navbar-right{
+      width: auto;
+  }
+  .navbar-nav .dropdown .dropdown-toggle.show::after{
+      top: 12px;
+      right: 15px;
+  }
+  .dropdown-menu-large {
+      margin-left: 0;
+      margin-right: 0;
+  }
+  .dropdown-menu-large .col-products{
+      display: inherit;
+      float: inherit;
+      padding-top: 0;
+      padding-bottom: 0;
+  }
+  .dropdown-menu-large .col-explore{
+      display: inherit;
+      float: inherit;
+      background: #fff;
+      padding-top: 0;
+  }
+  .col-explore .explore li{
+      border: none;
+  }
+  .dropdown-menu-large .col-pov{
+      background: #f9f9f9;
+  }
+
+  .dropdown-menu-large>li {
+      margin-bottom: 0px;
+  }
+
+  .dropdown-menu-large>li:last-child {
+      margin-bottom: 0;
+  }
+
+  .dropdown-menu-large .dropdown-header {
+      padding: 15px 0px 10px;
+    min-height:auto;
+  }
+
+  .dropdown-menu-large>li>ul>li{
+      padding: 0;
+  }
+}
+
+/* Basket Banner */
+.basket-message {
+  background: #3c3c3c!important;
+}
+/* Button Disabled state */
+.btn-primary.disabled, .btn-primary[disabled], fieldset[disabled] .btn-primary, .btn-primary.disabled:hover, .btn-primary[disabled]:hover, fieldset[disabled] .btn-primary:hover, .btn-primary.disabled:focus, .btn-primary[disabled]:focus, fieldset[disabled] .btn-primary:focus, .btn-primary.disabled.focus, .btn-primary[disabled].focus, fieldset[disabled] .btn-primary.focus, .btn-primary.disabled:active, .btn-primary[disabled]:active, fieldset[disabled] .btn-primary:active, .btn-primary.disabled.active, .btn-primary[disabled].active, fieldset[disabled] .btn-primary.active {
+border-color: #b80f15;
+background: #b80f15;
+}
+.btn:focus, .btn:active:focus, .btn.active:focus, .btn.focus, .btn:active.focus, .btn.active.focus{
+  outline:#ed0c24;
+}
+
+/* Login / Sign up form */
+.switcher li {
+border: 1px solid #ed0c24!important;
+border-radius: 50px;
+}
+
+.switcher li:hover {
+color: white!important;
+}
+input[type=checkbox], input[type=radio]{
+accent-color:#ed0c24;
+}
+.has-float-label .form-label {
+font-size: 76% !important;
+}
+.has-float-label .form-control {
+height: 50px !important;
+padding: 15px 12px 0px !important;
+}
+.has-float-label .form-control{
+height: 50px!important;
+padding: 15px 12px 0px!important;
+}
+  .has-float-label .form-label,
+.has-float-label label{
+font-size: 76%!important;
+}
+.well {
+    background-color: #f9f9f9;
+}
+.form-control:focus {
+    border-color: #ed1c24;
+    outline: 0;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px #ed1c23a7;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px #ed1c23a7;
+}
+#etaplogin .checkbox input[type=checkbox], .checkbox-inline input[type=checkbox]{
+    accent-color: #ed1c24;
+}
+#progress-bar{
+        background: red;
+}
+/* Mobile */
+@media (max-width: 575.98px) {
+    .anab-logo img {
+        width: 50%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Tablettes / iPad */
+@media (min-width: 576px) and (max-width: 1024px) {
+    .anab-logo img {
+        width: 50%;
+        margin-bottom: 10px;
+    }
+}</style><script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=645d0c51ae583700197b9a7f&product=sop" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785"></script><script type="text/javascript" src="//script.crazyegg.com/pages/scripts/0076/0191.js" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785"></script><meta name="Generator" content="Sitefinity 14.4.8147.0 DX" /><link rel="canonical" href="https://etap.com/error-pages/error" />    <script type="text/plain" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785" src="https://web.cmp.usercentrics.eu/modules/autoblocker.js"></script>
+    <script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785" id="usercentrics-cmp" src="https://web.cmp.usercentrics.eu/ui/loader.js" data-settings-id="88VXrqubnaLG81" async></script><script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+(function(a, b, c, d, e, m) {
+	a['OktopostTrackerObject'] = d;
+	a[d] = a[d] || function() {
+		(a[d].q = a[d].q || []).push(arguments);
+	};
+	e = b.createElement('script');
+	m = b.getElementsByTagName('script')[0];
+	e.async = 1;
+	e.src = c;
+	m.parentNode.insertBefore(e, m);
+})(window, document, 'https://static.oktopost.com/oktrk.js', '_oktrk');
+
+_oktrk('create', '0019573tvoerk1d', { domain: 'socialmedia.etap.com'});
+</script><script type="application/json" id="sf-insight-metadata">
+	{"contentMetadata":"{\"Id\":\"9eacde45-0c28-6c02-8629-ff00005ae238\",\"ContentType\":\"Page\",\"Title\":\"Error\",\"CanonicalTitle\":\"Error\",\"CanonicalUrl\":\"https://etap.com/error-pages/error\",\"Language\":\"en\",\"CreatedOn\":\"2016-09-30T16:22:58Z\",\"ModifiedOn\":\"2025-04-17T23:05:41Z\",\"SiteName\":\"Default\",\"PageId\":\"9eacde45-0c28-6c02-8629-ff00005ae238\"}","videosMetadata":"[]"}
+</script><script type="application/json" id="sf-insight-settings">
+	{"apiServerUrl":"https://api.insight.sitefinity.com","apiKey":"628a36e9-693a-2207-a5f5-56a2b344b70d","applicationName":"Website","trackingCookieDomain":"","keepDecTrackingCookieOnTrackingConsentRejection":false,"slidingExpirationForTrackingCookie":false,"maxAgeForTrackingCookieInDays":365,"trackYouTubeVideos":true,"crossDomainTrackingEntries":["etap.com"],"strategy":"Persist|False","docsHrefTestExpressions":[".*\\/docs\\/.+\\.{1}.+((\\?|\\\u0026)sfvrsn=.+){1}$",".+((\\?|\\\u0026)sf_dm_key=.+){1}$"]}
+</script><script type="text/javascript" src="/WebResource.axd?d=HtQyXelCu6mzSPcVcvK_BpqI2NvHHpedBRZieZFh62U01i-yr7mpSn2QTlIhGjRFIf6QE7GC1gcK0VERSaETWJX28NNQpiNVGri0aqeev_IxyAsd7lUKB-SVm49kIhYwCN7tO262sG7DoJFRAkljWjAWshKavfd65l8iDiyA8c6qV17mTbMFArJqLAOBfAmzzhH88TRS-LZDK8ql010St09jNF081rF5vJGsrdJoLI41&amp;t=638846013880000000">
+
+</script><script src="https://cdn.insight.sitefinity.com/sdk/sitefinity-insight-client.min.3.1.13.js" crossorigin="" async="async">
+
+</script><meta name="viewport" content="width=device-width, initial-scale=1.0" /><script type="text/javascript" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785" >
+	(function() {var _rdDeviceWidth = (window.innerWidth > 0) ? window.innerWidth : screen.width;var _rdDeviceHeight = (window.innerHeight > 0) ? window.innerHeight : screen.height;var _rdOrientation = (window.width > window.height) ? 'landscape' : 'portrait';})();
+</script></head> <body> <!-- Google Tag Manager (noscript) --> <noscript> <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZ42L6"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe> </noscript> <!-- End Google Tag Manager (noscript) --> <script src="/ScriptResource.axd?d=ktXPS54N4JY6vbaCTPlT9Tkz6zpUPfvBICrJGDqQvYD6NvbqhQsHq378QW784Z18XhluhihibbRoxVqPV_FhRoBipJyuVdwneRdVKttzAPJd4nN4OqgFyYuCU6vjYub1K9U_Ceb9b_JMsLz1JpFsDv76UR21wEG2ygXvVLJjj2YEYdZWth_Nl4mB6oMcCdAE0&amp;t=760f9f32" type="text/javascript"></script><script src="/ScriptResource.axd?d=ePnjFy9PuY6CB3GWMX-b_25nJfl1hoKsXLpVQ4me7LrQUDea_fgmsDgTXC-fM6ncGN9VSHEXW94KdDs8KqLMQojbkkFf0Wc7RJQANsP400IudcPLwncsR_jTnkaxlbmOX4ejWd4PaYJncAHMdK9pqQYTWNOLMkzTp_mCuBsmLLgo1LhUH5eNmGkfFGbLWrVz0&amp;t=760f9f32" type="text/javascript"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.21.0/jquery.validate.min.js" type="text/javascript"></script> <!-- Header Section  --> <div id="wrapper"> <!--===================********** NAVIGATION **********====================--> <nav class="navbar navbar-default navbar-fixed-top  navbar-fixed-top-header"> <!--=================== LOGIN CONTAINER - ACCORDION ===================--> <div class="container-login"> <div class="container"> <div class="panel-group container login-container" id="accordion2"> <div class="panel panel-default"> <div id="collapseOne2" class="panel-collapse collapse"> <div class="panel-body"> <ul class="list-inline"> <li> <!-- Login --> 
+
+
+
+
+
+
+
+<div>
+    <div data-sf-role="sf-logged-in-view" style="display: none">
+        <div class="myaccount">
+            <div class="dropdown">
+                <a href="#" id="myaccount" class="dropdown-toggle login" data-bs-toggle="dropdown">
+                    <strong>Logged as <span data-sf-role="sf-logged-in-name"></span></strong>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="myaccount">
+                    <a href="https://etap.com/edit-profile" class="sf-mr-m">My Profile</a>
+                    <a href="/changepassword">Change Password</a>
+                    <a href="/error-pages/error/SignOut/?sf_cntrl_id=ctl00$LoginPlaceholder$T722A86B6002">Sign out</a>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div data-sf-role="sf-logged-out-view" style="display: none">
+        <div class="myaccount">
+            <div class="dropdown">
+                <a href="#" id="myaccount" class="dropdown-toggle" data-bs-toggle="dropdown"><strong>My ETAP</strong></a>
+                <div class="dropdown-menu" aria-labelledby="myaccount">
+                    <a href="https://etap.com/login" class="sf-mr-m">Sign in</a>
+                    <a href="https://etap.com/register">Create account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" data-sf-role="sf-status-json-endpoint-url" value="/rest-api/login-status" />
+<input type="hidden" data-sf-role="sf-logout-redirect-url" value="https://etap.com/error-pages/error" />
+<input type="hidden" data-sf-role="sf-is-design-mode-value" value="False" />
+<input type="hidden" data-sf-role="sf-allow-windows-sts-login" value="False" />
+
+
+<script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+    $('.sf-mr-m.before-login').attr('href', function (i, oldhref) {
+        return oldhref.replace("ReturnUrl=", "ReturnUrl=" + encodeURIComponent(window.location.href));
+    });
+</script>
+
+
+ </li> <li> <!-- Language --> 
+
+
+
+<div class="sf-lang-selector">
+    <label>
+            <select class="languageSelector" id="lang-selector">
+
+
+            <option value="en" selected=selected>English</option>
+    </select>
+</label>
+</div>
+
+
+
+<script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+    $(document).ready(function(){
+        $('#lang-selector').change(function(){
+            const selectedValue = $(this).val();
+            openLink(selectedValue);
+        });
+    });
+</script> <!-- Language --> </li> <li> <!-- search --> 
+
+
+
+
+<style>
+ 
+    .ui-menu-item:hover
+    {
+        text-decoration: underline;
+    }
+
+</style>
+
+<div class="form-inline">
+
+<input type="search" title="Search input" placeholder="Search" id="fbcda2eb-1bab-4111-89ad-f92dadbb912a" value="" />
+<button type="button" class="sfsearchSubmit" id="19ed8c91-7bb6-401b-b245-876d836785e3">Search</button>
+
+<input type="hidden" data-sf-role="resultsUrl" value="/searchresults" />
+<input type="hidden" data-sf-role="indexCatalogue" value="public-search" />
+<input type="hidden" data-sf-role="wordsMode" value="AllWords" />
+<input type="hidden" data-sf-role="disableSuggestions" value='false' />
+<input type="hidden" data-sf-role="minSuggestionLength" value="3" />
+<input type="hidden" data-sf-role="suggestionFields" value="Title,Content,Summary,ShortDescription" />
+<input type="hidden" data-sf-role="language" value="en" />
+<input type="hidden" data-sf-role="suggestionsRoute" value="/restapi/search/suggestions" />
+<input type="hidden" data-sf-role="searchTextBoxId" value='#fbcda2eb-1bab-4111-89ad-f92dadbb912a' />
+<input type="hidden" data-sf-role="searchButtonId" value='#19ed8c91-7bb6-401b-b245-876d836785e3' />
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/Content/Stylesheets/EtapCustomBasketIconWidget.css"/>
+
+    <div id="mini-basket-icon" class="quick-basket-container">
+    </div>
+ </li> </ul> </div> </div> </div> </div> </div> </div> <!-- END LOGIN CONTAINER - ACCORDION  --> <div class="banner-placeholder"> 
+
+
+ </div> <div class="container"> <!-- Brand and toggle get grouped for better mobile display --> <div class="navbar-header"> <button type="button" class="navbar-toggle collapsed" data-bs-toggle="collapse" data-bs-target="#defaultNavbar1"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <button data-bs-toggle="collapse" data-parent="#accordion2" href="#collapseOne2" aria-expanded="false" class="navbar-toggle collapsed"> <span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="glyphicon glyphicon-user" aria-hidden="true"></span></button> 
+
+<div >
+    <div class="sf-Long-text" ><a class="navbar-brand" href="/home"><img src="/images/default-source/logos/etap-logos/logo-etap.svg?sfvrsn=bdf8457c_22" alt="ETAP Logo" title="ETAP Logo" data-displaymode="Original" class="etap-logo" /></a></div>    
+</div> </div> <!-- Collect the nav links, forms, and other content for toggling --> <div class="collapse navbar-collapse" id="defaultNavbar1"> <!-- NAV Set 1 --> 
+
+<div >
+    <div class="sf-Long-text" ><ul class="nav navbar-nav navbar-right"><li class="dropdown dropdown-large"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Solutions</a>
+ <ul class="dropdown-menu dropdown-menu-large container"><li class="col-sm-10 col-products"><ul class="row"><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Design</li><li><a href="/product/caneco">Low Voltage Electrical Design</a></li><li><a href="/solutions/system-modeling-visualization">System Modeling &amp; Visualization</a></li><li><a href="/packages/protective-device-coordination">Automated Protection &amp; Coordination</a></li><li><a href="/solutions/arcflash">Arc Flash Safety - ArcSafety, ArcFault</a></li><li><a href="/industries/renewable-energy">Renewables &amp; Energy Storage</a></li><li><a href="/solutions/distribution-network-analysis">Distribution Network Analysis</a></li><li><a href="/packages/dynamics-transients">Dynamics &amp; Transients</a></li><li><a href="/solutions/gridcode">Grid Code Compliance &amp; Maintenance</a></li><li><a href="/solutions/railways">AC &amp; DC Rail Traction Systems </a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Build</li><li><a href="/product/see-electrical">Electrical Equipment Design and Engineering</a></li><li><a href="/product/see-electrical-harness-manufacturing">Electrical Manufacturing</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Operate</li><li><a href="/packages/monitoring-simulation">Power Management System</a></li><li><a href="/packages/energy-management-system">Energy Management System</a></li><li><a href="/solutions/advanced-distribution-management-system">Advanced Distribution Management System</a></li><li><a href="/solutions/substation-automation-system">Digital Substation &amp; Automation System</a></li><li><a href="/solutions/eprotect">Relay Protection &amp; Asset Management</a></li><li><a href="/solutions/eots">Operator Training Simulator</a></li><li><a href="/packages/electrical-scada">Electrical SCADA &amp; Control System</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Automate</li><li><a href="/solutions/load-shedding-system">Load Shedding Controller</a></li><li><a href="/solutions/intelligent-distribution-load-shedding">Distribution Load Shedding</a></li><li><a href="/solutions/power-plant-controller">Power Plant Controller</a></li><li><a href="/solutions/microgrid">Microgrid Controller &amp; Energy Management</a></li><!-- li><a href="/docs/default-source/brochures/etap-solutions-overview-nanogrid.pdf?sfvrsn=ef5f447c_4" title="etap-Solutions Overview-NanoGrid" sfref="[documents%7COpenAccessDataProvider]1c772846-0c28-6c02-8629-ff05005ae238" data-sf-ec-immutable="">Multi-site Nanogrid Controller</a></li -->
+ </ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Digital Transformation</li><li><a href="/products/etap-digital-twin">ETAP Digital Twin </a></li><li><a href="/solutions/intelligent-single-line-diagram">Intelligent Electrical Single-Line Diagram</a></li><li><a href="/company/sustainable-energy-transition">Sustainability</a></li><li><a href="/packages/data-exchange">Data Exchange</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Data &amp; Project Management</li><li><a href="/product/netpm">Cloud - Collaborative Project Management</a></li><li><a href="/product/etapapp">Mobile - Data Collection App</a></li><li><a href="/product/see-project-manager">Data &amp; Project Management</a></li></ul></li></ul></li><li class="col-sm-2 col-explore"><ul class="row"><li class="col-sm-12"><ul class="explore"><li class="dropdown-header">Solutions for Sectors</li><li><a href="/sectors/generation">Generation</a></li><li><a href="/sectors/transmission">Transmission</a></li><li><a href="/sectors/distribution">Distribution</a></li><li><a href="/sectors/industrial">Industrial</a></li><li><a href="/sectors/transportation">Transportation</a></li><li><a href="/sectors/low-voltage">Low Voltage</a></li></ul></li><li class="col-sm-12"><ul class="explore"><li class="dropdown-header">Catalog</li><li><a href="/docs/default-source/brochures/etap-solutions-overview.pdf?sfvrsn=88144c7c_76" title="ETAP Solutions Catalog"><img src="/images/default-source/static/product-overview/thumbnails/etap-solutions-overview-1.jpg?sfvrsn=9a604c7c_9" title="etap-Solutions-Overview" class="nav-item-catalog img-responsive img-rounded" data-displaymode="Original" alt="etap-Solutions-Overview" /></a></li><li class="text-center"><a href="/docs/default-source/brochures/etap-solutions-overview.pdf?sfvrsn=88144c7c_76" title="ETAP Solutions Catalog">View Catalog</a></li></ul></li></ul></li></ul></li><li class="dropdown"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Industries</a>
+ <ul role="menu" class="dropdown-menu"><li><a href="/sectors/industries">Industry Segments</a></li><li><a href="/industries/consulting-firms">Engineering Consulting</a></li><li><a href="/industries/data-center">Data Centers</a>
+ </li><li><a href="/industries/oil-gas">Energy &amp; Chemicals</a></li><li><a href="/industries/transportation">Transportation</a></li><li><a href="/industries/Manufacturing">Manufacturing</a></li><li><a href="/industries/generation-plants">Fossil Fuel Generation</a></li><li><a href="/industries/metals-mining">Metals &amp; Mining</a></li><li><a href="/industries/nuclear-generation">Nuclear Generation</a></li><li><a href="/industries/renewable-energy">Renewables</a></li><li><a href="/industries/utility-distribution">Utility Distribution</a></li><li><a href="/industries/utility-transmission">Utility Transmission</a></li><li><a href="/industries/government-defense">Government &amp; Defense</a></li><li><a href="/industries/Academia">Academia</a></li></ul></li><li class="dropdown dropdown-large"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Products</a>
+ <ul class="dropdown-menu dropdown-menu-large container"><li class="col-sm-10 col-products"><p class="nav-item-short-description hidden-sm hidden-xs" style="font-size:15px;margin-bottom:-20px;font-weight:600;padding-left:15px;">Top Products</p><ul class="row"><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Electrical Network Design</li><li><a href="/power-simulator">ETAP Power Simulator</a></li><li><a href="/solutions/railways">ETAP eTraX</a></li><li><a href="/product/caneco">Caneco</a></li><li><a href="/product/caneco--electrical" data-sf-ec-immutable="">Caneco Electrical</a></li><li><a href="/product/caneco-bim">Caneco BIM</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Analysis &amp; Simulation</li><li><a href="/solutions/arcflash">ETAP Arc Flash</a></li><li><a href="/solutions/protection-coordination">ETAP Protection &amp; Coordination</a></li><li><a href="/product/load-flow-software">ETAP Power Flow</a></li><li><a href="/product/transient-stability-software">ETAP Dynamics &amp; Transients</a></li><li><a href="/solutions/distribution-network-analysis">ETAP Distribution Network Analysis</a></li><li><a href="/product/sustainability-analysis">ETAP Sustainability Analysis</a></li></ul><ul><li></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Engineer &amp; Build</li><li><a href="/product/see-electrical">SEE Electrical</a></li><li><a href="/product/see-electrical-expert">SEE Electrical Expert</a></li><li><a href="/product/see-electrical-3d-panel">SEE Electrical 3D Panel</a></li><li><a href="/product/see-electrical-plm">SEE Electrical PLM</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Operate &amp; Maintain</li><li><a href="/packages/electrical-scada">ETAP SCADA</a></li><li><a href="/solutions/advanced-distribution-management-system">ETAP ADMS</a></li><li><a href="/packages/monitoring-simulation">ETAP Power Management System</a></li><li><a href="/solutions/generation-management-system">ETAP Generation Management System</a></li><li><a href="/solutions/eots">ETAP Operator Training Simulator</a></li><li><a href="/solutions/eprotect">ETAP Protection Asset Management</a></li><li><a href="/product/see-gen-edoc">SEE Gen eDoc</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Automate &amp; Optimize</li><li><a href="/solutions/load-shedding-system">ETAP Intelligent Load Shedding</a></li><li><a href="/solutions/microgrid">ETAP Microgrid</a></li><li><a href="/solutions/power-plant-controller">ETAP Power Plant Controller</a></li></ul></li><li class="col-md-4 col-sm-4 col-xs-12"><ul><li class="dropdown-header">Data &amp; Project Management</li><li><a href="/product/etapapp">ETAP Mobile APP</a></li><li><a href="/product/netpm">ETAP NetPM</a></li><li><a href="/product/see-web-catalogue">SEE Web Catalogue</a></li></ul></li></ul></li><li class="col-sm-2 col-explore"><ul class="row"><li class="col-sm-12"><ul class="explore"><li class="dropdown-header">Explore</li><li><a href="/product?options=d83c2a46-0c28-6c02-8629-ff09005ae238">Caneco</a></li><li><a href="/product?options=40832a46-0c28-6c02-8629-ff09005ae238">ETAP</a></li><li><a href="/product?options=51452a46-0c28-6c02-8629-ff09005ae238">SEE</a></li><li><a href="/products/whats-new">What's New</a></li><li><a href="/power-simulator">How to Buy</a></li></ul><ul class="explore"><li class="dropdown-header">News</li><li><a href="/product-releases/etap-2024-release"><img src="https://cdn.etap.com/staging/images/default-source/navigation/etap-news-nav-thumb_6696a470-cad7-4490-b964-8e45ddc2c70b.png?sfvrsn=2e8b477c_3" class="nav-item-catalog img-responsive img-rounded" sf-size="11158" alt="" sfref="[images%7COpenAccessDataProvider]dda32b46-0c28-6c02-8629-ff08005ae238" data-sf-ec-immutable="" /></a></li><li><a href="/product-releases/etap-2024-release" title="ETAP Solutions Catalog">View Detail</a></li></ul></li></ul></li><li class="col-sm-12 col-pov"><a href="/product">View all Products</a>
+ </li></ul></li><li class="dropdown"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Events</a>
+ <ul role="menu" class="dropdown-menu"><li><a href="/events/events-schedule">Events Schedule</a></li><li><a href="/events/conferences-summits/global/2025/etap-spark-2025" style="font-family:inherit;text-align:inherit;text-transform:inherit;word-spacing:normal;white-space:inherit;font-size:inherit;">ETAP Spark - Regional User Conferences</a></li><li><a href="/events/nuclear-user-groups">Nuclear Utility Conference</a></li><li><a href="/events/user-groups">User Groups</a></li></ul></li><li class="dropdown"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Resources</a>
+ <ul role="menu" class="dropdown-menu"><li><a href="/resources">Resource Center</a></li><li><a href="/case-study">Case Studies</a></li><li><a href="/logo">Media Kits</a></li><li><a href="/blog">Blogs</a></li></ul></li><li class="dropdown"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Support</a>
+ <ul role="menu" class="dropdown-menu"><li><a href="/products/sales">Sales Support</a></li><li><a href="/products/quality-assurance">Quality Assurance</a></li><li><a href="/contact-aed">AED Support</a></li><li><a href="/support/technical-support">ETAP Global Support</a></li><li><a href="https://igexao.my.site.com/professional/s/login/?language=en_US" target="_blank;" data-sf-ec-immutable="" data-sf-marked="">SEE/CANECO Client Portal</a></li></ul></li><li class="dropdown"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Services</a>
+ <ul role="menu" class="dropdown-menu"><li><a href="/services/analytical-services">Analytical Services</a></li><li><a href="/services/system-integration-automation">System Integration &amp; Automation</a></li><li><a href="/services/dynamic-modeling-tuning">Dynamic Modeling &amp; Tuning</a></li><li><a href="/services/gis-integration">GIS Integration</a></li><li><a href="/services/data-exchange-services">Data Exchange Services</a></li><li><a href="/services/specification-for-power-system-analysis">Specification for Power System Analysis</a></li><li><a href="/services/research-development-services">R&amp;D Services</a></li></ul></li><li class="dropdown"><a data-bs-toggle="dropdown" href="#" aria-expanded="false" role="button" class="dropdown-toggle" data-sf-ec-immutable="">Company</a>
+ <ul role="menu" class="dropdown-menu"><li><a href="/company/about-us">About Us</a></li><li><a href="/company/why-etap">Why ETAP</a></li><li><a href="/contact-us">Contact Us</a></li><li><a href="/company/news">News</a></li><li><a href="/company/awards-recognitions">Awards</a></li><li><a href="/company/sustainable-energy-transition">Sustainability</a></li><li><a href="https://info.etap.com/acton/media/46336/subscribe-to-etap-news" data-sf-ec-immutable="" data-sf-marked="">Subscribe to News</a></li><li><a href="/company/etap-offices">Contact ETAP Offices</a></li><li><a href="/partner-program">Partner Program</a></li><li><a href="/company/careers">Careers</a></li><li><a href="/company/trust-line">Compliance &amp; Ethics</a></li><li><a href="/products/etap-users-list">User Lists</a></li><li><a href="/products/sales/customer-testimonials">Testimonials</a></li><li><a href="/blog">Blogs</a></li></ul></li></ul></div>    
+</div> <!-- NAV Set 2 --> 
+
+<div >
+    <div class="sf-Long-text" ><div class="demo-reg-btn"><ul class="nav navbar-nav"><!-- <li><a class="btn btn-primary btn-primary-2" href="/student-edition" sfref="[f669d9a7-009d-4d83-ddaa-000000000002]bb912246-0c28-6c02-8629-ff05005ae238" data-sf-ec-immutable="">Student Edition</a></li> -->
+ <li><a class="btn btn-primary" href="/demo-download">ETAP Demo</a>
+ </li><li><a href="/request-pricing-subscription" class="btn btn-info">Get Pricing</a>
+ </li></ul></div></div>    
+</div> </div> <!-- navbar-collapse --> </div> <!-- container --> </nav> <!--=================********** END NAVIGATION **********==================container-main-content--> <div class="container-main-content"> <div id="contentpages"> 
+<div class="sf_cols container-default container-dark-blue"> 
+    <div class="sf_colsOut container container-default" style=""> 
+        <div id="ContentPlaceholder_C047_Col00" class="sf_colsIn"> 
+<div class="sf_cols row"> 
+    <div class="sf_colsOut col-md-2"> 
+        <div id="ContentPlaceholder_C046_Col00" class="sf_colsIn"> 
+        </div> 
+    </div> 
+    <div class="sf_colsOut col-md-8"> 
+        <div id="ContentPlaceholder_C046_Col01" class="sf_colsIn"><div class='sfContentBlock'><div style="text-align: center;">
+<h2>Something went wrong!</h2>
+</div>
+<div style="text-align: center;">
+<h3>Your profile may be missing required information:</h3>
+<p>Go to Edit Profile<br />
+Review and fix you user data<br />
+Save changes <br />
+Go back to event and register&nbsp;</p>
+<p style="text-align: center;"><a class="btn btn-primary btn-lg" href="/edit-profile">Go to User Profile</a></p>
+<p>
+Should you encounter any further issues, please contact <a href="mailto:webmaster@etap.com">webmaster@etap.com</a>
+</p>
+</div>
+
+</div> 
+        </div> 
+    </div> 
+    <div class="sf_colsOut col-md-2"> 
+        <div id="ContentPlaceholder_C046_Col02" class="sf_colsIn">
+        </div> 
+    </div> 
+</div> 
+        </div> 
+    </div> 
+</div>
+<div >
+    <div class="sf-Long-text" ><div class="alert alert-danger" style="position:fixed;z-index:9;bottom:15px;left:50%;transform:translateX(-50%);width:75%;display:none;">Customers may be experiencing problems accessing some of resources on the ETAP website due to an outage by one of our service providers. We are actively working to resolve the issue.
+
+</div></div>    
+</div> </div> </div> <div class="container-footer"> 
+<div id="FooterPlaceholder_T722A86B6029_Col00" class="sf_colsIn container footer-menu-list border-bottom" data-sf-element="Container" data-placeholder-label="Container"><div class="row" data-sf-element="Row">
+    <div id="FooterPlaceholder_T722A86B6030_Col00" class="sf_colsIn col-xs-12 col-sm-12 col-md-3" data-sf-element="Column 1" data-placeholder-label="Column 1">
+<div >
+    <div class="sf-Long-text" ><br /><h4 id="subscribe">Subscribe to ETAP News</h4><p>You will be the first to hear about our Corporate News, Upcoming Webinars, Software Release Updates, Product Promotions, and more.</p><p><a href="https://info.etap.com/acton/media/46336/subscribe-to-etap-news" target="_blank" data-sf-ec-immutable="" class="btn btn-primary">Subscribe</a></p></div>    
+</div>
+    </div>
+    <div id="FooterPlaceholder_T722A86B6030_Col01" class="sf_colsIn col-xs-12 col-sm-12 col-md-6" data-sf-element="Column 2" data-placeholder-label="Column 2">
+<div >
+    <div class="sf-Long-text" ><br /><ul class="list-inline text-center"><li><a href="/contact-us">Contact Us</a></li><li><a href="/terms-of-use">Terms of Use</a></li><li><a href="/privacy-policy">Privacy Policy</a></li><li><a href="/sitemap">Sitemap</a></li></ul><div class="col-md-4 col-md-offset-4 content-block anab-logo"><a style="vertical-align:middle;margin-top:5px;" href="/products/quality-assurance/qa-standards"><img src="/images/default-source/logos/etap-logos/iso-9001-2015-150px.svg?sfvrsn=5e4eb47f_22" style="vertical-align:middle;" title="ANAB Logo" class="img-responsive center-block" data-displaymode="Original" alt="ANAB Logo" /></a>
+</div></div>    
+</div>
+    </div>
+    <div id="FooterPlaceholder_T722A86B6030_Col02" class="sf_colsIn col-xs-12 col-sm-12 col-md-3 text-center" data-sf-element="Column 3" data-placeholder-label="Column 3">
+<div >
+    <div class="sf-Long-text" ><br /><img src="https://cdn.etap.com/prod/images/default-source/app-icon/etap-color-logo-black.png?sfvrsn=2c44187c_1" style="display:block;margin-left:auto;margin-right:auto;" width="151" height="62" class="-align-center" sf-size="100" alt="ETAP Color Logo-Black" /><p class="hidden-xs">Electrical Power System Analysis &amp; Operation Software</p><div class="social-wrapper"><a class="icon-social" rel="noopener" href="https://www.linkedin.com/company/operation-technology-inc-" target="_blank" data-sf-ec-immutable=""><em class="fa-brands fa-linkedin-in"></em></a>
+ <a class="icon-social" rel="noopener" href="https://www.youtube.com/user/ETAPsoftware" target="_blank" data-sf-ec-immutable=""><em class="fa-brands fa-youtube"></em></a>
+ <a class="icon-social" rel="noopener" href="https://www.facebook.com/etappower" target="_blank" data-sf-ec-immutable=""><em class="fa-brands fa-facebook-f"></em></a>
+ <a class="icon-social" rel="noopener" href="https://twitter.com/ETAPsoftware" target="_blank" data-sf-ec-immutable=""><em class="fa-brands fa-x-twitter"></em></a>
+ <a class="icon-social" rel="noopener" href="https://www.instagram.com/etap_software/" target="_blank" data-sf-ec-immutable=""> <em class="fa-brands fa-instagram"></em></a>
+
+</div><p>&copy; 2016-2025 Operation Technology, Inc. <span>All rights reserved.</span></p></div>    
+</div>
+    </div>
+</div>
+
+</div>
+ </div> </div> <div> <div class="col-md-6"> 
+ </div> <div class="col-md-6"> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ </div> </div> <! -- Inline editing --> <script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-7100287-1', 'auto');
+        ga('send', 'pageview');
+    </script> <script src="https://www.googletagmanager.com/gtag/js?id=AW-1072679818"></script> <script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'AW-1072679818');
+    </script> <script nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">(function (w, d, t, r, u) { var f, n, i; w[u] = w[u] || [], f = function () { var o = { ti: "5707381" }; o.q = w[u], w[u] = new UET(o), w[u].push("pageLoad") }, n = d.createElement(t), n.src = r, n.async = 1, n.onload = n.onreadystatechange = function () { var s = this.readyState; s && s !== "loaded" && s !== "complete" || (f(), n.onload = n.onreadystatechange = null) }, i = d.getElementsByTagName(t)[0], i.parentNode.insertBefore(n, i) })(window, document, "script", "//bat.bing.com/bat.js", "uetq");</script> <noscript><img src="https://bat.bing.com/action/0?ti=5707381&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" /></noscript> <!-- Adding Sitefinity resources --> <script src="/ResourcePackages/Bootstrap/assets/dist/js/bundle.js" type="text/javascript"></script> <script src="/Content/Scripts/ConfigureVideoPopUp.js" type="text/javascript"></script> <script src="/Content/Scripts/Master_page/ResetLanguageDropdown.js" type="text/javascript"></script> <script src="/Frontend-Assembly/Telerik.Sitefinity.Frontend.Identity/Mvc/Scripts/LoginStatus/login-status.min.js?package=Bootstrap&amp;v=MTQuNC44MTQ3LjA%3d" type="text/javascript"></script><script src="/Frontend-Assembly/Telerik.Sitefinity.Frontend.Navigation/Mvc/Scripts/LanguageSelector/language-selector.min.js?package=Bootstrap&amp;v=MTQuNC44MTQ3LjA%3d" type="text/javascript"></script><script src="/ScriptResource.axd?d=Uf8BQcxRshYGUr_fjsqPCEU8PVjLHo7qNn5zoJKCghzTEuushYKuF3qg7jea9iDazec-OfJRgy5jj_uuQN-H3ErH6rY37oRnn6nlrol_NnRj5dmFNipfHxS42T3cIar-VWYY9CKsYoDlmnPRasHgro5B2zt1vKNC92Q_D3tRHUaprEDXVJp_BOm4PhDp-o_T0&amp;t=760f9f32" type="text/javascript"></script><script src="/Frontend-Assembly/Telerik.Sitefinity.Frontend.Search/Mvc/Scripts/SearchBox/Search-box.min.js?package=Bootstrap&amp;v=LTEyOTM0NTAxNzc%3d" type="text/javascript"></script><script type="application/json" id="PersonalizationTracker">
+	{"IsPagePersonalizationTarget":false,"IsUrlPersonalizationTarget":false,"PageId":"9eacde45-0c28-6c02-8629-ff00005ae238"}
+</script><script type="text/javascript" src="/WebResource.axd?d=NjxTqR2bqTw1rewxxlkHPvvXVxKWKTC2E-jfoI6xqjpd3Akb9SJH7PHZi16lWXLM-DvOUYrAfbm-omgRgZeYzuIeMzhZtXzLh_5KGi4srowudJ3vcRg7-B1fBQWprpaivV_dDr3_uf5Qt0KFubIs8kZWhauvvYGmtDkWg7mbLxmuMofPRLHhSDh1ItIZUsD-rIhxWlms9jfT0uTGRI_EP9lA-lCXSaSSdqUXG0eVBwE1&amp;t=638846014580000000">
+
+</script><input data-sf-role='en' type='hidden' value='https://etap.com/error-pages/error'><script type="text/javascript" src="/Content/Scripts/Lazyload_cdn_5_3_0.js" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785"></script><script type="text/javascript" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+/*<![CDATA[*/(function(w,a,b,d,s){w[a]=w[a]||{};w[a][b]=w[a][b]||{q:[],track:function(r,e,t){this.q.push({r:r,e:e,t:t||+new Date});}};var e=d.createElement(s);var f=d.getElementsByTagName(s)[0];e.async=1;e.src='//info.etap.com/cdnr/aorpci12/acton/bn/tracker/46336';f.parentNode.insertBefore(e,f);})(window,'ActOn','Beacon',document,'script');ActOn.Beacon.track();/*]]>*/
+</script><script type="text/javascript" src="/Content/Scripts/Master_page/RedirectAfterLogin.js" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785"></script><script type="text/javascript" src="/Content/Scripts/Master_page/MenuDropdownScript.js" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785"></script><script type="text/javascript" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785">
+$(document).load($(window).bind("resize", checkPosition));
+function checkPosition()
+{
+   var nh = $('.navbar-fixed-top-header').outerHeight();
+    $('.container-main-content').css('padding-top',nh);
+}
+</script><script type="text/javascript" src="/Content/Scripts/Master_page/ScrollToTop.js" nonce="19b7e396-9ccf-4191-9f7a-2fd41ab83785"></script> </body> </html>
+
+
