@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
         C: 47,
         V: 10,
         Freq: 60,
-        Source: 'DC'
+        Source: 'DC',
+        Config: 'Serie'
     };
 
     // Elements
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const vSlider = document.getElementById('param_v');
     const fSlider = document.getElementById('param_f');
     const sourceType = document.getElementById('source_type');
+    const configType = document.getElementById('config_type');
     const freqControl = document.getElementById('freq_control');
     
     const valR = document.getElementById('val-r');
@@ -28,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const metricAlpha = document.getElementById('metric-alpha');
     const metricZeta = document.getElementById('metric-zeta');
     const metricType = document.getElementById('metric-type');
+    const resonanceFreq = document.getElementById('resonance-freq');
+    const resonanceIndicator = document.getElementById('resonance-indicator');
+    const circuitDiagram = document.getElementById('circuit-diagram');
 
     // Chart Setup
     const ctx = document.getElementById('rlcChart').getContext('2d');
@@ -104,6 +109,100 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function calculateResonance() {
+        const L = state.L;
+        const C = state.C * 1e-6;
+        const w0 = 1 / Math.sqrt(L * C);
+        const f0 = w0 / (2 * Math.PI);
+        
+        resonanceFreq.textContent = f0.toFixed(2) + ' Hz';
+        
+        // Check if at resonance (AC mode only)
+        if (state.Source === 'AC') {
+            const tolerance = 0.05; // 5% tolerance
+            const isAtResonance = Math.abs(state.Freq - f0) / f0 < tolerance;
+            
+            if (isAtResonance) {
+                resonanceIndicator.style.display = 'flex';
+            } else {
+                resonanceIndicator.style.display = 'none';
+            }
+        } else {
+            resonanceIndicator.style.display = 'none';
+        }
+    }
+
+    function updateCircuitDiagram() {
+        const isSeries = state.Config === 'Serie';
+        
+        if (isSeries) {
+            // Series RLC Circuit - Components in line
+            circuitDiagram.innerHTML = `
+                <svg width="240" height="120" viewBox="0 0 240 120">
+                    <!-- Wires -->
+                    <line x1="20" y1="60" x2="60" y2="60" stroke="#fff" stroke-width="2"/>
+                    <line x1="100" y1="60" x2="140" y2="60" stroke="#fff" stroke-width="2"/>
+                    <line x1="180" y1="60" x2="220" y2="60" stroke="#fff" stroke-width="2"/>
+                    
+                    <!-- Source (Circle) -->
+                    <circle cx="20" cy="60" r="15" stroke="#4CAF50" stroke-width="2" fill="none"/>
+                    <text x="20" y="65" fill="#4CAF50" font-size="20" text-anchor="middle" font-weight="bold">~</text>
+                    <text x="20" y="95" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
+
+                    <!-- Resistor (Zigzag) 60-100 -->
+                    <polyline points="60,60 65,50 75,70 85,50 95,70 100,60" fill="none" stroke="#FF5252" stroke-width="2"/>
+                    <text x="80" y="40" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
+
+                    <!-- Inductor (Coil) 140-180 -->
+                    <path d="M140,60 Q145,40 150,60 T160,60 T170,60 T180,60" fill="none" stroke="#FFC107" stroke-width="2"/>
+                    <text x="160" y="40" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
+
+                    <!-- Capacitor (Plates) 220 -->
+                    <line x1="220" y1="45" x2="220" y2="75" stroke="#448aff" stroke-width="2"/>
+                    <line x1="226" y1="45" x2="226" y2="75" stroke="#448aff" stroke-width="2"/>
+                    <text x="223" y="40" fill="#448aff" font-size="12" text-anchor="middle">C</text>
+                </svg>
+            `;
+        } else {
+            // Parallel RLC Circuit - Components in parallel branches
+            circuitDiagram.innerHTML = `
+                <svg width="240" height="140" viewBox="0 0 240 140">
+                    <!-- Source -->
+                    <circle cx="20" cy="70" r="15" stroke="#4CAF50" stroke-width="2" fill="none"/>
+                    <text x="20" y="75" fill="#4CAF50" font-size="20" text-anchor="middle" font-weight="bold">~</text>
+                    <text x="20" y="105" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
+                    
+                    <!-- Left vertical wire -->
+                    <line x1="35" y1="70" x2="60" y2="70" stroke="#fff" stroke-width="2"/>
+                    <line x1="60" y1="20" x2="60" y2="120" stroke="#fff" stroke-width="2"/>
+                    
+                    <!-- Branch 1: Resistor (Top) -->
+                    <line x1="60" y1="30" x2="90" y2="30" stroke="#fff" stroke-width="2"/>
+                    <polyline points="90,30 95,20 105,40 115,20 125,40 130,30" fill="none" stroke="#FF5252" stroke-width="2"/>
+                    <line x1="130" y1="30" x2="160" y2="30" stroke="#fff" stroke-width="2"/>
+                    <text x="110" y="15" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
+                    
+                    <!-- Branch 2: Inductor (Middle) -->
+                    <line x1="60" y1="70" x2="90" y2="70" stroke="#fff" stroke-width="2"/>
+                    <path d="M90,70 Q95,50 100,70 T110,70 T120,70 T130,70" fill="none" stroke="#FFC107" stroke-width="2"/>
+                    <line x1="130" y1="70" x2="160" y2="70" stroke="#fff" stroke-width="2"/>
+                    <text x="110" y="55" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
+                    
+                    <!-- Branch 3: Capacitor (Bottom) -->
+                    <line x1="60" y1="110" x2="105" y2="110" stroke="#fff" stroke-width="2"/>
+                    <line x1="110" y1="95" x2="110" y2="125" stroke="#448aff" stroke-width="2"/>
+                    <line x1="116" y1="95" x2="116" y2="125" stroke="#448aff" stroke-width="2"/>
+                    <line x1="120" y1="110" x2="160" y2="110" stroke="#fff" stroke-width="2"/>
+                    <text x="113" y="90" fill="#448aff" font-size="12" text-anchor="middle">C</text>
+                    
+                    <!-- Right vertical wire -->
+                    <line x1="160" y1="20" x2="160" y2="120" stroke="#fff" stroke-width="2"/>
+                    <line x1="160" y1="70" x2="180" y2="70" stroke="#fff" stroke-width="2"/>
+                </svg>
+            `;
+        }
+    }
+
     function calculateResponse() {
         // Parameters
         const R = state.R;
@@ -112,11 +211,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const V = state.V;
         const f = state.Freq;
         const isAC = state.Source === 'AC';
+        const isParallel = state.Config === 'Paralelo';
 
         // Derived Parameters
         const w0 = 1 / Math.sqrt(L * C);
-        const alpha = R / (2 * L);
-        const zeta = alpha / w0;
+        let alpha, zeta;
+        
+        if (isParallel) {
+            // Parallel RLC: α = 1/(2RC), ζ = (1/2R)√(L/C)
+            alpha = 1 / (2 * R * C);
+            zeta = (1 / (2 * R)) * Math.sqrt(L / C);
+        } else {
+            // Series RLC: α = R/(2L), ζ = α/ω₀
+            alpha = R / (2 * L);
+            zeta = alpha / w0;
+        }
 
         // Metrics Display
         metricW0.textContent = w0.toFixed(1) + ' rad/s' + (isAC ? ` (Resonancia: ${(w0/(2*Math.PI)).toFixed(1)} Hz)` : '');
@@ -196,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         state.V = parseFloat(vSlider.value);
         state.Freq = parseFloat(fSlider.value);
         state.Source = sourceType.value;
+        state.Config = configType.value;
 
         // Update UI Text
         valR.textContent = state.R;
@@ -211,11 +321,14 @@ document.addEventListener('DOMContentLoaded', function() {
             freqControl.style.display = 'none';
         }
 
+        calculateResonance();
+        updateCircuitDiagram();
         calculateResponse();
     }
 
     [rSlider, lSlider, cSlider, vSlider, fSlider].forEach(el => el.addEventListener('input', updateState));
     sourceType.addEventListener('change', updateState);
+    configType.addEventListener('change', updateState);
 
     // Initial
     updateState();

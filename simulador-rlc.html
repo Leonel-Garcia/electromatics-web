@@ -150,39 +150,16 @@
         </a>
 
         <div class="section-title">
-            <h1>Respuesta <span style="color: var(--safety-orange);">RLC Serie</span></h1>
-            <p>Simula el comportamiento transitorio y estacionario de un circuito RLC serie ante entradas de voltaje <strong>DC (Escalón)</strong> y <strong>AC (Senoidal)</strong>.</p>
+            <h1>Respuesta <span style="color: var(--safety-orange);">RLC Serie/Paralelo</span></h1>
+            <p>Simula el comportamiento transitorio y estacionario de un circuito RLC <strong>serie o paralelo</strong> ante entradas de voltaje <strong>DC (Escalón)</strong> y <strong>AC (Senoidal)</strong>.</p>
         </div>
 
         <div class="sim-container">
             <!-- Controls -->
             <div class="controls-panel">
                 <!-- Circuit Diagram -->
-                <div style="text-align: center; margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    <svg width="240" height="120" viewBox="0 0 240 120">
-                        <!-- Wires -->
-                        <line x1="20" y1="60" x2="60" y2="60" stroke="#fff" stroke-width="2"/>
-                        <line x1="100" y1="60" x2="140" y2="60" stroke="#fff" stroke-width="2"/>
-                        <line x1="180" y1="60" x2="220" y2="60" stroke="#fff" stroke-width="2"/>
-                        
-                        <!-- Source (Circle) -->
-                        <circle cx="20" cy="60" r="15" stroke="#4CAF50" stroke-width="2" fill="none"/>
-                        <text x="20" y="65" fill="#4CAF50" font-size="20" text-anchor="middle" font-weight="bold">~</text>
-                        <text x="20" y="95" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
-
-                        <!-- Resistor (Zigzag) 60-100 -->
-                        <polyline points="60,60 65,50 75,70 85,50 95,70 100,60" fill="none" stroke="#FF5252" stroke-width="2"/>
-                        <text x="80" y="40" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
-
-                        <!-- Inductor (Coil) 140-180 -->
-                        <path d="M140,60 Q145,40 150,60 T160,60 T170,60 T180,60" fill="none" stroke="#FFC107" stroke-width="2"/>
-                        <text x="160" y="40" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
-
-                        <!-- Capacitor (Plates) 220 -->
-                        <line x1="220" y1="45" x2="220" y2="75" stroke="#448aff" stroke-width="2"/>
-                        <line x1="226" y1="45" x2="226" y2="75" stroke="#448aff" stroke-width="2"/>
-                        <text x="223" y="40" fill="#448aff" font-size="12" text-anchor="middle">C</text>
-                    </svg>
+                <div id="circuit-diagram" style="text-align: center; margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <!-- SVG will be dynamically inserted here by JavaScript -->
                 </div>
 
                 <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Configuración</h3>
@@ -194,6 +171,16 @@
                         <select id="source_type" style="background: var(--bg-color); border: 1px solid var(--border-color); color: white; padding: 2px 8px; border-radius: 4px;">
                             <option value="DC">DC (Escalón)</option>
                             <option value="AC">AC (Senoidal)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Configuración</span>
+                        <select id="config_type" style="background: var(--bg-color); border: 1px solid var(--border-color); color: white; padding: 2px 8px; border-radius: 4px;">
+                            <option value="Serie">Serie</option>
+                            <option value="Paralelo">Paralelo</option>
                         </select>
                     </div>
                 </div>
@@ -260,6 +247,22 @@
                  <div class="metric-card">
                     <span class="metric-title">Tipo de Respuesta</span>
                     <span id="metric-type" class="metric-val" style="color: #448aff">Subamortiguado</span>
+                </div>
+
+                <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Resonancia</h3>
+                
+                <div style="background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(255,152,0,0.1)); padding: 15px; border-radius: 8px; border: 2px solid var(--safety-orange); margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--safety-orange);"><i class="fa-solid fa-wave-square" style="margin-right: 8px;"></i>Frecuencia de Resonancia</span>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <div id="resonance-freq" style="font-size: 28px; font-weight: 700; color: var(--safety-orange); font-family: monospace;">23.33 Hz</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">f₀ = 1 / (2π√LC)</div>
+                    </div>
+                    <div id="resonance-indicator" style="display: none; background: rgba(76,175,80,0.3); border: 1px solid #4CAF50; border-radius: 4px; padding: 8px; text-align: center;">
+                        <i class="fa-solid fa-circle-check" style="color: #4CAF50; margin-right: 6px;"></i>
+                        <span style="color: #4CAF50; font-weight: 600; font-size: 13px;">¡En Resonancia!</span>
+                    </div>
                 </div>
 
                 <div class="control-buttons">
@@ -394,6 +397,122 @@
                 </div>
             </div>
         </section>
+
+        <!-- Resonance Section -->
+        <section style="margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 40px;">
+            <h2 style="margin-bottom: 30px; font-size: 28px;">Resonancia en Circuitos <span style="color: var(--safety-orange);">RLC</span></h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+                <!-- Definition -->
+                <div>
+                    <h3 style="color: var(--electric-blue); margin-bottom: 15px;"><i class="fa-solid fa-lightbulb" style="margin-right: 8px;"></i>¿Qué es la Resonancia?</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        La <strong>resonancia</strong> ocurre cuando la frecuencia de la fuente de alimentación AC coincide con la frecuencia natural del circuito RLC. En este punto, las reactancias inductiva (X<sub>L</sub>) y capacitiva (X<sub>C</sub>) se cancelan mutuamente.
+                    </p>
+                    
+                    <div style="background: var(--card-bg); padding: 20px; border-radius: 8px; border-left: 4px solid var(--safety-orange);">
+                        <h4 style="margin-bottom: 10px; color: var(--text-primary);">Frecuencia de Resonancia</h4>
+                        <p style="font-family: 'Courier New', monospace; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; color: #fff; margin-bottom: 8px;">
+                            f₀ = 1 / (2π√LC)
+                        </p>
+                        <p style="font-size: 13px; color: var(--text-secondary);">
+                            Esta fórmula es válida tanto para circuitos serie como paralelo.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Effects -->
+                <div>
+                    <h3 style="color: var(--electric-blue); margin-bottom: 15px;"><i class="fa-solid fa-bolt" style="margin-right: 8px;"></i>Efectos de la Resonancia</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--safety-orange); margin-bottom: 5px; font-size: 16px;">Serie (ζ < 1):</h4>
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            • <strong>Impedancia mínima</strong> (Z = R)<br>
+                            • <strong>Corriente máxima</strong><br>
+                            • Voltajes en L y C pueden ser mucho mayores que la fuente<br>
+                            • Factor de calidad: Q = ω₀L/R
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #4CAF50; margin-bottom: 5px; font-size: 16px;">Paralelo (ζ < 1):</h4>
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            • <strong>Impedancia máxima</strong> (Z = R)<br>
+                            • <strong>Corriente mínima</strong> de la fuente<br>
+                            • Corrientes circulantes entre L y C<br>
+                            • Factor de calidad: Q = R/(ω₀L)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <h3 style="margin-bottom: 20px;">Comparación: Serie vs. Paralelo</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 8px; overflow: hidden;">
+                    <thead>
+                        <tr style="background: rgba(255,152,0,0.2);">
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--safety-orange);">Característica</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--safety-orange);">RLC Serie</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: #4CAF50;">RLC Paralelo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 600;">Impedancia en f₀</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Mínima (Z = R)</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Máxima (Z = R)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 600;">Corriente total</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Máxima</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Mínima</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 600;">Factor α</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">α = R/(2L)</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">α = 1/(2RC)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 600;">Factor ζ</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">ζ = α/ω₀</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">ζ = (1/2R)√(L/C)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; font-weight: 600;">Aplicación típica</td>
+                            <td style="padding: 12px;">Filtros pasa-banda</td>
+                            <td style="padding: 12px;">Sintonizadores de radio, rechazo de frecuencias</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Applications -->
+            <div style="margin-top: 40px; background: linear-gradient(135deg, rgba(33,150,243,0.1), rgba(76,175,80,0.1)); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-radio" style="margin-right: 10px; color: var(--electric-blue);"></i>Aplicaciones Prácticas</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div>
+                        <h4 style="color: var(--safety-orange); margin-bottom: 8px;">Sintonización de Radio</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                            Los receptores de radio utilizan circuitos RLC paralelo para sintonizar estaciones específicas, maximizando la impedancia a la frecuencia deseada.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--safety-orange); margin-bottom: 8px;">Filtros de Frecuencia</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                            Los filtros pasa-banda serie permiten el paso de frecuencias cercanas a f₀, bloqueando otras frecuencias efectivamente.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--safety-orange); margin-bottom: 8px;">Acondicionamiento de Señales</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                            En sistemas de energía, se aprovecha la resonancia para rechazar armónicos no deseados y mejorar la calidad de la señal.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="main-footer">
@@ -416,6 +535,6 @@
     </footer>
 
     <script src="js/simple-auth.js"></script>
-    <script src="js/simulators/rlc.js?v=1.0"></script>
+    <script src="js/simulators/rlc.js?v=1.1"></script>
 </body>
 </html>
