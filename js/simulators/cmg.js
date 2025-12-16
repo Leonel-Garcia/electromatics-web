@@ -4,7 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
         freq: 60,
         speed: 10,  // Animation speed multiplier
         reverse: false,
-        showVectors: true
+        showVectors: true,
+        poles: 4,       // Number of poles
+        slip: 3,        // Slip percentage
+        Ns: 1800,       // Synchronous speed (calculated)
+        Nr: 1746        // Rotor speed (calculated)
     };
 
     // Elements
@@ -12,10 +16,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const speedSlider = document.getElementById('param_speed');
     const reverseCheck = document.getElementById('param_reverse');
     const vectorsCheck = document.getElementById('param_vectors');
+    const polesSelect = document.getElementById('param_poles');
+    const slipSlider = document.getElementById('param_slip');
     
     const valFreq = document.getElementById('val-freq');
     const valSpeed = document.getElementById('val-speed');
+    const valSlip = document.getElementById('val-slip');
     const seqLabel = document.getElementById('seq-label');
+    const speedSync = document.getElementById('speed-sync');
+    const speedRotor = document.getElementById('speed-rotor');
+    const speedDiff = document.getElementById('speed-diff');
 
     // Chart Setup (Waveforms)
     const ctxChart = document.getElementById('waveformChart').getContext('2d');
@@ -135,6 +145,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     Chart.register(verticalLinePlugin);
+
+    // Calculate Speeds Function
+    function calculateSpeeds() {
+        // Synchronous speed: Ns = 120 * f / P
+        state.Ns = (120 * state.freq) / state.poles;
+        
+        // Rotor speed: Nr = Ns * (1 - s/100)
+        state.Nr = state.Ns * (1 - state.slip / 100);
+        
+        // Update UI
+        speedSync.textContent = state.Ns.toFixed(0) + ' RPM';
+        speedRotor.textContent = state.Nr.toFixed(0) + ' RPM';
+        speedDiff.textContent = (state.Ns - state.Nr).toFixed(0) + ' RPM';
+    }
 
 
     // Vector Animation (Canvas)
@@ -287,8 +311,43 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const ResultantScale = 100; // Expected magnitude is 1.5 * scale
 
-        // Draw Resultant
+        // Draw Resultant (Magnetic Field)
         drawArrow(ctx, cx, cy, cx + Rx*ResultantScale, cy + Ry*ResultantScale, '#ffffff', 5);
+
+        // ROTOR VISUALIZATION
+        // Rotor rotates at Nr speed (slower than field at Ns)
+        // Calculate rotor angle based on its speed relative to field
+        const rotorAngleRad = (state.currentTimeAngle * (state.Nr / state.Ns)) * (Math.PI / 180);
+        
+        // Draw rotor body (inner circle)
+        ctx.beginPath();
+        ctx.arc(cx, cy, 80, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+        ctx.fill();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw rotor marker (radial line to show rotation)
+        const markRadius = 70;
+        const markX = cx + markRadius * Math.cos(rotorAngleRad);
+        const markY = cy + markRadius * Math.sin(rotorAngleRad);
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(markX, markY);
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        
+        // Draw marker dot
+        ctx.beginPath();
+        ctx.arc(markX, markY, 7, 0, 2 * Math.PI);
+        ctx.fillStyle = '#f97316';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
         // Update Chart vertical bar
         waveformChart.update('none'); // Efficient update just for plugin?
@@ -302,6 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
     freqSlider.addEventListener('input', (e) => {
         valFreq.textContent = e.target.value;
         state.freq = parseInt(e.target.value);
+        calculateSpeeds();
     });
 
     speedSlider.addEventListener('input', (e) => {
@@ -333,6 +393,20 @@ document.addEventListener('DOMContentLoaded', function() {
         state.showVectors = e.target.checked;
     });
 
-    // Start
+    polesSelect.addEventListener('change', (e) => {
+        state.poles = parseInt(e.target.value);
+        calculateSpeeds();
+    });
+
+    slipSlider.addEventListener('input', (e) => {
+        state.slip = parseFloat(e.target.value);
+        valSlip.textContent = state.slip.toFixed(1) + '%';
+        calculateSpeeds();
+    });
+
+    // Initial calculations
+    calculateSpeeds();
+    
+    // Start animation
     animate(0);
 });

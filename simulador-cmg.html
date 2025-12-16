@@ -198,6 +198,47 @@
                     <!-- Internal speed multiplier, not physics Hz -->
                     <input type="range" id="param_speed" min="1" max="100" step="1" value="10">
                     <p style="font-size: 12px; color: #aaa; margin-top: 5px;">Ajusta para ver en cámara lenta</p>
+                 </div>
+
+                <h3 style="margin: 20px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Parámetros del Motor</h3>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Número de Polos</span>
+                        <select id="param_poles" style="background: var(--bg-color); border: 1px solid var(--border-color); color: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: 700;">
+                            <option value="2">2 Polos</option>
+                            <option value="4" selected>4 Polos</option>
+                            <option value="6">6 Polos</option>
+                            <option value="8">8 Polos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Deslizamiento (s)</span>
+                        <span id="val-slip" class="slider-value">3%</span>
+                    </div>
+                    <input type="range" id="param_slip" min="0" max="100" step="0.5" value="3">
+                    <p style="font-size: 12px; color: #aaa; margin-top: 5px;">0% = síncrono, 100% = bloqueado</p>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(255,152,0,0.1)); padding: 15px; border-radius: 8px; border: 2px solid var(--safety-orange); margin-top: 20px;">
+                    <h4 style="color: var(--safety-orange); margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-gauge-high" style="margin-right: 6px;"></i>Velocidades</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">Ns (Síncrona):</span>
+                            <span id="speed-sync" style="color: #fff; font-family: monospace; font-weight: 700;">1800 RPM</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">Nr (Rotor):</span>
+                            <span id="speed-rotor" style="color: #f97316; font-family: monospace; font-weight: 700;">1746 RPM</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid rgba(255,193,7,0.3);">
+                            <span style="color: var(--text-secondary);">Diferencia:</span>
+                            <span id="speed-diff" style="color: var(--electric-blue); font-family: monospace; font-weight: 700;">54 RPM</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="control-row">
@@ -221,7 +262,8 @@
                  <div class="legend-item"><div class="color-dot" style="background: #FF5252;"></div>Fase A (0°)</div>
                  <div class="legend-item"><div class="color-dot" style="background: #448aff;"></div>Fase B (-120°)</div>
                  <div class="legend-item"><div class="color-dot" style="background: #00E676;"></div>Fase C (+120°)</div>
-                 <div class="legend-item"><div class="color-dot" style="background: #ffffff; border: 2px solid white;"></div>Resultante (Giratorio)</div>
+                 <div class="legend-item"><div class="color-dot" style="background: #ffffff; border: 2px solid white;"></div>Campo Resultante (Blanco)</div>
+                 <div class="legend-item"><div class="color-dot" style="background: #f97316;"></div>Rotor (Naranja)</div>
 
             </div>
 
