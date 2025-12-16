@@ -27,9 +27,28 @@ document.addEventListener('DOMContentLoaded', () => {
         spring: 0.0        // Natural spring force (0 = free floating)
     };
 
+    // Timing and Performance Metrics
+    let lastUpdateTime = 0;
+    const updateInterval = 100; // Update chart every 100ms (10 Hz)
+    let currentSimTime = 0;
+    let simSpeed = 1.0;
+    
+    // Performance metrics
+    let maxValue = 0;
+    let settlingTime = null;
+    let settledCounter = 0;
+    const settlingThreshold = 0.02; // ±2% band
+
     // Chart Setup
-    const dataPoints = 100; // Number of points to show on chart
-    const labels = Array(dataPoints).fill('');
+    const dataPoints = 500; // Extended to show ~50 seconds of history
+    const labels = [];
+    
+    // Generate time labels (show every 2 seconds)
+    for (let i = 0; i < dataPoints; i++) {
+        const segundos = i * (updateInterval / 1000);
+        labels.push(i % 20 === 0 ? `${segundos.toFixed(0)}s` : '');
+    }
+    
     const spData = Array(dataPoints).fill(state.setpoint);
     const pvData = Array(dataPoints).fill(0);
 
@@ -164,6 +183,14 @@ document.addEventListener('DOMContentLoaded', () => {
         state.velocity = 0;
         state.integral = 0;
         state.lastError = 0;
+        
+        // Reset performance metrics
+        maxValue = 0;
+        settlingTime = null;
+        settledCounter = 0;
+        currentSimTime = 0;
+        lastUpdateTime = 0;
+        
         // Reset chart data
         for(let i=0; i<dataPoints; i++) {
             pvData[i] = 0;
@@ -218,20 +245,69 @@ document.addEventListener('DOMContentLoaded', () => {
         if(state.processVar > 150) { state.processVar = 150; state.velocity = 0; }
         if(state.processVar < -50) { state.processVar = -50; state.velocity = 0; }
 
-        // 7. Update Chart Data
-        spData.shift();
-        spData.push(state.setpoint);
+        // 7. Calculate Performance Metrics
+        // Track maximum value for overshoot calculation
+        if (state.processVar > maxValue) {
+            maxValue = state.processVar;
+        }
         
-        pvData.shift();
-        pvData.push(state.processVar);
+        // Check if system is within settling band (±2%)
+        const settlingBand = state.setpoint * settlingThreshold;
+        const absError = Math.abs(error);
+        
+        if (absError <= settlingBand) {
+            settledCounter++;
+            // Consider settled after staying in band for 2 seconds (20 × 0.1s)
+            if (settledCounter >= 20 && settlingTime === null) {
+                settlingTime = currentSimTime.toFixed(1);
+            }
+        } else {
+            settledCounter = 0;
+        }
 
-        chart.update('none'); // Update without animation for performance
+        // 8. Update Chart Data (only every updateInterval ms for readability)
+        if (now - lastUpdateTime >= updateInterval) {
+            lastUpdateTime = now;
+            currentSimTime += updateInterval / 1000;
+            
+            spData.shift();
+            spData.push(state.setpoint);
+            
+            pvData.shift();
+            pvData.push(state.processVar);
 
-        // 8. Update Metrics on UI
-        metricError.textContent = error.toFixed(2);
-        metricOutput.textContent = output.toFixed(2);
+            chart.update('none'); // Update without animation for performance
+            
+            // Update performance metrics UI if elements exist
+            updateMetricsUI(error, output);
+        }
 
         requestAnimationFrame(simulate);
+    }
+    
+    // Update metrics display
+    function updateMetricsUI(error, output) {
+        // Update existing metrics
+        metricError.textContent = error.toFixed(2);
+        metricOutput.textContent = output.toFixed(2);
+        
+        // Update performance metrics if elements exist
+        const metricOvershoot = document.getElementById('metric-overshoot');
+        const metricSettling = document.getElementById('metric-settling');
+        const metricSSE = document.getElementById('metric-sse');
+        
+        if (metricOvershoot) {
+            const overshoot = ((maxValue - state.setpoint) / state.setpoint) * 100;
+            metricOvershoot.textContent = overshoot > 0 ? `+${overshoot.toFixed(1)}%` : '0.0%';
+        }
+        
+        if (metricSettling) {
+            metricSettling.textContent = settlingTime ? `${settlingTime}s` : 'Aún no';
+        }
+        
+        if (metricSSE) {
+            metricSSE.textContent = Math.abs(error).toFixed(2);
+        }
     }
 
     // Start Simulation

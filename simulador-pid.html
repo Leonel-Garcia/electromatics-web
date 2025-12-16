@@ -196,6 +196,26 @@
                     <span id="metric-output" class="metric-val" style="color: #448aff">0.00</span>
                 </div>
 
+                <h3 style="margin: 20px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Desempeño</h3>
+                
+                <div style="background: linear-gradient(135deg, rgba(33,150,243,0.1), rgba(76,175,80,0.1)); padding: 15px; border-radius: 8px; border: 1px solid var(--electric-blue); margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">Sobrepaso:</span>
+                        <span id="metric-overshoot" style="font-family: monospace; font-weight: 700; color: var(--safety-orange);">0.0%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">T. Asentamiento:</span>
+                        <span id="metric-settling" style="font-family: monospace; font-weight: 700; color: #4CAF50;">Aún no</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">Error Est. Estable:</span>
+                        <span id="metric-sse" style="font-family: monospace; font-weight: 700; color: #ff5252;">0.00</span>
+                    </div>
+                    <p style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 10px; margin-bottom: 0;">
+                        <i class="fa-solid fa-info-circle"></i> T. Asentamiento: tiempo en ±2% del setpoint
+                    </p>
+                </div>
+
                 <div class="control-buttons">
                     <button id="reset-sim" class="btn btn-secondary full-width">
                         <i class="fa-solid fa-rotate-right"></i> Reiniciar
@@ -329,6 +349,6 @@
     </footer>
 
     <script src="js/simple-auth.js"></script>
-    <script src="js/simulators/pid.js?v=1.0"></script>
+    <script src="js/simulators/pid.js?v=2.0"></script>
 </body>
 </html>
