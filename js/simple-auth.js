@@ -271,9 +271,10 @@ const SimpleAuth = {
                 }
             } catch (error) {
                 console.error("Error validando sesión:", error);
-                // Si el backend no responde, mantenemos el estado local temporalmente o cerramos sesión
-                // Por seguridad, mejor cerrar si no podemos validar
-                SimpleAuth.logout(); 
+                // Si falla validación, solo limpiamos token, no recargamos para evitar bucles
+                SafeStorage.removeItem('auth_token');
+                SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null };
+                SimpleAuth.updateUI();
             }
         }
     },

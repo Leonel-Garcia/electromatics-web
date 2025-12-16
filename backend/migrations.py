@@ -21,35 +21,48 @@ def run_migrations(engine):
         columns = [c['name'] for c in inspector.get_columns("users")]
         logger.info(f"Existing columns in 'users': {columns}")
         
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             # 1. is_admin
             if "is_admin" not in columns:
-                logger.info("Migrating: Adding is_admin column")
-                conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE"))
+                try:
+                    logger.info("Migrating: Adding is_admin column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE"))
+                except Exception as e:
+                    logger.error(f"Failed to add is_admin: {e}")
             
             # 2. is_premium
             if "is_premium" not in columns:
-                logger.info("Migrating: Adding is_premium column")
-                conn.execute(text("ALTER TABLE users ADD COLUMN is_premium BOOLEAN DEFAULT FALSE"))
+                try:
+                    logger.info("Migrating: Adding is_premium column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_premium BOOLEAN DEFAULT FALSE"))
+                except Exception as e:
+                    logger.error(f"Failed to add is_premium: {e}")
                 
             # 3. email_verified
             if "email_verified" not in columns:
-                logger.info("Migrating: Adding email_verified column")
-                conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE"))
+                try:
+                    logger.info("Migrating: Adding email_verified column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE"))
+                except Exception as e:
+                    logger.error(f"Failed to add email_verified: {e}")
                 
             # 4. verification_token
             if "verification_token" not in columns:
-                logger.info("Migrating: Adding verification_token column")
-                # PostgreSQL uses VARCHAR, SQLite matches text
-                conn.execute(text("ALTER TABLE users ADD COLUMN verification_token VARCHAR"))
+                try:
+                    logger.info("Migrating: Adding verification_token column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN verification_token VARCHAR"))
+                except Exception as e:
+                    logger.error(f"Failed to add verification_token: {e}")
 
             # 5. verification_token_expires
             if "verification_token_expires" not in columns:
-                logger.info("Migrating: Adding verification_token_expires column")
-                conn.execute(text("ALTER TABLE users ADD COLUMN verification_token_expires TIMESTAMP"))
+                try:
+                    logger.info("Migrating: Adding verification_token_expires column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN verification_token_expires TIMESTAMP"))
+                except Exception as e:
+                    logger.error(f"Failed to add verification_token_expires: {e}")
                 
-            conn.commit()
-            logger.info("Migrations completed successfully.")
+            logger.info("Migrations check completed.")
             
     except Exception as e:
         logger.error(f"Migration Error: {e}")
