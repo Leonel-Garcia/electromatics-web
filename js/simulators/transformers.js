@@ -288,10 +288,13 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.fillStyle = colB; ctx.fillText('B', 10, srcB.y-5);
         ctx.fillStyle = colC; ctx.fillText('C', 10, srcC.y-5);
 
+        // Define Open Delta Check Early
+        const isOpenDelta = state.secondaryConn.startsWith('delta-open');
+
         // --- Primary Connections (Fixed Delta) ---
         // T1: H1->A, H2->B
         // T2: H1->B, H2->C
-        // T3: H1->C, H2->A
+        // T3: H1->C, H2->A (Skip if Open Delta)
         
         drawWire(trafos[0].h1, {x: trafos[0].h1.x, y: srcA.y}, colA, 5);
         drawWire(trafos[0].h2, {x: trafos[0].h2.x, y: srcB.y}, colB, 10);
@@ -299,9 +302,10 @@ document.addEventListener('DOMContentLoaded', function() {
         drawWire(trafos[1].h1, {x: trafos[1].h1.x, y: srcB.y}, colB, 15);
         drawWire(trafos[1].h2, {x: trafos[1].h2.x, y: srcC.y}, colC, 20);
 
-        drawWire(trafos[2].h1, {x: trafos[2].h1.x, y: srcC.y}, colC, 25);
-        drawWire(trafos[2].h2, {x: trafos[2].h2.x, y: srcA.y}, colA, 30);
-
+        if (!isOpenDelta) {
+            drawWire(trafos[2].h1, {x: trafos[2].h1.x, y: srcC.y}, colC, 25);
+            drawWire(trafos[2].h2, {x: trafos[2].h2.x, y: srcA.y}, colA, 30);
+        }
 
         // --- Secondary Busbars (a, b, c, n) ---
         const out_a = loadY - busGap*3;
@@ -323,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const isStar = state.secondaryConn.includes('star');
         const isDelta = state.secondaryConn.includes('delta');
-        const isOpenDelta = state.secondaryConn.startsWith('delta-open');
+        // isOpenDelta already defined
 
         trafos.forEach((t, i) => {
             if(isOpenDelta && i === 2) return; 
@@ -370,7 +374,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function drawInternalConnections() {
-        trafos.forEach(t => {
+        const isOpenDelta = state.secondaryConn.startsWith('delta-open');
+        trafos.forEach((t, i) => {
+            if(isOpenDelta && i === 2) return; // Skip T3 internal jumper
+
             // Because X1..X4 are horizontal, we can arc or bracket them.
             // Arcs might be cleaner than square jumps for local connections.
             
