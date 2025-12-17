@@ -2,6 +2,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('transformerCanvas');
     const ctx = canvas.getContext('2d');
     
+    // Load Transformer Image
+    const trafoImg = new Image();
+    trafoImg.src = 'images/transformer_real.png';
+    let imageLoaded = false;
+    trafoImg.onload = () => {
+        imageLoaded = true;
+        draw();
+    };
+
+    // Load Logo (Assuming existing logo)
+    const logoImg = new Image();
+    // Try to find the logo relative path. Based on HTML it might be images/logo.png or just logo.png.
+    // Let's assume images/logo.png to match standard structure, or fallback if needed.
+    // The previous file listing showed logo.png at root. 
+    // But the HTML <img src="images/logo.png"> suggests it's in images.
+    // Let's try 'images/logo.png'.
+    logoImg.src = 'images/logo.png'; 
+    let logoLoaded = false;
+    logoImg.onload = () => {
+        logoLoaded = true;
+        draw();
+    };
+
     // Config State
     const state = {
         primaryConn: 'delta',
@@ -18,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Colors
     const colA = '#FF5252';
     const colB = '#448aff';
-    const colC = '#00E676';
+    const colC = '#FFD600'; // Changed to Yellow (Green reserved for ground)
     const colN = '#e2e8f0';
     const colH = '#f59e0b'; // HV Bushing
     const colX = '#94a3b8'; // LV Bushing
@@ -41,10 +64,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initTrafos() {
         trafos = [];
-        const gap = w * 0.05;
+        const gap = w * 0.02; // Reduced gap
+        // Maintain aspect ratio of image?
+        // Assume image is roughly 1:2 or 1:2.5
+        // Let's fit 3 transformers.
+        
         const tWidth = (w - gap*4) / 3;
-        const tHeight = h * 0.4;
-        const startY = h * 0.35;
+        // Image aspect ratio approximation (from user image view)
+        // It looks tall. Let's say H = 2 * W approximately.
+        // We need to ensure it fits in h.
+        let tHeight = tWidth * 2.2; 
+        
+        if (tHeight > h * 0.8) {
+            tHeight = h * 0.8;
+            // Adjust width to maintain aspect if needed, but drawing will stretch.
+            // Better to let width be fixed by column and stretch height? 
+            // Or let's center them vertically.
+        }
+
+        const startY = (h - tHeight) / 2 + 20; // Center vertically, slightly shifted down
 
         const labels = ['T1', 'T2', 'T3'];
 
@@ -52,23 +90,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const x = gap + i*(tWidth + gap);
             const y = startY;
             
-            // Layout: X1, X3, X2, X4 spaced evenly at bottom to facilitate parallel/series jumpers
-            // Order: X1 (0.15), X3 (0.38), X2 (0.62), X4 (0.85)
+            // Image Feature Coordinates (approximate percentages based on the uploaded image)
+            // Top Bushings: Tall. Tips are at ~5% height.
+            // H1 (Left Bushing): ~30% width, ~5% height
+            // H2 (Right Bushing): ~70% width, ~5% height
+            
+            // Front Bushings (X1, X3, X2, X4)
+            // They are in a row at ~35-40% height of the image? 
+            // Looking at the image:
+            // The bushings are on the side/front.
+            // X1, X3, X2, X4.
+            // Height: About 35% down from top.
+            
+            // Let's map normalized coordinates relative to (x, y, tWidth, tHeight)
+            
             trafos.push({
                 x: x,
                 y: y,
                 w: tWidth,
                 h: tHeight,
                 label: labels[i],
-                // Primary Top: H1 (Left), H2 (Right)
-                h1: {x: x + tWidth*0.25, y: y + 15},
-                h2: {x: x + tWidth*0.75, y: y + 15},
+                // Primary Top Bushings (Tips)
+                // H1 Left, H2 Right. Bushings slant outwards slightly.
+                // Adjusted: Closer to 30% and 70%. Height slightly lower to hit the metal tip.
+                h1: {x: x + tWidth*0.29, y: y + tHeight*0.06}, 
+                h2: {x: x + tWidth*0.71, y: y + tHeight*0.06},
                 
-                // Secondary Bottom: X1, X3, X2, X4
-                x1: {x: x + tWidth*0.15, y: y + tHeight - 15},
-                x3: {x: x + tWidth*0.38, y: y + tHeight - 15}, // Swapped position with X2
-                x2: {x: x + tWidth*0.62, y: y + tHeight - 15}, // Swapped position with X3
-                x4: {x: x + tWidth*0.85, y: y + tHeight - 15}
+                // Secondary Front Bushings
+                // Located roughly at 30% down the image height
+                // The image shows them clustered in the center-front.
+                // Labels X1 X3 X2 X4 are above the bushings.
+                // We need to bring them closer together horizontally and check height.
+                // Previous: 0.22, 0.40, 0.60, 0.78 (Range 0.56w)
+                // New: Tighten to center. Range ~0.5w?
+                // Also visually they are slightly lower than the 'X1' label text.
+                // Let's drop Y slightly to 0.36
+                x1: {x: x + tWidth*0.26, y: y + tHeight*0.37},
+                x3: {x: x + tWidth*0.42, y: y + tHeight*0.37},
+                x2: {x: x + tWidth*0.58, y: y + tHeight*0.37},
+                x4: {x: x + tWidth*0.74, y: y + tHeight*0.37}
             });
         }
     }
@@ -92,15 +152,47 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         
-        // Simple 3-segment path logic
-        // If connecting top terminals (Primary), go up
-        // If connecting bottom (Secondary), go down
+        // Routing logic
+        // p1 is always on the transformer (Trafo Point)
+        // p2 is either another trafo point or a busbar point
         
-        const isPri = p1.y < h/2;
+        // If p1 is internal (connection between trf terminals), we handle it in drawJumper/Internal
+        // Here we handle Trafo -> Busbar.
+        
+        // H1/H2 (Primary) go UP to busbar.
+        // X1..X4 (Secondary) go DOWN to busbar.
+        
+        const isPri = p1.y < (trafos[0].y + trafos[0].h * 0.2); // Rough check if top part
+        
+        // Mid line for neatness
         const midY = isPri ? p1.y - 30 - offset : p1.y + 30 + offset;
         
-        ctx.lineTo(p1.x, midY);
-        ctx.lineTo(p2.x, midY);
+        // But wait, the secondary terminals are now in the middle of the body (y + 0.35h).
+        // If we go strictly down, we cross the transformer body.
+        // It might look better to go "Out" (Z-axis visually?) or just go down over the body?
+        // Let's go down.
+        
+        // If Secondary, we might need a larger offset or different routing to clear the labels/body if desired.
+        // For now, simple orthogonal.
+        
+        // Adjust midY for secondary to be below the transformer
+        let actualMidY = midY;
+        if (!isPri) {
+             // Ensure we go below the transformer body before turning horizontal?
+             // Or just go down from the terminal. 
+             // Since terminals are at 35% height, we have 65% body below.
+             // Wires going down over the white body is fine, realistic.
+             
+             // Ensure midY is below the transformer body to avoid crossing labels?
+             // The labels in the image are painted on.
+             // The wire busbars are at the very bottom (h - 40).
+             // Let's just go directly to busbar level Y?
+             
+             // The previous logic used 'midY' as a horizontal channel.
+        }
+
+        ctx.lineTo(p1.x, actualMidY);
+        ctx.lineTo(p2.x, actualMidY);
         ctx.lineTo(p2.x, p2.y);
         
         ctx.strokeStyle = color;
@@ -116,45 +208,58 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function drawTrafo(t) {
-        // Body
-        ctx.fillStyle = '#334155';
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.rect(t.x, t.y, t.w, t.h);
-        ctx.fill();
-        ctx.stroke();
+        if (imageLoaded) {
+            // Draw Image
+            ctx.drawImage(trafoImg, t.x, t.y, t.w, t.h);
+            
+            // Draw Logo Overlay (Replace bottom brand)
+            // Brand is at approx bottom 20% center.
+            if (logoLoaded) {
+                const logoW = t.w * 0.3; // Logo width
+                const logoAspect = logoImg.width / logoImg.height; // Keep aspect if possible
+                const logoH = logoW / logoAspect;
+                
+                const logoX = t.x + (t.w - logoW) / 2;
+                const logoY = t.y + t.h * 0.78; // Moved up from 0.85 to cover original brand
+                
+                // Draw a white circle/bg behind logo to mask original brand?
+                ctx.fillStyle = '#fff'; // Transformer body color
+                ctx.beginPath();
+                ctx.arc(logoX + logoW/2, logoY + logoH/2, logoW/1.5, 0, Math.PI*2);
+                ctx.fill();
 
-        // Label
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        ctx.font = 'bold 32px Inter';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(t.label, t.x + t.w/2, t.y + t.h/2);
+                ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+            }
 
-        // Terminals
+        } else {
+            // Fallback
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(t.x, t.y, t.w, t.h);
+        }
+
+        // Draw Terminals (just dots for connection reference)
         const bushings = [
-            {p: t.h1, l: 'H1', c: colH}, {p: t.h2, l: 'H2', c: colH},
-            {p: t.x1, l: 'X1', c: colX}, {p: t.x3, l: 'X3', c: colX},
-            {p: t.x2, l: 'X2', c: colX}, {p: t.x4, l: 'X4', c: colX}
+            {p: t.h1, l: '', c: colH}, {p: t.h2, l: '', c: colH},
+            {p: t.x1, l: '', c: colX}, {p: t.x3, l: '', c: colX},
+            {p: t.x2, l: '', c: colX}, {p: t.x4, l: '', c: colX}
         ];
 
         bushings.forEach(b => {
-             // Bushing Body
-             ctx.fillStyle = '#1e293b';
+             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // Semi-transparent overlay
              ctx.beginPath();
-             ctx.arc(b.p.x, b.p.y, 8, 0, Math.PI*2);
+             ctx.arc(b.p.x, b.p.y, 5, 0, Math.PI*2);
              ctx.fill();
-             ctx.lineWidth = 2;
+             // Optional: outline
              ctx.strokeStyle = b.c;
+             ctx.lineWidth = 1;
              ctx.stroke();
-
-             // Label
-             ctx.fillStyle = '#fff';
-             ctx.font = '10px Inter';
-             ctx.textAlign = 'center';
-             ctx.fillText(b.l, b.p.x, b.p.y < t.y+t.h/2 ? b.p.y + 20 : b.p.y - 15);
         });
+        
+        // Label? Image has text "37.5 kVA". We can add T1/T2/T3 below or above.
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(t.label, t.x + t.w/2, t.y + t.h + 20); // Below unit
     }
 
     function drawSystem() {
@@ -165,9 +270,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function drawBusbarsAndExternal() {
         // Busbars positions
-        const busY = 40;
-        const busGap = 15;
-        const loadY = h - 40;
+        const busY = 25; // Top
+        const busGap = 12;
+        const loadY = h - 25; // Bottom
 
         const srcA = {x: 0, y: busY, c: colA}; // Line A
         const srcB = {x: 0, y: busY+busGap, c: colB}; // Line B
@@ -183,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.fillStyle = colB; ctx.fillText('B', 10, srcB.y-5);
         ctx.fillStyle = colC; ctx.fillText('C', 10, srcC.y-5);
 
-        // --- Primary Connections (Fixed Delta for now) ---
+        // --- Primary Connections (Fixed Delta) ---
         // T1: H1->A, H2->B
         // T2: H1->B, H2->C
         // T3: H1->C, H2->A
@@ -199,7 +304,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         // --- Secondary Busbars (a, b, c, n) ---
-        // Just defining Y positions for output lines
         const out_a = loadY - busGap*3;
         const out_b = loadY - busGap*2;
         const out_c = loadY - busGap;
@@ -221,76 +325,44 @@ document.addEventListener('DOMContentLoaded', function() {
         const isDelta = state.secondaryConn.includes('delta');
         const isOpenDelta = state.secondaryConn.startsWith('delta-open');
 
-        // Identify 'Hot' and 'Return' terminal for each trafo based on internal jumping
-        // Parallel: Hot = X1(linked to X3), Return = X2(linked to X4) (Polarity: X1,X3 are starts)
-        // Series: Hot = X1, Mid = X2-X3, Return = X4 .
-        
         trafos.forEach((t, i) => {
-            if(isOpenDelta && i === 2) return; // Skip T3 wiring for Open Delta
+            if(isOpenDelta && i === 2) return; 
 
             let hotPoint, returnPoint;
 
             if(state.secondaryConn.includes('parallel')) {
-                // Parallel (120V): 
-                // X1 tied to X3 (Starts). X2 tied to X4 (Ends).
-                // Output taken from X1 (Hot) and X4 (Return/Neutral).
                 hotPoint = t.x1; 
                 returnPoint = t.x4; 
             } else {
-                // Series (240V): 
-                // X2 tied to X3 (Center Tap).
-                // Output X1 (Hot 1) and X4 (Hot 2 or Return depending on Star/Delta).
-                // For Star 3-phase (4-wire): X1 is Line, X4 is Neutral?
-                // Or Center Tap is grounded?
-                // Standard Star 4-wire (208/120V) uses Parallel coils.
-                // Standard Star (480/277V) uses Series coils? 
-                // If Series: X1->Line, X4->Neutral/Common Point.
                 hotPoint = t.x1;
                 returnPoint = t.x4;
             }
 
             // STAR CONNECTION
             if(isStar) {
-                // Phase output to a/b/c
                 const targetLineY = (i===0) ? out_a : (i===1) ? out_b : out_c;
                 const targetColor = (i===0) ? colA : (i===1) ? colB : colC;
                 
+                // Route down to busbar. 
+                // Since points are high up (35% H), we need to clear down.
                 drawWire(hotPoint, {x: hotPoint.x, y: targetLineY}, targetColor, 10 + i*5);
-
-                // Neutral Point
-                // In Star, all 'Return' points connect to Neutral Bus
                 drawWire(returnPoint, {x: returnPoint.x, y: out_n}, colN, 40);
             }
 
             // DELTA CONNECTION
             if(isDelta) {
-                // Delta closes the loop: End of T1 -> Start of T2
-                // Return of T1 -> Hot of T2
-                
-                // Draw to lines
-                const myLineY = (i===0) ? out_a : (i===1) ? out_b : out_c; // a, b, c
+                const myLineY = (i===0) ? out_a : (i===1) ? out_b : out_c; 
                 const myColor = (i===0) ? colA : (i===1) ? colB : colC;
 
-                // T_Hot goes to My Line
                 drawWire(hotPoint, {x: hotPoint.x, y: myLineY}, myColor, 10 + i*5);
 
-                // T_Return goes to Next Line
-                // T1(X4) -> T2(X1) (aka Line b)
-                
                 const nextLineY = (i===0) ? out_b : (i===1) ? out_c : out_a;
                 const nextColor = (i===0) ? colB : (i===1) ? colC : colA;
                 
                 if(isOpenDelta) {
-                   if(i===0) {
-                        // T1 Ret -> b
-                        drawWire(returnPoint, {x: returnPoint.x, y: out_b}, colB, 30);
-                   }
-                   if(i===1) {
-                        // T2 Ret -> c
-                        drawWire(returnPoint, {x: returnPoint.x, y: out_c}, colC, 30);
-                   }
+                   if(i===0) drawWire(returnPoint, {x: returnPoint.x, y: out_b}, colB, 30);
+                   if(i===1) drawWire(returnPoint, {x: returnPoint.x, y: out_c}, colC, 30);
                 } else {
-                   // Full Delta
                    drawWire(returnPoint, {x: returnPoint.x, y: nextLineY}, nextColor, 35);
                 }
             }
@@ -299,30 +371,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function drawInternalConnections() {
         trafos.forEach(t => {
+            // Because X1..X4 are horizontal, we can arc or bracket them.
+            // Arcs might be cleaner than square jumps for local connections.
+            
             if(state.secondaryConn.includes('parallel')) {
-                // Parallel: X1-X3 and X2-X4
-                // Jumpers
-                drawJumper(t.x1, t.x3, '#fff', -20);
-                drawJumper(t.x2, t.x4, '#fff', -20);
+                // X1-X3 and X2-X4
+                drawLocalJumper(t.x1, t.x3, '#fff');
+                drawLocalJumper(t.x2, t.x4, '#fff');
             } else {
                 // Series: X2-X3
-                drawJumper(t.x2, t.x3, '#fff', -20);
+                drawLocalJumper(t.x2, t.x3, '#fff');
             }
         });
     }
 
-    function drawJumper(p1, p2, color, offset) {
+    function drawLocalJumper(p1, p2, color) {
         ctx.beginPath();
-        const y = p1.y - offset; // actually offset is negative for up? No, p1.y is bottom. +offset goes down.
-        // Let's go down.
-        const midY = p1.y + Math.abs(offset);
+        // Arc downwards?
+        const centerX = (p1.x + p2.x) / 2;
+        const dist = Math.abs(p2.x - p1.x);
+        const controlY = p1.y + dist/1.5; // Control point below
         
         ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p1.x, midY);
-        ctx.lineTo(p2.x, midY);
-        ctx.lineTo(p2.x, p2.y);
+        ctx.quadraticCurveTo(centerX, controlY, p2.x, p2.y);
+        
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.stroke();
         
         ctx.beginPath();
@@ -333,16 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function calculateValues() {
-        // ... (Keep existing logic but update comments if needed)
-        // Re-implementing for safety
-        
-        let v_phase_pri = 13800; 
-        
-        // Single Phase Output Voltage based on internal connection
-        // Ratio 13800/120 = 115
-        // Parallel (X1//X3): 120V
-        // Series (X1-X2-X3-X4): 240V
-        
         let v_sec_winding = 120;
         if(state.secondaryConn.includes('series') || state.secondaryConn === 'delta-open') v_sec_winding = 240;
 
@@ -354,8 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
             v_ln = v_sec_winding;
         } else if (state.secondaryConn.includes('delta')) {
             v_ll = v_sec_winding;
-             // High leg theoretical? Just show phase
-            v_ln = v_sec_winding / Math.sqrt(3); // Virtual center
+            v_ln = v_sec_winding / Math.sqrt(3); 
         }
 
         dispVLL.textContent = v_ll.toFixed(1) + ' V';
