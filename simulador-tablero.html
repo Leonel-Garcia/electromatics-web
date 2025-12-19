@@ -104,14 +104,14 @@
       }
 
       .component-icon {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 6px;
-        font-size: 16px;
+        display: none; /* Reemplazado por img */
+      }
+
+      .component-img {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        display: block;
       }
 
       .workspace {
@@ -447,11 +447,11 @@
           <div class="component-category">
             <div class="category-label">Protección</div>
             <button class="component-btn" draggable="true" data-component="breaker">
-              <div class="component-icon">⚡</div>
+              <img src="img/simulators/control-panel/breaker.png" alt="Breaker" class="component-img">
               <span>Breaker Principal</span>
             </button>
             <button class="component-btn" draggable="true" data-component="thermal-relay">
-              <div class="component-icon">🌡️</div>
+              <img src="img/simulators/control-panel/thermal-relay.png" alt="Relé Térmico" class="component-img">
               <span>Relé Térmico</span>
             </button>
           </div>
@@ -459,7 +459,7 @@
           <div class="component-category">
             <div class="category-label">Maniobra</div>
             <button class="component-btn" draggable="true" data-component="contactor">
-              <div class="component-icon">🔌</div>
+              <img src="img/simulators/control-panel/contactor.png" alt="Contactor" class="component-img">
               <span>Contactor</span>
             </button>
           </div>
@@ -467,19 +467,19 @@
           <div class="component-category">
             <div class="category-label">Control</div>
             <button class="component-btn" draggable="true" data-component="start-btn">
-              <div class="component-icon" style="color: #22c55e;">▶</div>
+              <img src="img/simulators/control-panel/pushbutton-green.png" alt="Start" class="component-img">
               <span>Pulsador Start</span>
             </button>
             <button class="component-btn" draggable="true" data-component="stop-btn">
-              <div class="component-icon" style="color: #dc2626;">■</div>
+              <img src="img/simulators/control-panel/pushbutton-red.png" alt="Stop" class="component-img">
               <span>Pulsador Stop</span>
             </button>
             <button class="component-btn" draggable="true" data-component="pilot-green">
-              <div class="component-icon" style="color: #22c55e;">●</div>
+              <img src="img/simulators/control-panel/pilot-green.png" alt="Luz Verde" class="component-img">
               <span>Luz Piloto Verde</span>
             </button>
             <button class="component-btn" draggable="true" data-component="pilot-red">
-              <div class="component-icon" style="color: #dc2626;">●</div>
+              <img src="img/simulators/control-panel/pilot-red.png" alt="Luz Roja" class="component-img">
               <span>Luz Piloto Roja</span>
             </button>
           </div>
