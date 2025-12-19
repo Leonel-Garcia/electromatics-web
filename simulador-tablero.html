@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>Simulador de Tableros de Control Industrial | Electromatics</title>
+    <meta name="description" content="Diseña y simula tableros de control industriales con breakers, contactores, relés térmicos y motores. Herramienta interactiva para aprender automatización industrial." />
+    <meta name="keywords" content="tableros de control, breakers termomagnéticos, contactores, relés térmicos, riel DIN, automatización industrial, simulador eléctrico" />
+    <meta name="author" content="Leonel García" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://electromatics.com.ve/simulador-tablero.html" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --panel-bg: #1e293b;
+        --rail-color: #64748b;
+        --component-bg: #334155;
+        --terminal-color: #94a3b8;
+        --wire-color: #fbbf24;
+        --active-color: #22c55e;
+        --inactive-color: #dc2626;
+        --motor-color: #3b82f6;
+      }
+
+      .simulator-wrapper {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+        height: calc(100vh - 200px);
+        min-height: 600px;
+      }
+
+      .component-panel {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .panel-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .panel-title i {
+        color: var(--safety-orange);
+      }
+
+      .component-category {
+        margin-bottom: 20px;
+      }
+
+      .category-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        letter-spacing: 0.5px;
+      }
+
+      .component-btn {
+        width: 100%;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        background: var(--component-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.2s ease;
+      }
+
+      .component-btn:hover {
+        background: rgba(255, 152, 0, 0.1);
+        border-color: var(--safety-orange);
+      }
+
+      .component-btn.selected {
+        background: rgba(255, 152, 0, 0.2);
+        border-color: var(--safety-orange);
+      }
+
+      .component-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        font-size: 16px;
+      }
+
+      .workspace {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        padding: 15px 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .toolbar-btn {
+        padding: 10px 18px;
+        background: var(--component-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .toolbar-btn:hover {
+        background: rgba(255, 152, 0, 0.2);
+        border-color: var(--safety-orange);
+      }
+
+      .toolbar-btn.active {
+        background: var(--safety-orange);
+        border-color: var(--safety-orange);
+        color: #000;
+      }
+
+      .toolbar-btn.danger {
+        border-color: var(--inactive-color);
+      }
+
+      .toolbar-btn.danger:hover {
+        background: rgba(220, 38, 38, 0.2);
+      }
+
+      .toolbar-btn.success {
+        background: var(--active-color);
+        border-color: var(--active-color);
+        color: #000;
+      }
+
+      .toolbar-divider {
+        width: 1px;
+        height: 30px;
+        background: var(--border-color);
+        margin: 0 5px;
+      }
+
+      .status-indicator {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--inactive-color);
+      }
+
+      .status-dot.running {
+        background: var(--active-color);
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      .canvas-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: 
+          linear-gradient(rgba(30, 41, 59, 0.95), rgba(30, 41, 59, 0.95)),
+          repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.03) 20px),
+          repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.03) 20px);
+      }
+
+      #simulatorCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .control-panel {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        min-width: 200px;
+      }
+
+      .control-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .control-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .ctrl-btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+      }
+
+      .ctrl-btn.start {
+        background: var(--active-color);
+        color: #fff;
+      }
+
+      .ctrl-btn.start:hover {
+        background: #16a34a;
+        transform: scale(1.02);
+      }
+
+      .ctrl-btn.start:active {
+        transform: scale(0.98);
+      }
+
+      .ctrl-btn.stop {
+        background: var(--inactive-color);
+        color: #fff;
+      }
+
+      .ctrl-btn.stop:hover {
+        background: #b91c1c;
+        transform: scale(1.02);
+      }
+
+      .selector-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+      }
+
+      .selector-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+      }
+
+      .selector-options {
+        display: flex;
+        gap: 5px;
+      }
+
+      .selector-opt {
+        padding: 8px 12px;
+        background: var(--component-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .selector-opt.active {
+        background: var(--safety-orange);
+        border-color: var(--safety-orange);
+        color: #000;
+      }
+
+      .pilot-lights {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .pilot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .pilot-light {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .pilot-light.green { background: #1a472a; }
+      .pilot-light.green.on { 
+        background: var(--active-color); 
+        box-shadow: 0 0 15px var(--active-color);
+      }
+
+      .pilot-light.red { background: #4a1a1a; }
+      .pilot-light.red.on { 
+        background: var(--inactive-color); 
+        box-shadow: 0 0 15px var(--inactive-color);
+      }
+
+      .pilot-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+
+      .info-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 15px 20px;
+        max-width: 300px;
+      }
+
+      .info-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--safety-orange);
+        margin-bottom: 8px;
+      }
+
+      .info-text {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      @media (max-width: 900px) {
+        .simulator-wrapper {
+          grid-template-columns: 1fr;
+        }
+        .component-panel {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+
+        <!-- Mobile Nav Toggle -->
+        <button class="mobile-nav-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="proyectos.html">Proyectos</a>
+          <a href="formacion.html">Formación</a>
+          <a href="museo.html">Museo</a>
+          <a href="simuladores.html" class="active">Simuladores</a>
+          <a href="electro-info.html">Electro Info</a>
+          <a href="calculadora.html">Plataforma IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container" style="padding-top: 30px; padding-bottom: 40px;">
+      <div class="section-title" style="margin-bottom: 25px;">
+        <h1 style="font-size: 32px; margin-bottom: 10px;">
+          <i class="fa-solid fa-microchip" style="color: var(--safety-orange); margin-right: 10px;"></i>
+          Tablero de Control <span style="color: var(--safety-orange);">Industrial</span>
+        </h1>
+        <p style="font-size: 16px; color: var(--text-secondary); max-width: 700px; margin: 0 auto;">
+          Simulador interactivo de arrancador directo con control Start/Stop y selector AOM
+        </p>
+      </div>
+
+      <div class="simulator-wrapper">
+        <!-- Component Panel -->
+        <div class="component-panel">
+          <div class="panel-title">
+            <i class="fa-solid fa-cubes"></i>
+            Componentes
+          </div>
+
+          <div class="component-category">
+            <div class="category-label">Protección</div>
+            <button class="component-btn" data-component="breaker">
+              <div class="component-icon">⚡</div>
+              <span>Breaker Principal</span>
+            </button>
+            <button class="component-btn" data-component="thermal-relay">
+              <div class="component-icon">🌡️</div>
+              <span>Relé Térmico</span>
+            </button>
+          </div>
+
+          <div class="component-category">
+            <div class="category-label">Maniobra</div>
+            <button class="component-btn" data-component="contactor">
+              <div class="component-icon">🔌</div>
+              <span>Contactor</span>
+            </button>
+          </div>
+
+          <div class="component-category">
+            <div class="category-label">Control</div>
+            <button class="component-btn" data-component="selector">
+              <div class="component-icon">🔄</div>
+              <span>Selector AOM</span>
+            </button>
+            <button class="component-btn" data-component="start-btn">
+              <div class="component-icon" style="color: #22c55e;">▶</div>
+              <span>Pulsador Start</span>
+            </button>
+            <button class="component-btn" data-component="stop-btn">
+              <div class="component-icon" style="color: #dc2626;">■</div>
+              <span>Pulsador Stop</span>
+            </button>
+          </div>
+
+          <div class="component-category">
+            <div class="category-label">Indicadores</div>
+            <button class="component-btn" data-component="pilot-green">
+              <div class="component-icon" style="color: #22c55e;">●</div>
+              <span>Luz Piloto Verde</span>
+            </button>
+            <button class="component-btn" data-component="pilot-red">
+              <div class="component-icon" style="color: #dc2626;">●</div>
+              <span>Luz Piloto Roja</span>
+            </button>
+          </div>
+
+          <div class="component-category">
+            <div class="category-label">Carga</div>
+            <button class="component-btn" data-component="motor">
+              <div class="component-icon">⚙️</div>
+              <span>Motor Trifásico</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Workspace -->
+        <div class="workspace">
+          <div class="toolbar">
+            <button class="toolbar-btn" id="btn-simulate" title="Activar simulación">
+              <i class="fa-solid fa-play"></i>
+              Simular
+            </button>
+            <button class="toolbar-btn" id="btn-stop-sim" title="Detener simulación">
+              <i class="fa-solid fa-stop"></i>
+              Detener
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn danger" id="btn-reset" title="Resetear circuito">
+              <i class="fa-solid fa-rotate-left"></i>
+              Reset
+            </button>
+            <div class="status-indicator">
+              <div class="status-dot" id="status-dot"></div>
+              <span id="status-text">Detenido</span>
+            </div>
+          </div>
+
+          <div class="canvas-container">
+            <canvas id="simulatorCanvas"></canvas>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+              <div class="info-title">Arrancador Directo</div>
+              <div class="info-text">
+                Circuito de control para motor trifásico con protección por breaker, 
+                contactor de maniobra, selector AOM y control Start/Stop.
+              </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+              <div class="control-title">Panel de Control</div>
+              
+              <div class="selector-container">
+                <span class="selector-label">Selector:</span>
+                <div class="selector-options">
+                  <button class="selector-opt" data-mode="A">A</button>
+                  <button class="selector-opt active" data-mode="O">O</button>
+                  <button class="selector-opt" data-mode="M">M</button>
+                </div>
+              </div>
+
+              <div class="control-buttons" style="margin-top: 15px;">
+                <button class="ctrl-btn start" id="btn-start">
+                  <i class="fa-solid fa-play"></i> Start
+                </button>
+                <button class="ctrl-btn stop" id="btn-stop">
+                  <i class="fa-solid fa-stop"></i> Stop
+                </button>
+              </div>
+
+              <div class="pilot-lights">
+                <div class="pilot">
+                  <div class="pilot-light green" id="pilot-run"></div>
+                  <span class="pilot-label">Run</span>
+                </div>
+                <div class="pilot">
+                  <div class="pilot-light red on" id="pilot-stop"></div>
+                  <span class="pilot-label">Stop</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-info">
+            <h3>Electromatics.com.ve</h3>
+            <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+          </div>
+          <div class="footer-links">
+            <h4>Plataforma</h4>
+            <a href="calculadora.html">Calculadora 220/430</a>
+            <a href="formacion.html">Formación Técnica</a>
+            <a href="simuladores.html">Simuladores</a>
+          </div>
+          <div class="footer-links">
+            <h4>Empresa</h4>
+            <a href="nosotros.html">Nosotros</a>
+            <a href="servicios.html">Servicios</a>
+            <a href="contacto.html">Contacto</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/simple-auth.js"></script>
+    <script src="js/ui.js?v=1.0"></script>
+    <script src="js/simulators/control-panel.js"></script>
+  </body>
+</html>
