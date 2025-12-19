@@ -292,28 +292,59 @@ function loadAssets() {
 }
 
 function setupEventListeners() {
+    console.log("Setting up event listeners...");
+    
     // Drag from Menu
     document.querySelectorAll('.component-btn').forEach(btn => {
         btn.addEventListener('dragstart', e => {
+            console.log("Drag start:", btn.dataset.component);
             e.dataTransfer.setData('type', btn.dataset.component);
+            e.dataTransfer.effectAllowed = 'copy';
         });
     });
 
     // Drop on Canvas
-    canvas.addEventListener('dragover', e => e.preventDefault());
+    // IMPORTANTE: dragover debe prevenir default para permitir drop
+    canvas.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
     canvas.addEventListener('drop', e => {
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const type = e.dataTransfer.getData('type');
-        addComponent(type, e.clientX - rect.left, e.clientY - rect.top);
+        console.log("Drop event detected!");
+        
+        try {
+            const rect = canvas.getBoundingClientRect();
+            const type = e.dataTransfer.getData('type');
+            
+            if (!type) {
+                console.warn("Drop sin tipo válido");
+                return;
+            }
+
+            // Coordenadas relativas al canvas
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            console.log(`Adding component: ${type} at ${x},${y}`);
+            addComponent(type, x, y);
+
+        } catch (err) {
+            console.error("Error en Drop:", err);
+        }
     });
 
     // Mouse Interaction
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
+    // Touch support (básico)
+    canvas.addEventListener('touchstart', onMouseDown, {passive: false});
+    canvas.addEventListener('touchmove', onMouseMove, {passive: false});
+    canvas.addEventListener('touchend', onMouseUp);
     
-    // UI Buttons
+    // UI Buttons (Simulación)
     const btnSim = document.getElementById('btn-simulate');
     const btnStop = document.getElementById('btn-stop-sim');
     const btnReset = document.getElementById('btn-reset');
@@ -323,35 +354,6 @@ function setupEventListeners() {
     if(btnReset) btnReset.addEventListener('click', () => { 
         components = []; wires = []; isSimulating = false; updateStatus(); draw(); 
     });
-
-    // Panel Control Buttons (Start/Stop/Selector)
-    // Estos alteran el estado de componentes "virtuales" si existen
-    const btnPanelStart = document.getElementById('btn-start');
-    const btnPanelStop = document.getElementById('btn-stop');
-    const selectorOpts = document.querySelectorAll('.selector-opt');
-
-    if(btnPanelStart) {
-        btnPanelStart.addEventListener('mousedown', () => {
-             // Buscar start-btn en canvas y presionarlo
-             const startC = components.find(c => c instanceof PushButton && c.terminals['1']); // Approx
-             if(startC) startC.state.pressed = true;
-        });
-        btnPanelStart.addEventListener('mouseup', () => {
-             const startC = components.find(c => c instanceof PushButton && c.terminals['1']);
-             if(startC) startC.state.pressed = false;
-        });
-    }
-
-    if(btnPanelStop) {
-        btnPanelStop.addEventListener('mousedown', () => {
-             const stopC = components.find(c => c instanceof PushButton && c.type === 'stop-btn');
-             if(stopC) stopC.state.pressed = true;
-        });
-        btnPanelStop.addEventListener('mouseup', () => {
-             const stopC = components.find(c => c instanceof PushButton && c.type === 'stop-btn');
-             if(stopC) stopC.state.pressed = false;
-        });
-    }
 }
 
 function addComponent(type, x, y) {
