@@ -298,25 +298,37 @@ function setupEventListeners() {
     document.querySelectorAll('.component-btn').forEach(btn => {
         btn.addEventListener('dragstart', e => {
             console.log("Drag start:", btn.dataset.component);
-            e.dataTransfer.setData('type', btn.dataset.component);
+            e.dataTransfer.setData('text/plain', btn.dataset.component);
             e.dataTransfer.effectAllowed = 'copy';
         });
     });
 
     // Drop on Canvas
-    // IMPORTANTE: dragover debe prevenir default para permitir drop
-    canvas.addEventListener('dragover', e => {
+    const canvasContainer = canvas.parentElement;
+
+    canvasContainer.addEventListener('dragenter', e => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
+        canvasContainer.classList.add('drop-valid');
     });
 
-    canvas.addEventListener('drop', e => {
+    canvasContainer.addEventListener('dragover', e => {
         e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        canvasContainer.classList.add('drop-valid'); // Asegurar loop
+    });
+
+    canvasContainer.addEventListener('dragleave', e => {
+        canvasContainer.classList.remove('drop-valid');
+    });
+
+    canvasContainer.addEventListener('drop', e => {
+        e.preventDefault();
+        canvasContainer.classList.remove('drop-valid');
         console.log("Drop event detected!");
         
         try {
             const rect = canvas.getBoundingClientRect();
-            const type = e.dataTransfer.getData('type');
+            const type = e.dataTransfer.getData('text/plain');
             
             if (!type) {
                 console.warn("Drop sin tipo válido");
@@ -324,8 +336,12 @@ function setupEventListeners() {
             }
 
             // Coordenadas relativas al canvas
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            // Ajuste robusto para zoom/scroll
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
             
             console.log(`Adding component: ${type} at ${x},${y}`);
             addComponent(type, x, y);

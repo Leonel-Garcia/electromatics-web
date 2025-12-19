@@ -112,6 +112,7 @@
         height: 40px;
         object-fit: contain;
         display: block;
+        pointer-events: none; /* Asegura que el drag lo capture el botón */
       }
 
       .workspace {
@@ -213,6 +214,12 @@
           linear-gradient(rgba(30, 41, 59, 0.95), rgba(30, 41, 59, 0.95)),
           repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.03) 20px),
           repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.03) 20px);
+        transition: box-shadow 0.3s ease;
+      }
+      
+      .canvas-container.drop-valid {
+        box-shadow: inset 0 0 20px var(--active-color);
+        border: 2px solid var(--active-color);
       }
 
       #simulatorCanvas {
@@ -446,10 +453,6 @@
 
           <div class="component-category">
             <div class="category-label">Protección</div>
-            <button class="component-btn" draggable="true" data-component="breaker">
-              <img src="img/simulators/control-panel/breaker.png" alt="Breaker" class="component-img">
-              <span>Breaker Principal</span>
-            </button>
             <button class="component-btn" draggable="true" data-component="thermal-relay">
               <img src="img/simulators/control-panel/thermal-relay.png" alt="Relé Térmico" class="component-img">
               <span>Relé Térmico</span>
@@ -458,14 +461,18 @@
 
           <div class="component-category">
             <div class="category-label">Maniobra</div>
-            <button class="component-btn" draggable="true" data-component="contactor">
-              <img src="img/simulators/control-panel/contactor.png" alt="Contactor" class="component-img">
-              <span>Contactor</span>
+            <button class="component-btn" draggable="true" data-component="breaker">
+              <img src="img/simulators/control-panel/breaker.png" alt="Breaker" class="component-img">
+              <span>Breaker Principal</span>
             </button>
           </div>
 
           <div class="component-category">
             <div class="category-label">Control</div>
+            <button class="component-btn" draggable="true" data-component="contactor">
+              <img src="img/simulators/control-panel/contactor.png" alt="Contactor" class="component-img">
+              <span>Contactor</span>
+            </button>
             <button class="component-btn" draggable="true" data-component="start-btn">
               <img src="img/simulators/control-panel/pushbutton-green.png" alt="Start" class="component-img">
               <span>Pulsador Start</span>
@@ -487,7 +494,7 @@
           <div class="component-category">
             <div class="category-label">Carga</div>
             <button class="component-btn" draggable="true" data-component="motor">
-              <div class="component-icon">⚙️</div>
+              <img src="img/simulators/control-panel/motor.png" alt="Motor Trifásico" class="component-img">
               <span>Motor Trifásico</span>
             </button>
           </div>
