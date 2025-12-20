@@ -209,11 +209,8 @@
       .canvas-container {
         flex: 1;
         position: relative;
-        overflow: hidden;
-        background: 
-          linear-gradient(rgba(30, 41, 59, 0.95), rgba(30, 41, 59, 0.95)),
-          repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.03) 20px),
-          repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.03) 20px);
+        overflow: auto;
+        background: #1e293b;
         transition: box-shadow 0.3s ease;
       }
       
@@ -224,8 +221,6 @@
 
       #simulatorCanvas {
         display: block;
-        width: 100%;
-        height: 100%;
       }
 
       .control-panel {

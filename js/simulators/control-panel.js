@@ -342,8 +342,14 @@ function setupEventListeners() {
     // Zoom Controls
     const btnZoomIn = document.getElementById('btn-zoom-in');
     const btnZoomOut = document.getElementById('btn-zoom-out');
-    if(btnZoomIn) btnZoomIn.addEventListener('click', () => { scale = Math.min(scale + 0.1, 2.0); draw(); });
-    if(btnZoomOut) btnZoomOut.addEventListener('click', () => { scale = Math.max(scale - 0.1, 0.5); draw(); });
+    if(btnZoomIn) btnZoomIn.addEventListener('click', () => { 
+        scale = Math.min(scale + 0.1, 2.0); 
+        resizeCanvas(); 
+    });
+    if(btnZoomOut) btnZoomOut.addEventListener('click', () => { 
+        scale = Math.max(scale - 0.1, 0.5); 
+        resizeCanvas(); 
+    });
 
     // Drag from Menu
     document.querySelectorAll('.component-btn').forEach(btn => {
@@ -431,9 +437,14 @@ function addComponent(type, x, y) {
         case 'pilot-red': c = new PilotLight('pilot-red', x, y); break;
         default: return;
     }
-    // Center logic
-    c.x -= c.width/2; 
-    c.y -= c.height/2;
+    // Calcular posición top-left basada en el mouse (centro)
+    let tlX = x - c.width/2;
+    let tlY = y - c.height/2;
+
+    // Aplicar Snap to Grid (20px) para alineación perfecta
+    c.x = snapToGrid(tlX); 
+    c.y = snapToGrid(tlY);
+
     components.push(c);
     draw();
 }
@@ -477,8 +488,11 @@ function onMouseMove(e) {
     mousePos.y = rawY / scale;
 
     if (dragItem) {
-        dragItem.comp.x = mousePos.x - dragItem.offX;
-        dragItem.comp.y = mousePos.y - dragItem.offY;
+        const rawX = mousePos.x - dragItem.offX;
+        const rawY = mousePos.y - dragItem.offY;
+        // Snap dragging
+        dragItem.comp.x = snapToGrid(rawX);
+        dragItem.comp.y = snapToGrid(rawY);
     }
 }
 
@@ -680,6 +694,9 @@ function draw() {
     ctx.save();
     ctx.scale(scale, scale);
 
+    // 0. Grid
+    drawGrid(ctx);
+
     // 1. Cables
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -729,11 +746,39 @@ function draw() {
 
 // ================= UTILIDADES =================
 
+function drawGrid(ctx) {
+    const w = 2400;
+    const h = 1600;
+    const step = 20;
+    
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    
+    // Vertical
+    for(let x=0; x<=w; x+=step) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+    }
+    // Horizontal
+    for(let y=0; y<=h; y+=step) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+    }
+    ctx.stroke();
+}
+
+function snapToGrid(val, gridSize = 20) {
+    return Math.round(val / gridSize) * gridSize;
+}
+
 function resizeCanvas() {
     const parent = canvas.parentElement;
     if (parent) {
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight || 600; 
+        // Área lógica base 2400x1600. Escalamos el canvas físicamente según el zoom
+        // para que siempre haya espacio para los elementos lógicos y el scroll funcione
+        canvas.width = Math.max(parent.clientWidth, 2400 * scale);
+        canvas.height = Math.max(parent.clientHeight || 600, 1600 * scale); 
         draw(); 
     }
 }
