@@ -7,10 +7,12 @@ const canvas = document.getElementById('simulatorCanvas');
 const ctx = canvas.getContext('2d');
 
 // Estado Global (Exuesto para debug)
+// Estado Global (Exuesto para debug)
 window.assets = {}; 
 window.components = []; 
 window.wires = []; 
 window.isSimulating = false;
+window.scale = 1.0; // Zoom level
 let simulationTime = 0;
 
 // Alias locales para compatibilidad con código existente
@@ -18,6 +20,7 @@ let assets = window.assets;
 let components = window.components;
 let wires = window.wires;
 let isSimulating = window.isSimulating;
+let scale = window.scale;
 
 // Configuración de Assets
 const ASSET_PATHS = {
@@ -28,7 +31,8 @@ const ASSET_PATHS = {
     'start-btn': 'img/simulators/control-panel/pushbutton-green.png',
     'stop-btn': 'img/simulators/control-panel/pushbutton-red.png',
     'pilot-green': 'img/simulators/control-panel/pilot-green.png',
-    'pilot-red': 'img/simulators/control-panel/pilot-red.png'
+    'pilot-red': 'img/simulators/control-panel/pilot-red.png',
+    // Fuente no tiene imagen, se dibuja
 };
 
 // ================= CLASES =================
@@ -61,6 +65,7 @@ class Component {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
+            // Ajustar radio de hit según zoom si fuera necesario, pero coordenadas ya vienen transformadas
             if (Math.hypot(mx - tx, my - ty) < 12) return this.getTerminal(id);
         }
         return null;
@@ -79,6 +84,19 @@ class Component {
             ctx.shadowBlur = 15;
             ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
             ctx.shadowBlur = 0;
+        } else if (this.type === 'power-source') {
+             // Dibujo vectorizado para Fuente
+             ctx.fillStyle = '#334155';
+             ctx.fillRect(this.x, this.y, this.width, this.height);
+             ctx.strokeStyle = '#94a3b8';
+             ctx.strokeRect(this.x, this.y, this.width, this.height);
+             ctx.fillStyle = '#fbbf24';
+             ctx.font = 'bold 14px Inter';
+             ctx.textAlign = 'center';
+             ctx.fillText('3Φ', this.x + this.width/2, this.y + 25);
+             ctx.font = '10px Inter';
+             ctx.fillStyle = '#fff';
+             ctx.fillText('440V', this.x + this.width/2, this.y + 40);
         } else {
             // Fallback
             ctx.fillStyle = '#cbd5e1';
@@ -114,6 +132,17 @@ class Component {
     }
 }
 
+class PowerSource extends Component {
+    constructor(x, y) {
+        super('power-source', x, y, 100, 60);
+        this.terminals = {
+            'L1': {x: 20, y: 50, label: 'L1'}, 
+            'L2': {x: 50, y: 50, label: 'L2'}, 
+            'L3': {x: 80, y: 50, label: 'L3'}
+        };
+    }
+}
+
 class Breaker extends Component {
     constructor(x, y) {
         super('breaker', x, y, 100, 120);
@@ -146,7 +175,10 @@ class Contactor extends Component {
             'L1': {x: 18, y: 10, label: 'L1'}, 'L2': {x: 50, y: 10, label: 'L2'}, 'L3': {x: 82, y: 10, label: 'L3'},
             'T1': {x: 18, y: 110, label: 'T1'}, 'T2': {x: 50, y: 110, label: 'T2'}, 'T3': {x: 82, y: 110, label: 'T3'},
             'A1': {x: 10, y: 60, label: 'A1'}, 'A2': {x: 90, y: 60, label: 'A2'},
-            'NO13': {x: 10, y: 80, label: '13'}, 'NO14': {x: 90, y: 80, label: '14'}
+            // Auxiliares NO (13-14)
+            'NO13': {x: 10, y: 40, label: '13'}, 'NO14': {x: 90, y: 40, label: '14'},
+            // Auxiliares NC (21-22) - Asumiendo que imagen permite ubicarlos, si no, se sobreponen visualmente pero funcionalmente ok
+            'NC21': {x: 10, y: 80, label: '21'}, 'NC22': {x: 90, y: 80, label: '22'}
         };
     }
     draw(ctx) {
@@ -176,7 +208,7 @@ class ThermalRelay extends Component {
 class Motor extends Component {
     constructor(x, y) {
         super('motor', x, y, 160, 160);
-        this.state = { running: false, angle: 0 };
+        this.state = { running: false, angle: 0, direction: 1 }; // 1: CW, -1: CCW
         this.terminals = {
             'U': {x: 45, y: 35, label: 'U'}, 
             'V': {x: 80, y: 35, label: 'V'}, 
@@ -195,7 +227,21 @@ class Motor extends Component {
              ctx.fillStyle = '#475569';
              ctx.fillRect(-2, -12, 4, 24);
              ctx.restore();
-             this.state.angle += 0.3;
+             
+             // Flecha de Dirección
+             ctx.save();
+             ctx.translate(this.x + 80, this.y + 90);
+             ctx.strokeStyle = '#22c55e';
+             ctx.lineWidth = 4;
+             ctx.beginPath();
+             // Arco flecha
+             ctx.arc(0, 0, 40, 0, Math.PI * (this.state.direction > 0 ? 1 : -1) * 0.5, this.state.direction < 0);
+             ctx.stroke();
+             // Cabeza flecha (simplificada)
+             // TBD: Drawing actual arrow head logic based on end point
+             ctx.restore();
+
+             this.state.angle += 0.3 * this.state.direction;
         }
     }
 }
@@ -255,7 +301,7 @@ function init() {
     loadAssets().then(() => {
         console.log("Assets cargados/verificados. Dibujando inicial...");
         draw(); 
-        loop(); // Iniciar loop de animación/simulación
+        loop(); 
     });
 }
 
@@ -284,7 +330,6 @@ function loadAssets() {
             
             img.onerror = () => { 
                 console.warn(`Error cargando asset: ${key} (${ASSET_PATHS[key]})`);
-                // No lo agregamos a assets[], usaremos fallback
                 checkDone(); 
             };
         });
@@ -294,10 +339,15 @@ function loadAssets() {
 function setupEventListeners() {
     console.log("Setting up event listeners...");
     
+    // Zoom Controls
+    const btnZoomIn = document.getElementById('btn-zoom-in');
+    const btnZoomOut = document.getElementById('btn-zoom-out');
+    if(btnZoomIn) btnZoomIn.addEventListener('click', () => { scale = Math.min(scale + 0.1, 2.0); draw(); });
+    if(btnZoomOut) btnZoomOut.addEventListener('click', () => { scale = Math.max(scale - 0.1, 0.5); draw(); });
+
     // Drag from Menu
     document.querySelectorAll('.component-btn').forEach(btn => {
         btn.addEventListener('dragstart', e => {
-            console.log("Drag start:", btn.dataset.component);
             e.dataTransfer.setData('text/plain', btn.dataset.component);
             e.dataTransfer.effectAllowed = 'copy';
         });
@@ -324,26 +374,21 @@ function setupEventListeners() {
     canvasContainer.addEventListener('drop', e => {
         e.preventDefault();
         canvasContainer.classList.remove('drop-valid');
-        console.log("Drop event detected!");
         
         try {
             const rect = canvas.getBoundingClientRect();
             const type = e.dataTransfer.getData('text/plain');
             
-            if (!type) {
-                console.warn("Drop sin tipo válido");
-                return;
-            }
+            if (!type) return;
 
-            // Coordenadas relativas al canvas
-            // Ajuste robusto para zoom/scroll
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-
-            const x = (e.clientX - rect.left) * scaleX;
-            const y = (e.clientY - rect.top) * scaleY;
+            // Coordenadas con Zoom
+            const rawX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const rawY = (e.clientY - rect.top) * (canvas.height / rect.height);
             
-            console.log(`Adding component: ${type} at ${x},${y}`);
+            // Aplicar escala inversa
+            const x = rawX / scale;
+            const y = rawY / scale;
+            
             addComponent(type, x, y);
 
         } catch (err) {
@@ -375,6 +420,7 @@ function setupEventListeners() {
 function addComponent(type, x, y) {
     let c;
     switch(type) {
+        case 'power-source': c = new PowerSource(x, y); break;
         case 'breaker': c = new Breaker(x, y); break;
         case 'contactor': c = new Contactor(x, y); break;
         case 'thermal-relay': c = new ThermalRelay(x, y); break;
@@ -394,8 +440,10 @@ function addComponent(type, x, y) {
 
 function onMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+    const rawX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const rawY = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const mx = rawX / scale; // Zoom logic
+    const my = rawY / scale;
 
     // 1. Tocar Terminal? -> Iniciar Cableado
     for (const c of components) {
@@ -423,8 +471,10 @@ function onMouseDown(e) {
 
 function onMouseMove(e) {
     const rect = canvas.getBoundingClientRect();
-    mousePos.x = e.clientX - rect.left;
-    mousePos.y = e.clientY - rect.top;
+    const rawX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const rawY = (e.clientY - rect.top) * (canvas.height / rect.height);
+    mousePos.x = rawX / scale;
+    mousePos.y = rawY / scale;
 
     if (dragItem) {
         dragItem.comp.x = mousePos.x - dragItem.offX;
@@ -463,7 +513,7 @@ function updateStatus() {
         el.innerText = "Simulando...";
         dot.className = "status-dot running";
     } else {
-        el.innerText = "Detenido (Edición)";
+        el.innerText = "Detenido";
         dot.className = "status-dot";
         // Reset states
         components.forEach(c => {
@@ -476,12 +526,6 @@ function updateStatus() {
 
 
 // ================= SIMULACION DE CIRCUITO (SOLVER) =================
-
-function loop() {
-    if (isSimulating) solveCircuit();
-    draw();
-    requestAnimationFrame(loop);
-}
 
 function solveCircuit() {
     // 1. Resetear nodos
@@ -500,11 +544,10 @@ function solveCircuit() {
     };
 
     // 2. Fuentes de Poder (StartPoints)
-    // Asumimos que la entrada del Breaker (L1, L2, L3) SIEMPRE tiene energía
-    components.filter(c => c instanceof Breaker).forEach(b => {
-        setNode(b, 'L1', 'L1');
-        setNode(b, 'L2', 'L2');
-        setNode(b, 'L3', 'L3');
+    components.filter(c => c instanceof PowerSource).forEach(p => {
+        setNode(p, 'L1', 'L1');
+        setNode(p, 'L2', 'L2');
+        setNode(p, 'L3', 'L3');
     });
 
     // 3. Propagación Iterativa (Max 10 iteraciones para estabilizar)
@@ -521,26 +564,42 @@ function solveCircuit() {
                 });
             }
             if (c instanceof Contactor && c.state.engaged) {
+                // Principales
                 ['L1','L2','L3'].forEach((inT, i) => {
                      const outT = ['T1','T2','T3'][i];
-                     // Transferir si tiene fase correspondiente
-                     // NOTA: Simplificamos, si L1 tiene L1 fase, pasa a T1.
                      if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
                 });
+                // Auxiliares NO (13-14)
+                // Bidireccional simple: Lo que hay en 13 pasa a 14 y viceversa
+                const k13 = `${c.id}_NO13`;
+                const k14 = `${c.id}_NO14`;
+                if(nodes[k13]) nodes[k13].forEach(p => setNode(c, 'NO14', p));
+                if(nodes[k14]) nodes[k14].forEach(p => setNode(c, 'NO13', p));
             }
+            if (c instanceof Contactor && !c.state.engaged) {
+                // Auxiliares NC (21-22)
+                const k21 = `${c.id}_NC21`;
+                const k22 = `${c.id}_NC22`;
+                if(nodes[k21]) nodes[k21].forEach(p => setNode(c, 'NC22', p));
+                if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
+            }
+            
             if (c instanceof ThermalRelay && !c.state.tripped) {
                 ['L1','L2','L3'].forEach((inT, i) => {
                      const outT = ['T1','T2','T3'][i];
                      if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
                 });
-                // Contacto NC 95-96 (Control)
-                // Si 95 tiene algo, pasarlo a 96
-                // (Implementación básica de control single-phase)
-                // Asumimos control voltage es L1 o cualquier fase.
+                // Contacto NC 95-96
+                const k95 = `${c.id}_NC95`;
+                if(nodes[k95]) nodes[k95].forEach(p => setNode(c, 'NC96', p));
             }
+            // NO 97-98 térmico (solo si trip)
+            if (c instanceof ThermalRelay && c.state.tripped) {
+                const k97 = `${c.id}_NO97`;
+                if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
+            }
+
             if (c instanceof PushButton && c.state.pressed) {
-                // Paso 1->2
-                // Chequear qué fases hay en 1
                 const k1 = `${c.id}_1`;
                 if(nodes[k1]) nodes[k1].forEach(p => setNode(c, '2', p));
             }
@@ -548,11 +607,6 @@ function solveCircuit() {
 
         // B. Transferencia por Cables
         wires.forEach(w => {
-            // De Start a End
-            const kStart = `${w.from.id}_${w.fromId}`;
-            const kEnd = `${w.to.toId}_${w.toId}`; // BUG: w.to is component, w.toId is term
-            
-            // Corregir acceso
             const ks = `${w.from.id}_${w.fromId}`;
             const ke = `${w.to.id}_${w.toId}`;
 
@@ -564,7 +618,6 @@ function solveCircuit() {
                     }
                 });
             }
-            // Cables son bidireccionales
             if(nodes[ke]) {
                 nodes[ke].forEach(p => {
                     if (!nodes[ks] || !nodes[ks].has(p)) {
@@ -575,26 +628,38 @@ function solveCircuit() {
             }
         });
         
-        // C. Lógica de Activación de Bobinas y Motores (Consumidores)
-        
-        // Bobina Contactor (A1 - A2)
-        // Requiere diferencia de potencial (Fase-Neutro o Fase-Fase).
-        // Simplificacion: Si A1 tiene fase y A2 tiene fase distinta o Neutro (no simulado), activar.
-        // HACK: Si A1 tiene 'L1' (control) -> activar.
+        // C. Consumidores
+        // Bobina Contactor
         components.filter(c => c instanceof Contactor).forEach(k => {
             const hasA1 = nodes[`${k.id}_A1`];
-            // Lógica Auto-Enclavamiento si cableado:
-            // Si A1 recibe señal...
+            // Simple logic: Si A1 tiene fase -> Activar. (Idealmente A1-A2 diff pot)
             if (hasA1 && hasA1.size > 0) k.state.engaged = true;
             else k.state.engaged = false;
         });
 
-        // Motor (U, V, W)
+        // Motor
         components.filter(c => c instanceof Motor).forEach(m => {
             const u = hasPhase(m, 'U', 'L1');
             const v = hasPhase(m, 'V', 'L2');
             const w = hasPhase(m, 'W', 'L3');
-            m.state.running = (u && v && w);
+            
+            // Lógica de Giro básica
+            // L1-U, L2-V, L3-W -> CW (+1)
+            // L1-U, L3-V, L2-W -> CCW (-1)
+            
+            const uPhase = nodes[`${m.id}_U`] ? [...nodes[`${m.id}_U`]][0] : null;
+            const vPhase = nodes[`${m.id}_V`] ? [...nodes[`${m.id}_V`]][0] : null;
+            const wPhase = nodes[`${m.id}_W`] ? [...nodes[`${m.id}_W`]][0] : null;
+
+            if (uPhase && vPhase && wPhase && uPhase!==vPhase && vPhase!==wPhase && uPhase!==wPhase) {
+                m.state.running = true;
+                // Detectar secuencia
+                if (uPhase==='L1' && vPhase==='L2') m.state.direction = 1;
+                else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
+                else m.state.direction = 1; // Default
+            } else {
+                m.state.running = false;
+            }
         });
 
         // Luces
@@ -611,6 +676,9 @@ function solveCircuit() {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.save();
+    ctx.scale(scale, scale);
 
     // 1. Cables
     ctx.lineCap = 'round';
@@ -620,24 +688,23 @@ function draw() {
         const p2 = w.to.getTerminal(w.toId);
         
         if (p1 && p2) {
-             // Determinar color: Si simulando y tiene voltaje -> Rojo/Vivo, sino Azul.
              ctx.strokeStyle = '#3b82f6'; 
              ctx.lineWidth = 4;
              
-             // Visualizar flujo si simulando
-             if (isSimulating) {
-                 // Check if start or end has voltage
-                 // (Sería ideal pintar todo el cable caliente)
-             }
-
+             // Si simulando y energizado... (Visualización básica)
+             
              ctx.beginPath();
              ctx.moveTo(p1.x, p1.y);
              
-             // Cableado "Ortohonal" o "Natural"
-             // Curva simple "colgante"
+             // Curva bonita
              const midY = Math.max(p1.y, p2.y) + 40;
              ctx.bezierCurveTo(p1.x, midY, p2.x, midY, p2.x, p2.y);
              ctx.stroke();
+
+             // Mejora visual: Circulo en unión para tapar extremos cuadrados
+             ctx.fillStyle = '#3b82f6';
+             ctx.beginPath(); ctx.arc(p1.x, p1.y, 2, 0, Math.PI*2); ctx.fill();
+             ctx.beginPath(); ctx.arc(p2.x, p2.y, 2, 0, Math.PI*2); ctx.fill();
         }
     });
 
@@ -656,6 +723,8 @@ function draw() {
 
     // 3. Componentes
     components.forEach(c => c.draw(ctx));
+
+    ctx.restore();
 }
 
 // ================= UTILIDADES =================
@@ -664,15 +733,11 @@ function resizeCanvas() {
     const parent = canvas.parentElement;
     if (parent) {
         canvas.width = parent.clientWidth;
-        // Ajustar altura para mantener proporción o llenar contenedor
         canvas.height = parent.clientHeight || 600; 
         draw(); 
     }
 }
 
-// Re-escuchar resize
-window.removeEventListener('resize', resizeCanvas); // Evitar duplicados si reload
+window.removeEventListener('resize', resizeCanvas); 
 window.addEventListener('resize', resizeCanvas);
-
-// Init
 document.addEventListener('DOMContentLoaded', init);

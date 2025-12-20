@@ -452,6 +452,14 @@
           </div>
 
           <div class="component-category">
+            <div class="category-label">Alimentación</div>
+            <button class="component-btn" draggable="true" data-component="power-source">
+              <div class="component-icon" style="display:block; font-size:24px;">⚡</div>
+              <span>Fuente Trifásica</span>
+            </button>
+          </div>
+
+          <div class="component-category">
             <div class="category-label">Protección</div>
             <button class="component-btn" draggable="true" data-component="thermal-relay">
               <img src="img/simulators/control-panel/thermal-relay.png" alt="Relé Térmico" class="component-img">
@@ -516,6 +524,13 @@
               <i class="fa-solid fa-rotate-left"></i>
               Reset
             </button>
+            <button class="toolbar-btn" id="btn-zoom-in" title="Acercar">
+              <i class="fa-solid fa-magnifying-glass-plus"></i>
+            </button>
+            <button class="toolbar-btn" id="btn-zoom-out" title="Alejar">
+              <i class="fa-solid fa-magnifying-glass-minus"></i>
+            </button>
+            <div class="toolbar-divider"></div>
             <div class="status-indicator">
               <div class="status-dot" id="status-dot"></div>
               <span id="status-text">Detenido</span>
