@@ -38,7 +38,7 @@ const ASSET_PATHS = {
     'stop-btn': 'img/simulators/control-panel/pushbutton-red.png',
     'pilot-green': 'img/simulators/control-panel/pilot-green.png',
     'pilot-red': 'img/simulators/control-panel/pilot-red.png',
-    'pilot-amber': 'img/simulators/control-panel/pilot-amber.png',
+    'pilot-amber': 'img/simulators/control-panel/pilot-ambar.png',
     // Fuente no tiene imagen, se dibuja
 };
 
@@ -187,18 +187,50 @@ class SinglePhaseSource extends Component {
         };
     }
     draw(ctx) {
+        // Sombra para profundidad
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 10;
+        
+        // Cuerpo principal con bordes redondeados
         ctx.fillStyle = '#334155';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.strokeStyle = '#94a3b8';
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        ctx.beginPath();
+        ctx.roundRect(this.x, this.y, this.width, this.height, 6);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Borde
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Texto
         ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 14px Inter';
+        ctx.font = 'bold 16px Inter';
         ctx.textAlign = 'center';
         ctx.fillText('1Φ', this.x + this.width/2, this.y + 25);
-        ctx.font = '10px Inter';
-        ctx.fillStyle = '#fff';
-        ctx.fillText('220V', this.x + this.width/2, this.y + 40);
-        super.draw(ctx);
+        ctx.font = '11px Inter';
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillText('220V', this.x + this.width/2, this.y + 42);
+        
+        // Terminales
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            
+            // Color del terminal
+            ctx.fillStyle = id === 'L' ? '#ef4444' : '#3b82f6'; // Rojo para L, Azul para N
+            ctx.beginPath();
+            ctx.arc(tx, ty, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Etiqueta
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Inter';
+            ctx.fillText(id, tx, ty - 10);
+        }
     }
 }
 
