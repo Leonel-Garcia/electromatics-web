@@ -925,7 +925,10 @@ function solveCircuit() {
     const setNode = (comp, term, phase) => {
         const key = `${comp.id}_${term}`;
         if (!nodes[key]) nodes[key] = new Set();
-        nodes[key].add(phase);
+        if (!nodes[key].has(phase)) {
+            nodes[key].add(phase);
+            changed = true; // Cualquier nuevo potencial debe gatillar otra iteración
+        }
     };
 
     const hasPhase = (comp, term, phase) => {
@@ -956,14 +959,17 @@ function solveCircuit() {
             if (c instanceof Breaker && c.state.closed) {
                 ['L1','L2','L3'].forEach((inT, i) => {
                     const outT = ['T1','T2','T3'][i];
-                    if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
+                    // Bidireccional
+                    if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                    if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
                 });
             }
             if (c instanceof Contactor && c.state.engaged) {
-                // Principales
+                // Principales (Bidireccional)
                 ['L1','L2','L3'].forEach((inT, i) => {
                      const outT = ['T1','T2','T3'][i];
-                     if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
+                     if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                     if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
                 });
                 // Auxiliares NO (13-14)
                 // Bidireccional simple: Lo que hay en 13 pasa a 14 y viceversa
@@ -985,14 +991,16 @@ function solveCircuit() {
                      const outT = ['T1','T2','T3'][i];
                      if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
                 });
-                // Contacto NC 95-96
-                const k95 = `${c.id}_NC95`;
+                // Contacto NC 95-96 (Bidireccional)
+                const k95 = `${c.id}_NC95`, k96 = `${c.id}_NC96`;
                 if(nodes[k95]) nodes[k95].forEach(p => setNode(c, 'NC96', p));
+                if(nodes[k96]) nodes[k96].forEach(p => setNode(c, 'NC95', p));
             }
-            // NO 97-98 térmico (solo si trip)
+            // NO 97-98 térmico (solo si trip, Bidireccional)
             if (c instanceof ThermalRelay && c.state.tripped) {
-                const k97 = `${c.id}_NO97`;
+                const k97 = `${c.id}_NO97`, k98 = `${c.id}_NO98`;
                 if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
+                if(nodes[k98]) nodes[k98].forEach(p => setNode(c, 'NO97', p));
             }
 
             if (c instanceof PushButton) {
@@ -1007,69 +1015,29 @@ function solveCircuit() {
                     if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
                 }
             }
-
         });
 
         // B. Transferencia por Cables
         wires.forEach(w => {
             if (w.isTriple) {
                 // Propagación trifásica automática
-                const phaseSets = [
-                    ['L1', 'L2', 'L3'],
-                    ['T1', 'T2', 'T3'],
-                    ['U', 'V', 'W']
-                ];
+                const phaseSets = [['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], ['U', 'V', 'W']];
 
-                // Encontrar a qué set y qué indice pertenece cada terminal
                 let setFrom = phaseSets.find(s => s.includes(w.fromId));
                 let setTo = phaseSets.find(s => s.includes(w.toId));
 
                 if (setFrom && setTo) {
                     for (let i = 0; i < 3; i++) {
-                        const fid = setFrom[i];
-                        const tid = setTo[i];
-                        const ks = `${w.from.id}_${fid}`;
-                        const ke = `${w.to.id}_${tid}`;
-
-                        if (nodes[ks]) {
-                            nodes[ks].forEach(p => {
-                                if (!nodes[ke] || !nodes[ke].has(p)) {
-                                    setNode(w.to, tid, p);
-                                    changed = true;
-                                }
-                            });
-                        }
-                        if (nodes[ke]) {
-                            nodes[ke].forEach(p => {
-                                if (!nodes[ks] || !nodes[ks].has(p)) {
-                                    setNode(w.from, fid, p);
-                                    changed = true;
-                                }
-                            });
-                        }
+                        const fid = setFrom[i], tid = setTo[i];
+                        const ks = `${w.from.id}_${fid}`, ke = `${w.to.id}_${tid}`;
+                        if (nodes[ks]) nodes[ks].forEach(p => setNode(w.to, tid, p));
+                        if (nodes[ke]) nodes[ke].forEach(p => setNode(w.from, fid, p));
                     }
                 }
             } else {
-                // Cable normal
-                const ks = `${w.from.id}_${w.fromId}`;
-                const ke = `${w.to.id}_${w.toId}`;
-
-                if (nodes[ks]) {
-                    nodes[ks].forEach(p => {
-                        if (!nodes[ke] || !nodes[ke].has(p)) {
-                            setNode(w.to, w.toId, p);
-                            changed = true;
-                        }
-                    });
-                }
-                if (nodes[ke]) {
-                    nodes[ke].forEach(p => {
-                        if (!nodes[ks] || !nodes[ks].has(p)) {
-                            setNode(w.from, w.fromId, p);
-                            changed = true;
-                        }
-                    });
-                }
+                const ks = `${w.from.id}_${w.fromId}`, ke = `${w.to.id}_${w.toId}`;
+                if (nodes[ks]) nodes[ks].forEach(p => setNode(w.to, w.toId, p));
+                if (nodes[ke]) nodes[ke].forEach(p => setNode(w.from, w.fromId, p));
             }
         });
         
@@ -1101,12 +1069,14 @@ function solveCircuit() {
 
                     // Propagar Corriente hacia los Relés Térmicos en serie
                     components.filter(c => c instanceof ThermalRelay && !c.state.tripped).forEach(r => {
-                        const nodeT1 = nodes[`${r.id}_T1`];
-                        const nodeT2 = nodes[`${r.id}_T2`];
-                        const nodeT3 = nodes[`${r.id}_T3`];
+                        const hasT1 = nodes[`${r.id}_T1`], hasT2 = nodes[`${r.id}_T2`], hasT3 = nodes[`${r.id}_T3`];
                         
-                        if (nodeT1 && nodeT1 === hasU && nodeT2 && nodeT2 === hasV && nodeT3 && nodeT3 === hasW) {
-                            r.state.currentSense += m.state.state?.nominalCurrent || 6.5;
+                        // Verificar si las salidas del relé están conectadas a las entradas del motor
+                        // Comparamos los conjuntos de fases. Si comparten al menos una fase de potencia, asumimos conexión
+                        const connected = (t, m) => t && m && [...t].some(p => m.has(p));
+
+                        if (connected(hasT1, hasU) && connected(hasT2, hasV) && connected(hasT3, hasW)) {
+                            r.state.currentSense += m.state.nominalCurrent || 6.5;
                         }
                     });
                 } else {
@@ -1131,13 +1101,15 @@ function solveCircuit() {
             const hasA1 = nodes[`${k.id}_A1`];
             const hasA2 = nodes[`${k.id}_A2`];
             
+            let shouldEngage = false;
             if (hasA1 && hasA1.size > 0 && hasA2 && hasA2.size > 0) {
-                const p1 = [...hasA1][0];
-                const p2 = [...hasA2][0];
-                if (p1 !== p2) k.state.engaged = true;
-                else k.state.engaged = false;
-            } else {
-                k.state.engaged = false;
+                const p1 = [...hasA1][0], p2 = [...hasA2][0];
+                if (p1 !== p2) shouldEngage = true;
+            }
+            
+            if (k.state.engaged !== shouldEngage) {
+                k.state.engaged = shouldEngage;
+                changed = true;
             }
         });
 
