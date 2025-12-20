@@ -73,6 +73,9 @@ const Analytics = {
     },
 
     registerVisit: async () => {
+        // Skip analytics in local environment to prevent console noise
+        if (window.location.hostname === 'localhost' || window.location.protocol === 'file:') return;
+
         try {
             // Check if API_BASE_URL is defined (from config.js), else use default
             const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:8001';
@@ -94,7 +97,8 @@ const Analytics = {
                 console.log('Analytics: Visit recorded', Analytics.visitId);
             }
         } catch (error) {
-            console.error('Analytics Error:', error);
+            // Silently fail for analytics
+            console.debug('Analytics skipped:', error);
         }
     },
 

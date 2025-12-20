@@ -658,5 +658,21 @@ function draw() {
     components.forEach(c => c.draw(ctx));
 }
 
+// ================= UTILIDADES =================
+
+function resizeCanvas() {
+    const parent = canvas.parentElement;
+    if (parent) {
+        canvas.width = parent.clientWidth;
+        // Ajustar altura para mantener proporción o llenar contenedor
+        canvas.height = parent.clientHeight || 600; 
+        draw(); 
+    }
+}
+
+// Re-escuchar resize
+window.removeEventListener('resize', resizeCanvas); // Evitar duplicados si reload
+window.addEventListener('resize', resizeCanvas);
+
 // Init
 document.addEventListener('DOMContentLoaded', init);
