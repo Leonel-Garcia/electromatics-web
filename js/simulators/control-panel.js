@@ -151,12 +151,12 @@ class Component {
 class PowerSource extends Component {
     constructor(x, y) {
         super('power-source', x, y, 120, 60);
-        // Estandarizado a 32px de separación (20, 52, 84, 116)
+        // Estandarizado a 32px de separación
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
             'L2': {x: 52, y: 50, label: 'L2'}, 
             'L3': {x: 84, y: 50, label: 'L3'},
-            'N':  {x: 116, y: 50, label: 'N'}
+            'N':  {x: 110, y: 50, label: 'N'}
         };
     }
     
@@ -182,7 +182,7 @@ class SinglePhaseSource extends Component {
     constructor(x, y) {
         super('single-phase-source', x, y, 70, 60);
         this.terminals = {
-            'L': {x: 52, y: 50, label: 'L'},
+            'L': {x: 50, y: 50, label: 'L'},
             'N': {x: 20, y: 50, label: 'N'}
         };
     }
@@ -238,13 +238,10 @@ class Breaker extends Component {
     constructor(x, y) {
         super('breaker', x, y, 100, 120);
         this.state = { closed: false };
-        // Pines superiores (Entrada) e inferiores (Salida) + Auxiliares
+        // Pines superiores (Entrada) e inferiores (Salida)
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
-            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'},
-            // Auxiliares (Similares a Contactor)
-            'NO13': {x: 5, y: 40, label: '13'}, 'NO14': {x: 95, y: 40, label: '14'},
-            'NC21': {x: 5, y: 80, label: '21'}, 'NC22': {x: 95, y: 80, label: '22'}
+            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'}
         };
     }
     draw(ctx) {
@@ -412,9 +409,9 @@ class Motor extends Component {
             nominalCurrent: 6.5 // Corriente que consume al girar
         }; 
         this.terminals = {
-            'U': {x: 40, y: 35, label: 'U'}, 
-            'V': {x: 72, y: 35, label: 'V'}, 
-            'W': {x: 104, y: 35, label: 'W'}
+            'U': {x: 48, y: 35, label: 'U'}, 
+            'V': {x: 80, y: 35, label: 'V'}, 
+            'W': {x: 112, y: 35, label: 'W'}
         };
     }
     draw(ctx) {
@@ -541,7 +538,7 @@ class PushButton extends Component {
 class PilotLight extends Component {
     constructor(type, x, y) {
         super(type, x, y, 50, 50);
-        this.terminals = { 'X1': {x: 10, y: 45}, 'X2': {x: 42, y: 45} };
+        this.terminals = { 'X1': {x: 10, y: 45}, 'X2': {x: 40, y: 45} };
         this.state = { on: false };
     }
     draw(ctx) {
@@ -1161,24 +1158,13 @@ function solveCircuit() {
         
         // A. Transferencia interna de Componentes
         components.forEach(c => {
-            if (c instanceof Breaker) {
-                if (c.state.closed) {
-                    // Principales (Bidireccional)
-                    ['L1','L2','L3'].forEach((inT, i) => {
-                        const outT = ['T1','T2','T3'][i];
-                        if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
-                        if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
-                    });
-                    // Aux NO (13-14) Cerrado cuando Breaker ON
-                    const k13 = `${c.id}_NO13`, k14 = `${c.id}_NO14`;
-                    if(nodes[k13]) nodes[k13].forEach(p => setNode(c, 'NO14', p));
-                    if(nodes[k14]) nodes[k14].forEach(p => setNode(c, 'NO13', p));
-                } else {
-                     // Aux NC (21-22) Cerrado cuando Breaker OFF
-                    const k21 = `${c.id}_NC21`, k22 = `${c.id}_NC22`;
-                    if(nodes[k21]) nodes[k21].forEach(p => setNode(c, 'NC22', p));
-                    if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
-                }
+            if (c instanceof Breaker && c.state.closed) {
+                ['L1','L2','L3'].forEach((inT, i) => {
+                    const outT = ['T1','T2','T3'][i];
+                    // Bidireccional
+                    if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                    if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
+                });
             }
             if (c instanceof Contactor && c.state.engaged) {
                 // Principales (Bidireccional)
