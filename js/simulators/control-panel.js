@@ -865,9 +865,17 @@ function solveCircuit() {
                 if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
             }
 
-            if (c instanceof PushButton && c.state.pressed) {
-                const k1 = `${c.id}_1`;
-                if(nodes[k1]) nodes[k1].forEach(p => setNode(c, '2', p));
+            if (c instanceof PushButton) {
+                const isNC = c.type === 'stop-btn';
+                const isConducting = isNC ? !c.state.pressed : c.state.pressed;
+                
+                if (isConducting) {
+                    const k1 = `${c.id}_1`;
+                    const k2 = `${c.id}_2`;
+                    // Conducción Bidireccional
+                    if(nodes[k1]) nodes[k1].forEach(p => setNode(c, '2', p));
+                    if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
+                }
             }
         });
 
