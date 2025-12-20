@@ -526,6 +526,16 @@
               <i class="fa-solid fa-magnifying-glass-minus"></i>
             </button>
             <div class="toolbar-divider"></div>
+            <!-- Color Selector -->
+            <select id="wire-color" class="toolbar-btn" title="Color de Cable" style="cursor: pointer; padding: 8px;">
+                <option value="#3b82f6">🔵 Azul (Control DC/AC)</option>
+                <option value="#ef4444">🔴 Rojo (Control AC)</option>
+                <option value="#000000">⚫ Negro (Potencia)</option>
+                <option value="#fbbf24">🟡 Amarillo (Externo/Interlock)</option>
+                <option value="#22c55e">🟢 Verde (Tierra)</option>
+                <option value="#ffffff">⚪ Blanco (Neutro)</option>
+            </select>
+            <div class="toolbar-divider"></div>
             <div class="status-indicator">
               <div class="status-dot" id="status-dot"></div>
               <span id="status-text">Detenido</span>

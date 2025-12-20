@@ -13,6 +13,8 @@ window.components = [];
 window.wires = []; 
 window.isSimulating = false;
 window.scale = 1.0; // Zoom level
+window.selectedWire = null;
+window.currentWireColor = '#3b82f6'; // Default Blue
 let simulationTime = 0;
 
 // Alias locales para compatibilidad con código existente
@@ -21,6 +23,8 @@ let components = window.components;
 let wires = window.wires;
 let isSimulating = window.isSimulating;
 let scale = window.scale;
+let selectedWire = window.selectedWire;
+let currentWireColor = window.currentWireColor;
 
 // Configuración de Assets
 const ASSET_PATHS = {
@@ -380,6 +384,34 @@ function setupEventListeners() {
         resizeCanvas(); 
     });
 
+    // Color Selector
+    const colorSelect = document.getElementById('wire-color');
+    if(colorSelect) {
+        colorSelect.addEventListener('change', (e) => {
+            currentWireColor = e.target.value;
+            // Si hay un cable seleccionado, cambiarle el color
+            if (selectedWire) {
+                selectedWire.color = currentWireColor;
+                draw();
+            }
+        });
+    }
+
+    // Delete Key listener
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (selectedWire) {
+                // Eliminar cable
+                const idx = wires.indexOf(selectedWire);
+                if (idx > -1) {
+                    wires.splice(idx, 1);
+                    selectedWire = null;
+                    draw();
+                }
+            }
+        }
+    });
+
     // Drag from Menu
     document.querySelectorAll('.component-btn').forEach(btn => {
         btn.addEventListener('dragstart', e => {
@@ -477,6 +509,9 @@ function onMouseDown(e) {
     const mx = pos.x;
     const my = pos.y;
 
+    // 0. Reset Selection (unless clicking valid object)
+    let hitObject = false;
+
     // 1. Tocar Terminal? -> Iniciar Cableado
     for (const c of components) {
         const t = c.getHoveredTerminal(mx, my);
@@ -487,17 +522,42 @@ function onMouseDown(e) {
     }
 
     // 2. Tocar Componente? -> Draguear o Activar
-    // Reverse loop para tocar el de arriba
     for (let i = components.length - 1; i >= 0; i--) {
         const c = components[i];
         if (c.isMouseOver(mx, my)) {
             dragItem = { comp: c, offX: mx - c.x, offY: my - c.y };
             
-            // Interacción Click (Toggle Breaker / Push Button)
+            // Interacción Click
             if (c instanceof Breaker) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
+
+            // Clear wire selection when selecting component (optional design choice)
+            selectedWire = null;
+            draw();
             return;
         }
+    }
+
+    // 3. Tocar Cable? (Selección)
+    for (const w of wires) {
+        if (isMouseOverWire(mx, my, w)) {
+            selectedWire = w;
+            // Update color picker to match wire
+            if(w.color) {
+                currentWireColor = w.color;
+                const sel = document.getElementById('wire-color');
+                if(sel) sel.value = w.color;
+            }
+            hitObject = true;
+            draw();
+            return; // Stop propagation
+        }
+    }
+
+    // Si no tocamos nada, limpiar selección
+    if (!hitObject) {
+        selectedWire = null;
+        draw();
     }
 }
 
@@ -532,12 +592,16 @@ function onMouseUp(e) {
                 // Crear cable
                 wires.push({
                     from: wireStartObj.component, fromId: wireStartObj.terminalId,
-                    to: t.component, toId: t.id
+                    to: t.component, toId: t.id,
+                    color: currentWireColor // Assign selected color
                 });
+                draw(); // Redraw immediately
             }
         }
         wireStartObj = null;
     }
+    // Redraw on release (snap fix visual update)
+    draw();
 }
 
 function updateStatus() {
@@ -725,11 +789,18 @@ function draw() {
         const p2 = w.to.getTerminal(w.toId);
         
         if (p1 && p2) {
-             ctx.strokeStyle = '#3b82f6'; 
-             ctx.lineWidth = 4;
+             const isSelected = (w === selectedWire);
              
-             // Si simulando y energizado... (Visualización básica)
+             // Base color or Selected Highlight
+             ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
+             ctx.lineWidth = isSelected ? 6 : 4;
              
+             // Glow effect for selection
+             if (isSelected) {
+                 ctx.shadowColor = '#fbbf24';
+                 ctx.shadowBlur = 15;
+             }
+
              ctx.beginPath();
              ctx.moveTo(p1.x, p1.y);
              
@@ -738,16 +809,19 @@ function draw() {
              ctx.bezierCurveTo(p1.x, midY, p2.x, midY, p2.x, p2.y);
              ctx.stroke();
 
+             // Reset shadow
+             ctx.shadowBlur = 0;
+
              // Mejora visual: Circulo en unión para tapar extremos cuadrados
-             ctx.fillStyle = '#3b82f6';
-             ctx.beginPath(); ctx.arc(p1.x, p1.y, 2, 0, Math.PI*2); ctx.fill();
-             ctx.beginPath(); ctx.arc(p2.x, p2.y, 2, 0, Math.PI*2); ctx.fill();
+             ctx.fillStyle = ctx.strokeStyle;
+             ctx.beginPath(); ctx.arc(p1.x, p1.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
+             ctx.beginPath(); ctx.arc(p2.x, p2.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
         }
     });
 
     // 2. Wire Creation Line
     if (wireStartObj) {
-        ctx.strokeStyle = '#fbbf24';
+        ctx.strokeStyle = currentWireColor;
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -765,6 +839,28 @@ function draw() {
 }
 
 // ================= UTILIDADES =================
+
+// Hit test simple para cables (Bezier Curve distance approximation)
+// Verifica si el punto (mx, my) está cerca de la curva definida por p1, p2
+function isMouseOverWire(mx, my, wire) {
+    const p1 = wire.from.getTerminal(wire.fromId);
+    const p2 = wire.to.getTerminal(wire.toId);
+    if (!p1 || !p2) return false;
+
+    const midY = Math.max(p1.y, p2.y) + 40;
+    const cp1 = {x: p1.x, y: midY};
+    const cp2 = {x: p2.x, y: midY};
+
+    // Muestreo simple a lo largo de la curva (10 puntos)
+    // Para mayor precisión podríamos usar algoritmos más complejos, pero esto basta para UX
+    for (let t = 0; t <= 1; t += 0.1) {
+        const x = Math.pow(1-t, 3)*p1.x + 3*Math.pow(1-t, 2)*t*cp1.x + 3*(1-t)*Math.pow(t, 2)*cp2.x + Math.pow(t, 3)*p2.x;
+        const y = Math.pow(1-t, 3)*p1.y + 3*Math.pow(1-t, 2)*t*cp1.y + 3*(1-t)*Math.pow(t, 2)*cp2.y + Math.pow(t, 3)*p2.y;
+        
+        if (Math.hypot(mx - x, my - y) < 10) return true; // Radio de 10px
+    }
+    return false;
+}
 
 function drawGrid(ctx) {
     const w = 2400;
