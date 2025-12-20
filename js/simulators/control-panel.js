@@ -287,6 +287,35 @@ let dragItem = null;
 let wireStartObj = null; // { component, terminalId }
 let mousePos = {x:0, y:0};
 
+function getEventPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Scale: Relación entre Pixeles del Buffer (width) y Pixeles CSS (rect.width)
+    // Cuando width=100%, es 1:1. Cuando width=2400, rect.width puede ser 2400 o menos si CSS lo restringe.
+    // Nosotros quitamos CSS width, así que rect.width debería ser igual a canvas.width (zoom físico).
+    const domScaleX = canvas.width / rect.width;
+    const domScaleY = canvas.height / rect.height;
+
+    const rawX = (clientX - rect.left) * domScaleX;
+    const rawY = (clientY - rect.top) * domScaleY;
+    
+    // Logical Scale (Zoom del dibujo ctx.scale)
+    return {
+        x: rawX / scale,
+        y: rawY / scale
+    };
+}
+
+function loop() {
+    if (isSimulating) {
+        solveCircuit();
+    }
+    draw();
+    requestAnimationFrame(loop);
+}
+
 function init() {
     console.log("Iniciando Simulador Tablero...");
     
@@ -382,20 +411,13 @@ function setupEventListeners() {
         canvasContainer.classList.remove('drop-valid');
         
         try {
-            const rect = canvas.getBoundingClientRect();
             const type = e.dataTransfer.getData('text/plain');
-            
             if (!type) return;
 
-            // Coordenadas con Zoom
-            const rawX = (e.clientX - rect.left) * (canvas.width / rect.width);
-            const rawY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            // Usar helper unificado (shim para clientX/Y del DropEvent que es MouseEvent)
+            const pos = getEventPos(e);
             
-            // Aplicar escala inversa
-            const x = rawX / scale;
-            const y = rawY / scale;
-            
-            addComponent(type, x, y);
+            addComponent(type, pos.x, pos.y);
 
         } catch (err) {
             console.error("Error en Drop:", err);
@@ -450,11 +472,10 @@ function addComponent(type, x, y) {
 }
 
 function onMouseDown(e) {
-    const rect = canvas.getBoundingClientRect();
-    const rawX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const rawY = (e.clientY - rect.top) * (canvas.height / rect.height);
-    const mx = rawX / scale; // Zoom logic
-    const my = rawY / scale;
+    if (e.touches) e.preventDefault(); // Prevenir scroll en touch
+    const pos = getEventPos(e);
+    const mx = pos.x;
+    const my = pos.y;
 
     // 1. Tocar Terminal? -> Iniciar Cableado
     for (const c of components) {
@@ -481,11 +502,10 @@ function onMouseDown(e) {
 }
 
 function onMouseMove(e) {
-    const rect = canvas.getBoundingClientRect();
-    const rawX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const rawY = (e.clientY - rect.top) * (canvas.height / rect.height);
-    mousePos.x = rawX / scale;
-    mousePos.y = rawY / scale;
+    if (e.touches) e.preventDefault();
+    const pos = getEventPos(e);
+    mousePos.x = pos.x;
+    mousePos.y = pos.y;
 
     if (dragItem) {
         const rawX = mousePos.x - dragItem.offX;
