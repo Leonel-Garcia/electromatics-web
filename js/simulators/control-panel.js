@@ -6,8 +6,7 @@
 const canvas = document.getElementById('simulatorCanvas');
 const ctx = canvas.getContext('2d');
 
-// Estado Global (Exuesto para debug)
-// Estado Global (Exuesto para debug)
+// Estado Global (Expuesto para debug)
 window.assets = {}; 
 window.components = []; 
 window.wires = []; 
