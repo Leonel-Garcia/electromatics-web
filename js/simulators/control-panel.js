@@ -140,17 +140,14 @@ class Component {
 
 class PowerSource extends Component {
     constructor(x, y) {
-        super('power-source', x, y, 100, 60);
+        super('power-source', x, y, 120, 60);
+        // Estandarizado a 32px de separación
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
-            'L2': {x: 50, y: 50, label: 'L2'}, 
-            'L3': {x: 80, y: 50, label: 'L3'},
-            'N':  {x: 10, y: 50, label: 'N'} // New Neutral
+            'L2': {x: 52, y: 50, label: 'L2'}, 
+            'L3': {x: 84, y: 50, label: 'L3'},
+            'N':  {x: 110, y: 50, label: 'N'}
         };
-        // Adjust others to make space? kept simple for now
-        this.terminals['L1'].x = 35;
-        this.terminals['L2'].x = 60;
-        this.terminals['L3'].x = 85;
     }
     
     draw(ctx) {
@@ -201,8 +198,8 @@ class Breaker extends Component {
         this.state = { closed: false };
         // Pines superiores (Entrada) e inferiores (Salida)
         this.terminals = {
-            'L1': {x: 18, y: 10, label: 'L1'}, 'L2': {x: 50, y: 10, label: 'L2'}, 'L3': {x: 82, y: 10, label: 'L3'},
-            'T1': {x: 18, y: 110, label: 'T1'}, 'T2': {x: 50, y: 110, label: 'T2'}, 'T3': {x: 82, y: 110, label: 'T3'}
+            'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
+            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'}
         };
     }
     draw(ctx) {
@@ -224,13 +221,11 @@ class Contactor extends Component {
         super('contactor', x, y, 100, 120);
         this.state = { engaged: false };
         this.terminals = {
-            'L1': {x: 18, y: 10, label: 'L1'}, 'L2': {x: 50, y: 10, label: 'L2'}, 'L3': {x: 82, y: 10, label: 'L3'},
-            'T1': {x: 18, y: 110, label: 'T1'}, 'T2': {x: 50, y: 110, label: 'T2'}, 'T3': {x: 82, y: 110, label: 'T3'},
-            'A1': {x: 10, y: 60, label: 'A1'}, 'A2': {x: 90, y: 60, label: 'A2'},
-            // Auxiliares NO (13-14)
-            'NO13': {x: 10, y: 40, label: '13'}, 'NO14': {x: 90, y: 40, label: '14'},
-            // Auxiliares NC (21-22) - Asumiendo que imagen permite ubicarlos, si no, se sobreponen visualmente pero funcionalmente ok
-            'NC21': {x: 10, y: 80, label: '21'}, 'NC22': {x: 90, y: 80, label: '22'}
+            'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
+            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'},
+            'A1': {x: 5, y: 60, label: 'A1'}, 'A2': {x: 95, y: 60, label: 'A2'},
+            'NO13': {x: 5, y: 40, label: '13'}, 'NO14': {x: 95, y: 40, label: '14'},
+            'NC21': {x: 5, y: 80, label: '21'}, 'NC22': {x: 95, y: 80, label: '22'}
         };
     }
     draw(ctx) {
@@ -269,10 +264,10 @@ class ThermalRelay extends Component {
         this.state = { tripped: false };
         // Entradas (pines de cobre arriba) -> Salidas (tornillos abajo)
         this.terminals = {
-            'L1': {x: 18, y: 5}, 'L2': {x: 50, y: 5}, 'L3': {x: 82, y: 5},
-            'T1': {x: 18, y: 95, label: 'T1'}, 'T2': {x: 50, y: 95, label: 'T2'}, 'T3': {x: 82, y: 95, label: 'T3'},
-            'NC95': {x: 10, y: 65, label: '95'}, 'NC96': {x: 30, y: 65, label: '96'},
-            'NO97': {x: 70, y: 65, label: '97'}, 'NO98': {x: 90, y: 65, label: '98'}
+            'L1': {x: 20, y: 5}, 'L2': {x: 52, y: 5}, 'L3': {x: 84, y: 5},
+            'T1': {x: 20, y: 95, label: 'T1'}, 'T2': {x: 52, y: 95, label: 'T2'}, 'T3': {x: 84, y: 95, label: 'T3'},
+            'NC95': {x: 5, y: 65, label: '95'}, 'NC96': {x: 30, y: 65, label: '96'},
+            'NO97': {x: 70, y: 65, label: '97'}, 'NO98': {x: 95, y: 65, label: '98'}
         };
     }
 }
@@ -282,9 +277,9 @@ class Motor extends Component {
         super('motor', x, y, 160, 160);
         this.state = { running: false, angle: 0, direction: 1 }; // 1: CW, -1: CCW
         this.terminals = {
-            'U': {x: 45, y: 35, label: 'U'}, 
+            'U': {x: 48, y: 35, label: 'U'}, 
             'V': {x: 80, y: 35, label: 'V'}, 
-            'W': {x: 115, y: 35, label: 'W'}
+            'W': {x: 112, y: 35, label: 'W'}
         };
     }
     draw(ctx) {
@@ -310,11 +305,33 @@ class Motor extends Component {
              ctx.arc(0, 0, 40, 0, Math.PI * (this.state.direction > 0 ? 1 : -1) * 0.5, this.state.direction < 0);
              ctx.stroke();
              // Cabeza flecha (simplificada)
-             // TBD: Drawing actual arrow head logic based on end point
+             // TBD: Drawing actual arrow
              ctx.restore();
-
-             this.state.angle += 0.3 * this.state.direction;
+             this.state.angle += 0.2 * this.state.direction;
         }
+    }
+}
+
+class ThreePhaseBus extends Component {
+    constructor(x, y) {
+        super('three-phase-bus', x, y, 600, 40);
+        // El bus trifásico tiene sets de terminales L1, L2, L3 repetidos
+        this.terminals = {};
+        for(let i=0; i<8; i++) {
+            const offsetX = 20 + i * (32 * 3 + 10); // Cada fase 32px + 10px de gap entre grupos
+            this.terminals[`L1_${i}`] = {x: offsetX, y: 10, label: 'L1'};
+            this.terminals[`L2_${i}`] = {x: offsetX + 32, y: 10, label: 'L2'};
+            this.terminals[`L3_${i}`] = {x: offsetX + 64, y: 10, label: 'L3'};
+        }
+    }
+    draw(ctx) {
+        // Dibujar las baras de cobre
+        ctx.fillStyle = '#b45309'; // Color cobre
+        ctx.fillRect(this.x + 10, this.y + 5, this.width - 20, 5); // L1
+        ctx.fillRect(this.x + 10, this.y + 15, this.width - 20, 5); // L2
+        ctx.fillRect(this.x + 10, this.y + 25, this.width - 20, 5); // L3
+        
+        super.draw(ctx);
     }
 }
 
@@ -581,7 +598,12 @@ function setupEventListeners() {
 function addComponent(type, x, y) {
     let c;
     switch(type) {
-        case 'power-source': c = new PowerSource(x, y); break;
+        case 'power-source':
+            c = new PowerSource(x, y);
+            break;
+        case 'three-phase-bus':
+            c = new ThreePhaseBus(x, y);
+            break;
         case 'single-phase-source': c = new SinglePhaseSource(x, y); break;
         case 'breaker': c = new Breaker(x, y); break;
         case 'contactor': c = new Contactor(x, y); break;
@@ -876,6 +898,21 @@ function solveCircuit() {
                     if(nodes[k1]) nodes[k1].forEach(p => setNode(c, '2', p));
                     if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
                 }
+            }
+            if (c instanceof ThreePhaseBus) {
+                const phases = ['L1', 'L2', 'L3'];
+                phases.forEach(p => {
+                    const allPotentials = new Set();
+                    for(let i=0; i<8; i++) {
+                        const k = `${c.id}_${p}_${i}`;
+                        if(nodes[k]) nodes[k].forEach(val => allPotentials.add(val));
+                    }
+                    if(allPotentials.size > 0) {
+                        for(let i=0; i<8; i++) {
+                            allPotentials.forEach(val => setNode(c, `${p}_${i}`, val));
+                        }
+                    }
+                });
             }
         });
 
