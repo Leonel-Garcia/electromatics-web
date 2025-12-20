@@ -26,6 +26,7 @@ let selectedWire = window.selectedWire;
 let selectedComponent = null; // New state
 let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
+let isTripleMode = false; // New state for Triple Cable tool
 
 // Configuración de Assets
 const ASSET_PATHS = {
@@ -312,28 +313,7 @@ class Motor extends Component {
     }
 }
 
-class ThreePhaseBus extends Component {
-    constructor(x, y) {
-        super('three-phase-bus', x, y, 600, 40);
-        // El bus trifásico tiene sets de terminales L1, L2, L3 repetidos
-        this.terminals = {};
-        for(let i=0; i<8; i++) {
-            const offsetX = 20 + i * (32 * 3 + 10); // Cada fase 32px + 10px de gap entre grupos
-            this.terminals[`L1_${i}`] = {x: offsetX, y: 10, label: 'L1'};
-            this.terminals[`L2_${i}`] = {x: offsetX + 32, y: 10, label: 'L2'};
-            this.terminals[`L3_${i}`] = {x: offsetX + 64, y: 10, label: 'L3'};
-        }
-    }
-    draw(ctx) {
-        // Dibujar las baras de cobre
-        ctx.fillStyle = '#b45309'; // Color cobre
-        ctx.fillRect(this.x + 10, this.y + 5, this.width - 20, 5); // L1
-        ctx.fillRect(this.x + 10, this.y + 15, this.width - 20, 5); // L2
-        ctx.fillRect(this.x + 10, this.y + 25, this.width - 20, 5); // L3
-        
-        super.draw(ctx);
-    }
-}
+
 
 class PushButton extends Component {
     constructor(type, x, y) {
@@ -593,6 +573,21 @@ function setupEventListeners() {
     if(btnReset) btnReset.addEventListener('click', () => { 
         components = []; wires = []; isSimulating = false; updateStatus(); draw(); 
     });
+
+    // Triple Cable Toggle
+    const btnTriple = document.getElementById('btn-triple-cable');
+    if(btnTriple) {
+        btnTriple.addEventListener('click', () => {
+            isTripleMode = !isTripleMode;
+            btnTriple.classList.toggle('selected', isTripleMode);
+            // Si activamos cable triple, cambiamos color a potencia (Negro) por defecto
+            if(isTripleMode) {
+                currentWireColor = '#000000';
+                const sel = document.getElementById('wire-color');
+                if(sel) sel.value = '#000000';
+            }
+        });
+    }
 }
 
 function addComponent(type, x, y) {
@@ -601,9 +596,7 @@ function addComponent(type, x, y) {
         case 'power-source':
             c = new PowerSource(x, y);
             break;
-        case 'three-phase-bus':
-            c = new ThreePhaseBus(x, y);
-            break;
+
         case 'single-phase-source': c = new SinglePhaseSource(x, y); break;
         case 'breaker': c = new Breaker(x, y); break;
         case 'contactor': c = new Contactor(x, y); break;
@@ -774,11 +767,34 @@ function onMouseUp(e) {
             const t = c.getHoveredTerminal(mousePos.x, mousePos.y);
             if (t && t.component !== wireStartObj.component) {
                 // Crear cable
-                wires.push({
-                    from: wireStartObj.component, fromId: wireStartObj.terminalId,
-                    to: t.component, toId: t.id,
-                    color: currentWireColor // Assign selected color
-                });
+                if (isTripleMode) {
+                    // Mapeo de fases para cables triples
+                    const phases = ['L1', 'L2', 'L3'];
+                    const fromPrefix = wireStartObj.terminalId.substring(0, 1); // 'L'
+                    const toPrefix = t.id.substring(0, 1); // 'L' o 'U' etc.
+
+                    // Intentar conectar las 3 fases si existen
+                    const connections = [
+                        {f: 'L1', t: 'T1'}, {f: 'L2', t: 'T2'}, {f: 'L3', t: 'T3'}, // Breaker/Contactor
+                        {f: 'L1', t: 'L1'}, {f: 'L2', t: 'L2'}, {f: 'L3', t: 'L3'}, // Bus/Source
+                        {f: 'L1', t: 'U'}, {f: 'L2', t: 'V'}, {f: 'L3', t: 'W'}     // Motor
+                    ];
+
+                    // Creamos UN SOLO objeto wire con propiedad isTriple
+                    // La lógica de dibujado y simulación se encargará de las otras 2 fases
+                    wires.push({
+                        from: wireStartObj.component, fromId: wireStartObj.terminalId,
+                        to: t.component, toId: t.id,
+                        color: '#000000',
+                        isTriple: true
+                    });
+                } else {
+                    wires.push({
+                        from: wireStartObj.component, fromId: wireStartObj.terminalId,
+                        to: t.component, toId: t.id,
+                        color: currentWireColor
+                    });
+                }
                 draw(); // Redraw immediately
             }
         }
@@ -899,43 +915,69 @@ function solveCircuit() {
                     if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
                 }
             }
-            if (c instanceof ThreePhaseBus) {
-                const phases = ['L1', 'L2', 'L3'];
-                phases.forEach(p => {
-                    const allPotentials = new Set();
-                    for(let i=0; i<8; i++) {
-                        const k = `${c.id}_${p}_${i}`;
-                        if(nodes[k]) nodes[k].forEach(val => allPotentials.add(val));
-                    }
-                    if(allPotentials.size > 0) {
-                        for(let i=0; i<8; i++) {
-                            allPotentials.forEach(val => setNode(c, `${p}_${i}`, val));
-                        }
-                    }
-                });
-            }
+
         });
 
         // B. Transferencia por Cables
         wires.forEach(w => {
-            const ks = `${w.from.id}_${w.fromId}`;
-            const ke = `${w.to.id}_${w.toId}`;
+            if (w.isTriple) {
+                // Propagación trifásica automática
+                const phaseSets = [
+                    ['L1', 'L2', 'L3'],
+                    ['T1', 'T2', 'T3'],
+                    ['U', 'V', 'W']
+                ];
 
-            if(nodes[ks]) {
-                nodes[ks].forEach(p => {
-                    if (!nodes[ke] || !nodes[ke].has(p)) {
-                        setNode(w.to, w.toId, p);
-                        changed = true;
+                // Encontrar a qué set y qué indice pertenece cada terminal
+                let setFrom = phaseSets.find(s => s.includes(w.fromId));
+                let setTo = phaseSets.find(s => s.includes(w.toId));
+
+                if (setFrom && setTo) {
+                    for (let i = 0; i < 3; i++) {
+                        const fid = setFrom[i];
+                        const tid = setTo[i];
+                        const ks = `${w.from.id}_${fid}`;
+                        const ke = `${w.to.id}_${tid}`;
+
+                        if (nodes[ks]) {
+                            nodes[ks].forEach(p => {
+                                if (!nodes[ke] || !nodes[ke].has(p)) {
+                                    setNode(w.to, tid, p);
+                                    changed = true;
+                                }
+                            });
+                        }
+                        if (nodes[ke]) {
+                            nodes[ke].forEach(p => {
+                                if (!nodes[ks] || !nodes[ks].has(p)) {
+                                    setNode(w.from, fid, p);
+                                    changed = true;
+                                }
+                            });
+                        }
                     }
-                });
-            }
-            if(nodes[ke]) {
-                nodes[ke].forEach(p => {
-                    if (!nodes[ks] || !nodes[ks].has(p)) {
-                        setNode(w.from, w.fromId, p);
-                        changed = true;
-                    }
-                });
+                }
+            } else {
+                // Cable normal
+                const ks = `${w.from.id}_${w.fromId}`;
+                const ke = `${w.to.id}_${w.toId}`;
+
+                if (nodes[ks]) {
+                    nodes[ks].forEach(p => {
+                        if (!nodes[ke] || !nodes[ke].has(p)) {
+                            setNode(w.to, w.toId, p);
+                            changed = true;
+                        }
+                    });
+                }
+                if (nodes[ke]) {
+                    nodes[ke].forEach(p => {
+                        if (!nodes[ks] || !nodes[ks].has(p)) {
+                            setNode(w.from, w.fromId, p);
+                            changed = true;
+                        }
+                    });
+                }
             }
         });
         
@@ -1029,12 +1071,23 @@ function draw() {
                  ctx.shadowBlur = 15;
              }
 
-             ctx.beginPath();
-             ctx.moveTo(p1.x, p1.y);
-             
              // Curva Bezier con CPs
-             ctx.bezierCurveTo(cps.cp1.x, cps.cp1.y, cps.cp2.x, cps.cp2.y, p2.x, p2.y);
-             ctx.stroke();
+             if (w.isTriple) {
+                 // Dibujar 3 líneas paralelas
+                 const offsets = [-32, 0, 32];
+                 ctx.strokeStyle = '#000000'; // Siempre negro para potencia trifásica
+                 offsets.forEach(offset => {
+                     ctx.beginPath();
+                     ctx.moveTo(p1.x + offset, p1.y);
+                     ctx.bezierCurveTo(cps.cp1.x + offset, cps.cp1.y, cps.cp2.x + offset, cps.cp2.y, p2.x + offset, p2.y);
+                     ctx.stroke();
+                 });
+             } else {
+                 ctx.beginPath();
+                 ctx.moveTo(p1.x, p1.y);
+                 ctx.bezierCurveTo(cps.cp1.x, cps.cp1.y, cps.cp2.x, cps.cp2.y, p2.x, p2.y);
+                 ctx.stroke();
+             }
 
              // Reset shadow
              ctx.shadowBlur = 0;
