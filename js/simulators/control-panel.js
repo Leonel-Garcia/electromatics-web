@@ -24,6 +24,7 @@ let wires = window.wires;
 let isSimulating = window.isSimulating;
 let scale = window.scale;
 let selectedWire = window.selectedWire;
+let selectedComponent = null; // New state
 let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
 
@@ -37,6 +38,7 @@ const ASSET_PATHS = {
     'stop-btn': 'img/simulators/control-panel/pushbutton-red.png',
     'pilot-green': 'img/simulators/control-panel/pilot-green.png',
     'pilot-red': 'img/simulators/control-panel/pilot-red.png',
+    'pilot-amber': 'img/simulators/control-panel/pilot-amber.png',
     // Fuente no tiene imagen, se dibuja
 };
 
@@ -167,6 +169,30 @@ class PowerSource extends Component {
              ctx.font = 'bold 10px Inter';
              ctx.fillText('N', t.x, t.y + 18);
         }
+    }
+}
+
+class SinglePhaseSource extends Component {
+    constructor(x, y) {
+        super('single-phase-source', x, y, 70, 60);
+        this.terminals = {
+            'L': {x: 50, y: 50, label: 'L'},
+            'N': {x: 20, y: 50, label: 'N'}
+        };
+    }
+    draw(ctx) {
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 14px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('1Φ', this.x + this.width/2, this.y + 25);
+        ctx.font = '10px Inter';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('220V', this.x + this.width/2, this.y + 40);
+        super.draw(ctx);
     }
 }
 
@@ -338,7 +364,8 @@ class PilotLight extends Component {
     draw(ctx) {
         super.draw(ctx);
         if(this.state.on) {
-            const color = this.type.includes('green') ? '#22c55e' : '#ef4444';
+            const color = this.type.includes('green') ? '#22c55e' : 
+                         (this.type.includes('amber') ? '#f59e0b' : '#ef4444');
             ctx.shadowColor = color; ctx.shadowBlur = 20;
             ctx.fillStyle = color;
             ctx.globalAlpha = 0.6;
@@ -465,11 +492,22 @@ function setupEventListeners() {
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Delete' || e.key === 'Backspace') {
             if (selectedWire) {
-                // Eliminar cable
                 const idx = wires.indexOf(selectedWire);
                 if (idx > -1) {
                     wires.splice(idx, 1);
                     selectedWire = null;
+                    draw();
+                }
+            } else if (selectedComponent) {
+                // Eliminar componente y sus cables
+                const idx = components.indexOf(selectedComponent);
+                if (idx > -1) {
+                    const compId = selectedComponent.id;
+                    components.splice(idx, 1);
+                    // Eliminar cables asociados
+                    wires = wires.filter(w => w.from.id !== compId && w.to.id !== compId);
+                    window.wires = wires; // Sync global
+                    selectedComponent = null;
                     draw();
                 }
             }
@@ -545,6 +583,7 @@ function addComponent(type, x, y) {
     let c;
     switch(type) {
         case 'power-source': c = new PowerSource(x, y); break;
+        case 'single-phase-source': c = new SinglePhaseSource(x, y); break;
         case 'breaker': c = new Breaker(x, y); break;
         case 'contactor': c = new Contactor(x, y); break;
         case 'thermal-relay': c = new ThermalRelay(x, y); break;
@@ -553,6 +592,7 @@ function addComponent(type, x, y) {
         case 'stop-btn': c = new PushButton('stop-btn', x, y); break;
         case 'pilot-green': c = new PilotLight('pilot-green', x, y); break;
         case 'pilot-red': c = new PilotLight('pilot-red', x, y); break;
+        case 'pilot-amber': c = new PilotLight('pilot-amber', x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -643,7 +683,8 @@ function onMouseDown(e) {
             if (c instanceof Breaker) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
 
-            // Clear wire selection when selecting component (optional design choice)
+            // Selección de componente
+            selectedComponent = c;
             selectedWire = null;
             draw();
             return;
@@ -654,6 +695,7 @@ function onMouseDown(e) {
     for (const w of wires) {
         if (isMouseOverWire(mx, my, w)) {
             selectedWire = w;
+            selectedComponent = null; // Clear comp selection
             // Update color picker to match wire
             if(w.color) {
                 currentWireColor = w.color;
@@ -669,6 +711,7 @@ function onMouseDown(e) {
     // Si no tocamos nada, limpiar selección
     if (!hitObject) {
         selectedWire = null;
+        selectedComponent = null;
         draw();
     }
 }
@@ -767,6 +810,11 @@ function solveCircuit() {
         setNode(p, 'L2', 'L2');
         setNode(p, 'L3', 'L3');
         setNode(p, 'N', 'N'); // Emit Neutral
+    });
+
+    components.filter(c => c instanceof SinglePhaseSource).forEach(p => {
+        setNode(p, 'L', 'L1'); // L acts as L1
+        setNode(p, 'N', 'N');
     });
 
     // 3. Propagación Iterativa (Max 10 iteraciones para estabilizar)
@@ -985,7 +1033,21 @@ function draw() {
     }
 
     // 3. Componentes
-    components.forEach(c => c.draw(ctx));
+    components.forEach(c => {
+        if (c === selectedComponent) {
+            ctx.save();
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 20;
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            // Draw a rounded rect around the component
+            ctx.beginPath();
+            ctx.roundRect(c.x - 5, c.y - 5, c.width + 10, c.height + 10, 8);
+            ctx.stroke();
+            ctx.restore();
+        }
+        c.draw(ctx);
+    });
 
     ctx.restore();
 }
