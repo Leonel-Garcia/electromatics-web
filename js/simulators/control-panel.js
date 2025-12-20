@@ -79,10 +79,19 @@ class Component {
     }
 
     isMouseOver(mx, my) {
-        return mx > this.x && mx < this.x + this.width &&
-               my > this.y && my < this.y + this.height;
+        return mx >= this.x && mx <= this.x + this.width &&
+               my >= this.y && my <= this.y + this.height;
     }
 
+    serialize() {
+        return {
+            id: this.id,
+            type: this.type,
+            x: this.x,
+            y: this.y,
+            state: JSON.parse(JSON.stringify(this.state)) // Deep copy
+        };
+    }
     draw(ctx) {
         // 1. Imagen
         if (assets[this.type]) {
@@ -680,6 +689,17 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Persistencia
+    const btnSaveLocal = document.getElementById('btn-save-local');
+    const btnLoadLocal = document.getElementById('btn-load-local');
+    const btnExport = document.getElementById('btn-export-json');
+    const btnImport = document.getElementById('btn-import-json');
+
+    if(btnSaveLocal) btnSaveLocal.addEventListener('click', saveToLocalStorage);
+    if(btnLoadLocal) btnLoadLocal.addEventListener('click', loadFromLocalStorage);
+    if(btnExport) btnExport.addEventListener('click', downloadCircuit);
+    if(btnImport) btnImport.addEventListener('click', triggerFileUpload);
 }
 
 function addComponent(type, x, y) {
@@ -1319,6 +1339,107 @@ function resizeCanvas() {
         canvas.height = Math.max(parent.clientHeight || 600, 1600 * scale); 
         draw(); 
     }
+}
+
+// ================= PERSISTENCIA (SAVE/LOAD) =================
+
+function serializeCircuit() {
+    return JSON.stringify({
+        version: "1.0",
+        components: components.map(c => c.serialize()),
+        wires: wires.map(w => ({
+            from: w.from.id,
+            fromId: w.fromId,
+            to: w.to.id,
+            toId: w.toId,
+            color: w.color,
+            isTriple: w.isTriple,
+            cp1: w.customCP1,
+            cp2: w.customCP2
+        }))
+    });
+}
+
+function saveToLocalStorage() {
+    const data = serializeCircuit();
+    localStorage.setItem('saved_circuit', data);
+    alert('Circuito guardado en el navegador.');
+}
+
+function downloadCircuit() {
+    const data = serializeCircuit();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `circuito_${new Date().getTime()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function loadFromLocalStorage() {
+    const data = localStorage.getItem('saved_circuit');
+    if (data) deserializeCircuit(data);
+    else alert('No hay circuitos guardados localmente.');
+}
+
+function deserializeCircuit(jsonString) {
+    try {
+        const data = JSON.parse(jsonString);
+        components = [];
+        wires = [];
+        selectedComponent = null;
+        selectedWire = null;
+
+        // 1. Recrear Componentes
+        data.components.forEach(cData => {
+            addComponent(cData.type, cData.x + 50, cData.y + 50); // addComponent offsets from center
+            const c = components[components.length - 1];
+            // Overwrite specific props
+            c.id = cData.id;
+            c.x = cData.x;
+            c.y = cData.y;
+            if (cData.state) Object.assign(c.state, cData.state);
+        });
+
+        // 2. Recrear Cables
+        data.wires.forEach(wData => {
+            const fromComp = components.find(c => c.id === wData.from);
+            const toComp = components.find(c => c.id === wData.to);
+
+            if (fromComp && toComp) {
+                wires.push({
+                    from: fromComp,
+                    fromId: wData.fromId,
+                    to: toComp,
+                    toId: wData.toId,
+                    color: wData.color,
+                    isTriple: wData.isTriple,
+                    customCP1: wData.cp1,
+                    customCP2: wData.cp2
+                });
+            }
+        });
+
+        draw();
+        console.log("Circuito cargado con éxito.");
+    } catch (err) {
+        console.error("Error al cargar circuito:", err);
+        alert("Error al procesar el archivo del circuito.");
+    }
+}
+
+function triggerFileUpload() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = event => deserializeCircuit(event.target.result);
+        reader.readAsText(file);
+    };
+    input.click();
 }
 
 window.removeEventListener('resize', resizeCanvas); 
