@@ -938,6 +938,7 @@ function updateStatus() {
 // ================= SIMULACION DE CIRCUITO (SOLVER) =================
 
 function solveCircuit() {
+    let changed = true;
     // 1. Resetear nodos
     const nodes = {}; // Mapa "ComponentID_TerminalID" -> { voltage: boolean, phase: 'L1'|'L2'|'L3'|null }
     
@@ -970,7 +971,6 @@ function solveCircuit() {
     });
 
     // 3. Propagación Iterativa (Max 10 iteraciones para estabilizar)
-    let changed = true;
     for(let iter=0; iter<10 && changed; iter++) {
         changed = false;
         
