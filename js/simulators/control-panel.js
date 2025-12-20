@@ -933,11 +933,20 @@ function solveCircuit() {
             }
         });
 
-        // Luces
+        // Luces (Requieren Diferencia de Potencial entre X1 y X2)
         components.filter(c => c instanceof PilotLight).forEach(p => {
-            const x1 = nodes[`${p.id}_X1`];
-            if (x1 && x1.size > 0) p.state.on = true;
-            else p.state.on = false; 
+            const hasX1 = nodes[`${p.id}_X1`];
+            const hasX2 = nodes[`${p.id}_X2`];
+            
+            if (hasX1 && hasX1.size > 0 && hasX2 && hasX2.size > 0) {
+                const p1 = [...hasX1][0];
+                const p2 = [...hasX2][0];
+                // Se enciende si hay diferencia de potencial (fases distintas o Fase-Neutro)
+                if (p1 !== p2) p.state.on = true;
+                else p.state.on = false;
+            } else {
+                p.state.on = false;
+            }
         });
     }
 }
