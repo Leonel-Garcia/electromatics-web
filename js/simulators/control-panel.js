@@ -262,7 +262,12 @@ class Contactor extends Component {
 class ThermalRelay extends Component {
     constructor(x, y) {
         super('thermal-relay', x, y, 100, 100);
-        this.state = { tripped: false };
+        this.state = { 
+            tripped: false,
+            currentLimit: 5.0, // Amperes
+            currentSense: 0.0,
+            tripEnabled: true
+        };
         // Entradas (pines de cobre arriba) -> Salidas (tornillos abajo)
         this.terminals = {
             'L1': {x: 20, y: 5}, 'L2': {x: 52, y: 5}, 'L3': {x: 84, y: 5},
@@ -271,12 +276,34 @@ class ThermalRelay extends Component {
             'NO97': {x: 70, y: 65, label: '97'}, 'NO98': {x: 95, y: 65, label: '98'}
         };
     }
+    
+    draw(ctx) {
+        super.draw(ctx);
+        if (this.state.tripped) {
+            // Indicador visual de disparo
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.4)'; // Rojo suave
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+            
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 12px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('TRIPPED', this.x + this.width/2, this.y + this.height/2);
+        }
+    }
 }
 
 class Motor extends Component {
     constructor(x, y) {
         super('motor', x, y, 160, 160);
-        this.state = { running: false, angle: 0, direction: 1 }; // 1: CW, -1: CCW
+        this.state = { 
+            running: false, 
+            angle: 0, 
+            direction: 1,
+            nominalCurrent: 6.5 // Corriente que consume al girar
+        }; 
         this.terminals = {
             'U': {x: 48, y: 35, label: 'U'}, 
             'V': {x: 80, y: 35, label: 'V'}, 
@@ -562,6 +589,71 @@ function setupEventListeners() {
     canvas.addEventListener('touchstart', onMouseDown, {passive: false});
     canvas.addEventListener('touchmove', onMouseMove, {passive: false});
     canvas.addEventListener('touchend', onMouseUp);
+
+    // Context Menu (Right Click)
+    const ctxMenu = document.getElementById('context-menu');
+    canvas.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        const pos = getEventPos(e);
+        const mx = pos.x;
+        const my = pos.y;
+
+        // Buscar si clicamos en un componente
+        for (let i = components.length - 1; i >= 0; i--) {
+            const c = components[i];
+            if (c.isMouseOver(mx, my)) {
+                selectedComponent = c;
+                showContextMenu(e.clientX, e.clientY, c);
+                return;
+            }
+        }
+        ctxMenu.style.display = 'none';
+    });
+
+    // Cerrar menú al hacer clic en cualquier parte
+    document.addEventListener('click', () => {
+        if(ctxMenu) ctxMenu.style.display = 'none';
+    });
+
+    function showContextMenu(x, y, component) {
+        const title = document.getElementById('menu-title');
+        const thermal = document.getElementById('thermal-controls');
+        const inputLimit = document.getElementById('input-limit');
+        
+        title.innerText = component.type.replace('-', ' ').toUpperCase();
+        ctxMenu.style.left = `${x}px`;
+        ctxMenu.style.top = `${y}px`;
+        ctxMenu.style.display = 'block';
+
+        // Mostrar controles específicos
+        if (component instanceof ThermalRelay) {
+            thermal.style.display = 'block';
+            inputLimit.value = component.state.currentLimit;
+            // Guardar referencia al componente actual para el input
+            inputLimit.onchange = (e) => {
+                component.state.currentLimit = parseFloat(e.target.value);
+            };
+            document.getElementById('btn-reset-relay').onclick = () => {
+                component.state.tripped = false;
+                draw();
+            };
+        } else {
+            thermal.style.display = 'none';
+        }
+
+        // Eliminar Genérico
+        document.getElementById('btn-delete-comp').onclick = () => {
+            const idx = components.indexOf(component);
+            if(idx > -1) {
+                components.splice(idx, 1);
+                const compId = component.id;
+                wires = wires.filter(w => w.from.id !== compId && w.to.id !== compId);
+                selectedComponent = null;
+                draw();
+            }
+            ctxMenu.style.display = 'none';
+        };
+    }
     
     // UI Buttons (Simulación)
     const btnSim = document.getElementById('btn-simulate');
@@ -982,6 +1074,58 @@ function solveCircuit() {
         });
         
         // C. Consumidores
+        // Limpiar sensores de corriente
+        components.filter(c => c instanceof ThermalRelay).forEach(r => r.state.currentSense = 0);
+
+        // Motores y otros receptores
+        components.filter(c => c instanceof Motor).forEach(m => {
+            const hasU = nodes[`${m.id}_U`];
+            const hasV = nodes[`${m.id}_V`];
+            const hasW = nodes[`${m.id}_W`];
+            
+            if (hasU && hasU.size > 0 && hasV && hasV.size > 0 && hasW && hasW.size > 0) {
+                // Secuencia y Giro
+                const uPhase = [...hasU][0];
+                const vPhase = [...hasV][0];
+                const wPhase = [...hasW][0];
+
+                if (uPhase !== vPhase && vPhase !== wPhase && uPhase !== wPhase) {
+                    if(!m.state.running) {
+                        m.state.running = true;
+                        changed = true;
+                    }
+                    // Detectar secuencia
+                    if (uPhase==='L1' && vPhase==='L2') m.state.direction = 1;
+                    else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
+                    else m.state.direction = 1;
+
+                    // Propagar Corriente hacia los Relés Térmicos en serie
+                    components.filter(c => c instanceof ThermalRelay && !c.state.tripped).forEach(r => {
+                        const nodeT1 = nodes[`${r.id}_T1`];
+                        const nodeT2 = nodes[`${r.id}_T2`];
+                        const nodeT3 = nodes[`${r.id}_T3`];
+                        
+                        if (nodeT1 && nodeT1 === hasU && nodeT2 && nodeT2 === hasV && nodeT3 && nodeT3 === hasW) {
+                            r.state.currentSense += m.state.state?.nominalCurrent || 6.5;
+                        }
+                    });
+                } else {
+                    if(m.state.running) { m.state.running = false; changed = true; }
+                }
+            } else {
+                if(m.state.running) { m.state.running = false; changed = true; }
+            }
+        });
+
+        // Disparo de Térmicos
+        components.filter(c => c instanceof ThermalRelay).forEach(r => {
+            if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
+                r.state.tripped = true;
+                changed = true;
+                console.log(`Relé Térmico ${r.id} DISPARADO por sobrecarga (${r.state.currentSense}A > ${r.state.currentLimit}A)`);
+            }
+        });
+
         // Bobina Contactor
         components.filter(c => c instanceof Contactor).forEach(k => {
             const hasA1 = nodes[`${k.id}_A1`];
@@ -996,29 +1140,7 @@ function solveCircuit() {
                 k.state.engaged = false;
             }
         });
-        components.filter(c => c instanceof Motor).forEach(m => {
-            const u = hasPhase(m, 'U', 'L1');
-            const v = hasPhase(m, 'V', 'L2');
-            const w = hasPhase(m, 'W', 'L3');
-            
-            // Lógica de Giro básica
-            // L1-U, L2-V, L3-W -> CW (+1)
-            // L1-U, L3-V, L2-W -> CCW (-1)
-            
-            const uPhase = nodes[`${m.id}_U`] ? [...nodes[`${m.id}_U`]][0] : null;
-            const vPhase = nodes[`${m.id}_V`] ? [...nodes[`${m.id}_V`]][0] : null;
-            const wPhase = nodes[`${m.id}_W`] ? [...nodes[`${m.id}_W`]][0] : null;
 
-            if (uPhase && vPhase && wPhase && uPhase!==vPhase && vPhase!==wPhase && uPhase!==wPhase) {
-                m.state.running = true;
-                // Detectar secuencia
-                if (uPhase==='L1' && vPhase==='L2') m.state.direction = 1;
-                else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
-                else m.state.direction = 1; // Default
-            } else {
-                m.state.running = false;
-            }
-        });
 
         // Luces (Requieren Diferencia de Potencial entre X1 y X2)
         components.filter(c => c instanceof PilotLight).forEach(p => {

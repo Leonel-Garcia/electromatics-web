@@ -261,14 +261,52 @@
         text-transform: uppercase;
       }
 
-      .ctrl-btn.start {
-        background: var(--active-color);
-        color: #fff;
+      /* Context Menu */
+      #context-menu {
+        position: fixed;
+        display: none;
+        background: #1e293b;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        min-width: 180px;
+        padding: 5px 0;
+        color: white;
+        font-family: 'Inter', sans-serif;
       }
-
-      .ctrl-btn.start:hover {
-        background: #16a34a;
-        transform: scale(1.02);
+      .menu-item {
+        padding: 8px 15px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        transition: background 0.2s;
+      }
+      .menu-item:hover {
+        background: #334155;
+      }
+      .menu-item.danger {
+        color: #ef4444;
+      }
+      .menu-header {
+        padding: 8px 15px;
+        font-weight: bold;
+        border-bottom: 1px solid #334155;
+        margin-bottom: 5px;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #94a3b8;
+      }
+      .menu-item input {
+        width: 60px;
+        background: #0f172a;
+        border: 1px solid #475569;
+        color: white;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 12px;
       }
 
       .ctrl-btn.start:active {
@@ -400,6 +438,25 @@
     </style>
   </head>
   <body>
+    <!-- Menú de Contexto -->
+    <div id="context-menu">
+        <div class="menu-header" id="menu-title">Componente</div>
+        <div id="thermal-controls" style="display:none;">
+            <div class="menu-item">
+                <span>Límite (A):</span>
+                <input type="number" id="input-limit" step="0.1" value="5.0">
+            </div>
+            <div class="menu-item" id="btn-reset-relay">
+                <span>Resetear Relé</span>
+                <span style="font-size:10px;">(Cerrar NC)</span>
+            </div>
+        </div>
+        <div class="menu-item danger" id="btn-delete-comp">
+            <span>Eliminar Componente</span>
+            <i class="fas fa-trash"></i>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="main-header">
       <nav class="container">
