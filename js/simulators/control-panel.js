@@ -850,7 +850,18 @@ function solveCircuit() {
         // C. Consumidores
         // Bobina Contactor
         components.filter(c => c instanceof Contactor).forEach(k => {
-        // Motor
+            const hasA1 = nodes[`${k.id}_A1`];
+            const hasA2 = nodes[`${k.id}_A2`];
+            
+            if (hasA1 && hasA1.size > 0 && hasA2 && hasA2.size > 0) {
+                const p1 = [...hasA1][0];
+                const p2 = [...hasA2][0];
+                if (p1 !== p2) k.state.engaged = true;
+                else k.state.engaged = false;
+            } else {
+                k.state.engaged = false;
+            }
+        });
         components.filter(c => c instanceof Motor).forEach(m => {
             const u = hasPhase(m, 'U', 'L1');
             const v = hasPhase(m, 'V', 'L2');
