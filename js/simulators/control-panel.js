@@ -245,16 +245,44 @@ class Breaker extends Component {
         };
     }
     draw(ctx) {
-        super.draw(ctx);
-        // Indicador visual de estado
+        // Dibuja imagen base si existe
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+            // Fallback vectorial
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // Indicador LED de estado (pequeño, no cubre la imagen)
+        const ledX = this.x + this.width - 15;
+        const ledY = this.y + 15;
         ctx.fillStyle = this.state.closed ? '#22c55e' : '#ef4444';
-        ctx.beginPath(); 
-        ctx.roundRect(this.x + 40, this.y + 55, 20, 30, 4); // Switch simulado
+        ctx.shadowColor = this.state.closed ? '#22c55e' : '#ef4444';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 6, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = '9px Arial';
-        ctx.fillText(this.state.closed ? 'ON' : 'OFF', this.x + 50, this.y + 75);
+        ctx.shadowBlur = 0;
+        
+        // Terminales
+        this.drawTerminals(ctx);
     }
+    
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
     toggle() { this.state.closed = !this.state.closed; }
 }
 
@@ -271,31 +299,40 @@ class Contactor extends Component {
         };
     }
     draw(ctx) {
-        super.draw(ctx);
-        // Plunger Logic (Visual Feedback)
-        const plungerY = this.state.engaged ? 45 : 40;
-        const plungerColor = this.state.engaged ? '#d97706' : '#f59e0b'; // Darker when engaged
-        
-        ctx.fillStyle = '#1e293b'; // Slot background
-        ctx.fillRect(this.x + 35, this.y + 35, 30, 40);
-        
-        ctx.fillStyle = plungerColor;
-        // Plunger moves down 5px
-        ctx.fillRect(this.x + 38, this.y + plungerY, 24, 25);
-        
-        // Label on plunger
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillText(this.state.engaged ? 'I' : 'O', this.x + 50, this.y + plungerY + 15);
-        
-        if (this.state.engaged) {
-            // Glow effect
-            ctx.shadowColor = '#f59e0b';
+        // Dibuja imagen base si existe
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
             ctx.shadowBlur = 15;
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#fbbf24';
-            ctx.strokeRect(this.x + 38, this.y + plungerY, 24, 25);
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
             ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // Indicador LED de estado (pequeño LED en esquina)
+        const ledX = this.x + this.width - 15;
+        const ledY = this.y + 15;
+        ctx.fillStyle = this.state.engaged ? '#22c55e' : '#64748b';
+        ctx.shadowColor = this.state.engaged ? '#22c55e' : 'transparent';
+        ctx.shadowBlur = this.state.engaged ? 12 : 0;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Terminales
+        this.drawTerminals(ctx);
+    }
+    
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 }
@@ -319,19 +356,45 @@ class ThermalRelay extends Component {
     }
     
     draw(ctx) {
-        super.draw(ctx);
-        if (this.state.tripped) {
-            // Indicador visual de disparo
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.4)'; // Rojo suave
+        // Dibuja imagen base si existe
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = '#475569';
             ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // Indicador de disparo (solo borde rojo y LED, no cubre la imagen)
+        if (this.state.tripped) {
             ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+            ctx.lineWidth = 3;
+            ctx.strokeRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
             
+            // LED rojo parpadeante (simulado con glow)
             ctx.fillStyle = '#ef4444';
-            ctx.font = 'bold 12px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText('TRIPPED', this.x + this.width/2, this.y + this.height/2);
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(this.x + this.width - 15, this.y + 15, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+        
+        // Terminales
+        this.drawTerminals(ctx);
+    }
+    
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 }
@@ -352,31 +415,54 @@ class Motor extends Component {
         };
     }
     draw(ctx) {
-        super.draw(ctx);
+        // Dibuja imagen base si existe
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = '#475569';
+            ctx.beginPath();
+            ctx.arc(this.x + 80, this.y + 90, 60, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Indicador de estado (LED en esquina)
+        const ledX = this.x + this.width - 20;
+        const ledY = this.y + 20;
+        ctx.fillStyle = this.state.running ? '#22c55e' : '#64748b';
+        ctx.shadowColor = this.state.running ? '#22c55e' : 'transparent';
+        ctx.shadowBlur = this.state.running ? 12 : 0;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Flecha de dirección (solo cuando está corriendo)
         if (this.state.running) {
-             // Animación del eje
-             ctx.save();
-             ctx.translate(this.x + 80, this.y + 90); // Ajustar centro visual del motor
-             ctx.rotate(this.state.angle);
-             ctx.fillStyle = '#94a3b8';
-             ctx.beginPath(); ctx.arc(0,0, 12, 0, Math.PI*2); ctx.fill();
-             ctx.fillStyle = '#475569';
-             ctx.fillRect(-2, -12, 4, 24);
-             ctx.restore();
-             
-             // Flecha de Dirección
-             ctx.save();
-             ctx.translate(this.x + 80, this.y + 90);
-             ctx.strokeStyle = '#22c55e';
-             ctx.lineWidth = 4;
-             ctx.beginPath();
-             // Arco flecha
-             ctx.arc(0, 0, 40, 0, Math.PI * (this.state.direction > 0 ? 1 : -1) * 0.5, this.state.direction < 0);
-             ctx.stroke();
-             // Cabeza flecha (simplificada)
-             // TBD: Drawing actual arrow
-             ctx.restore();
-             this.state.angle += 0.2 * this.state.direction;
+            const arrowX = this.x + 25;
+            const arrowY = this.y + this.height / 2;
+            ctx.fillStyle = '#22c55e';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.state.direction > 0 ? '↻' : '↺', arrowX, arrowY);
+            
+            this.state.angle += 0.15 * this.state.direction;
+        }
+        
+        // Terminales
+        this.drawTerminals(ctx);
+    }
+    
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 }
