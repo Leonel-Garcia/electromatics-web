@@ -24,7 +24,6 @@ let wires = window.wires;
 let isSimulating = window.isSimulating;
 let scale = window.scale;
 let selectedWire = window.selectedWire;
-let selectedWire = window.selectedWire;
 let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
 
