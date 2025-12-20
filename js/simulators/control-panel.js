@@ -242,8 +242,8 @@ class Breaker extends Component {
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
             'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'},
-            'NO13': {x: 5, y: 40, label: '13'}, 'NO14': {x: 95, y: 40, label: '14'},
-            'NC21': {x: 5, y: 80, label: '21'}, 'NC22': {x: 95, y: 80, label: '22'}
+            'NO13': {x: 0, y: 40, label: '13'}, 'NO14': {x: 100, y: 40, label: '14'},
+            'NC21': {x: 0, y: 80, label: '21'}, 'NC22': {x: 100, y: 80, label: '22'}
         };
     }
     draw(ctx) {
@@ -293,8 +293,15 @@ class Breaker extends Component {
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 10px Inter';
                 ctx.textAlign = 'center';
-                const ly = ty < this.y + 50 ? ty - 10 : ty + 18; 
-                ctx.fillText(t.label, tx, ly);
+                // Lower label to avoid overlap
+                const ly = ty + 18; 
+                if(ty < this.y + 20) {
+                     // Top terminals (Input) still above
+                     ctx.fillText(t.label, tx, ty - 10);
+                } else {
+                     // Side/Bottom terminals below
+                     ctx.fillText(t.label, tx, ly);
+                }
             }
         }
     }
