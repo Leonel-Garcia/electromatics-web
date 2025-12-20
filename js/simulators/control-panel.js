@@ -424,15 +424,49 @@ class PilotLight extends Component {
         this.state = { on: false };
     }
     draw(ctx) {
-        super.draw(ctx);
+        // 1. Dibujar imagen base si existe
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+            // Fallback: círculo gris
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.arc(this.x + 25, this.y + 25, 20, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#64748b';
+            ctx.stroke();
+        }
+        
+        // 2. Efecto de encendido (glow)
         if(this.state.on) {
             const color = this.type.includes('green') ? '#22c55e' : 
                          (this.type.includes('amber') ? '#f59e0b' : '#ef4444');
-            ctx.shadowColor = color; ctx.shadowBlur = 20;
+            ctx.shadowColor = color; 
+            ctx.shadowBlur = 25;
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath(); ctx.arc(this.x+25, this.y+25, 12, 0, Math.PI*2); ctx.fill();
-            ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath(); 
+            ctx.arc(this.x + 25, this.y + 25, 14, 0, Math.PI * 2); 
+            ctx.fill();
+            ctx.globalAlpha = 1.0; 
+            ctx.shadowBlur = 0;
+        }
+        
+        // 3. Terminales
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '9px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(id, tx, ty - 8);
         }
     }
 }
