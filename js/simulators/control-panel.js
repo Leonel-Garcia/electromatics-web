@@ -143,8 +143,30 @@ class PowerSource extends Component {
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
             'L2': {x: 50, y: 50, label: 'L2'}, 
-            'L3': {x: 80, y: 50, label: 'L3'}
+            'L3': {x: 80, y: 50, label: 'L3'},
+            'N':  {x: 10, y: 50, label: 'N'} // New Neutral
         };
+        // Adjust others to make space? kept simple for now
+        this.terminals['L1'].x = 35;
+        this.terminals['L2'].x = 60;
+        this.terminals['L3'].x = 85;
+    }
+    
+    draw(ctx) {
+        super.draw(ctx);
+        // Draw Neutral Terminal specific color
+        const t = this.getTerminal('N');
+        if(t) {
+             ctx.beginPath();
+             ctx.arc(t.x, t.y, 5, 0, Math.PI*2);
+             ctx.fillStyle = '#e2e8f0'; // Gray/White for Neutral
+             ctx.fill();
+             ctx.strokeStyle = '#64748b';
+             ctx.stroke();
+             ctx.fillStyle = '#fff';
+             ctx.font = 'bold 10px Inter';
+             ctx.fillText('N', t.x, t.y + 18);
+        }
     }
 }
 
@@ -188,10 +210,30 @@ class Contactor extends Component {
     }
     draw(ctx) {
         super.draw(ctx);
+        // Plunger Logic (Visual Feedback)
+        const plungerY = this.state.engaged ? 45 : 40;
+        const plungerColor = this.state.engaged ? '#d97706' : '#f59e0b'; // Darker when engaged
+        
+        ctx.fillStyle = '#1e293b'; // Slot background
+        ctx.fillRect(this.x + 35, this.y + 35, 30, 40);
+        
+        ctx.fillStyle = plungerColor;
+        // Plunger moves down 5px
+        ctx.fillRect(this.x + 38, this.y + plungerY, 24, 25);
+        
+        // Label on plunger
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(this.state.engaged ? 'I' : 'O', this.x + 50, this.y + plungerY + 15);
+        
         if (this.state.engaged) {
-            // Brillo central indicando activación magnética
-            ctx.fillStyle = 'rgba(251, 191, 36, 0.4)';
-            ctx.fillRect(this.x + 25, this.y + 40, 50, 40);
+            // Glow effect
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = 15;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fbbf24';
+            ctx.strokeRect(this.x + 38, this.y + plungerY, 24, 25);
+            ctx.shadowBlur = 0;
         }
     }
 }
@@ -259,9 +301,30 @@ class PushButton extends Component {
     }
     draw(ctx) {
         super.draw(ctx);
+        // Button Cap
+        const btnColor = this.type.includes('green') ? '#22c55e' : '#ef4444';
+        const pressOffset = this.state.pressed ? 2 : 0;
+        
+        // Casing ring
+        ctx.beginPath(); ctx.arc(this.x+30, this.y+25, 22, 0, Math.PI*2); 
+        ctx.fillStyle = '#cbd5e1'; ctx.fill(); ctx.stroke();
+
+        // Button itself
+        ctx.beginPath(); ctx.arc(this.x+30, this.y+25 + pressOffset, 18, 0, Math.PI*2);
+        ctx.fillStyle = this.state.pressed ? '#1e293b' : btnColor; // Darken on press or just move
+        // Gradient for 3D effect
+        const grad = ctx.createRadialGradient(this.x+30-5, this.y+25+pressOffset-5, 2, this.x+30, this.y+25+pressOffset, 18);
+        grad.addColorStop(0, this.state.pressed ? '#334155' : '#fff');
+        grad.addColorStop(1, this.state.pressed ? '#0f172a' : btnColor);
+        ctx.fillStyle = grad;
+        
+        ctx.fill(); 
+        
         if (this.state.pressed) {
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.beginPath(); ctx.arc(this.x+30, this.y+25, 20, 0, Math.PI*2); ctx.fill();
+           // Inner shadow
+           ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+           ctx.lineWidth = 2;
+           ctx.stroke();
         }
     }
 }
@@ -703,6 +766,7 @@ function solveCircuit() {
         setNode(p, 'L1', 'L1');
         setNode(p, 'L2', 'L2');
         setNode(p, 'L3', 'L3');
+        setNode(p, 'N', 'N'); // Emit Neutral
     });
 
     // 3. Propagación Iterativa (Max 10 iteraciones para estabilizar)
@@ -786,12 +850,6 @@ function solveCircuit() {
         // C. Consumidores
         // Bobina Contactor
         components.filter(c => c instanceof Contactor).forEach(k => {
-            const hasA1 = nodes[`${k.id}_A1`];
-            // Simple logic: Si A1 tiene fase -> Activar. (Idealmente A1-A2 diff pot)
-            if (hasA1 && hasA1.size > 0) k.state.engaged = true;
-            else k.state.engaged = false;
-        });
-
         // Motor
         components.filter(c => c instanceof Motor).forEach(m => {
             const u = hasPhase(m, 'U', 'L1');
