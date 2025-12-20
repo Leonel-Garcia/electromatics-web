@@ -358,31 +358,61 @@ class PushButton extends Component {
         this.state = { pressed: false };
     }
     draw(ctx) {
-        super.draw(ctx);
-        // Button Cap
-        const btnColor = this.type.includes('green') ? '#22c55e' : '#ef4444';
-        const pressOffset = this.state.pressed ? 2 : 0;
-        
-        // Casing ring
-        ctx.beginPath(); ctx.arc(this.x+30, this.y+25, 22, 0, Math.PI*2); 
-        ctx.fillStyle = '#cbd5e1'; ctx.fill(); ctx.stroke();
+        // Si hay imagen cargada, usar la imagen base y solo agregar efectos de presión
+        if (assets[this.type]) {
+            // Sombra para dar profundidad
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+            
+            // Efecto de presión: oscurecer levemente el botón
+            if (this.state.pressed) {
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.arc(this.x + 30, this.y + 25, 18, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else {
+            // Fallback: dibujar botón vectorial si no hay imagen
+            const btnColor = this.type.includes('green') ? '#22c55e' : '#ef4444';
+            const pressOffset = this.state.pressed ? 2 : 0;
+            
+            // Casing ring
+            ctx.beginPath(); ctx.arc(this.x+30, this.y+25, 22, 0, Math.PI*2); 
+            ctx.fillStyle = '#cbd5e1'; ctx.fill(); ctx.stroke();
 
-        // Button itself
-        ctx.beginPath(); ctx.arc(this.x+30, this.y+25 + pressOffset, 18, 0, Math.PI*2);
-        ctx.fillStyle = this.state.pressed ? '#1e293b' : btnColor; // Darken on press or just move
-        // Gradient for 3D effect
-        const grad = ctx.createRadialGradient(this.x+30-5, this.y+25+pressOffset-5, 2, this.x+30, this.y+25+pressOffset, 18);
-        grad.addColorStop(0, this.state.pressed ? '#334155' : '#fff');
-        grad.addColorStop(1, this.state.pressed ? '#0f172a' : btnColor);
-        ctx.fillStyle = grad;
+            // Button itself
+            ctx.beginPath(); ctx.arc(this.x+30, this.y+25 + pressOffset, 18, 0, Math.PI*2);
+            const grad = ctx.createRadialGradient(this.x+30-5, this.y+25+pressOffset-5, 2, this.x+30, this.y+25+pressOffset, 18);
+            grad.addColorStop(0, this.state.pressed ? '#334155' : '#fff');
+            grad.addColorStop(1, this.state.pressed ? '#0f172a' : btnColor);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            if (this.state.pressed) {
+               ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+               ctx.lineWidth = 2;
+               ctx.stroke();
+            }
+        }
         
-        ctx.fill(); 
-        
-        if (this.state.pressed) {
-           // Inner shadow
-           ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-           ctx.lineWidth = 2;
-           ctx.stroke();
+        // Dibujar terminales (heredado de Component pero llamamos directamente para control)
+        this.drawTerminals(ctx);
+    }
+    
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '9px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(id, tx, ty - 8);
         }
     }
 }
