@@ -24,7 +24,9 @@ let wires = window.wires;
 let isSimulating = window.isSimulating;
 let scale = window.scale;
 let selectedWire = window.selectedWire;
+let selectedWire = window.selectedWire;
 let currentWireColor = window.currentWireColor;
+let draggingHandle = null; // {wire, cp: 1|2}
 
 // Configuración de Assets
 const ASSET_PATHS = {
@@ -500,7 +502,29 @@ function addComponent(type, x, y) {
     c.y = snapToGrid(tlY);
 
     components.push(c);
+    if (selectedWire) {
+        selectedWire = null; // Deseleccionar al agregar componente
+    }
     draw();
+}
+
+// Helper para obtener Puntos de Control (Default o Custom)
+function getWireControlPoints(w) {
+    const p1 = w.from.getTerminal(w.fromId);
+    const p2 = w.to.getTerminal(w.toId);
+    if (!p1 || !p2) return null;
+
+    if (w.customCP1 && w.customCP2) {
+        return { cp1: w.customCP1, cp2: w.customCP2, isCustom: true };
+    }
+    
+    // Default Auto-Route (U-Shape)
+    const midY = Math.max(p1.y, p2.y) + 40;
+    return {
+        cp1: { x: p1.x, y: midY },
+        cp2: { x: p2.x, y: midY },
+        isCustom: false
+    };
 }
 
 function onMouseDown(e) {
@@ -509,7 +533,33 @@ function onMouseDown(e) {
     const mx = pos.x;
     const my = pos.y;
 
-    // 0. Reset Selection (unless clicking valid object)
+    // 0. Handle Dragging (Wire Control Points)
+    if (selectedWire) {
+        const cps = getWireControlPoints(selectedWire);
+        if (cps) {
+            // Check CP1
+            if (Math.hypot(mx - cps.cp1.x, my - cps.cp1.y) < 8) {
+                // Initialize custom CPs if not valid
+                if (!selectedWire.customCP1) {
+                    selectedWire.customCP1 = { ...cps.cp1 };
+                    selectedWire.customCP2 = { ...cps.cp2 };
+                }
+                draggingHandle = { wire: selectedWire, cp: 1 };
+                return;
+            }
+            // Check CP2
+            if (Math.hypot(mx - cps.cp2.x, my - cps.cp2.y) < 8) {
+                if (!selectedWire.customCP1) {
+                    selectedWire.customCP1 = { ...cps.cp1 };
+                    selectedWire.customCP2 = { ...cps.cp2 };
+                }
+                draggingHandle = { wire: selectedWire, cp: 2 };
+                return;
+            }
+        }
+    }
+
+    // 0.5 Reset Selection (unless clicking valid object)
     let hitObject = false;
 
     // 1. Tocar Terminal? -> Iniciar Cableado
@@ -574,6 +624,13 @@ function onMouseMove(e) {
         dragItem.comp.x = snapToGrid(rawX);
         dragItem.comp.y = snapToGrid(rawY);
     }
+
+    if (draggingHandle) {
+         // Free movement for handles (no snap needed usually, but can be added)
+         if (draggingHandle.cp === 1) draggingHandle.wire.customCP1 = { x: mousePos.x, y: mousePos.y };
+         else draggingHandle.wire.customCP2 = { x: mousePos.x, y: mousePos.y };
+         draw();
+    }
 }
 
 function onMouseUp(e) {
@@ -582,6 +639,7 @@ function onMouseUp(e) {
         dragItem.comp.state.pressed = false;
     }
     dragItem = null;
+    draggingHandle = null;
 
     // Finalizar Cableado
     if (wireStartObj) {
@@ -790,7 +848,8 @@ function draw() {
         
         if (p1 && p2) {
              const isSelected = (w === selectedWire);
-             
+             const cps = getWireControlPoints(w);
+
              // Base color or Selected Highlight
              ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
              ctx.lineWidth = isSelected ? 6 : 4;
@@ -804,9 +863,8 @@ function draw() {
              ctx.beginPath();
              ctx.moveTo(p1.x, p1.y);
              
-             // Curva bonita
-             const midY = Math.max(p1.y, p2.y) + 40;
-             ctx.bezierCurveTo(p1.x, midY, p2.x, midY, p2.x, p2.y);
+             // Curva Bezier con CPs
+             ctx.bezierCurveTo(cps.cp1.x, cps.cp1.y, cps.cp2.x, cps.cp2.y, p2.x, p2.y);
              ctx.stroke();
 
              // Reset shadow
@@ -816,6 +874,25 @@ function draw() {
              ctx.fillStyle = ctx.strokeStyle;
              ctx.beginPath(); ctx.arc(p1.x, p1.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
              ctx.beginPath(); ctx.arc(p2.x, p2.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
+
+             // Draw Handles if Selected
+             if (isSelected) {
+                 // Dashed lines to handles
+                 ctx.lineWidth = 1;
+                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                 ctx.setLineDash([3, 3]);
+                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(cps.cp1.x, cps.cp1.y); ctx.stroke();
+                 ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(cps.cp2.x, cps.cp2.y); ctx.stroke();
+                 ctx.setLineDash([]);
+
+                 // Handles
+                 ctx.fillStyle = '#fbbf24';
+                 ctx.beginPath(); ctx.arc(cps.cp1.x, cps.cp1.y, 5, 0, Math.PI*2); ctx.fill();
+                 ctx.beginPath(); ctx.arc(cps.cp2.x, cps.cp2.y, 5, 0, Math.PI*2); ctx.fill();
+                 ctx.strokeStyle = '#000';
+                 ctx.lineWidth = 1;
+                 ctx.strokeRect(cps.cp1.x-5, cps.cp1.y-5, 10, 10); // dummy stroke
+             }
         }
     });
 
@@ -827,7 +904,14 @@ function draw() {
         ctx.beginPath();
         const p1 = wireStartObj.component.getTerminal(wireStartObj.terminalId);
         ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(mousePos.x, mousePos.y);
+        
+        // Simple curve draft
+        const cp1x = p1.x;
+        const cp1y = Math.max(p1.y, mousePos.y) + 40;
+        const cp2x = mousePos.x;
+        const cp2y = cp1y;
+        
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, mousePos.x, mousePos.y);
         ctx.stroke();
         ctx.setLineDash([]);
     }
@@ -847,17 +931,25 @@ function isMouseOverWire(mx, my, wire) {
     const p2 = wire.to.getTerminal(wire.toId);
     if (!p1 || !p2) return false;
 
-    const midY = Math.max(p1.y, p2.y) + 40;
-    const cp1 = {x: p1.x, y: midY};
-    const cp2 = {x: p2.x, y: midY};
+    const cps = getWireControlPoints(wire);
+    if (!cps) return false;
 
-    // Muestreo simple a lo largo de la curva (10 puntos)
-    // Para mayor precisión podríamos usar algoritmos más complejos, pero esto basta para UX
-    for (let t = 0; t <= 1; t += 0.1) {
-        const x = Math.pow(1-t, 3)*p1.x + 3*Math.pow(1-t, 2)*t*cp1.x + 3*(1-t)*Math.pow(t, 2)*cp2.x + Math.pow(t, 3)*p2.x;
-        const y = Math.pow(1-t, 3)*p1.y + 3*Math.pow(1-t, 2)*t*cp1.y + 3*(1-t)*Math.pow(t, 2)*cp2.y + Math.pow(t, 3)*p2.y;
+    const cp1 = cps.cp1;
+    const cp2 = cps.cp2;
+
+    // Hight Precision Sampling (50 points)
+    // Reduce false negatives on sharp curves
+    const steps = 50;
+    const threshold = 8; // detection radius
+
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const it = 1 - t;
+        // Bezier Cubic Formula
+        const x = (it*it*it)*p1.x + 3*(it*it)*t*cp1.x + 3*it*(t*t)*cp2.x + (t*t*t)*p2.x;
+        const y = (it*it*it)*p1.y + 3*(it*it)*t*cp1.y + 3*it*(t*t)*cp2.y + (t*t*t)*p2.y;
         
-        if (Math.hypot(mx - x, my - y) < 10) return true; // Radio de 10px
+        if (Math.hypot(mx - x, my - y) < threshold) return true;
     }
     return false;
 }
