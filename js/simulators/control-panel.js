@@ -151,12 +151,12 @@ class Component {
 class PowerSource extends Component {
     constructor(x, y) {
         super('power-source', x, y, 120, 60);
-        // Estandarizado a 32px de separación
+        // Estandarizado a 32px de separación (20, 52, 84, 116)
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
             'L2': {x: 52, y: 50, label: 'L2'}, 
             'L3': {x: 84, y: 50, label: 'L3'},
-            'N':  {x: 110, y: 50, label: 'N'}
+            'N':  {x: 116, y: 50, label: 'N'}
         };
     }
     
@@ -182,7 +182,7 @@ class SinglePhaseSource extends Component {
     constructor(x, y) {
         super('single-phase-source', x, y, 70, 60);
         this.terminals = {
-            'L': {x: 50, y: 50, label: 'L'},
+            'L': {x: 52, y: 50, label: 'L'},
             'N': {x: 20, y: 50, label: 'N'}
         };
     }
@@ -238,10 +238,12 @@ class Breaker extends Component {
     constructor(x, y) {
         super('breaker', x, y, 100, 120);
         this.state = { closed: false };
-        // Pines superiores (Entrada) e inferiores (Salida)
+        // Pines superiores (Entrada) e inferiores (Salida) + Auxiliares completas
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
-            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'}
+            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'},
+            'NO13': {x: 5, y: 40, label: '13'}, 'NO14': {x: 95, y: 40, label: '14'},
+            'NC21': {x: 5, y: 80, label: '21'}, 'NC22': {x: 95, y: 80, label: '22'}
         };
     }
     draw(ctx) {
@@ -276,10 +278,24 @@ class Breaker extends Component {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
-            ctx.fillStyle = '#1e293b';
+            
+            // Halo / Base Oro
             ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
             ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Etiqueta
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Inter';
+                ctx.textAlign = 'center';
+                const ly = ty < this.y + 50 ? ty - 10 : ty + 18; 
+                ctx.fillText(t.label, tx, ly);
+            }
         }
     }
     
@@ -293,9 +309,10 @@ class Contactor extends Component {
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
             'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'},
-            'A1': {x: 5, y: 60, label: 'A1'}, 'A2': {x: 95, y: 60, label: 'A2'},
-            'NO13': {x: 5, y: 40, label: '13'}, 'NO14': {x: 95, y: 40, label: '14'},
-            'NC21': {x: 5, y: 80, label: '21'}, 'NC22': {x: 95, y: 80, label: '22'}
+            // Bobina A1/A2 en los bordes para visibilidad
+            'A1': {x: 0, y: 60, label: 'A1'}, 'A2': {x: 100, y: 60, label: 'A2'},
+            'NO13': {x: 0, y: 40, label: '13'}, 'NO14': {x: 100, y: 40, label: '14'},
+            'NC21': {x: 0, y: 80, label: '21'}, 'NC22': {x: 100, y: 80, label: '22'}
         };
     }
     draw(ctx) {
@@ -326,13 +343,29 @@ class Contactor extends Component {
     }
     
     drawTerminals(ctx) {
+        // Misma lógica visual dorada para Contactores
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
-            ctx.fillStyle = '#1e293b';
+            
             ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
             ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                let ly = ty + 15;
+                if(ty < this.y + 20) ly = ty - 8; // Top terminals
+                if(id.startsWith('A')) ly = ty + 18; // Coil side text (Moved down)
+                
+                ctx.fillText(t.label, tx, ly);
+            }
         }
     }
 }
@@ -391,10 +424,21 @@ class ThermalRelay extends Component {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
-            ctx.fillStyle = '#1e293b';
+            
             ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
             ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(t.label, tx, ty + 15);
+            }
         }
     }
 }
@@ -409,9 +453,9 @@ class Motor extends Component {
             nominalCurrent: 6.5 // Corriente que consume al girar
         }; 
         this.terminals = {
-            'U': {x: 48, y: 35, label: 'U'}, 
-            'V': {x: 80, y: 35, label: 'V'}, 
-            'W': {x: 112, y: 35, label: 'W'}
+            'U': {x: 20, y: 35, label: 'U'}, 
+            'V': {x: 52, y: 35, label: 'V'}, 
+            'W': {x: 84, y: 35, label: 'W'}
         };
     }
     draw(ctx) {
@@ -459,10 +503,21 @@ class Motor extends Component {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
-            ctx.fillStyle = '#1e293b';
+            
             ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
             ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(t.label, tx, ty + 15); // Label correction
+            }
         }
     }
 }
@@ -472,7 +527,7 @@ class Motor extends Component {
 class PushButton extends Component {
     constructor(type, x, y) {
         super(type, x, y, 60, 60);
-        this.terminals = { '1': {x: 10, y: 50}, '2': {x: 50, y: 50} };
+        this.terminals = { '1': {x: 0, y: 50}, '2': {x: 60, y: 50} };
         this.state = { pressed: false };
     }
     draw(ctx) {
@@ -523,14 +578,23 @@ class PushButton extends Component {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
-            ctx.fillStyle = '#1e293b';
+            
+            // Gold Standard
             ctx.beginPath();
             ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fbbf24'; 
             ctx.fill();
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '9px Inter';
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Label Lowered
+            ctx.fillStyle = '#fff'; // White text
+            ctx.shadowColor = '#000'; ctx.shadowBlur = 4; // Shadow for readability
+            ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(id, tx, ty - 8);
+            ctx.fillText(id, tx, ty + 18);
+            ctx.shadowBlur = 0;
         }
     }
 }
@@ -538,7 +602,7 @@ class PushButton extends Component {
 class PilotLight extends Component {
     constructor(type, x, y) {
         super(type, x, y, 50, 50);
-        this.terminals = { 'X1': {x: 10, y: 45}, 'X2': {x: 40, y: 45} };
+        this.terminals = { 'X1': {x: 0, y: 45}, 'X2': {x: 50, y: 45} };
         this.state = { on: false };
     }
     draw(ctx) {
@@ -573,18 +637,25 @@ class PilotLight extends Component {
             ctx.shadowBlur = 0;
         }
         
-        // 3. Terminales
+        // 3. Terminales (Gold Standard + Edges)
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
-            ctx.fillStyle = '#1e293b';
+            
             ctx.beginPath();
             ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fbbf24';
             ctx.fill();
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '9px Inter';
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+            ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(id, tx, ty - 8);
+            ctx.fillText(id, tx, ty + 18);
+            ctx.shadowBlur = 0;
         }
     }
 }
@@ -1158,13 +1229,25 @@ function solveCircuit() {
         
         // A. Transferencia interna de Componentes
         components.forEach(c => {
-            if (c instanceof Breaker && c.state.closed) {
-                ['L1','L2','L3'].forEach((inT, i) => {
-                    const outT = ['T1','T2','T3'][i];
-                    // Bidireccional
-                    if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
-                    if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
-                });
+            if (c instanceof Breaker) {
+                if (c.state.closed) {
+                    // Principales (Bidireccional)
+                    ['L1','L2','L3'].forEach((inT, i) => {
+                        const outT = ['T1','T2','T3'][i];
+                        // Bidireccional
+                        if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                        if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
+                    });
+                    // Aux NO (13-14) Cerrado cuando Breaker ON
+                    const k13 = `${c.id}_NO13`, k14 = `${c.id}_NO14`;
+                    if(nodes[k13]) nodes[k13].forEach(p => setNode(c, 'NO14', p));
+                    if(nodes[k14]) nodes[k14].forEach(p => setNode(c, 'NO13', p));
+                } else {
+                     // Aux NC (21-22) Cerrado cuando Breaker OFF
+                    const k21 = `${c.id}_NC21`, k22 = `${c.id}_NC22`;
+                    if(nodes[k21]) nodes[k21].forEach(p => setNode(c, 'NC22', p));
+                    if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
+                }
             }
             if (c instanceof Contactor && c.state.engaged) {
                 // Principales (Bidireccional)
