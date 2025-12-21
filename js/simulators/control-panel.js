@@ -28,6 +28,119 @@ let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
 let isTripleMode = false; // New state for Triple Cable tool
 
+// ================= MOTOR AUDIO MANAGER (Web Audio API) =================
+class MotorAudioManager {
+    constructor() {
+        this.audioCtx = null;
+        this.masterGain = null;
+        this.oscillators = [];
+        this.isPlaying = false;
+        this.targetVolume = 0;
+        this.currentVolume = 0;
+    }
+
+    init() {
+        if (this.audioCtx) return;
+        try {
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            this.masterGain = this.audioCtx.createGain();
+            this.masterGain.gain.value = 0;
+            this.masterGain.connect(this.audioCtx.destination);
+        } catch(e) {
+            console.warn('Web Audio API not supported:', e);
+        }
+    }
+
+    start() {
+        if (!this.audioCtx) this.init();
+        if (!this.audioCtx || this.isPlaying) return;
+
+        // Resume context if suspended (browser policy)
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
+        // Base frequency (60Hz - power line frequency)
+        const baseFreq = 60;
+        
+        // Create layered oscillators for realistic motor sound
+        const frequencies = [
+            { freq: baseFreq, gain: 0.3, type: 'sine' },           // Base hum
+            { freq: baseFreq * 2, gain: 0.15, type: 'sine' },      // 1st harmonic (120Hz)
+            { freq: baseFreq * 3, gain: 0.08, type: 'sine' },      // 2nd harmonic
+            { freq: baseFreq * 5, gain: 0.04, type: 'triangle' },  // Higher harmonic (mechanical)
+            { freq: 25, gain: 0.1, type: 'sine' }                  // Low rumble (rotation)
+        ];
+
+        frequencies.forEach(config => {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            
+            osc.type = config.type;
+            osc.frequency.value = config.freq;
+            gain.gain.value = config.gain;
+            
+            // Add slight modulation for vibration effect
+            const lfo = this.audioCtx.createOscillator();
+            const lfoGain = this.audioCtx.createGain();
+            lfo.frequency.value = 2 + Math.random(); // 2-3 Hz wobble
+            lfoGain.gain.value = config.freq * 0.02; // Slight pitch variation
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            lfo.start();
+            
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start();
+            
+            this.oscillators.push({ osc, gain, lfo, lfoGain });
+        });
+
+        // Fade in
+        this.targetVolume = 0.25;
+        this.isPlaying = true;
+        this.fadeToTarget();
+    }
+
+    stop() {
+        if (!this.isPlaying) return;
+        this.targetVolume = 0;
+        this.fadeToTarget(() => {
+            this.oscillators.forEach(({ osc, lfo }) => {
+                try { osc.stop(); lfo.stop(); } catch(e) {}
+            });
+            this.oscillators = [];
+            this.isPlaying = false;
+        });
+    }
+
+    fadeToTarget(callback) {
+        if (!this.masterGain) return;
+        const now = this.audioCtx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(now);
+        this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+        this.masterGain.gain.linearRampToValueAtTime(this.targetVolume, now + 0.5);
+        
+        if (callback) {
+            setTimeout(callback, 550);
+        }
+    }
+
+    // Call this from the main loop to sync with motor state
+    update(anyMotorRunning) {
+        if (anyMotorRunning && !this.isPlaying) {
+            this.start();
+        } else if (!anyMotorRunning && this.isPlaying) {
+            this.stop();
+        }
+    }
+}
+
+// Global audio manager instance
+const motorAudio = new MotorAudioManager();
+
+
+
 // Configuración de Assets
 const ASSET_PATHS = {
     'breaker': 'img/simulators/control-panel/breaker.png',
@@ -492,21 +605,77 @@ class Motor extends Component {
         ctx.fill();
         ctx.shadowBlur = 0;
         
-        // Flecha de dirección (solo cuando está corriendo)
+        // Animación de rotor mejorada (solo cuando está corriendo)
         if (this.state.running) {
-            const arrowX = this.x + 25;
-            const arrowY = this.y + this.height / 2;
-            ctx.fillStyle = '#22c55e';
-            ctx.font = 'bold 24px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(this.state.direction > 0 ? '↻' : '↺', arrowX, arrowY);
+            const centerX = this.x + 80;
+            const centerY = this.y + 100;
+            const rotorRadius = 35;
+            const numSegments = 8;
             
-            this.state.angle += 0.15 * this.state.direction;
+            // Actualizar ángulo
+            this.state.angle += 0.08 * this.state.direction;
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.state.angle);
+            
+            // Dibujar segmentos del rotor con efecto de brillo
+            for (let i = 0; i < numSegments; i++) {
+                const segAngle = (i / numSegments) * Math.PI * 2;
+                const nextAngle = ((i + 1) / numSegments) * Math.PI * 2;
+                
+                // Alternar colores para efecto visual
+                const brightness = 0.4 + 0.3 * Math.sin(segAngle + this.state.angle * 2);
+                ctx.fillStyle = i % 2 === 0 
+                    ? `rgba(34, 197, 94, ${brightness})` 
+                    : `rgba(59, 130, 246, ${brightness})`;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, rotorRadius, segAngle, nextAngle);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Círculo central (eje)
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Punto de referencia de dirección
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(rotorRadius - 8, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Efecto de glow alrededor del rotor
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, rotorRadius + 5, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(34, 197, 94, 0.4)';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#22c55e';
+            ctx.shadowBlur = 15;
+            ctx.stroke();
+            ctx.restore();
+            
+            // Indicador de dirección (pequeña flecha)
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.state.direction > 0 ? '⟳' : '⟲', this.x + 20, this.y + 130);
         }
         
         // Terminales
         this.drawTerminals(ctx);
     }
+
     
     drawTerminals(ctx) {
         for (const [id, t] of Object.entries(this.terminals)) {
@@ -858,26 +1027,87 @@ class Motor6T extends Component {
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Animation Overlay
+        // Animación de rotor mejorada
         if (this.state.running) {
-             // Background for text visibility
-             ctx.fillStyle = 'rgba(0,0,0,0.6)';
-             ctx.beginPath();
-             ctx.roundRect(this.x + 40, this.y + 60, 80, 50, 8);
-             ctx.fill();
-
-             ctx.font = 'bold 36px Arial';
-             ctx.fillStyle = '#fff';
-             ctx.textAlign = 'center';
-             ctx.fillText(this.state.direction > 0 ? '↻' : '↺', this.x + 80, this.y + 90);
-             
-             ctx.font = 'bold 12px Inter';
-             ctx.fillStyle = '#fbbf24'; // Gold text for connection type
-             ctx.fillText(this.state.connection.toUpperCase(), this.x + 80, this.y + 105);
+            // Inicializar ángulo si no existe
+            if (this.state.angle === undefined) this.state.angle = 0;
+            
+            const centerX = this.x + 80;
+            const centerY = this.y + 80;
+            const rotorRadius = 30;
+            const numSegments = 8;
+            
+            // Actualizar ángulo
+            this.state.angle += 0.08 * this.state.direction;
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.state.angle);
+            
+            // Dibujar segmentos del rotor
+            for (let i = 0; i < numSegments; i++) {
+                const segAngle = (i / numSegments) * Math.PI * 2;
+                const nextAngle = ((i + 1) / numSegments) * Math.PI * 2;
+                
+                const brightness = 0.4 + 0.3 * Math.sin(segAngle + this.state.angle * 2);
+                // Usar colores según tipo de conexión
+                const color1 = this.state.connection === 'Star' ? 'rgba(234, 179, 8' : 'rgba(34, 197, 94';
+                const color2 = this.state.connection === 'Star' ? 'rgba(251, 191, 36' : 'rgba(59, 130, 246';
+                ctx.fillStyle = i % 2 === 0 
+                    ? `${color1}, ${brightness})` 
+                    : `${color2}, ${brightness})`;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, rotorRadius, segAngle, nextAngle);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Círculo central (eje)
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Punto de referencia
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(rotorRadius - 6, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Efecto de glow
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, rotorRadius + 4, 0, Math.PI * 2);
+            const glowColor = this.state.connection === 'Star' ? '#eab308' : '#22c55e';
+            ctx.strokeStyle = glowColor + '66';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 12;
+            ctx.stroke();
+            ctx.restore();
+            
+            // Indicador de conexión (Star/Delta) y dirección
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 11px Inter';
+            ctx.textAlign = 'center';
+            const connSymbol = this.state.connection === 'Star' ? '★ Y' : '△ Δ';
+            ctx.fillText(connSymbol, this.x + 80, this.y + 145);
+            
+            // Flecha de dirección
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(this.state.direction > 0 ? '⟳' : '⟲', this.x + 20, this.y + 80);
         }
         
         this.drawTerminals(ctx);
     }
+
     
     drawTerminals(ctx) {
         for (const [id, t] of Object.entries(this.terminals)) {
@@ -934,10 +1164,20 @@ function getEventPos(e) {
 function loop() {
     if (isSimulating) {
         solveCircuit();
+        
+        // Sincronizar audio del motor con el estado de los motores
+        const anyMotorRunning = components.some(c => 
+            (c instanceof Motor || c instanceof Motor6T) && c.state.running
+        );
+        motorAudio.update(anyMotorRunning);
+    } else {
+        // Detener audio si la simulación está detenida
+        motorAudio.update(false);
     }
     draw();
     requestAnimationFrame(loop);
 }
+
 
 function init() {
     console.log("Iniciando Simulador Tablero...");
