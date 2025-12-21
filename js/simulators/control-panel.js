@@ -105,11 +105,13 @@ class MotorAudioManager {
         
         // Create layered oscillators for realistic motor sound
         const frequencies = [
-            { freq: baseFreq, gain: 0.3, type: 'sine' },           // Base hum
-            { freq: baseFreq * 2, gain: 0.15, type: 'sine' },      // 1st harmonic (120Hz)
-            { freq: baseFreq * 3, gain: 0.08, type: 'sine' },      // 2nd harmonic
-            { freq: baseFreq * 5, gain: 0.04, type: 'triangle' },  // Higher harmonic (mechanical)
-            { freq: 25, gain: 0.1, type: 'sine' }                  // Low rumble (rotation)
+            { freq: baseFreq, gain: 0.4, type: 'sine' },           // Stronger base hum (60Hz)
+            { freq: baseFreq * 2, gain: 0.3, type: 'triangle' },   // Strong harmonics (120Hz)
+            { freq: baseFreq * 3, gain: 0.15, type: 'sine' },      // 180Hz
+            { freq: baseFreq * 4, gain: 0.12, type: 'sawtooth' },  // 240Hz - adds mechanical "bite"
+            { freq: baseFreq * 6, gain: 0.08, type: 'sine' },      // 360Hz
+            { freq: baseFreq * 8, gain: 0.05, type: 'sine' },      // 480Hz - high whine
+            { freq: 30, gain: 0.2, type: 'sine' }                  // Sub-harmonic rumble (mechanical rotation)
         ];
 
         frequencies.forEach(config => {
@@ -136,8 +138,8 @@ class MotorAudioManager {
             this.oscillators.push({ osc, gain, lfo, lfoGain });
         });
 
-        // Fade in
-        this.targetVolume = 0.25;
+        // Fade in - Increased volume to 0.7
+        this.targetVolume = 0.7;
         this.isPlaying = true;
         this.fadeToTarget();
         console.log('Motor audio started');
