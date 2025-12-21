@@ -1267,21 +1267,25 @@ function solveCircuit() {
                 if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
             }
             
-            if (c instanceof ThermalRelay && !c.state.tripped) {
+            if (c instanceof ThermalRelay) {
+                // 1. Potencia (L -> T): Siempre conduce (el relé no corta potencia, corta control)
                 ['L1','L2','L3'].forEach((inT, i) => {
                      const outT = ['T1','T2','T3'][i];
                      if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
                 });
-                // Contacto NC 95-96 (Bidireccional)
-                const k95 = `${c.id}_NC95`, k96 = `${c.id}_NC96`;
-                if(nodes[k95]) nodes[k95].forEach(p => setNode(c, 'NC96', p));
-                if(nodes[k96]) nodes[k96].forEach(p => setNode(c, 'NC95', p));
-            }
-            // NO 97-98 térmico (solo si trip, Bidireccional)
-            if (c instanceof ThermalRelay && c.state.tripped) {
-                const k97 = `${c.id}_NO97`, k98 = `${c.id}_NO98`;
-                if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
-                if(nodes[k98]) nodes[k98].forEach(p => setNode(c, 'NO97', p));
+
+                // 2. Auxiliares (Control)
+                if (!c.state.tripped) {
+                    // Normal: NC 95-96 CERRADO
+                    const k95 = `${c.id}_NC95`, k96 = `${c.id}_NC96`;
+                    if(nodes[k95]) nodes[k95].forEach(p => setNode(c, 'NC96', p));
+                    if(nodes[k96]) nodes[k96].forEach(p => setNode(c, 'NC95', p));
+                } else {
+                    // Disparo: NO 97-98 CERRADO
+                    const k97 = `${c.id}_NO97`, k98 = `${c.id}_NO98`;
+                    if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
+                    if(nodes[k98]) nodes[k98].forEach(p => setNode(c, 'NO97', p));
+                }
             }
 
             if (c instanceof PushButton) {
