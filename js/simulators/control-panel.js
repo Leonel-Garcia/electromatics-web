@@ -640,7 +640,7 @@ class Motor extends Component {
         } else {
             ctx.fillStyle = '#475569';
             ctx.beginPath();
-            ctx.arc(this.x + 60, this.y + 90, 60, 0, Math.PI * 2);
+            ctx.arc(this.x + 48, this.y + 90, 60, 0, Math.PI * 2);
             ctx.fill();
         }
         
@@ -657,7 +657,7 @@ class Motor extends Component {
         
         // Animación de rotor mejorada (solo cuando está corriendo)
         if (this.state.running) {
-            const centerX = this.x + 60; // Shifted further left for axis alignment
+            const centerX = this.x + 48; // Shifted even further left for axis alignment
             const centerY = this.y + 100;
             const rotorRadius = 35;
             const numSegments = 8;
@@ -1082,7 +1082,7 @@ class Motor6T extends Component {
             // Inicializar ángulo si no existe
             if (this.state.angle === undefined) this.state.angle = 0;
             
-            const centerX = this.x + 60; // Shifted further left for axis alignment
+            const centerX = this.x + 48; // Shifted even further left for axis alignment
             const centerY = this.y + 80;
             const rotorRadius = 30;
             const numSegments = 8;
