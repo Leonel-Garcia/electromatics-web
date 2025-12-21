@@ -38,9 +38,9 @@ const ASSET_PATHS = {
     'stop-btn': 'img/simulators/control-panel/pushbutton-red.png',
     'pilot-green': 'img/simulators/control-panel/pilot-green.png',
     'pilot-red': 'img/simulators/control-panel/pilot-red.png',
-    'pilot-red': 'img/simulators/control-panel/pilot-red.png',
     'pilot-amber': 'img/simulators/control-panel/pilot-ambar.png',
-    'timer': 'img/simulators/control-panel/timer.png'
+    'timer': 'img/simulators/control-panel/timer.png',
+    'motor6t': 'img/simulators/control-panel/motor6t.png'
 };
 
 // ... (Rest of file) ...
@@ -666,6 +666,154 @@ class PilotLight extends Component {
             ctx.fillText(id, tx, ty + 18);
             ctx.shadowBlur = 0;
         }
+    }
+}
+
+class Selector extends Component {
+    constructor(x, y) {
+        super('selector', x, y, 60, 60);
+        this.terminals = {
+            '13': {x: 0, y: 10, label: '13'}, '14': {x: 60, y: 10, label: '14'},
+            '23': {x: 0, y: 50, label: '23'}, '24': {x: 60, y: 50, label: '24'}
+        };
+        // Position: -1: Left (Man), 0: Center (Off), 1: Right (Auto)
+        this.state = { position: 0 }; 
+    }
+    
+    toggle() {
+        // Cycle: 0 -> 1 -> -1 -> 0
+        if (this.state.position === 0) this.state.position = 1;
+        else if (this.state.position === 1) this.state.position = -1;
+        else this.state.position = 0;
+    }
+    
+    draw(ctx) {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.strokeStyle = '#475569';
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
+        // Knob
+        ctx.save();
+        ctx.translate(this.x + 30, this.y + 30);
+        const rotation = this.state.position * (Math.PI / 4); // +/- 45 deg
+        ctx.rotate(rotation);
+        
+        // Knob Shape
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 8, 20, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-1, -15, 2, 10); // Indicator line
+        
+        ctx.restore();
+        
+        // Labels
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '8px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('M', this.x + 10, this.y + 55);
+        ctx.fillText('0', this.x + 30, this.y + 55);
+        ctx.fillText('A', this.x + 50, this.y + 55);
+        
+        this.drawTerminals(ctx);
+    }
+}
+
+class TimerRelay extends Component {
+    constructor(x, y) {
+        super('timer', x, y, 60, 100);
+        this.terminals = {
+            'A1': {x: 0, y: 10}, 'A2': {x: 0, y: 90},
+            'NC55': {x: 60, y: 30}, 'NC56': {x: 60, y: 50}, 
+            'NO67': {x: 60, y: 70}, 'NO68': {x: 60, y: 90}
+        };
+        this.state = { 
+            timeElapsed: 0, 
+            done: false, 
+            active: false,
+            setting: 5000 // 5 seconds
+        };
+    }
+    
+    draw(ctx) {
+        if (assets['timer']) {
+             ctx.save();
+             ctx.shadowColor = 'rgba(0,0,0,0.3)';
+             ctx.shadowBlur = 10;
+             ctx.drawImage(assets['timer'], this.x, this.y, this.width, this.height);
+             ctx.shadowBlur = 0;
+             ctx.restore();
+        } else {
+            // Body
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // Dial / Face
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.arc(this.x + 30, this.y + 30, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Hand (Animated) - Always draw over
+        if (this.state.active) {
+            const angle = -Math.PI/2 + (this.state.timeElapsed / this.state.setting) * (2*Math.PI);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(this.x + 30, this.y + 30);
+            ctx.lineTo(this.x + 30 + 15 * Math.cos(angle), this.y + 30 + 15 * Math.sin(angle));
+            ctx.stroke();
+        }
+
+        this.drawTerminals(ctx);
+    }
+}
+
+class Motor6T extends Component {
+    constructor(x, y) {
+        super('motor6t', x, y, 160, 160);
+        // Standard IEC Terminal Layout for 6-post block
+        // W2 U2 V2 (Bottom)
+        // U1 V1 W1 (Top)
+        this.terminals = {
+            'U1': {x: 40, y: 30, label: 'U1'}, 'V1': {x: 80, y: 30, label: 'V1'}, 'W1': {x: 120, y: 30, label: 'W1'},
+            'W2': {x: 40, y: 130, label: 'W2'}, 'U2': {x: 80, y: 130, label: 'U2'}, 'V2': {x: 120, y: 130, label: 'V2'}
+        };
+        this.state = { running: false, direction: 1, connection: 'None' };
+    }
+    draw(ctx) {
+        if (assets['motor6t']) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets['motor6t'], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+             // Fallback
+             ctx.fillStyle = '#ea580c'; // Orange
+             ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // Animation Overlay
+        if (this.state.running) {
+             ctx.font = '40px Arial';
+             ctx.fillStyle = '#fff';
+             ctx.textAlign = 'center';
+             ctx.shadowColor = '#22c55e';
+             ctx.shadowBlur = 20;
+             ctx.fillText(this.state.direction > 0 ? '↻' : '↺', this.x + 80, this.y + 80);
+             ctx.shadowBlur = 0;
+             
+             ctx.font = '14px Inter';
+             ctx.strokeStyle = '#000';
+             ctx.lineWidth = 3;
+             ctx.strokeText(this.state.connection, this.x + 80, this.y + 110);
+             ctx.fillText(this.state.connection, this.x + 80, this.y + 110);
+        }
+        
+        this.drawTerminals(ctx);
     }
 }
 
