@@ -29,6 +29,9 @@ let draggingHandle = null; // {wire, cp: 1|2}
 let isTripleMode = false; // New state for Triple Cable tool
 
 // ================= MOTOR AUDIO MANAGER (Web Audio API) =================
+// Handles browser autoplay policy by requiring user interaction
+let audioUnlocked = false;
+
 class MotorAudioManager {
     constructor() {
         this.audioCtx = null;
@@ -36,26 +39,63 @@ class MotorAudioManager {
         this.oscillators = [];
         this.isPlaying = false;
         this.targetVolume = 0;
-        this.currentVolume = 0;
+        this.pendingStart = false;
     }
 
     init() {
-        if (this.audioCtx) return;
+        if (this.audioCtx) return true;
         try {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             this.masterGain = this.audioCtx.createGain();
             this.masterGain.gain.value = 0;
             this.masterGain.connect(this.audioCtx.destination);
+            console.log('Audio context created, state:', this.audioCtx.state);
+            return true;
         } catch(e) {
             console.warn('Web Audio API not supported:', e);
+            return false;
+        }
+    }
+
+    // Must be called from a user interaction event (click)
+    unlock() {
+        if (audioUnlocked) return;
+        
+        if (!this.audioCtx) {
+            if (!this.init()) return;
+        }
+        
+        // Resume suspended context
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().then(() => {
+                console.log('Audio context resumed successfully');
+                audioUnlocked = true;
+                // If there was a pending start, do it now
+                if (this.pendingStart) {
+                    this.pendingStart = false;
+                    this.start();
+                }
+            }).catch(e => console.warn('Failed to resume audio:', e));
+        } else {
+            audioUnlocked = true;
+            console.log('Audio already unlocked');
         }
     }
 
     start() {
-        if (!this.audioCtx) this.init();
-        if (!this.audioCtx || this.isPlaying) return;
+        if (!audioUnlocked) {
+            this.pendingStart = true;
+            console.log('Audio not unlocked yet, pending start...');
+            return;
+        }
+        
+        if (!this.audioCtx) {
+            if (!this.init()) return;
+        }
+        
+        if (this.isPlaying) return;
 
-        // Resume context if suspended (browser policy)
+        // Resume context if needed
         if (this.audioCtx.state === 'suspended') {
             this.audioCtx.resume();
         }
@@ -100,10 +140,12 @@ class MotorAudioManager {
         this.targetVolume = 0.25;
         this.isPlaying = true;
         this.fadeToTarget();
+        console.log('Motor audio started');
     }
 
     stop() {
         if (!this.isPlaying) return;
+        this.pendingStart = false;
         this.targetVolume = 0;
         this.fadeToTarget(() => {
             this.oscillators.forEach(({ osc, lfo }) => {
@@ -111,11 +153,12 @@ class MotorAudioManager {
             });
             this.oscillators = [];
             this.isPlaying = false;
+            console.log('Motor audio stopped');
         });
     }
 
     fadeToTarget(callback) {
-        if (!this.masterGain) return;
+        if (!this.masterGain || !this.audioCtx) return;
         const now = this.audioCtx.currentTime;
         this.masterGain.gain.cancelScheduledValues(now);
         this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
@@ -138,6 +181,11 @@ class MotorAudioManager {
 
 // Global audio manager instance
 const motorAudio = new MotorAudioManager();
+
+// Unlock audio on first user interaction
+document.addEventListener('click', () => motorAudio.unlock(), { once: true });
+document.addEventListener('touchstart', () => motorAudio.unlock(), { once: true });
+
 
 
 
