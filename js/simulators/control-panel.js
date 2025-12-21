@@ -1113,6 +1113,9 @@ function addComponent(type, x, y) {
         case 'pilot-green': c = new PilotLight('pilot-green', x, y); break;
         case 'pilot-red': c = new PilotLight('pilot-red', x, y); break;
         case 'pilot-amber': c = new PilotLight('pilot-amber', x, y); break;
+        case 'selector': c = new Selector(x, y); break;
+        case 'timer': c = new TimerRelay(x, y); break;
+        case 'motor6t': c = new Motor6T(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
