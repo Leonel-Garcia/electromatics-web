@@ -438,13 +438,149 @@ class ThermalRelay extends Component {
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            if (t.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(t.label, tx, ty + 15);
-            }
+            // Etiquetas (Lowered)
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(id, tx, ty + 18);
         }
+    }
+}
+
+class TimerRelay extends Component {
+    constructor(x, y) {
+        super('timer', x, y, 60, 100);
+        this.terminals = {
+            'A1': {x: 0, y: 10}, 'A2': {x: 0, y: 90},
+            'NC55': {x: 60, y: 30}, 'NC56': {x: 60, y: 50}, 
+            'NO67': {x: 60, y: 70}, 'NO68': {x: 60, y: 90}
+        };
+        this.state = { 
+            timeElapsed: 0, 
+            done: false, 
+            active: false,
+            setting: 5000 // 5 seconds
+        };
+    }
+    
+    draw(ctx) {
+        // Body
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        
+        // Dial / Face
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(this.x + 30, this.y + 30, 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Hand (Animated)
+        const angle = -Math.PI/2 + (this.state.timeElapsed / this.state.setting) * (2*Math.PI);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(this.x + 30, this.y + 30);
+        ctx.lineTo(this.x + 30 + 15 * Math.cos(angle), this.y + 30 + 15 * Math.sin(angle));
+        ctx.stroke();
+
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+        // Labels
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px Inter';
+        ctx.fillText('TIMER', this.x + 30, this.y + 60);
+
+        this.drawTerminals(ctx);
+    }
+}
+
+class Motor6T extends Component {
+    constructor(x, y) {
+        super('motor6t', x, y, 120, 120);
+        this.terminals = {
+            'U1': {x: 20, y: 10, label: 'U1'}, 'V1': {x: 60, y: 10, label: 'V1'}, 'W1': {x: 100, y: 10, label: 'W1'},
+            'W2': {x: 20, y: 110, label: 'W2'}, 'U2': {x: 60, y: 110, label: 'U2'}, 'V2': {x: 100, y: 110, label: 'V2'}
+        };
+        this.state = { running: false, direction: 1, connection: 'None' };
+    }
+    draw(ctx) {
+        // Base Image (Reuse motor asset or draw custom)
+        if (assets['motor']) {
+            ctx.drawImage(assets['motor'], this.x, this.y, this.width, this.height);
+        } else {
+             ctx.fillStyle = '#334155';
+             ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // Animation
+        if (this.state.running) {
+             ctx.font = '40px Arial';
+             ctx.fillStyle = '#fff';
+             ctx.textAlign = 'center';
+             ctx.shadowColor = '#22c55e';
+             ctx.shadowBlur = 20;
+             ctx.fillText(this.state.direction > 0 ? '↻' : '↺', this.x + 60, this.y + 70);
+             ctx.shadowBlur = 0;
+             
+             ctx.font = '12px Inter';
+             ctx.fillText(this.state.connection, this.x + 60, this.y + 90);
+        }
+        
+        this.drawTerminals(ctx);
+    }
+}
+
+class Selector extends Component {
+    constructor(x, y) {
+        super('selector', x, y, 60, 60);
+        this.terminals = {
+            '13': {x: 0, y: 10, label: '13'}, '14': {x: 60, y: 10, label: '14'},
+            '23': {x: 0, y: 50, label: '23'}, '24': {x: 60, y: 50, label: '24'}
+        };
+        // Position: -1: Left (Man), 0: Center (Off), 1: Right (Auto)
+        this.state = { position: 0 }; 
+    }
+    
+    toggle() {
+        // Cycle: 0 -> 1 -> -1 -> 0
+        if (this.state.position === 0) this.state.position = 1;
+        else if (this.state.position === 1) this.state.position = -1;
+        else this.state.position = 0;
+    }
+    
+    draw(ctx) {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.strokeStyle = '#475569';
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
+        // Knob
+        ctx.save();
+        ctx.translate(this.x + 30, this.y + 30);
+        const rotation = this.state.position * (Math.PI / 4); // +/- 45 deg
+        ctx.rotate(rotation);
+        
+        // Knob Shape
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 8, 20, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-1, -15, 2, 10); // Indicator line
+        
+        ctx.restore();
+        
+        // Labels
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '8px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('M', this.x + 10, this.y + 55);
+        ctx.fillText('0', this.x + 30, this.y + 55);
+        ctx.fillText('A', this.x + 50, this.y + 55);
+        
+        this.drawTerminals(ctx);
     }
 }
 
@@ -1288,6 +1424,33 @@ function solveCircuit() {
                         if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
                     }
                 }
+                if (c instanceof Selector) {
+                    // Pos -1: Manual (13-14)
+                    if (c.state.position === -1) {
+                        const k13 = `${c.id}_13`, k14 = `${c.id}_14`;
+                        if(nodes[k13]) nodes[k13].forEach(p => setNode(c, '14', p));
+                        if(nodes[k14]) nodes[k14].forEach(p => setNode(c, '13', p));
+                    }
+                    // Pos 1: Auto (23-24)
+                    if (c.state.position === 1) {
+                        const k23 = `${c.id}_23`, k24 = `${c.id}_24`;
+                        if(nodes[k23]) nodes[k23].forEach(p => setNode(c, '24', p));
+                        if(nodes[k24]) nodes[k24].forEach(p => setNode(c, '23', p));
+                    }
+                }
+                if (c instanceof TimerRelay) {
+                    // NC 55-56
+                    if (!c.state.done) {
+                        const k55 = `${c.id}_NC55`, k56 = `${c.id}_NC56`;
+                        if(nodes[k55]) nodes[k55].forEach(p => setNode(c, 'NC56', p));
+                        if(nodes[k56]) nodes[k56].forEach(p => setNode(c, 'NC55', p));
+                    } else {
+                        // NO 67-68
+                        const k67 = `${c.id}_NO67`, k68 = `${c.id}_NO68`;
+                        if(nodes[k67]) nodes[k67].forEach(p => setNode(c, 'NO68', p));
+                        if(nodes[k68]) nodes[k68].forEach(p => setNode(c, 'NO67', p));
+                    }
+                }
             });
 
             // B. Cables
@@ -1321,7 +1484,8 @@ function solveCircuit() {
         // FASE 2: ACTUALIZAR ESTADOS (Switches)
         // ==========================================
         
-        // Limpiar sensores
+        // C. Consumidores
+        // Limpiar sensores de corriente
         components.filter(c => c instanceof ThermalRelay).forEach(r => r.state.currentSense = 0);
 
         // A. BOBINAS DE CONTACTORES
@@ -1339,20 +1503,56 @@ function solveCircuit() {
             }
         });
 
-        // B. RELÉS TÉRMICOS (Trip Logic)
-        // Calculado POSTERIOR a todo para no oscilar en el mismo frame, pero afecta siguiente frame
-        // Aunque si dispara, cambia topología. Aquí asumimos que trip es "lento" y no necesita re-solver instantáneo
-        // O si queremos re-solver inmediato:
-        // Motores Logic (Calcula corriente)
+        // BOBINAS DE TEMPORIZADORES (TimerRelay)
+        components.filter(c => c instanceof TimerRelay).forEach(t => {
+            const hasA1 = nodes[`${t.id}_A1`];
+            const hasA2 = nodes[`${t.id}_A2`];
+            let energized = false;
+            if (hasA1 && hasA1.size > 0 && hasA2 && hasA2.size > 0) {
+                const p1 = [...hasA1][0], p2 = [...hasA2][0];
+                if (p1 !== p2) energized = true;
+            }
+            
+            if (energized) {
+                if (!t.state.active) {
+                     t.state.active = true;
+                     t.state.timeElapsed = 0; // Reset on fresh energization? Or keep counting? Usually reset on drop.
+                }
+                if (!t.state.done) {
+                    t.state.timeElapsed += 16; // approx 16ms per frame
+                    if (t.state.timeElapsed >= t.state.setting) {
+                        t.state.done = true;
+                        circuitChanged = true;
+                    }
+                }
+            } else {
+                if (t.state.active || t.state.done || t.state.timeElapsed > 0) {
+                    t.state.active = false;
+                    t.state.done = false;
+                    t.state.timeElapsed = 0;
+                    circuitChanged = true;
+                }
+            }
+        });
+
+        // Motores 3T
         components.filter(c => c instanceof Motor).forEach(m => {
-            const hasU = nodes[`${m.id}_U`], hasV = nodes[`${m.id}_V`], hasW = nodes[`${m.id}_W`];
+            const hasU = nodes[`${m.id}_U`];
+            const hasV = nodes[`${m.id}_V`];
+            const hasW = nodes[`${m.id}_W`];
+            
             if (hasU && hasU.size > 0 && hasV && hasV.size > 0 && hasW && hasW.size > 0) {
-                const u = [...hasU][0], v = [...hasV][0], w = [...hasW][0];
-                if (u !== v && v !== w && u !== w) {
-                    if(!m.state.running) { m.state.running = true; } // Visual update
-                     // Detectar secuencia
-                    if (u==='L1' && v==='L2') m.state.direction = 1;
-                    else if (u==='L1' && v==='L3') m.state.direction = -1;
+                const uPhase = [...hasU][0];
+                const vPhase = [...hasV][0];
+                const wPhase = [...hasW][0];
+
+                if (uPhase !== vPhase && vPhase !== wPhase && uPhase !== wPhase) {
+                    if(!m.state.running) {
+                        m.state.running = true;
+                        circuitChanged = true; // Changed to 'circuitChanged' to match existing pattern
+                    }
+                    if (uPhase==='L1' && vPhase==='L2') m.state.direction = 1;
+                    else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
                     else m.state.direction = 1;
 
                     // Corriente -> Térmicos
@@ -1363,9 +1563,68 @@ function solveCircuit() {
                             r.state.currentSense += m.state.nominalCurrent || 6.5;
                         }
                     });
-                } else { if(m.state.running) m.state.running = false; }
-            } else { if(m.state.running) m.state.running = false; }
+                } else { if(m.state.running) { m.state.running = false; circuitChanged = true; } } // Changed to 'circuitChanged'
+            } else { if(m.state.running) { m.state.running = false; circuitChanged = true; } } // Changed to 'circuitChanged'
         });
+
+        // Motores 6T (Star-Delta)
+        components.filter(c => c instanceof Motor6T).forEach(m => {
+             const get = (id) => nodes[`${m.id}_${id}`];
+             const hasU1 = get('U1'), hasV1 = get('V1'), hasW1 = get('W1');
+             const hasU2 = get('U2'), hasV2 = get('V2'), hasW2 = get('W2');
+             
+             let connection = 'None';
+             let running = false;
+             let direction = 1;
+
+             // Check Input Power (U1, V1, W1)
+             if (hasU1 && hasU1.size && hasV1 && hasV1.size && hasW1 && hasW1.size) {
+                 const pU = [...hasU1][0], pV = [...hasV1][0], pW = [...hasW1][0];
+                 const validPower = (pU!==pV && pV!==pW && pU!==pW);
+                 
+                 if (validPower) {
+                     // Check Star: U2, V2, W2 shorted together
+                     // We check if they share a common potential derived from each other?
+                     // Easier: check if they are all connected to the SAME node set in our 'nodes' map?
+                     // 'nodes' map stores voltage potentials. If shorted, they might have specific potential?
+                     // Actually, if they are shorted, they share connectivity.
+                     // But 'nodes' calculation propagates voltage. If U2 is connected to V2, then V2 gets U1's potential!
+                     // So in Star (shorted), U2, V2, W2 will ALL have ALL 3 PHASES (short circuit mixing).
+                     // If we detect MIXED phases on U2/V2/W2, that's a Star Point!
+                     
+                     if (hasU2 && hasU2.size > 1 && hasV2 && hasV2.size > 1 && hasW2 && hasW2.size > 1) {
+                         // They are mixing phases -> Short circuit at Neutral Point -> STAR connection working!
+                         connection = 'Star';
+                         running = true;
+                     } 
+                     // Check Delta: U1-W2, V1-U2, W1-V2
+                     // U1(L1) connected to W2. W2 has L1.
+                     // V1(L2) connected to U2. U2 has L2.
+                     // W1(L3) connected to V2. V2 has L3.
+                     else if (hasW2 && [...hasW2].includes(pU) && 
+                              hasU2 && [...hasU2].includes(pV) &&
+                              hasV2 && [...hasV2].includes(pW)) {
+                         connection = 'Delta';
+                         running = true;
+                     }
+                 }
+             }
+
+             if (m.state.running !== running || m.state.connection !== connection) {
+                 m.state.running = running;
+                 m.state.connection = connection;
+                 m.state.direction = 1; // Default
+                 circuitChanged = true;
+             }
+        });
+
+        // B. RELÉS TÉRMICOS (Trip Logic)
+        // Calculado POSTERIOR a todo para no oscilar en el mismo frame, pero afecta siguiente frame
+        // Aunque si dispara, cambia topología. Aquí asumimos que trip es "lento" y no necesita re-solver instantáneo
+        // O si queremos re-solver inmediato:
+        // Motores Logic (Calcula corriente)
+        // This section was moved and integrated into the Motor logic above.
+        // The original `components.filter(c => c instanceof Motor).forEach(m => { ... });` block is now split and re-ordered.
 
         components.filter(c => c instanceof ThermalRelay).forEach(r => {
              if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
