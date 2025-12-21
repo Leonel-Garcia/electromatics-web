@@ -847,21 +847,33 @@ class Motor6T extends Component {
              ctx.fillRect(this.x, this.y, this.width, this.height);
         }
         
+        // Status LED (Top Right)
+        const ledX = this.x + this.width - 20;
+        const ledY = this.y + 20;
+        ctx.fillStyle = this.state.running ? '#22c55e' : '#64748b';
+        ctx.shadowColor = this.state.running ? '#22c55e' : 'transparent';
+        ctx.shadowBlur = this.state.running ? 12 : 0;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
         // Animation Overlay
         if (this.state.running) {
-             ctx.font = '40px Arial';
+             // Background for text visibility
+             ctx.fillStyle = 'rgba(0,0,0,0.6)';
+             ctx.beginPath();
+             ctx.roundRect(this.x + 40, this.y + 60, 80, 50, 8);
+             ctx.fill();
+
+             ctx.font = 'bold 36px Arial';
              ctx.fillStyle = '#fff';
              ctx.textAlign = 'center';
-             ctx.shadowColor = '#22c55e';
-             ctx.shadowBlur = 20;
-             ctx.fillText(this.state.direction > 0 ? '↻' : '↺', this.x + 80, this.y + 80);
-             ctx.shadowBlur = 0;
+             ctx.fillText(this.state.direction > 0 ? '↻' : '↺', this.x + 80, this.y + 90);
              
-             ctx.font = '14px Inter';
-             ctx.strokeStyle = '#000';
-             ctx.lineWidth = 3;
-             ctx.strokeText(this.state.connection, this.x + 80, this.y + 110);
-             ctx.fillText(this.state.connection, this.x + 80, this.y + 110);
+             ctx.font = 'bold 12px Inter';
+             ctx.fillStyle = '#fbbf24'; // Gold text for connection type
+             ctx.fillText(this.state.connection.toUpperCase(), this.x + 80, this.y + 105);
         }
         
         this.drawTerminals(ctx);
