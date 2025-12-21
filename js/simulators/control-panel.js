@@ -719,6 +719,28 @@ class Selector extends Component {
         
         this.drawTerminals(ctx);
     }
+
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(t.label, tx, ty + 18);
+            }
+        }
+    }
 }
 
 class TimerRelay extends Component {
@@ -770,6 +792,35 @@ class TimerRelay extends Component {
 
         this.drawTerminals(ctx);
     }
+
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (id.includes('A')) {
+                // Coil terminals
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(id, tx + 12, ty + 3); 
+            } else if (t.label || id) {
+                 // Side terminals
+                 ctx.fillStyle = '#fff';
+                 ctx.font = 'bold 9px Inter';
+                 ctx.textAlign = 'center';
+                 ctx.fillText(id, tx, ty + 18);
+            }
+        }
+    }
 }
 
 class Motor6T extends Component {
@@ -814,6 +865,29 @@ class Motor6T extends Component {
         }
         
         this.drawTerminals(ctx);
+    }
+    
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24'; 
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Inter';
+                ctx.textAlign = 'center';
+                const ly = ty < this.y + 80 ? ty - 10 : ty + 18; // Top vs Bottom
+                ctx.fillText(t.label, tx, ly);
+            }
+        }
     }
 }
 
