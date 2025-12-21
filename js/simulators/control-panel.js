@@ -1196,224 +1196,197 @@ function updateStatus() {
 // ================= SIMULACION DE CIRCUITO (SOLVER) =================
 
 function solveCircuit() {
-    let changed = true;
-    // 1. Resetear nodos
-    const nodes = {}; // Mapa "ComponentID_TerminalID" -> { voltage: boolean, phase: 'L1'|'L2'|'L3'|null }
-    
-    // Función auxiliar para setear estatus de un pin
-    const setNode = (comp, term, phase) => {
-        const key = `${comp.id}_${term}`;
-        if (!nodes[key]) nodes[key] = new Set();
-        if (!nodes[key].has(phase)) {
-            nodes[key].add(phase);
-            changed = true; // Cualquier nuevo potencial debe gatillar otra iteración
-        }
-    };
+    let circuitChanged = true;
+    let stabilityLoop = 0;
+    const MAX_STABILITY_LOOPS = 5; // Evitar oscilaciones infinitas
 
-    const hasPhase = (comp, term, phase) => {
-        const key = `${comp.id}_${term}`;
-        return nodes[key] && nodes[key].has(phase);
-    };
-
-    // 2. Fuentes de Poder (StartPoints)
-    components.filter(c => c instanceof PowerSource).forEach(p => {
-        setNode(p, 'L1', 'L1');
-        setNode(p, 'L2', 'L2');
-        setNode(p, 'L3', 'L3');
-        setNode(p, 'N', 'N'); // Emit Neutral
-    });
-
-    components.filter(c => c instanceof SinglePhaseSource).forEach(p => {
-        setNode(p, 'L', 'L1'); // L acts as L1
-        setNode(p, 'N', 'N');
-    });
-
-    // 3. Propagación Iterativa (Max 10 iteraciones para estabilizar)
-    for(let iter=0; iter<10 && changed; iter++) {
-        changed = false;
+    while(circuitChanged && stabilityLoop < MAX_STABILITY_LOOPS) {
+        circuitChanged = false;
         
-        // A. Transferencia interna de Componentes
-        components.forEach(c => {
-            if (c instanceof Breaker) {
-                if (c.state.closed) {
-                    // Principales (Bidireccional)
-                    ['L1','L2','L3'].forEach((inT, i) => {
-                        const outT = ['T1','T2','T3'][i];
-                        // Bidireccional
-                        if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
-                        if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
-                    });
-                }
-            }
-            if (c instanceof Contactor && c.state.engaged) {
-                // Principales (Bidireccional)
-                ['L1','L2','L3'].forEach((inT, i) => {
-                     const outT = ['T1','T2','T3'][i];
-                     if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
-                     if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
-                });
-                // Auxiliares NO (13-14)
-                // Bidireccional simple: Lo que hay en 13 pasa a 14 y viceversa
-                const k13 = `${c.id}_NO13`;
-                const k14 = `${c.id}_NO14`;
-                if(nodes[k13]) nodes[k13].forEach(p => setNode(c, 'NO14', p));
-                if(nodes[k14]) nodes[k14].forEach(p => setNode(c, 'NO13', p));
-            }
-            if (c instanceof Contactor && !c.state.engaged) {
-                // Auxiliares NC (21-22)
-                const k21 = `${c.id}_NC21`;
-                const k22 = `${c.id}_NC22`;
-                if(nodes[k21]) nodes[k21].forEach(p => setNode(c, 'NC22', p));
-                if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
-            }
-            
-            if (c instanceof ThermalRelay) {
-                // 1. Potencia (L -> T): Siempre conduce (el relé no corta potencia, corta control)
-                ['L1','L2','L3'].forEach((inT, i) => {
-                     const outT = ['T1','T2','T3'][i];
-                     if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
-                });
+        // ==========================================
+        // FASE 1: RESOLVER VOLTAJES (Red de Nodos)
+        // ==========================================
+        const nodes = {}; 
+        
+        // Helpers
+        const setNode = (comp, term, phase) => {
+            const key = `${comp.id}_${term}`;
+            if (!nodes[key]) nodes[key] = new Set();
+            if (!nodes[key].has(phase)) nodes[key].add(phase);
+        };
+        const hasPhase = (comp, term, phase) => {
+            const key = `${comp.id}_${term}`;
+            return nodes[key] && nodes[key].has(phase);
+        };
 
-                // 2. Auxiliares (Control)
-                if (!c.state.tripped) {
-                    // Normal: NC 95-96 CERRADO
-                    const k95 = `${c.id}_NC95`, k96 = `${c.id}_NC96`;
-                    if(nodes[k95]) nodes[k95].forEach(p => setNode(c, 'NC96', p));
-                    if(nodes[k96]) nodes[k96].forEach(p => setNode(c, 'NC95', p));
-                } else {
-                    // Disparo: NO 97-98 CERRADO
-                    const k97 = `${c.id}_NO97`, k98 = `${c.id}_NO98`;
-                    if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
-                    if(nodes[k98]) nodes[k98].forEach(p => setNode(c, 'NO97', p));
-                }
-            }
-
-            if (c instanceof PushButton) {
-                const isNC = c.type === 'stop-btn';
-                const isConducting = isNC ? !c.state.pressed : c.state.pressed;
-                
-                if (isConducting) {
-                    const k1 = `${c.id}_1`;
-                    const k2 = `${c.id}_2`;
-                    // Conducción Bidireccional
-                    if(nodes[k1]) nodes[k1].forEach(p => setNode(c, '2', p));
-                    if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
-                }
-            }
+        // 1.1 Fuentes (Semillas)
+        components.filter(c => c instanceof PowerSource).forEach(p => {
+            setNode(p, 'L1', 'L1'); setNode(p, 'L2', 'L2'); setNode(p, 'L3', 'L3'); setNode(p, 'N', 'N');
+        });
+        components.filter(c => c instanceof SinglePhaseSource).forEach(p => {
+            setNode(p, 'L', 'L1'); setNode(p, 'N', 'N');
         });
 
-        // B. Transferencia por Cables
-        wires.forEach(w => {
-            if (w.isTriple) {
-                // Propagación trifásica automática
-                const phaseSets = [['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], ['U', 'V', 'W']];
+        // 1.2 Propagación Iterativa (Solo voltajes, sin cambiar estados de switches)
+        for(let iter=0; iter<10; iter++) {
+            let voltageChanged = false;
+            const prevNodesCount = Object.values(nodes).reduce((acc, s) => acc + s.size, 0);
 
-                let setFrom = phaseSets.find(s => s.includes(w.fromId));
-                let setTo = phaseSets.find(s => s.includes(w.toId));
-
-                if (setFrom && setTo) {
-                    for (let i = 0; i < 3; i++) {
-                        const fid = setFrom[i], tid = setTo[i];
-                        const ks = `${w.from.id}_${fid}`, ke = `${w.to.id}_${tid}`;
-                        if (nodes[ks]) nodes[ks].forEach(p => setNode(w.to, tid, p));
-                        if (nodes[ke]) nodes[ke].forEach(p => setNode(w.from, fid, p));
+            // A. Componentes Interiores (Según estado ACTUAL de switches)
+            components.forEach(c => {
+                if (c instanceof Breaker) {
+                    if (c.state.closed) {
+                        ['L1','L2','L3'].forEach((inT, i) => {
+                            const outT = ['T1','T2','T3'][i];
+                            if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                            if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
+                        });
                     }
                 }
-            } else {
-                const ks = `${w.from.id}_${w.fromId}`, ke = `${w.to.id}_${w.toId}`;
-                if (nodes[ks]) nodes[ks].forEach(p => setNode(w.to, w.toId, p));
-                if (nodes[ke]) nodes[ke].forEach(p => setNode(w.from, w.fromId, p));
-            }
-        });
+                if (c instanceof Contactor) {
+                    if (c.state.engaged) {
+                        // Principales
+                        ['L1','L2','L3'].forEach((inT, i) => {
+                             const outT = ['T1','T2','T3'][i];
+                             if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                             if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
+                        });
+                        // Aux NO (13-14) Cerrado
+                        const k13 = `${c.id}_NO13`, k14 = `${c.id}_NO14`;
+                        if(nodes[k13]) nodes[k13].forEach(p => setNode(c, 'NO14', p));
+                        if(nodes[k14]) nodes[k14].forEach(p => setNode(c, 'NO13', p));
+                    } else {
+                        // Aux NC (21-22) Cerrado
+                        const k21 = `${c.id}_NC21`, k22 = `${c.id}_NC22`;
+                        if(nodes[k21]) nodes[k21].forEach(p => setNode(c, 'NC22', p));
+                        if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
+                    }
+                }
+                if (c instanceof ThermalRelay) {
+                    // Potencia siempre pasa
+                    ['L1','L2','L3'].forEach((inT, i) => {
+                         const outT = ['T1','T2','T3'][i];
+                         if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
+                    });
+                    // Auxiliares
+                    if (!c.state.tripped) {
+                        const k95 = `${c.id}_NC95`, k96 = `${c.id}_NC96`;
+                        if(nodes[k95]) nodes[k95].forEach(p => setNode(c, 'NC96', p));
+                        if(nodes[k96]) nodes[k96].forEach(p => setNode(c, 'NC95', p));
+                    } else {
+                        const k97 = `${c.id}_NO97`, k98 = `${c.id}_NO98`;
+                        if(nodes[k97]) nodes[k97].forEach(p => setNode(c, 'NO98', p));
+                        if(nodes[k98]) nodes[k98].forEach(p => setNode(c, 'NO97', p));
+                    }
+                }
+                if (c instanceof PushButton) {
+                    const isNC = c.type === 'stop-btn';
+                    const isConducting = isNC ? !c.state.pressed : c.state.pressed;
+                    if (isConducting) {
+                        const k1 = `${c.id}_1`, k2 = `${c.id}_2`;
+                        if(nodes[k1]) nodes[k1].forEach(p => setNode(c, '2', p));
+                        if(nodes[k2]) nodes[k2].forEach(p => setNode(c, '1', p));
+                    }
+                }
+            });
+
+            // B. Cables
+            wires.forEach(w => {
+                if (w.isTriple) {
+                    const phaseSets = [['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], ['U', 'V', 'W']];
+                    let setFrom = phaseSets.find(s => s.includes(w.fromId));
+                    let setTo = phaseSets.find(s => s.includes(w.toId));
+                    if (setFrom && setTo) {
+                        for (let i = 0; i < 3; i++) {
+                            const fid = setFrom[i], tid = setTo[i];
+                            const ks = `${w.from.id}_${fid}`, ke = `${w.to.id}_${tid}`;
+                            if (nodes[ks]) nodes[ks].forEach(p => setNode(w.to, tid, p));
+                            if (nodes[ke]) nodes[ke].forEach(p => setNode(w.from, fid, p));
+                        }
+                    }
+                } else {
+                    const ks = `${w.from.id}_${w.fromId}`, ke = `${w.to.id}_${w.toId}`;
+                    if (nodes[ks]) nodes[ks].forEach(p => setNode(w.to, w.toId, p));
+                    if (nodes[ke]) nodes[ke].forEach(p => setNode(w.from, w.fromId, p));
+                }
+            });
+
+            // Check convergence
+            const newNodesCount = Object.values(nodes).reduce((acc, s) => acc + s.size, 0);
+            if (newNodesCount > prevNodesCount) voltageChanged = true;
+            if (!voltageChanged) break; // Voltajes estables
+        }
+
+        // ==========================================
+        // FASE 2: ACTUALIZAR ESTADOS (Switches)
+        // ==========================================
         
-        // C. Consumidores
-        // Limpiar sensores de corriente
+        // Limpiar sensores
         components.filter(c => c instanceof ThermalRelay).forEach(r => r.state.currentSense = 0);
 
-        // Motores y otros receptores
-        components.filter(c => c instanceof Motor).forEach(m => {
-            const hasU = nodes[`${m.id}_U`];
-            const hasV = nodes[`${m.id}_V`];
-            const hasW = nodes[`${m.id}_W`];
-            
-            if (hasU && hasU.size > 0 && hasV && hasV.size > 0 && hasW && hasW.size > 0) {
-                // Secuencia y Giro
-                const uPhase = [...hasU][0];
-                const vPhase = [...hasV][0];
-                const wPhase = [...hasW][0];
-
-                if (uPhase !== vPhase && vPhase !== wPhase && uPhase !== wPhase) {
-                    if(!m.state.running) {
-                        m.state.running = true;
-                        changed = true;
-                    }
-                    // Detectar secuencia
-                    if (uPhase==='L1' && vPhase==='L2') m.state.direction = 1;
-                    else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
-                    else m.state.direction = 1;
-
-                    // Propagar Corriente hacia los Relés Térmicos en serie
-                    components.filter(c => c instanceof ThermalRelay && !c.state.tripped).forEach(r => {
-                        const hasT1 = nodes[`${r.id}_T1`], hasT2 = nodes[`${r.id}_T2`], hasT3 = nodes[`${r.id}_T3`];
-                        
-                        // Verificar si las salidas del relé están conectadas a las entradas del motor
-                        // Comparamos los conjuntos de fases. Si comparten al menos una fase de potencia, asumimos conexión
-                        const connected = (t, m) => t && m && [...t].some(p => m.has(p));
-
-                        if (connected(hasT1, hasU) && connected(hasT2, hasV) && connected(hasT3, hasW)) {
-                            r.state.currentSense += m.state.nominalCurrent || 6.5;
-                        }
-                    });
-                } else {
-                    if(m.state.running) { m.state.running = false; changed = true; }
-                }
-            } else {
-                if(m.state.running) { m.state.running = false; changed = true; }
-            }
-        });
-
-        // Disparo de Térmicos
-        components.filter(c => c instanceof ThermalRelay).forEach(r => {
-            if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
-                r.state.tripped = true;
-                changed = true;
-                console.log(`Relé Térmico ${r.id} DISPARADO por sobrecarga (${r.state.currentSense}A > ${r.state.currentLimit}A)`);
-            }
-        });
-
-        // Bobina Contactor
+        // A. BOBINAS DE CONTACTORES
         components.filter(c => c instanceof Contactor).forEach(k => {
             const hasA1 = nodes[`${k.id}_A1`];
             const hasA2 = nodes[`${k.id}_A2`];
-            
             let shouldEngage = false;
             if (hasA1 && hasA1.size > 0 && hasA2 && hasA2.size > 0) {
                 const p1 = [...hasA1][0], p2 = [...hasA2][0];
                 if (p1 !== p2) shouldEngage = true;
             }
-            
             if (k.state.engaged !== shouldEngage) {
                 k.state.engaged = shouldEngage;
-                changed = true;
+                circuitChanged = true; // Switch changed! Re-solve voltages in next loop
             }
         });
 
+        // B. RELÉS TÉRMICOS (Trip Logic)
+        // Calculado POSTERIOR a todo para no oscilar en el mismo frame, pero afecta siguiente frame
+        // Aunque si dispara, cambia topología. Aquí asumimos que trip es "lento" y no necesita re-solver instantáneo
+        // O si queremos re-solver inmediato:
+        // Motores Logic (Calcula corriente)
+        components.filter(c => c instanceof Motor).forEach(m => {
+            const hasU = nodes[`${m.id}_U`], hasV = nodes[`${m.id}_V`], hasW = nodes[`${m.id}_W`];
+            if (hasU && hasU.size > 0 && hasV && hasV.size > 0 && hasW && hasW.size > 0) {
+                const u = [...hasU][0], v = [...hasV][0], w = [...hasW][0];
+                if (u !== v && v !== w && u !== w) {
+                    if(!m.state.running) { m.state.running = true; } // Visual update
+                     // Detectar secuencia
+                    if (u==='L1' && v==='L2') m.state.direction = 1;
+                    else if (u==='L1' && v==='L3') m.state.direction = -1;
+                    else m.state.direction = 1;
 
-        // Luces (Requieren Diferencia de Potencial entre X1 y X2)
+                    // Corriente -> Térmicos
+                    components.filter(c => c instanceof ThermalRelay && !c.state.tripped).forEach(r => {
+                        const hasT1 = nodes[`${r.id}_T1`], hasT2 = nodes[`${r.id}_T2`], hasT3 = nodes[`${r.id}_T3`];
+                        const connected = (t, mP) => t && mP && [...t].some(p => mP.has(p));
+                        if (connected(hasT1, hasU) && connected(hasT2, hasV) && connected(hasT3, hasW)) {
+                            r.state.currentSense += m.state.nominalCurrent || 6.5;
+                        }
+                    });
+                } else { if(m.state.running) m.state.running = false; }
+            } else { if(m.state.running) m.state.running = false; }
+        });
+
+        components.filter(c => c instanceof ThermalRelay).forEach(r => {
+             if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
+                 r.state.tripped = true;
+                 console.log(`Relé Térmico ${r.id} TRIPPED`);
+                 circuitChanged = true; // Topología cambia (NC abre)
+             }
+        });
+
+        // C. LUCES PILOTO (Visual only, no afecta topología)
         components.filter(c => c instanceof PilotLight).forEach(p => {
-            const hasX1 = nodes[`${p.id}_X1`];
-            const hasX2 = nodes[`${p.id}_X2`];
-            
+            const hasX1 = nodes[`${p.id}_X1`], hasX2 = nodes[`${p.id}_X2`];
             if (hasX1 && hasX1.size > 0 && hasX2 && hasX2.size > 0) {
-                const p1 = [...hasX1][0];
-                const p2 = [...hasX2][0];
-                // Se enciende si hay diferencia de potencial (fases distintas o Fase-Neutro)
-                if (p1 !== p2) p.state.on = true;
-                else p.state.on = false;
+                const p1 = [...hasX1][0], p2 = [...hasX2][0];
+                p.state.on = (p1 !== p2);
             } else {
                 p.state.on = false;
             }
         });
+        
+        stabilityLoop++;
     }
 }
 
