@@ -1679,6 +1679,7 @@ function onMouseDown(e) {
             
             // Interacción Click
             if (c instanceof Breaker) c.toggle();
+            if (c instanceof Selector) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
 
             // Selección de componente
