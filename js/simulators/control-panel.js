@@ -1503,6 +1503,21 @@ function setupEventListeners() {
                 draw();
             };
         }
+        
+        // Temporizador Controls
+        const timerControls = document.getElementById('timer-controls');
+        if (timerControls) {
+            if (component instanceof TimerRelay) {
+                timerControls.style.display = 'block';
+                const inputTimer = document.getElementById('input-timer-sec');
+                inputTimer.value = component.state.setting / 1000;
+                inputTimer.onchange = (e) => {
+                    component.state.setting = parseFloat(e.target.value) * 1000;
+                };
+            } else {
+                timerControls.style.display = 'none';
+            }
+        }
 
         // Eliminar Genérico
         document.getElementById('btn-delete-comp').onclick = () => {
