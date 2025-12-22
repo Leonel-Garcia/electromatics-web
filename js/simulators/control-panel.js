@@ -2105,7 +2105,7 @@ function draw() {
         c.draw(ctx);
     });
 
-    // 2. Cables (Now in front!)
+     // 2. Cables (Now in front and segmented!)
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     wires.forEach(w => {
@@ -2114,6 +2114,7 @@ function draw() {
         
         if (p1 && p2) {
              const isSelected = (w === selectedWire);
+             const cps = getWireControlPoints(w);
 
              // Color base o Resaltado
              ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
@@ -2125,19 +2126,23 @@ function draw() {
                  ctx.shadowBlur = 15;
              }
 
-             // Línea Recta Directa (Sin curvas Bezier)
+             // Línea Segmentada (Polyline: p1 -> cp1 -> cp2 -> p2)
              if (w.isTriple) {
                  const offsets = [-32, 0, 32];
                  ctx.strokeStyle = '#000000'; 
                  offsets.forEach(offset => {
                      ctx.beginPath();
                      ctx.moveTo(p1.x + offset, p1.y);
+                     ctx.lineTo(cps.cp1.x + offset, cps.cp1.y);
+                     ctx.lineTo(cps.cp2.x + offset, cps.cp2.y);
                      ctx.lineTo(p2.x + offset, p2.y);
                      ctx.stroke();
                  });
              } else {
                  ctx.beginPath();
                  ctx.moveTo(p1.x, p1.y);
+                 ctx.lineTo(cps.cp1.x, cps.cp1.y);
+                 ctx.lineTo(cps.cp2.x, cps.cp2.y);
                  ctx.lineTo(p2.x, p2.y);
                  ctx.stroke();
              }
@@ -2148,17 +2153,39 @@ function draw() {
              ctx.fillStyle = ctx.strokeStyle;
              ctx.beginPath(); ctx.arc(p1.x, p1.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
              ctx.beginPath(); ctx.arc(p2.x, p2.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
+
+             // Dibujar Manivelas (Handles) si está seleccionado
+             if (isSelected) {
+                 ctx.lineWidth = 1;
+                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                 ctx.setLineDash([3, 3]);
+                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(cps.cp1.x, cps.cp1.y); ctx.stroke();
+                 ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(cps.cp2.x, cps.cp2.y); ctx.stroke();
+                 ctx.setLineDash([]);
+
+                 ctx.fillStyle = '#fbbf24';
+                 ctx.beginPath(); ctx.arc(cps.cp1.x, cps.cp1.y, 6, 0, Math.PI*2); ctx.fill();
+                 ctx.beginPath(); ctx.arc(cps.cp2.x, cps.cp2.y, 6, 0, Math.PI*2); ctx.fill();
+                 ctx.strokeStyle = '#000';
+                 ctx.stroke();
+             }
         }
     });
 
-    // 3. Línea de Creación (Recta)
+    // 3. Línea de Creación (Segmentada para previsualizar)
     if (wireStartObj) {
         ctx.strokeStyle = currentWireColor;
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 5]);
         const p1 = wireStartObj.component.getTerminal(wireStartObj.terminalId);
+        
+        // Simular ruta auto
+        const midY = Math.max(p1.y, mousePos.y) + 40;
+        
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p1.x, midY);
+        ctx.lineTo(mousePos.x, midY);
         ctx.lineTo(mousePos.x, mousePos.y);
         ctx.stroke();
         ctx.setLineDash([]);
@@ -2170,16 +2197,23 @@ function draw() {
 
 // ================= UTILIDADES =================
 
-// Hit test mejorado para líneas rectas
+// Hit test mejorado para polilíneas de 3 segmentos
 function isMouseOverWire(mx, my, wire) {
     const p1 = wire.from.getTerminal(wire.fromId);
     const p2 = wire.to.getTerminal(wire.toId);
     if (!p1 || !p2) return false;
 
-    // Distancia punto a segmento
-    const threshold = wire.isTriple ? 40 : 8; // Mayor radio para cable triple
-    const dist = pDist(mx, my, p1.x, p1.y, p2.x, p2.y);
-    return dist < threshold;
+    const cps = getWireControlPoints(wire);
+    if (!cps) return false;
+
+    // Distancia punto a segmentos: p1-cp1, cp1-cp2, cp2-p2
+    const threshold = wire.isTriple ? 40 : 10;
+    
+    const d1 = pDist(mx, my, p1.x, p1.y, cps.cp1.x, cps.cp1.y);
+    const d2 = pDist(mx, my, cps.cp1.x, cps.cp1.y, cps.cp2.x, cps.cp2.y);
+    const d3 = pDist(mx, my, cps.cp2.x, cps.cp2.y, p2.x, p2.y);
+
+    return (d1 < threshold || d2 < threshold || d3 < threshold);
 }
 
 function pDist(x, y, x1, y1, x2, y2) {
