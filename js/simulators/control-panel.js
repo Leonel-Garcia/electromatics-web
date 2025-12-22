@@ -1461,10 +1461,15 @@ function setupEventListeners() {
         ctxMenu.style.display = 'none';
     });
 
-    // Cerrar menú al hacer clic en cualquier parte
+    // Cerrar menú al hacer clic en cualquier parte (fuera del menú)
     document.addEventListener('click', () => {
         if(ctxMenu) ctxMenu.style.display = 'none';
     });
+    
+    // Evitar que el menú se cierre al hacer clic dentro de él (para interactuar con inputs)
+    if(ctxMenu) {
+        ctxMenu.addEventListener('click', e => e.stopPropagation());
+    }
 
     function showContextMenu(x, y, component) {
         const title = document.getElementById('menu-title');
