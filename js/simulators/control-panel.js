@@ -1628,24 +1628,6 @@ function addComponent(type, x, y) {
     draw();
 }
 
-// Helper para obtener Puntos de Control (Default o Custom)
-function getWireControlPoints(w) {
-    const p1 = w.from.getTerminal(w.fromId);
-    const p2 = w.to.getTerminal(w.toId);
-    if (!p1 || !p2) return null;
-
-    if (w.customCP1 && w.customCP2) {
-        return { cp1: w.customCP1, cp2: w.customCP2, isCustom: true };
-    }
-    
-    // Default Auto-Route (U-Shape)
-    const midY = Math.max(p1.y, p2.y) + 40;
-    return {
-        cp1: { x: p1.x, y: midY },
-        cp2: { x: p2.x, y: midY },
-        isCustom: false
-    };
-}
 
 function onMouseDown(e) {
     if (e.touches) e.preventDefault(); // Prevenir scroll en touch
@@ -1653,27 +1635,12 @@ function onMouseDown(e) {
     const mx = pos.x;
     const my = pos.y;
 
-    // 0. Handle Dragging (Wire Control Points)
-    if (selectedWire) {
-        const cps = getWireControlPoints(selectedWire);
-        if (cps) {
-            // Check CP1
-            if (Math.hypot(mx - cps.cp1.x, my - cps.cp1.y) < 8) {
-                // Initialize custom CPs if not valid
-                if (!selectedWire.customCP1) {
-                    selectedWire.customCP1 = { ...cps.cp1 };
-                    selectedWire.customCP2 = { ...cps.cp2 };
-                }
-                draggingHandle = { wire: selectedWire, cp: 1 };
-                return;
-            }
-            // Check CP2
-            if (Math.hypot(mx - cps.cp2.x, my - cps.cp2.y) < 8) {
-                if (!selectedWire.customCP1) {
-                    selectedWire.customCP1 = { ...cps.cp1 };
-                    selectedWire.customCP2 = { ...cps.cp2 };
-                }
-                draggingHandle = { wire: selectedWire, cp: 2 };
+    // 0. Handle Dragging (Waypoints)
+    if (selectedWire && selectedWire.path) {
+        for (let i = 0; i < selectedWire.path.length; i++) {
+            const pt = selectedWire.path[i];
+            if (Math.hypot(mx - pt.x, my - pt.y) < 8) {
+                draggingHandle = { wire: selectedWire, index: i };
                 return;
             }
         }
@@ -1682,12 +1649,21 @@ function onMouseDown(e) {
     // 0.5 Reset Selection (unless clicking valid object)
     let hitObject = false;
 
-    // 1. Tocar Terminal? -> Iniciar Cableado
+    // 1. Tocar Terminal? -> Iniciar Cableado o Agregar Waypoint si ya iniciamos
     for (const c of components) {
         const t = c.getHoveredTerminal(mx, my);
         if (t) {
-            wireStartObj = { component: c, terminalId: t.id, x: t.x, y: t.y };
-            return;
+            if (wireStartObj) {
+                // Si ya iniciamos cableado, intentar cerrar si es otro terminal
+                if (c !== wireStartObj.component) {
+                    onMouseUp(e); // Helper para cerrar
+                    return;
+                }
+            } else {
+                // Iniciar nuevo cable
+                wireStartObj = { component: c, terminalId: t.id, x: t.x, y: t.y, path: [] };
+                return;
+            }
         }
     }
 
@@ -1727,8 +1703,14 @@ function onMouseDown(e) {
         }
     }
 
-    // Si no tocamos nada, limpiar selección
+    // Si no tocamos nada, limpiar selección o agregar waypoint si estamos cableando
     if (!hitObject) {
+        if (wireStartObj) {
+            // Agregar waypoint al cable actual
+            wireStartObj.path.push({ x: snapToGrid(mx), y: snapToGrid(my) });
+            draw();
+            return;
+        }
         selectedWire = null;
         selectedComponent = null;
         draw();
@@ -1750,9 +1732,8 @@ function onMouseMove(e) {
     }
 
     if (draggingHandle) {
-         // Free movement for handles (no snap needed usually, but can be added)
-         if (draggingHandle.cp === 1) draggingHandle.wire.customCP1 = { x: mousePos.x, y: mousePos.y };
-         else draggingHandle.wire.customCP2 = { x: mousePos.x, y: mousePos.y };
+         draggingHandle.wire.path[draggingHandle.index].x = snapToGrid(mousePos.x);
+         draggingHandle.wire.path[draggingHandle.index].y = snapToGrid(mousePos.y);
          draw();
     }
 }
@@ -1765,45 +1746,27 @@ function onMouseUp(e) {
     dragItem = null;
     draggingHandle = null;
 
-    // Finalizar Cableado
+    // Finalizar Cableado (Solo si soltamos sobre un terminal válido)
     if (wireStartObj) {
-        // Ver si soltamos sobre otro terminal
+        let finished = false;
         for (const c of components) {
             const t = c.getHoveredTerminal(mousePos.x, mousePos.y);
-            if (t && t.component !== wireStartObj.component) {
-                // Crear cable
-                if (isTripleMode) {
-                    // Mapeo de fases para cables triples
-                    const phases = ['L1', 'L2', 'L3'];
-                    const fromPrefix = wireStartObj.terminalId.substring(0, 1); // 'L'
-                    const toPrefix = t.id.substring(0, 1); // 'L' o 'U' etc.
-
-                    // Intentar conectar las 3 fases si existen
-                    const connections = [
-                        {f: 'L1', t: 'T1'}, {f: 'L2', t: 'T2'}, {f: 'L3', t: 'T3'}, // Breaker/Contactor
-                        {f: 'L1', t: 'L1'}, {f: 'L2', t: 'L2'}, {f: 'L3', t: 'L3'}, // Bus/Source
-                        {f: 'L1', t: 'U'}, {f: 'L2', t: 'V'}, {f: 'L3', t: 'W'}     // Motor
-                    ];
-
-                    // Creamos UN SOLO objeto wire con propiedad isTriple
-                    // La lógica de dibujado y simulación se encargará de las otras 2 fases
-                    wires.push({
-                        from: wireStartObj.component, fromId: wireStartObj.terminalId,
-                        to: t.component, toId: t.id,
-                        color: '#000000',
-                        isTriple: true
-                    });
-                } else {
-                    wires.push({
-                        from: wireStartObj.component, fromId: wireStartObj.terminalId,
-                        to: t.component, toId: t.id,
-                        color: currentWireColor
-                    });
-                }
-                draw(); // Redraw immediately
+            if (t && c !== wireStartObj.component) {
+                // Crear cable final
+                wires.push({
+                    from: wireStartObj.component, fromId: wireStartObj.terminalId,
+                    to: c, toId: t.id,
+                    color: isTripleMode ? '#000000' : currentWireColor,
+                    isTriple: isTripleMode,
+                    path: [...wireStartObj.path]
+                });
+                wireStartObj = null;
+                finished = true;
+                break;
             }
         }
-        wireStartObj = null;
+        // Si no hemos finalizado sobre un terminal, dejamos el wireStartObj activo para seguir agregando waypoints
+        if (finished) draw();
     }
     // Redraw on release (snap fix visual update)
     draw();
@@ -2220,7 +2183,7 @@ function draw() {
         
         if (p1 && p2) {
              const isSelected = (w === selectedWire);
-             const cps = getWireControlPoints(w);
+             const path = [p1, ...(w.path || []), p2];
 
              const nodes = window.lastSolvedNodes || {};
              const phaseSets = [
@@ -2239,27 +2202,22 @@ function draw() {
                  ctx.shadowColor = (w.color && w.color !== '#000000') ? w.color : '#fbbf24';
                  ctx.shadowBlur = 10;
                  ctx.lineWidth = isSelected ? 8 : 6;
-                 // Brillo extra para cables con tensión
-                 if (w.color === '#ef4444') ctx.strokeStyle = '#f87171'; // Rojo más brillante
-                 else if (w.color === '#22c55e') ctx.strokeStyle = '#4ade80'; // Verde más brillante
-                 else if (w.color === '#3b82f6') ctx.strokeStyle = '#60a5fa'; // Azul más brillante
-                 else ctx.strokeStyle = '#fcd34d'; // Amarillo/Oro brillante
+                 if (w.color === '#ef4444') ctx.strokeStyle = '#f87171';
+                 else if (w.color === '#22c55e') ctx.strokeStyle = '#4ade80';
+                 else if (w.color === '#3b82f6') ctx.strokeStyle = '#60a5fa';
+                 else ctx.strokeStyle = '#fcd34d';
              } else {
                  ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
                  ctx.lineWidth = isSelected ? 6 : 4;
              }
 
-             // Línea Segmentada (Polyline: p1 -> cp1 -> cp2 -> p2)
              if (w.isTriple) {
-                 let index = 1; // Default middle
+                 let index = 1;
                  if (activeSet) index = activeSet.indexOf(w.fromId);
-                 
                  const spacing = 32;
                  const offsets = [(0 - index) * spacing, (1 - index) * spacing, (2 - index) * spacing];
                  
-                 const baseColor = ctx.strokeStyle;
                  offsets.forEach((offset, i) => {
-                     // Check specific phase voltage for triple cable feedback
                      let phaseEnergized = isEnergized;
                      if (activeSet && isSimulating) {
                          const phaseKey = `${w.from.id}_${activeSet[i]}`;
@@ -2271,49 +2229,45 @@ function draw() {
                      if (phaseEnergized) {
                          ctx.shadowBlur = 8;
                          ctx.shadowColor = '#fbbf24';
-                     } else {
-                         ctx.shadowBlur = 0;
-                     }
+                     } else { ctx.shadowBlur = 0; }
 
-                     ctx.moveTo(p1.x + offset, p1.y);
-                     ctx.lineTo(cps.cp1.x + offset, cps.cp1.y);
-                     ctx.lineTo(cps.cp2.x + offset, cps.cp2.y);
-                     ctx.lineTo(p2.x + offset, p2.y);
+                     path.forEach((pt, idx) => {
+                         if (idx === 0) ctx.moveTo(pt.x + offset, pt.y);
+                         else ctx.lineTo(pt.x + offset, pt.y);
+                     });
                      ctx.stroke();
                  });
                  if (isEnergized) ctx.restore();
              } else {
                  ctx.beginPath();
-                 ctx.moveTo(p1.x, p1.y);
-                 ctx.lineTo(cps.cp1.x, cps.cp1.y);
-                 ctx.lineTo(cps.cp2.x, cps.cp2.y);
-                 ctx.lineTo(p2.x, p2.y);
+                 path.forEach((pt, idx) => {
+                     if (idx === 0) ctx.moveTo(pt.x, pt.y);
+                     else ctx.lineTo(pt.x, pt.y);
+                 });
                  ctx.stroke();
                  if (isEnergized) ctx.restore();
              }
 
              ctx.shadowBlur = 0;
 
-             // Tapar extremos
+             // Tapar extremos y dibujar puntos del path
              ctx.fillStyle = ctx.strokeStyle;
-             ctx.beginPath(); ctx.arc(p1.x, p1.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
-             ctx.beginPath(); ctx.arc(p2.x, p2.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
-
-             // Dibujar Manivelas (Handles) si está seleccionado
-             if (isSelected) {
-                 ctx.lineWidth = 1;
-                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                 ctx.setLineDash([3, 3]);
-                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(cps.cp1.x, cps.cp1.y); ctx.stroke();
-                 ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(cps.cp2.x, cps.cp2.y); ctx.stroke();
-                 ctx.setLineDash([]);
-
-                 ctx.fillStyle = '#fbbf24';
-                 ctx.beginPath(); ctx.arc(cps.cp1.x, cps.cp1.y, 6, 0, Math.PI*2); ctx.fill();
-                 ctx.beginPath(); ctx.arc(cps.cp2.x, cps.cp2.y, 6, 0, Math.PI*2); ctx.fill();
-                 ctx.strokeStyle = '#000';
-                 ctx.stroke();
-             }
+             path.forEach((pt, idx) => {
+                 const isEndpoint = (idx === 0 || idx === path.length - 1);
+                 if (isEndpoint) {
+                     ctx.beginPath();
+                     ctx.arc(pt.x, pt.y, isSelected ? 3 : 2, 0, Math.PI*2);
+                     ctx.fill();
+                 } else if (isSelected) {
+                     // Waypoints visibles solo si está seleccionado
+                     ctx.beginPath();
+                     ctx.arc(pt.x, pt.y, 6, 0, Math.PI*2);
+                     ctx.fill();
+                     ctx.strokeStyle = '#000';
+                     ctx.lineWidth = 1;
+                     ctx.stroke();
+                 }
+             });
         }
     });
 
@@ -2323,15 +2277,13 @@ function draw() {
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 5]);
         const p1 = wireStartObj.component.getTerminal(wireStartObj.terminalId);
-        
-        // Simular ruta auto
-        const midY = Math.max(p1.y, mousePos.y) + 40;
+        const fullPath = [p1, ...wireStartObj.path, mousePos];
         
         ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p1.x, midY);
-        ctx.lineTo(mousePos.x, midY);
-        ctx.lineTo(mousePos.x, mousePos.y);
+        fullPath.forEach((pt, idx) => {
+            if (idx === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+        });
         ctx.stroke();
         ctx.setLineDash([]);
     }
@@ -2342,23 +2294,23 @@ function draw() {
 
 // ================= UTILIDADES =================
 
-// Hit test mejorado para polilíneas de 3 segmentos
+// Hit test mejorado para polilíneas de N segmentos
 function isMouseOverWire(mx, my, wire) {
     const p1 = wire.from.getTerminal(wire.fromId);
     const p2 = wire.to.getTerminal(wire.toId);
     if (!p1 || !p2) return false;
 
-    const cps = getWireControlPoints(wire);
-    if (!cps) return false;
-
-    // Distancia punto a segmentos: p1-cp1, cp1-cp2, cp2-p2
+    const fullPath = [p1, ...(wire.path || []), p2];
     const threshold = wire.isTriple ? 40 : 10;
     
-    const d1 = pDist(mx, my, p1.x, p1.y, cps.cp1.x, cps.cp1.y);
-    const d2 = pDist(mx, my, cps.cp1.x, cps.cp1.y, cps.cp2.x, cps.cp2.y);
-    const d3 = pDist(mx, my, cps.cp2.x, cps.cp2.y, p2.x, p2.y);
-
-    return (d1 < threshold || d2 < threshold || d3 < threshold);
+    for (let i = 0; i < fullPath.length - 1; i++) {
+        const segStart = fullPath[i];
+        const segEnd = fullPath[i+1];
+        if (pDist(mx, my, segStart.x, segStart.y, segEnd.x, segEnd.y) < threshold) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function pDist(x, y, x1, y1, x2, y2) {
@@ -2424,8 +2376,7 @@ function serializeCircuit() {
             toId: w.toId,
             color: w.color,
             isTriple: w.isTriple,
-            cp1: w.customCP1,
-            cp2: w.customCP2
+            path: w.path || []
         }))
     });
 }
@@ -2485,8 +2436,7 @@ function deserializeCircuit(jsonString) {
                     toId: wData.toId,
                     color: wData.color,
                     isTriple: wData.isTriple,
-                    customCP1: wData.cp1,
-                    customCP2: wData.cp2
+                    path: wData.path || []
                 });
             }
         });
