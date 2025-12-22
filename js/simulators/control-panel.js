@@ -1183,6 +1183,53 @@ class Motor6T extends Component {
     }
 }
 
+class PhaseBridge extends Component {
+    constructor(x, y) {
+        super('bridge', x, y, 100, 20);
+        this.state = { spacing: 32 }; 
+        this.updateTerminals();
+    }
+    updateTerminals() {
+        const s = this.state.spacing;
+        this.terminals = {
+            '1': { x: 20, y: 10 },
+            '2': { x: 20 + s, y: 10 },
+            '3': { x: 20 + s * 2, y: 10 }
+        };
+        this.width = 40 + s * 2;
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 10;
+        const s = this.state.spacing;
+        const gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+        gradient.addColorStop(0, '#b45309');
+        gradient.addColorStop(0.5, '#f59e0b');
+        gradient.addColorStop(1, '#b45309');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(this.x, this.y, this.width, this.height, 4);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 8px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.state.spacing === 32 ? 'IEC' : 'MOT', this.x + this.width/2, this.y + 13);
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 6, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+}
+
 
 // ================= LOGICA DE INTERACCION =================
 
@@ -1436,6 +1483,18 @@ function setupEventListeners() {
             thermal.style.display = 'none';
         }
 
+        // Toggle Espaciado Puente
+        const bridgeControls = document.getElementById('bridge-controls');
+        if (bridgeControls) {
+            bridgeControls.style.display = (component instanceof PhaseBridge) ? 'block' : 'none';
+            document.getElementById('btn-toggle-spacing').onclick = () => {
+                component.state.spacing = (component.state.spacing === 32) ? 40 : 32;
+                component.updateTerminals();
+                ctxMenu.style.display = 'none';
+                draw();
+            };
+        }
+
         // Eliminar Genérico
         document.getElementById('btn-delete-comp').onclick = () => {
             const idx = components.indexOf(component);
@@ -1503,6 +1562,7 @@ function setupEventListeners() {
 }
 
 function addComponent(type, x, y) {
+    console.log("Agregando componente:", type, "en", x, y);
     let c;
     switch(type) {
         case 'power-source':
@@ -1521,6 +1581,7 @@ function addComponent(type, x, y) {
         case 'pilot-amber': c = new PilotLight('pilot-amber', x, y); break;
         case 'selector': c = new Selector(x, y); break;
         case 'timer': c = new TimerRelay(x, y); break;
+        case 'bridge': c = new PhaseBridge(x, y); break;
         case 'motor6t': c = new Motor6T(x, y); break;
         default: return;
     }
