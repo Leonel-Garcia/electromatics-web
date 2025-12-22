@@ -1456,7 +1456,21 @@ function setupEventListeners() {
     const btnReset = document.getElementById('btn-reset');
 
     if(btnSim) btnSim.addEventListener('click', () => { isSimulating = true; updateStatus(); });
-    if(btnStop) btnStop.addEventListener('click', () => { isSimulating = false; updateStatus(); });
+    if(btnStop) btnStop.addEventListener('click', () => { 
+        isSimulating = false; 
+        updateStatus(); 
+        // Reset Visual States
+        components.forEach(c => {
+            if (c.state) {
+                if (c.state.running !== undefined) c.state.running = false;
+                if (c.state.on !== undefined) c.state.on = false;
+                if (c.state.engaged !== undefined) c.state.engaged = false;
+                if (c.state.pressed !== undefined) c.state.pressed = false;
+                if (c.state.active !== undefined) c.state.active = false;
+            }
+        });
+        draw();
+    });
     if(btnReset) btnReset.addEventListener('click', () => { 
         components = []; wires = []; isSimulating = false; updateStatus(); draw(); 
     });
@@ -1794,10 +1808,14 @@ function solveCircuit() {
                     }
                 }
                 if (c instanceof ThermalRelay) {
-                    // Potencia siempre pasa
+                    // Potencia siempre pasa si no está disparado (en realidad pasa siempre físicamente, el control es el que corta)
+                    // Generalizado para pasar cualquier fase de L a T
                     ['L1','L2','L3'].forEach((inT, i) => {
                          const outT = ['T1','T2','T3'][i];
-                         if (hasPhase(c, inT, inT)) setNode(c, outT, inT); 
+                         const key = `${c.id}_${inT}`;
+                         if (nodes[key]) nodes[key].forEach(p => setNode(c, outT, p));
+                         const rKey = `${c.id}_${outT}`;
+                         if (nodes[rKey]) nodes[rKey].forEach(p => setNode(c, inT, p));
                     });
                     // Auxiliares
                     if (!c.state.tripped) {
