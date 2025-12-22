@@ -1477,7 +1477,7 @@ function setupEventListeners() {
         ctxMenu.style.display = 'block';
 
         // Mostrar controles específicos
-        if (component instanceof ThermalRelay) {
+        if (component instanceof ThermalRelay || component.type === 'thermal-relay') {
             thermal.style.display = 'block';
             inputLimit.value = component.state.currentLimit;
             // Guardar referencia al componente actual para el input
@@ -1495,7 +1495,7 @@ function setupEventListeners() {
         // Toggle Espaciado Puente
         const bridgeControls = document.getElementById('bridge-controls');
         if (bridgeControls) {
-            bridgeControls.style.display = (component instanceof PhaseBridge) ? 'block' : 'none';
+            bridgeControls.style.display = (component instanceof PhaseBridge || component.type === 'bridge') ? 'block' : 'none';
             document.getElementById('btn-toggle-spacing').onclick = () => {
                 component.state.spacing = (component.state.spacing === 32) ? 40 : 32;
                 component.updateTerminals();
@@ -1507,7 +1507,7 @@ function setupEventListeners() {
         // Temporizador Controls
         const timerControls = document.getElementById('timer-controls');
         if (timerControls) {
-            if (component instanceof TimerRelay) {
+            if (component instanceof TimerRelay || component.type === 'timer') {
                 timerControls.style.display = 'block';
                 const inputTimer = document.getElementById('input-timer-sec');
                 inputTimer.value = component.state.setting / 1000;
