@@ -369,55 +369,70 @@ class PowerSource extends Component {
 class SinglePhaseSource extends Component {
     constructor(x, y) {
         super('single-phase-source', x, y, 70, 60);
+        this.state = { voltage: 120 }; // Default normalized voltage
         this.terminals = {
             'L': {x: 52, y: 50, label: 'L'},
             'N': {x: 20, y: 50, label: 'N'}
         };
     }
+    
     draw(ctx) {
-        // Sombra para profundidad
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 10;
-        
-        // Cuerpo principal con bordes redondeados
+        // Dibujo vectorizado para Fuente Monofásica
         ctx.fillStyle = '#334155';
-        ctx.beginPath();
-        ctx.roundRect(this.x, this.y, this.width, this.height, 6);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
         
-        // Borde
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // Texto
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 16px Inter';
         ctx.textAlign = 'center';
         ctx.fillText('1Φ', this.x + this.width/2, this.y + 25);
-        ctx.font = '11px Inter';
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillText('220V', this.x + this.width/2, this.y + 42);
         
-        // Terminales
+        ctx.font = 'bold 11px Inter';
+        ctx.fillStyle = '#fff';
+        // Mostrar Voltaje y Frecuencia (60Hz fijo)
+        ctx.fillText(`${this.state.voltage}V - 60Hz`, this.x + this.width/2, this.y + 42);
+
+        // Terminales usando el método modular con colores personalizados
+        this.drawTerminals(ctx);
+    }
+
+    drawTerminals(ctx) {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
             
-            // Color del terminal
-            ctx.fillStyle = id === 'L' ? '#ef4444' : '#3b82f6'; // Rojo para L, Azul para N
+            const nodes = window.lastSolvedNodes || {};
+            const key = `${this.id}_${id}`;
+            const energized = isSimulating && nodes[key] && nodes[key].size > 0;
+
+            // Determinar color base (Regla del usuario)
+            let color = '#fbbf24'; // Defecto
+            if (this.state.voltage === 120) {
+                if (id === 'N') color = '#ffffff'; // Neutro Blanco
+                if (id === 'L') color = '#000000'; // Fase Negro
+            } else {
+                // 208V o 240V -> Ambas son fases (Negro)
+                color = '#000000';
+            }
+
             ctx.beginPath();
-            ctx.arc(tx, ty, 6, 0, Math.PI * 2);
+            ctx.arc(tx, ty, energized ? 7 : 6, 0, Math.PI * 2);
+            ctx.fillStyle = energized ? '#fcd34d' : color; 
             ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1;
-            ctx.stroke();
             
-            // Etiqueta
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Inter';
-            ctx.fillText(id, tx, ty - 10);
+            // Borde del terminal
+            ctx.strokeStyle = energized ? '#fff' : (color === '#ffffff' ? '#94a3b8' : '#78350f');
+            ctx.lineWidth = energized ? 2 : 1;
+            ctx.stroke();
+
+            if (t.label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Inter';
+                ctx.textAlign = 'center';
+                const ly = ty + 18; 
+                ctx.fillText(t.label, tx, ly);
+            }
         }
     }
 }
@@ -1542,10 +1557,37 @@ function setupEventListeners() {
         // Fuente de Poder Controls
         const sourceControls = document.getElementById('source-controls');
         if (sourceControls) {
-            if (component instanceof PowerSource || component.type === 'power-source') {
+            if (component instanceof PowerSource || component.type === 'power-source' || 
+                component instanceof SinglePhaseSource || component.type === 'single-phase-source') {
+                
                 sourceControls.style.display = 'block';
                 const selectVoltage = document.getElementById('select-voltage');
-                selectVoltage.value = component.state.voltage || 480;
+                
+                // Limpiar opciones previas
+                selectVoltage.innerHTML = '';
+                
+                let options = [];
+                if (component.type === 'power-source') {
+                    options = [
+                        { val: 480, text: '480 V' },
+                        { val: 208, text: '208 V' }
+                    ];
+                } else {
+                    options = [
+                        { val: 120, text: '120 V' },
+                        { val: 208, text: '208 V' },
+                        { val: 240, text: '240 V' }
+                    ];
+                }
+                
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt.val;
+                    el.textContent = opt.text;
+                    if (component.state.voltage == opt.val) el.selected = true;
+                    selectVoltage.appendChild(el);
+                });
+
                 selectVoltage.onchange = (e) => {
                     component.state.voltage = parseInt(e.target.value);
                     draw();
