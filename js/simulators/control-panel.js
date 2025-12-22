@@ -278,6 +278,10 @@ class Component {
         }
 
         // 2. Terminales
+        this.drawTerminals(ctx);
+    }
+
+    drawTerminals(ctx) {
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
@@ -332,16 +336,19 @@ class PowerSource extends Component {
         ctx.fillRect(this.x, this.y, this.width, this.height);
         ctx.strokeStyle = '#94a3b8';
         ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 14px Inter';
         ctx.textAlign = 'center';
         ctx.fillText('3Φ', this.x + this.width/2, this.y + 25);
-        ctx.font = 'bold 12px Inter';
+        
+        ctx.font = 'bold 11px Inter';
         ctx.fillStyle = '#fff';
-        ctx.fillText(`${this.state.voltage}V`, this.x + this.width/2, this.y + 40);
+        // Mostrar Voltaje y Frecuencia (60Hz fijo)
+        ctx.fillText(`${this.state.voltage}V - 60Hz`, this.x + this.width/2, this.y + 42);
 
-        // Terminals (done by super.draw)
-        super.draw(ctx);
+        // Terminales (usando el método modular para evitar overpaint)
+        this.drawTerminals(ctx);
 
         // Draw Neutral Terminal specific color
         const t = this.getTerminal('N');
