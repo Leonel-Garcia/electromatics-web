@@ -1562,7 +1562,6 @@ function setupEventListeners() {
 }
 
 function addComponent(type, x, y) {
-    console.log("Agregando componente:", type, "en", x, y);
     let c;
     switch(type) {
         case 'power-source':
