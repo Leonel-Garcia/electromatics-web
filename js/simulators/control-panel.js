@@ -28,9 +28,11 @@ let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
 let isTripleMode = false; // New state for Triple Cable tool
 
-// ================= MOTOR AUDIO MANAGER (Web Audio API) =================
-// Handles browser autoplay policy by requiring user interaction
+// Audio y Deshacer/Rehacer
 let audioUnlocked = false;
+let undoStack = [];
+let redoStack = [];
+const MAX_HISTORY = 50;
 
 class MotorAudioManager {
     constructor() {
@@ -1526,6 +1528,7 @@ function setupEventListeners() {
 
         // Eliminar Genérico
         document.getElementById('btn-delete-comp').onclick = () => {
+            pushHistory();
             const idx = components.indexOf(component);
             if(idx > -1) {
                 components.splice(idx, 1);
@@ -1560,6 +1563,7 @@ function setupEventListeners() {
         draw();
     });
     if(btnReset) btnReset.addEventListener('click', () => { 
+        pushHistory();
         components = []; wires = []; isSimulating = false; updateStatus(); draw(); 
     });
 
@@ -1588,9 +1592,34 @@ function setupEventListeners() {
     if(btnLoadLocal) btnLoadLocal.addEventListener('click', loadFromLocalStorage);
     if(btnExport) btnExport.addEventListener('click', downloadCircuit);
     if(btnImport) btnImport.addEventListener('click', triggerFileUpload);
+
+    // Undo/Redo Buttons
+    const btnUndo = document.getElementById('btn-undo');
+    const btnRedo = document.getElementById('btn-redo');
+    const btnUndoFull = document.getElementById('btn-undo-full');
+    const btnRedoFull = document.getElementById('btn-redo-full');
+
+    if (btnUndo) btnUndo.onclick = undo;
+    if (btnRedo) btnRedo.onclick = redo;
+    if (btnUndoFull) btnUndoFull.onclick = undo;
+    if (btnRedoFull) btnRedoFull.onclick = redo;
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', e => {
+        if (e.ctrlKey) {
+            if (e.key === 'z' || e.key === 'Z') {
+                e.preventDefault();
+                undo();
+            } else if (e.key === 'y' || e.key === 'Y') {
+                e.preventDefault();
+                redo();
+            }
+        }
+    });
 }
 
-function addComponent(type, x, y) {
+function addComponent(type, x, y, skipHistory = false) {
+    if (!skipHistory) pushHistory();
     let c;
     switch(type) {
         case 'power-source':
@@ -1640,6 +1669,7 @@ function onMouseDown(e) {
         for (let i = 0; i < selectedWire.path.length; i++) {
             const pt = selectedWire.path[i];
             if (Math.hypot(mx - pt.x, my - pt.y) < 8) {
+                pushHistory();
                 draggingHandle = { wire: selectedWire, index: i };
                 return;
             }
@@ -1661,6 +1691,7 @@ function onMouseDown(e) {
                 }
             } else {
                 // Iniciar nuevo cable
+                pushHistory();
                 wireStartObj = { component: c, terminalId: t.id, x: t.x, y: t.y, path: [] };
                 return;
             }
@@ -1671,6 +1702,7 @@ function onMouseDown(e) {
     for (let i = components.length - 1; i >= 0; i--) {
         const c = components[i];
         if (c.isMouseOver(mx, my)) {
+            pushHistory();
             dragItem = { comp: c, offX: mx - c.x, offY: my - c.y };
             
             // Interacción Click
@@ -2361,6 +2393,100 @@ function resizeCanvas() {
         canvas.height = Math.max(parent.clientHeight || 600, 1600 * scale); 
         draw(); 
     }
+}
+
+// ================= HISTORIAL (UNDO/REDO) =================
+
+function pushHistory() {
+    const currentState = serializeCircuit();
+    // Evitar duplicados consecutivos
+    if (undoStack.length > 0 && undoStack[undoStack.length - 1] === currentState) return;
+    
+    undoStack.push(currentState);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = []; // Al hacer un cambio nuevo, se limpia el redo
+    updateUndoButtons();
+}
+
+function undo() {
+    if (undoStack.length === 0) return;
+    
+    const currentState = serializeCircuit();
+    redoStack.push(currentState);
+    
+    const previousState = undoStack.pop();
+    applyState(previousState);
+    updateUndoButtons();
+}
+
+function redo() {
+    if (redoStack.length === 0) return;
+    
+    const currentState = serializeCircuit();
+    undoStack.push(currentState);
+    
+    const nextState = redoStack.pop();
+    applyState(nextState);
+    updateUndoButtons();
+}
+
+function applyState(jsonString) {
+    try {
+        const data = JSON.parse(jsonString);
+        components = [];
+        wires = [];
+        selectedComponent = null;
+        selectedWire = null;
+        
+        // window.components y window.wires deben sincronizarse si se usan como referencias globales
+        window.components = components;
+        window.wires = wires;
+
+        // 1. Recrear Componentes
+        data.components.forEach(cData => {
+            addComponent(cData.type, cData.x + 50, cData.y + 50, true); // true = skipHistory
+            const c = components[components.length - 1];
+            c.id = cData.id;
+            c.x = cData.x;
+            c.y = cData.y;
+            if (cData.state) Object.assign(c.state, cData.state);
+        });
+
+        // 2. Recrear Cables
+        data.wires.forEach(wData => {
+            const fromComp = components.find(c => c.id === wData.from);
+            const toComp = components.find(c => c.id === wData.to);
+
+            if (fromComp && toComp) {
+                wires.push({
+                    from: fromComp,
+                    fromId: wData.fromId,
+                    to: toComp,
+                    toId: wData.toId,
+                    color: wData.color,
+                    isTriple: wData.isTriple,
+                    path: wData.path || []
+                });
+            }
+        });
+
+        draw();
+    } catch (err) {
+        console.error("Error al aplicar estado del historial:", err);
+    }
+}
+
+function updateUndoButtons() {
+    const btnUndo = document.getElementById('btn-undo');
+    const btnRedo = document.getElementById('btn-redo');
+    if (btnUndo) btnUndo.disabled = (undoStack.length === 0);
+    if (btnRedo) btnRedo.disabled = (redoStack.length === 0);
+    
+    // También para la versión full
+    const btnUndoFull = document.getElementById('btn-undo-full');
+    const btnRedoFull = document.getElementById('btn-redo-full');
+    if (btnUndoFull) btnUndoFull.disabled = (undoStack.length === 0);
+    if (btnRedoFull) btnRedoFull.disabled = (redoStack.length === 0);
 }
 
 // ================= PERSISTENCIA (SAVE/LOAD) =================
