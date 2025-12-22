@@ -269,19 +269,6 @@ class Component {
             ctx.shadowBlur = 15;
             ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
             ctx.shadowBlur = 0;
-        } else if (this.type === 'power-source') {
-             // Dibujo vectorizado para Fuente
-             ctx.fillStyle = '#334155';
-             ctx.fillRect(this.x, this.y, this.width, this.height);
-             ctx.strokeStyle = '#94a3b8';
-             ctx.strokeRect(this.x, this.y, this.width, this.height);
-             ctx.fillStyle = '#fbbf24';
-             ctx.font = 'bold 14px Inter';
-             ctx.textAlign = 'center';
-             ctx.fillText('3Φ', this.x + this.width/2, this.y + 25);
-             ctx.font = '10px Inter';
-             ctx.fillStyle = '#fff';
-             ctx.fillText('440V', this.x + this.width/2, this.y + 40);
         } else {
             // Fallback
             ctx.fillStyle = '#cbd5e1';
@@ -329,6 +316,7 @@ class Component {
 class PowerSource extends Component {
     constructor(x, y) {
         super('power-source', x, y, 120, 60);
+        this.state = { voltage: 480 }; // Default normalized voltage
         // Estandarizado a 32px de separación (20, 52, 84, 116)
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
@@ -339,7 +327,22 @@ class PowerSource extends Component {
     }
     
     draw(ctx) {
+        // Dibujo vectorizado para Fuente
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 14px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('3Φ', this.x + this.width/2, this.y + 25);
+        ctx.font = 'bold 12px Inter';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(`${this.state.voltage}V`, this.x + this.width/2, this.y + 40);
+
+        // Terminals (done by super.draw)
         super.draw(ctx);
+
         // Draw Neutral Terminal specific color
         const t = this.getTerminal('N');
         if(t) {
@@ -1526,6 +1529,22 @@ function setupEventListeners() {
                 };
             } else {
                 timerControls.style.display = 'none';
+            }
+        }
+
+        // Fuente de Poder Controls
+        const sourceControls = document.getElementById('source-controls');
+        if (sourceControls) {
+            if (component instanceof PowerSource || component.type === 'power-source') {
+                sourceControls.style.display = 'block';
+                const selectVoltage = document.getElementById('select-voltage');
+                selectVoltage.value = component.state.voltage || 480;
+                selectVoltage.onchange = (e) => {
+                    component.state.voltage = parseInt(e.target.value);
+                    draw();
+                };
+            } else {
+                sourceControls.style.display = 'none';
             }
         }
 
