@@ -1859,7 +1859,13 @@ function solveCircuit() {
             // B. Cables
             wires.forEach(w => {
                 if (w.isTriple) {
-                    const phaseSets = [['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], ['U', 'V', 'W']];
+                    const phaseSets = [
+                        ['L1', 'L2', 'L3'], 
+                        ['T1', 'T2', 'T3'], 
+                        ['U', 'V', 'W'],
+                        ['U1', 'V1', 'W1'],
+                        ['W2', 'U2', 'V2']
+                    ];
                     let setFrom = phaseSets.find(s => s.includes(w.fromId));
                     let setTo = phaseSets.find(s => s.includes(w.toId));
                     if (setFrom && setTo) {
@@ -2064,95 +2070,7 @@ function draw() {
     // 0. Grid
     drawGrid(ctx);
 
-    // 1. Cables
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    wires.forEach(w => {
-        const p1 = w.from.getTerminal(w.fromId);
-        const p2 = w.to.getTerminal(w.toId);
-        
-        if (p1 && p2) {
-             const isSelected = (w === selectedWire);
-             const cps = getWireControlPoints(w);
-
-             // Base color or Selected Highlight
-             ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
-             ctx.lineWidth = isSelected ? 6 : 4;
-             
-             // Glow effect for selection
-             if (isSelected) {
-                 ctx.shadowColor = '#fbbf24';
-                 ctx.shadowBlur = 15;
-             }
-
-             // Curva Bezier con CPs
-             if (w.isTriple) {
-                 // Dibujar 3 líneas paralelas
-                 const offsets = [-32, 0, 32];
-                 ctx.strokeStyle = '#000000'; // Siempre negro para potencia trifásica
-                 offsets.forEach(offset => {
-                     ctx.beginPath();
-                     ctx.moveTo(p1.x + offset, p1.y);
-                     ctx.bezierCurveTo(cps.cp1.x + offset, cps.cp1.y, cps.cp2.x + offset, cps.cp2.y, p2.x + offset, p2.y);
-                     ctx.stroke();
-                 });
-             } else {
-                 ctx.beginPath();
-                 ctx.moveTo(p1.x, p1.y);
-                 ctx.bezierCurveTo(cps.cp1.x, cps.cp1.y, cps.cp2.x, cps.cp2.y, p2.x, p2.y);
-                 ctx.stroke();
-             }
-
-             // Reset shadow
-             ctx.shadowBlur = 0;
-
-             // Mejora visual: Circulo en unión para tapar extremos cuadrados
-             ctx.fillStyle = ctx.strokeStyle;
-             ctx.beginPath(); ctx.arc(p1.x, p1.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
-             ctx.beginPath(); ctx.arc(p2.x, p2.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
-
-             // Draw Handles if Selected
-             if (isSelected) {
-                 // Dashed lines to handles
-                 ctx.lineWidth = 1;
-                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                 ctx.setLineDash([3, 3]);
-                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(cps.cp1.x, cps.cp1.y); ctx.stroke();
-                 ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(cps.cp2.x, cps.cp2.y); ctx.stroke();
-                 ctx.setLineDash([]);
-
-                 // Handles
-                 ctx.fillStyle = '#fbbf24';
-                 ctx.beginPath(); ctx.arc(cps.cp1.x, cps.cp1.y, 5, 0, Math.PI*2); ctx.fill();
-                 ctx.beginPath(); ctx.arc(cps.cp2.x, cps.cp2.y, 5, 0, Math.PI*2); ctx.fill();
-                 ctx.strokeStyle = '#000';
-                 ctx.lineWidth = 1;
-                 ctx.strokeRect(cps.cp1.x-5, cps.cp1.y-5, 10, 10); // dummy stroke
-             }
-        }
-    });
-
-    // 2. Wire Creation Line
-    if (wireStartObj) {
-        ctx.strokeStyle = currentWireColor;
-        ctx.lineWidth = 3;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        const p1 = wireStartObj.component.getTerminal(wireStartObj.terminalId);
-        ctx.moveTo(p1.x, p1.y);
-        
-        // Simple curve draft
-        const cp1x = p1.x;
-        const cp1y = Math.max(p1.y, mousePos.y) + 40;
-        const cp2x = mousePos.x;
-        const cp2y = cp1y;
-        
-        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, mousePos.x, mousePos.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    // 3. Componentes
+    // 1. Componentes
     components.forEach(c => {
         if (c === selectedComponent) {
             ctx.save();
@@ -2169,39 +2087,94 @@ function draw() {
         c.draw(ctx);
     });
 
+    // 2. Cables (Now in front!)
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    wires.forEach(w => {
+        const p1 = w.from.getTerminal(w.fromId);
+        const p2 = w.to.getTerminal(w.toId);
+        
+        if (p1 && p2) {
+             const isSelected = (w === selectedWire);
+
+             // Color base o Resaltado
+             ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
+             ctx.lineWidth = isSelected ? 6 : 4;
+             
+             // Efecto glow de selección
+             if (isSelected) {
+                 ctx.shadowColor = '#fbbf24';
+                 ctx.shadowBlur = 15;
+             }
+
+             // Línea Recta Directa (Sin curvas Bezier)
+             if (w.isTriple) {
+                 const offsets = [-32, 0, 32];
+                 ctx.strokeStyle = '#000000'; 
+                 offsets.forEach(offset => {
+                     ctx.beginPath();
+                     ctx.moveTo(p1.x + offset, p1.y);
+                     ctx.lineTo(p2.x + offset, p2.y);
+                     ctx.stroke();
+                 });
+             } else {
+                 ctx.beginPath();
+                 ctx.moveTo(p1.x, p1.y);
+                 ctx.lineTo(p2.x, p2.y);
+                 ctx.stroke();
+             }
+
+             ctx.shadowBlur = 0;
+
+             // Tapar extremos
+             ctx.fillStyle = ctx.strokeStyle;
+             ctx.beginPath(); ctx.arc(p1.x, p1.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
+             ctx.beginPath(); ctx.arc(p2.x, p2.y, isSelected ? 3 : 2, 0, Math.PI*2); ctx.fill();
+        }
+    });
+
+    // 3. Línea de Creación (Recta)
+    if (wireStartObj) {
+        ctx.strokeStyle = currentWireColor;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 5]);
+        const p1 = wireStartObj.component.getTerminal(wireStartObj.terminalId);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(mousePos.x, mousePos.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
     ctx.restore();
 }
 
+
 // ================= UTILIDADES =================
 
-// Hit test simple para cables (Bezier Curve distance approximation)
-// Verifica si el punto (mx, my) está cerca de la curva definida por p1, p2
+// Hit test mejorado para líneas rectas
 function isMouseOverWire(mx, my, wire) {
     const p1 = wire.from.getTerminal(wire.fromId);
     const p2 = wire.to.getTerminal(wire.toId);
     if (!p1 || !p2) return false;
 
-    const cps = getWireControlPoints(wire);
-    if (!cps) return false;
+    // Distancia punto a segmento
+    const threshold = wire.isTriple ? 40 : 8; // Mayor radio para cable triple
+    const dist = pDist(mx, my, p1.x, p1.y, p2.x, p2.y);
+    return dist < threshold;
+}
 
-    const cp1 = cps.cp1;
-    const cp2 = cps.cp2;
-
-    // Hight Precision Sampling (50 points)
-    // Reduce false negatives on sharp curves
-    const steps = 50;
-    const threshold = 8; // detection radius
-
-    for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const it = 1 - t;
-        // Bezier Cubic Formula
-        const x = (it*it*it)*p1.x + 3*(it*it)*t*cp1.x + 3*it*(t*t)*cp2.x + (t*t*t)*p2.x;
-        const y = (it*it*it)*p1.y + 3*(it*it)*t*cp1.y + 3*it*(t*t)*cp2.y + (t*t*t)*p2.y;
-        
-        if (Math.hypot(mx - x, my - y) < threshold) return true;
-    }
-    return false;
+function pDist(x, y, x1, y1, x2, y2) {
+    const A = x - x1, B = y - y1, C = x2 - x1, D = y2 - y1;
+    const dot = A * C + B * D, len_sq = C * C + D * D;
+    let param = -1;
+    if (len_sq != 0) param = dot / len_sq;
+    let xx, yy;
+    if (param < 0) { xx = x1; yy = y1; }
+    else if (param > 1) { xx = x2; yy = y2; }
+    else { xx = x1 + param * C; yy = y1 + param * D; }
+    const dx = x - xx, dy = y - yy;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
 function drawGrid(ctx) {
