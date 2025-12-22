@@ -1366,6 +1366,7 @@ function setupEventListeners() {
 
     // Delete Key listener
     window.addEventListener('keydown', (e) => {
+        if (isSimulating) return; // Proteccion: No borrar mientras se simula
         if (e.key === 'Delete' || e.key === 'Backspace') {
             if (selectedWire) {
                 const idx = wires.indexOf(selectedWire);
@@ -1420,6 +1421,8 @@ function setupEventListeners() {
         e.preventDefault();
         canvasContainer.classList.remove('drop-valid');
         
+        if (isSimulating) return; // Proteccion: No agregar componentes mientras se simula
+
         try {
             const type = e.dataTransfer.getData('text/plain');
             if (!type) return;
@@ -1527,7 +1530,10 @@ function setupEventListeners() {
         }
 
         // Eliminar Genérico
-        document.getElementById('btn-delete-comp').onclick = () => {
+        const btnDelete = document.getElementById('btn-delete-comp');
+        btnDelete.style.display = isSimulating ? 'none' : 'block';
+        btnDelete.onclick = () => {
+            if (isSimulating) return;
             pushHistory();
             const idx = components.indexOf(component);
             if(idx > -1) {
@@ -1665,7 +1671,7 @@ function onMouseDown(e) {
     const my = pos.y;
 
     // 0. Handle Dragging (Waypoints)
-    if (selectedWire && selectedWire.path) {
+    if (selectedWire && selectedWire.path && !isSimulating) {
         for (let i = 0; i < selectedWire.path.length; i++) {
             const pt = selectedWire.path[i];
             if (Math.hypot(mx - pt.x, my - pt.y) < 8) {
@@ -1680,20 +1686,22 @@ function onMouseDown(e) {
     let hitObject = false;
 
     // 1. Tocar Terminal? -> Iniciar Cableado o Agregar Waypoint si ya iniciamos
-    for (const c of components) {
-        const t = c.getHoveredTerminal(mx, my);
-        if (t) {
-            if (wireStartObj) {
-                // Si ya iniciamos cableado, intentar cerrar si es otro terminal
-                if (c !== wireStartObj.component) {
-                    onMouseUp(e); // Helper para cerrar
+    if (!isSimulating) {
+        for (const c of components) {
+            const t = c.getHoveredTerminal(mx, my);
+            if (t) {
+                if (wireStartObj) {
+                    // Si ya iniciamos cableado, intentar cerrar si es otro terminal
+                    if (c !== wireStartObj.component) {
+                        onMouseUp(e); // Helper para cerrar
+                        return;
+                    }
+                } else {
+                    // Iniciar nuevo cable
+                    pushHistory();
+                    wireStartObj = { component: c, terminalId: t.id, x: t.x, y: t.y, path: [] };
                     return;
                 }
-            } else {
-                // Iniciar nuevo cable
-                pushHistory();
-                wireStartObj = { component: c, terminalId: t.id, x: t.x, y: t.y, path: [] };
-                return;
             }
         }
     }
@@ -1702,42 +1710,46 @@ function onMouseDown(e) {
     for (let i = components.length - 1; i >= 0; i--) {
         const c = components[i];
         if (c.isMouseOver(mx, my)) {
-            pushHistory();
-            dragItem = { comp: c, offX: mx - c.x, offY: my - c.y };
-            
-            // Interacción Click
+            // Interacción Click (Siempre permitida si es componente interactivo)
             if (c instanceof Breaker) c.toggle();
             if (c instanceof Selector) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
 
-            // Selección de componente
-            selectedComponent = c;
-            selectedWire = null;
+            // Selección y arrastre (Solo si NO estamos simulando)
+            if (!isSimulating) {
+                pushHistory();
+                dragItem = { comp: c, offX: mx - c.x, offY: my - c.y };
+                selectedComponent = c;
+                selectedWire = null;
+            }
+            
             draw();
             return;
         }
     }
 
-    // 3. Tocar Cable? (Selección)
-    for (const w of wires) {
-        if (isMouseOverWire(mx, my, w)) {
-            selectedWire = w;
-            selectedComponent = null; // Clear comp selection
-            // Update color picker to match wire
-            if(w.color) {
-                currentWireColor = w.color;
-                const sel = document.getElementById('wire-color');
-                if(sel) sel.value = w.color;
+    // 3. Tocar Cable? (Selección - Solo si NO estamos simulando)
+    if (!isSimulating) {
+        for (const w of wires) {
+            if (isMouseOverWire(mx, my, w)) {
+                selectedWire = w;
+                selectedComponent = null; // Clear comp selection
+                // Update color picker to match wire
+                if(w.color) {
+                    currentWireColor = w.color;
+                    const sel = document.getElementById('wire-color');
+                    if(sel) sel.value = w.color;
+                }
+                hitObject = true;
+                draw();
+                return; // Stop propagation
             }
-            hitObject = true;
-            draw();
-            return; // Stop propagation
         }
     }
 
     // Si no tocamos nada, limpiar selección o agregar waypoint si estamos cableando
     if (!hitObject) {
-        if (wireStartObj) {
+        if (wireStartObj && !isSimulating) {
             // Agregar waypoint al cable actual
             wireStartObj.path.push({ x: snapToGrid(mx), y: snapToGrid(my) });
             draw();
