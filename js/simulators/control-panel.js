@@ -1864,6 +1864,20 @@ function solveCircuit() {
                         if(nodes[k68]) nodes[k68].forEach(p => setNode(c, 'NO67', p));
                     }
                 }
+                if (c instanceof PhaseBridge) {
+                    // Cortocircuito entre los 3 terminales
+                    const k1 = `${c.id}_1`, k2 = `${c.id}_2`, k3 = `${c.id}_3`;
+                    const allPotentials = new Set();
+                    if(nodes[k1]) nodes[k1].forEach(p => allPotentials.add(p));
+                    if(nodes[k2]) nodes[k2].forEach(p => allPotentials.add(p));
+                    if(nodes[k3]) nodes[k3].forEach(p => allPotentials.add(p));
+                    
+                    allPotentials.forEach(p => {
+                        setNode(c, '1', p);
+                        setNode(c, '2', p);
+                        setNode(c, '3', p);
+                    });
+                }
                 if (c instanceof Motor6T) {
                     // Bobinados internos: U1-U2, V1-V2, W1-W2
                     [['U1','U2'], ['V1','V2'], ['W1','W2']].forEach(([t1, t2]) => {

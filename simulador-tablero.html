@@ -451,6 +451,12 @@
                 <span style="font-size:10px;">(Cerrar NC)</span>
             </div>
         </div>
+        <div id="bridge-controls" style="display:none;">
+            <div class="menu-item" id="btn-toggle-spacing">
+                <span>Cambiar Espaciado</span>
+                <span style="font-size:10px;">(IEC/Motor)</span>
+            </div>
+        </div>
         <div class="menu-item danger" id="btn-delete-comp">
             <span>Eliminar Componente</span>
             <i class="fas fa-trash"></i>
@@ -516,6 +522,10 @@
             <button class="component-btn" draggable="false" id="btn-triple-cable" style="border-color: #000;">
                 <div class="component-icon" style="display:block; font-size:24px;">🧶</div>
                 <span>Cable Trifásico</span>
+            </button>
+            <button class="component-btn" draggable="true" data-component="bridge">
+                <div class="component-icon" style="display:block; font-size:24px;">🪜</div>
+                <span>Puente Trifásico</span>
             </button>
           </div>
 
