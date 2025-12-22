@@ -1846,6 +1846,14 @@ function solveCircuit() {
                         if(nodes[k68]) nodes[k68].forEach(p => setNode(c, 'NO67', p));
                     }
                 }
+                if (c instanceof Motor6T) {
+                    // Bobinados internos: U1-U2, V1-V2, W1-W2
+                    [['U1','U2'], ['V1','V2'], ['W1','W2']].forEach(([t1, t2]) => {
+                        const k1 = `${c.id}_${t1}`, k2 = `${c.id}_${t2}`;
+                        if(nodes[k1]) nodes[k1].forEach(p => setNode(c, t2, p));
+                        if(nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
+                    });
+                }
             });
 
             // B. Cables
