@@ -293,13 +293,22 @@ class Component {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
             
-            // Halo si el mouse está cerca (lo hace en el loop principal, aqui solo dibujo base)
+            // Verificar tensión para feedback visual en terminales
+            const nodes = window.lastSolvedNodes || {};
+            const key = `${this.id}_${id}`;
+            const energized = isSimulating && nodes[key] && nodes[key].size > 0;
+
             ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; // Oro
+            ctx.arc(tx, ty, energized ? 7 : 5, 0, Math.PI*2);
+            ctx.fillStyle = energized ? '#fcd34d' : '#fbbf24'; 
+            if (energized) {
+                ctx.shadowColor = '#fbbf24';
+                ctx.shadowBlur = 15;
+            }
             ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = energized ? '#fff' : '#78350f';
+            ctx.lineWidth = energized ? 2 : 1;
             ctx.stroke();
 
             // Etiquetas de terminales (L1, T1...)
@@ -1812,6 +1821,7 @@ function solveCircuit() {
         // FASE 1: RESOLVER VOLTAJES (Red de Nodos)
         // ==========================================
         const nodes = {}; 
+        window.lastSolvedNodes = nodes; // Export for UI feedback
         
         // Helpers
         const setNode = (comp, term, phase) => {
@@ -1956,7 +1966,8 @@ function solveCircuit() {
                         ['T1', 'T2', 'T3'], 
                         ['U', 'V', 'W'],
                         ['U1', 'V1', 'W1'],
-                        ['W2', 'U2', 'V2']
+                        ['W2', 'U2', 'V2'],
+                        ['1', '2', '3'] // Phase Bridge
                     ];
                     let setFrom = phaseSets.find(s => s.includes(w.fromId));
                     let setTo = phaseSets.find(s => s.includes(w.toId));
@@ -2190,28 +2201,66 @@ function draw() {
              const isSelected = (w === selectedWire);
              const cps = getWireControlPoints(w);
 
-             // Color base o Resaltado
-             ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
-             ctx.lineWidth = isSelected ? 6 : 4;
+             const nodes = window.lastSolvedNodes || {};
+             const phaseSets = [
+                 ['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], 
+                 ['U', 'V', 'W'], ['U1', 'V1', 'W1'], ['W2', 'U2', 'V2']
+             ];
+             const activeSet = w.isTriple ? phaseSets.find(s => s.includes(w.fromId)) : null;
+
+             const isEnergized = w.isTriple && activeSet ? 
+                activeSet.some(f => (nodes[`${w.from.id}_${f}`] && nodes[`${w.from.id}_${f}`].size > 0)) :
+                ((nodes[`${w.from.id}_${w.fromId}`] && nodes[`${w.from.id}_${w.fromId}`].size > 0) || 
+                 (nodes[`${w.to.id}_${w.toId}`] && nodes[`${w.to.id}_${w.toId}`].size > 0));
              
-             // Efecto glow de selección
-             if (isSelected) {
-                 ctx.shadowColor = '#fbbf24';
-                 ctx.shadowBlur = 15;
+             if (isEnergized && isSimulating) {
+                 ctx.save();
+                 ctx.shadowColor = (w.color && w.color !== '#000000') ? w.color : '#fbbf24';
+                 ctx.shadowBlur = 10;
+                 ctx.lineWidth = isSelected ? 8 : 6;
+                 // Brillo extra para cables con tensión
+                 if (w.color === '#ef4444') ctx.strokeStyle = '#f87171'; // Rojo más brillante
+                 else if (w.color === '#22c55e') ctx.strokeStyle = '#4ade80'; // Verde más brillante
+                 else if (w.color === '#3b82f6') ctx.strokeStyle = '#60a5fa'; // Azul más brillante
+                 else ctx.strokeStyle = '#fcd34d'; // Amarillo/Oro brillante
+             } else {
+                 ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
+                 ctx.lineWidth = isSelected ? 6 : 4;
              }
 
              // Línea Segmentada (Polyline: p1 -> cp1 -> cp2 -> p2)
              if (w.isTriple) {
-                 const offsets = [-32, 0, 32];
-                 ctx.strokeStyle = '#000000'; 
-                 offsets.forEach(offset => {
+                 let index = 1; // Default middle
+                 if (activeSet) index = activeSet.indexOf(w.fromId);
+                 
+                 const spacing = 32;
+                 const offsets = [(0 - index) * spacing, (1 - index) * spacing, (2 - index) * spacing];
+                 
+                 const baseColor = ctx.strokeStyle;
+                 offsets.forEach((offset, i) => {
+                     // Check specific phase voltage for triple cable feedback
+                     let phaseEnergized = isEnergized;
+                     if (activeSet && isSimulating) {
+                         const phaseKey = `${w.from.id}_${activeSet[i]}`;
+                         phaseEnergized = (nodes[phaseKey] && nodes[phaseKey].size > 0);
+                     }
+
                      ctx.beginPath();
+                     ctx.strokeStyle = phaseEnergized ? '#fcd34d' : '#000000';
+                     if (phaseEnergized) {
+                         ctx.shadowBlur = 8;
+                         ctx.shadowColor = '#fbbf24';
+                     } else {
+                         ctx.shadowBlur = 0;
+                     }
+
                      ctx.moveTo(p1.x + offset, p1.y);
                      ctx.lineTo(cps.cp1.x + offset, cps.cp1.y);
                      ctx.lineTo(cps.cp2.x + offset, cps.cp2.y);
                      ctx.lineTo(p2.x + offset, p2.y);
                      ctx.stroke();
                  });
+                 if (isEnergized) ctx.restore();
              } else {
                  ctx.beginPath();
                  ctx.moveTo(p1.x, p1.y);
@@ -2219,6 +2268,7 @@ function draw() {
                  ctx.lineTo(cps.cp2.x, cps.cp2.y);
                  ctx.lineTo(p2.x, p2.y);
                  ctx.stroke();
+                 if (isEnergized) ctx.restore();
              }
 
              ctx.shadowBlur = 0;
