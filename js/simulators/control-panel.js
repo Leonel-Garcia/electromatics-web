@@ -321,8 +321,11 @@ class Component {
 class PowerSource extends Component {
     constructor(x, y) {
         super('power-source', x, y, 120, 60);
-        this.state = { voltage: 480 }; // Default normalized voltage
-        // Estandarizado a 32px de separación (20, 52, 84, 116)
+        this.state = { 
+            voltage: 480, 
+            randomEnabled: false,
+            phaseShifts: { L1: 1, L2: 1, L3: 1, N: 0 } 
+        };
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
             'L2': {x: 52, y: 50, label: 'L2'}, 
@@ -330,39 +333,86 @@ class PowerSource extends Component {
             'N':  {x: 116, y: 50, label: 'N'}
         };
     }
+
+    update() {
+        if (!isSimulating) return;
+        if (this.state.randomEnabled) {
+            // Fluctuación lenta (±15%)
+            ['L1', 'L2', 'L3'].forEach(f => {
+                const target = 0.85 + Math.random() * 0.30;
+                this.state.phaseShifts[f] = this.state.phaseShifts[f] * 0.95 + target * 0.05;
+            });
+        } else {
+            this.state.phaseShifts = { L1: 1, L2: 1, L3: 1, N: 0 };
+        }
+    }
     
     draw(ctx) {
         // Dibujo vectorizado para Fuente
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = '#1e293b';
         ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeStyle = '#334155';
         ctx.strokeRect(this.x, this.y, this.width, this.height);
         
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 14px Inter';
         ctx.textAlign = 'center';
-        ctx.fillText('3Φ', this.x + this.width/2, this.y + 25);
+        ctx.fillText('3Φ Power Source', this.x + this.width/2, this.y + 20);
         
         ctx.font = 'bold 11px Inter';
-        ctx.fillStyle = '#fff';
-        // Mostrar Voltaje y Frecuencia (60Hz fijo)
-        ctx.fillText(`${this.state.voltage}V - 60Hz`, this.x + this.width/2, this.y + 42);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${this.state.voltage}V NOMINAL`, this.x + this.width/2, this.y + 35);
 
-        // Terminales (usando el método modular para evitar overpaint)
+        // Controles si está seleccionado
+        if (selectedComponent === this && !isSimulating) {
+            // Slider área: Parte superior del componente
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.fillRect(this.x, this.y - 40, this.width, 35);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.strokeRect(this.x, this.y - 40, this.width, 35);
+
+            // Slider track
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(this.x + 10, this.y - 25, this.width - 20, 4);
+            
+            // Slider handle
+            const minV = 208, maxV = 600;
+            const perc = (this.state.voltage - minV) / (maxV - minV);
+            const hx = this.x + 10 + perc * (this.width - 20);
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.arc(hx, this.y - 23, 6, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '9px Inter';
+            ctx.fillText(`Ajustar: ${this.state.voltage}V`, this.x + this.width/2, this.y - 30);
+
+            // Botón Random
+            const rColor = this.state.randomEnabled ? '#22c55e' : '#64748b';
+            ctx.fillStyle = rColor;
+            ctx.beginPath();
+            ctx.roundRect(this.x + this.width - 25, this.y + 5, 20, 10, 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = '7px Inter';
+            ctx.fillText('RND', this.x + this.width - 15, this.y + 13);
+        }
+
         this.drawTerminals(ctx);
 
-        // Draw Neutral Terminal specific color
+        // Neutral
         const t = this.getTerminal('N');
         if(t) {
              ctx.beginPath();
-             ctx.arc(t.x, t.y, 5, 0, Math.PI*2);
-             ctx.fillStyle = '#e2e8f0'; // Gray/White for Neutral
+             ctx.arc(this.x + t.x, this.y + t.y, 5, 0, Math.PI*2);
+             ctx.fillStyle = '#e2e8f0';
              ctx.fill();
              ctx.strokeStyle = '#64748b';
              ctx.stroke();
              ctx.fillStyle = '#fff';
              ctx.font = 'bold 10px Inter';
-             ctx.fillText('N', t.x, t.y + 18);
+             ctx.fillText('N', this.x + t.x, this.y + t.y + 18);
         }
     }
 }
@@ -370,29 +420,75 @@ class PowerSource extends Component {
 class SinglePhaseSource extends Component {
     constructor(x, y) {
         super('single-phase-source', x, y, 70, 60);
-        this.state = { voltage: 120 }; // Default normalized voltage
+        this.state = { 
+            voltage: 120,
+            randomEnabled: false,
+            phaseShifts: { L: 1, N: 0 }
+        };
         this.terminals = {
             'L': {x: 52, y: 50, label: 'L'},
             'N': {x: 20, y: 50, label: 'N'}
         };
     }
+
+    update() {
+        if (!isSimulating) return;
+        if (this.state.randomEnabled) {
+            const target = 0.85 + Math.random() * 0.30;
+            this.state.phaseShifts.L = this.state.phaseShifts.L * 0.95 + target * 0.05;
+        } else {
+            this.state.phaseShifts = { L: 1, N: 0 };
+        }
+    }
     
     draw(ctx) {
         // Dibujo vectorizado para Fuente Monofásica
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = '#1e293b';
         ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeStyle = '#334155';
         ctx.strokeRect(this.x, this.y, this.width, this.height);
         
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 16px Inter';
         ctx.textAlign = 'center';
-        ctx.fillText('1Φ', this.x + this.width/2, this.y + 25);
+        ctx.fillText('1Φ Power Source', this.x + this.width/2, this.y + 20);
         
         ctx.font = 'bold 11px Inter';
-        ctx.fillStyle = '#fff';
-        // Mostrar Voltaje y Frecuencia (60Hz fijo)
-        ctx.fillText(`${this.state.voltage}V - 60Hz`, this.x + this.width/2, this.y + 42);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${this.state.voltage}V NOMINAL`, this.x + this.width/2, this.y + 35);
+
+        // Controles si está seleccionado
+        if (selectedComponent === this && !isSimulating) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.fillRect(this.x, this.y - 40, this.width, 35);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.strokeRect(this.x, this.y - 40, this.width, 35);
+
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(this.x + 10, this.y - 25, this.width - 20, 4);
+            
+            const minV = 100, maxV = 250;
+            const perc = (this.state.voltage - minV) / (maxV - minV);
+            const hx = this.x + 10 + perc * (this.width - 20);
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.arc(hx, this.y - 23, 5, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '8px Inter';
+            ctx.fillText(`Ajustar: ${this.state.voltage}V`, this.x + this.width/2, this.y - 30);
+
+             // Botón Random
+            const rColor = this.state.randomEnabled ? '#22c55e' : '#64748b';
+            ctx.fillStyle = rColor;
+            ctx.beginPath();
+            ctx.roundRect(this.x + this.width - 22, this.y + 5, 18, 9, 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = '7px Inter';
+            ctx.fillText('RND', this.x + this.width - 13, this.y + 12);
+        }
 
         // Terminales usando el método modular con colores personalizados
         this.drawTerminals(ctx);
@@ -502,24 +598,42 @@ class Multimeter {
         const getVoltage = (p1, p2) => {
             const has = (set, phase) => set.has(phase);
             if (p1.size === 0 || p2.size === 0) return 0;
-            const isN1 = has(p1, 'N');
-            const isN2 = has(p2, 'N');
-            const isL1_1 = has(p1, 'L1'), isL2_1 = has(p1, 'L2'), isL3_1 = has(p1, 'L3');
-            const isL1_2 = has(p2, 'L1'), isL2_2 = has(p2, 'L2'), isL3_2 = has(p2, 'L3');
+            
+            const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
+            if (!source) return 0;
 
-            if ((isN1 && (isL1_2 || isL2_2 || isL3_2)) || (isN2 && (isL1_1 || isL2_1 || isL3_1))) {
-                const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
-                const vNominal = source ? source.state.voltage : 120;
-                if (source?.type === 'power-source') return Math.round(vNominal / Math.sqrt(3));
-                return vNominal;
+            const shifts = source.state.phaseShifts || { L1: 1, L2: 1, L3: 1, L: 1, N: 0 };
+            const vBase = source.state.voltage;
+
+            // Determinar fase predominante en cada punta
+            const ph1 = [...p1][0], ph2 = [...p2][0];
+            
+            const getInstVal = (ph) => {
+                if (ph === 'N') return 0;
+                let sKey = ph;
+                if (ph === 'L1' && !shifts.L1 && shifts.L) sKey = 'L'; // Map Mono to L
+                return vBase * (shifts[sKey] || 1);
+            };
+
+            const v1 = getInstVal(ph1);
+            const v2 = getInstVal(ph2);
+
+            // Diferencia Neutral - Fase
+            if ((ph1 === 'N' && ph2 !== 'N') || (ph2 === 'N' && ph1 !== 'N')) {
+                const activePh = ph1 === 'N' ? ph2 : ph1;
+                const val = getInstVal(activePh);
+                if (source.type === 'power-source') return Math.round(val / Math.sqrt(3));
+                return Math.round(val);
             }
 
-            if ((isL1_1 && isL2_2) || (isL1_2 && isL2_1) || 
-                (isL2_1 && isL3_2) || (isL2_2 && isL3_1) || 
-                (isL3_1 && isL1_2) || (isL3_2 && isL1_1)) {
-                const source = components.find(c => c.type === 'power-source');
-                return source ? source.state.voltage : 0;
+            // Linea - Linea
+            if (ph1 !== ph2 && ph1 !== 'N' && ph2 !== 'N') {
+                // Simplificación: Asumimos 120 grados. En DC o monofasica real 180 si es L1-L2 de transformador.
+                // Aquí usamos el voltaje nominal ajustado por los consumos/fluctuaciones.
+                const avgShift = (getInstVal(ph1) + getInstVal(ph2)) / 2;
+                return Math.round(avgShift); 
             }
+
             return 0;
         };
 
@@ -1702,6 +1816,11 @@ function loop() {
             (c instanceof Motor || c instanceof Motor6T) && c.state.running
         );
         motorAudio.update(anyMotorRunning);
+
+        // Actualizar estados dinámicos de componentes (fuentes, etc.)
+        components.forEach(c => {
+            if (c.update) c.update();
+        });
     } else {
         // Detener audio si la simulación está detenida
         motorAudio.update(false);
@@ -2315,6 +2434,27 @@ function onMouseDown(e) {
 
             // Selección y arrastre (Solo si NO estamos simulando)
             if (!isSimulating) {
+                // Check if clicked ON SLIDER area for PowerSource
+                if (c instanceof PowerSource || c instanceof SinglePhaseSource) {
+                    const sliderY = c.y - 25;
+                    if (my > sliderY - 15 && my < sliderY + 15) {
+                         // Dragging handled by MouseMove since we don't have a direct 'draggingSlider' flag yet
+                         // But we can check here to prevent dragging the body
+                         const minV = (c instanceof PowerSource) ? 208 : 100;
+                         const maxV = (c instanceof PowerSource) ? 600 : 250;
+                         const perc = Math.max(0, Math.min(1, (mx - (c.x + 10)) / (c.width - 20)));
+                         c.state.voltage = Math.round(minV + perc * (maxV - minV));
+                         draw();
+                         return;
+                    }
+                    // Check Random button
+                    if (mx > c.x + c.width - 25 && mx < c.x + c.width - 5 && my > c.y + 5 && my < c.y + 15) {
+                        c.state.randomEnabled = !c.state.randomEnabled;
+                        draw();
+                        return;
+                    }
+                }
+
                 pushHistory();
                 dragItem = { comp: c, offX: mx - c.x, offY: my - c.y };
                 selectedComponent = c;
@@ -2366,6 +2506,17 @@ function onMouseMove(e) {
     mousePos.y = pos.y;
 
     if (dragItem) {
+        // Si es una fuente y estamos sobre el slider, no mover el cuerpo
+        const c = dragItem.comp;
+        if ((c instanceof PowerSource || c instanceof SinglePhaseSource) && mousePos.y < c.y) {
+             const minV = (c instanceof PowerSource) ? 208 : 100;
+             const maxV = (c instanceof PowerSource) ? 600 : 250;
+             const perc = Math.max(0, Math.min(1, (mousePos.x - (c.x + 10)) / (c.width - 20)));
+             c.state.voltage = Math.round(minV + perc * (maxV - minV));
+             draw();
+             return;
+        }
+
         const rawX = mousePos.x - dragItem.offX;
         const rawY = mousePos.y - dragItem.offY;
         // Snap dragging
