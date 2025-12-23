@@ -324,7 +324,8 @@ class PowerSource extends Component {
         this.state = { 
             voltage: 480, 
             randomEnabled: false,
-            phaseShifts: { L1: 1, L2: 1, L3: 1, N: 0 } 
+            phaseShifts: { L1: 1, L2: 1, L3: 1, N: 0 },
+            lastUpdate: 0
         };
         this.terminals = {
             'L1': {x: 20, y: 50, label: 'L1'}, 
@@ -337,11 +338,21 @@ class PowerSource extends Component {
     update() {
         if (!isSimulating) return;
         if (this.state.randomEnabled) {
-            // Fluctuación lenta (±15%)
-            ['L1', 'L2', 'L3'].forEach(f => {
-                const target = 0.85 + Math.random() * 0.30;
-                this.state.phaseShifts[f] = this.state.phaseShifts[f] * 0.95 + target * 0.05;
-            });
+            const now = Date.now();
+            if (now - this.state.lastUpdate > 30000) { // 30 segundos
+                this.state.lastTargets = {
+                    L1: 0.85 + Math.random() * 0.30,
+                    L2: 0.85 + Math.random() * 0.30,
+                    L3: 0.85 + Math.random() * 0.30
+                };
+                this.state.lastUpdate = now;
+            }
+            
+            if (this.state.lastTargets) {
+                ['L1', 'L2', 'L3'].forEach(f => {
+                    this.state.phaseShifts[f] = this.state.phaseShifts[f] * 0.98 + this.state.lastTargets[f] * 0.02;
+                });
+            }
         } else {
             this.state.phaseShifts = { L1: 1, L2: 1, L3: 1, N: 0 };
         }
@@ -419,7 +430,8 @@ class SinglePhaseSource extends Component {
         this.state = { 
             voltage: 120,
             randomEnabled: false,
-            phaseShifts: { L: 1, N: 0 }
+            phaseShifts: { L: 1, N: 0 },
+            lastUpdate: 0
         };
         this.terminals = {
             'L': {x: 52, y: 50, label: 'L'},
@@ -430,8 +442,14 @@ class SinglePhaseSource extends Component {
     update() {
         if (!isSimulating) return;
         if (this.state.randomEnabled) {
-            const target = 0.85 + Math.random() * 0.30;
-            this.state.phaseShifts.L = this.state.phaseShifts.L * 0.95 + target * 0.05;
+            const now = Date.now();
+            if (now - this.state.lastUpdate > 30000) {
+                this.state.lastTarget = 0.85 + Math.random() * 0.30;
+                this.state.lastUpdate = now;
+            }
+            if (this.state.lastTarget !== undefined) {
+                this.state.phaseShifts.L = this.state.phaseShifts.L * 0.98 + this.state.lastTarget * 0.02;
+            }
         } else {
             this.state.phaseShifts = { L: 1, N: 0 };
         }
@@ -804,7 +822,7 @@ class Multimeter {
         ctx.shadowBlur = 5;
         ctx.font = 'bold 18px "Courier New", monospace';
         ctx.textAlign = 'right';
-        const displayValue = isSimulating ? this.value.toFixed(1).padStart(5, ' ') : '  0.0';
+        const displayValue = isSimulating ? this.value.toFixed(2).padStart(6, ' ') : '  0.00';
         ctx.fillText(displayValue, this.x + this.width - 22, this.y + 40);
         
         ctx.shadowBlur = 0;
