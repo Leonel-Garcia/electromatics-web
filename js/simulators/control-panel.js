@@ -1871,6 +1871,7 @@ function setupEventListeners() {
                 selectMode.value = component.mode || 'VAC';
                 selectMode.onchange = (e) => {
                     component.mode = e.target.value;
+                    component.unit = (e.target.value === 'AAC') ? 'A' : 'V';
                     draw();
                 };
             } else {
