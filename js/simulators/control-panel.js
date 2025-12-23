@@ -346,6 +346,16 @@ class PowerSource extends Component {
             this.state.phaseShifts = { L1: 1, L2: 1, L3: 1, N: 0 };
         }
     }
+
+    isMouseOver(mx, my) {
+        // Expandir hacia arriba para el slider si está seleccionado
+        if (selectedComponent === this && !isSimulating) {
+            if (mx >= this.x && mx <= this.x + this.width && my >= this.y - 45 && my <= this.y + this.height) {
+                return true;
+            }
+        }
+        return super.isMouseOver(mx, my);
+    }
     
     draw(ctx) {
         // Dibujo vectorizado para Fuente
@@ -439,6 +449,15 @@ class SinglePhaseSource extends Component {
         } else {
             this.state.phaseShifts = { L: 1, N: 0 };
         }
+    }
+
+    isMouseOver(mx, my) {
+        if (selectedComponent === this && !isSimulating) {
+            if (mx >= this.x && mx <= this.x + this.width && my >= this.y - 45 && my <= this.y + this.height) {
+                return true;
+            }
+        }
+        return super.isMouseOver(mx, my);
     }
     
     draw(ctx) {
@@ -2438,12 +2457,14 @@ function onMouseDown(e) {
                 if (c instanceof PowerSource || c instanceof SinglePhaseSource) {
                     const sliderY = c.y - 25;
                     if (my > sliderY - 15 && my < sliderY + 15) {
-                         // Dragging handled by MouseMove since we don't have a direct 'draggingSlider' flag yet
-                         // But we can check here to prevent dragging the body
                          const minV = (c instanceof PowerSource) ? 208 : 100;
                          const maxV = (c instanceof PowerSource) ? 600 : 250;
                          const perc = Math.max(0, Math.min(1, (mx - (c.x + 10)) / (c.width - 20)));
                          c.state.voltage = Math.round(minV + perc * (maxV - minV));
+                         
+                         pushHistory();
+                         dragItem = { comp: c, isSlider: true };
+                         selectedComponent = c;
                          draw();
                          return;
                     }
@@ -2508,7 +2529,7 @@ function onMouseMove(e) {
     if (dragItem) {
         // Si es una fuente y estamos sobre el slider, no mover el cuerpo
         const c = dragItem.comp;
-        if ((c instanceof PowerSource || c instanceof SinglePhaseSource) && mousePos.y < c.y) {
+        if (dragItem.isSlider) {
              const minV = (c instanceof PowerSource) ? 208 : 100;
              const maxV = (c instanceof PowerSource) ? 600 : 250;
              const perc = Math.max(0, Math.min(1, (mousePos.x - (c.x + 10)) / (c.width - 20)));
