@@ -27,7 +27,7 @@ let selectedComponent = null; // New state
 let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
 let isTripleMode = false; // New state for Triple Cable tool
-let activeMultimeter = null; // Instancia global del tester
+let multimeters = []; // Arreglo de instancias de tester
 
 // Audio y Deshacer/Rehacer
 let audioUnlocked = false;
@@ -696,16 +696,16 @@ class Multimeter {
 
             const getLinkedTerms = (c, tid) => {
                 if (c instanceof Breaker && c.state.closed) {
-                    if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
-                    if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
+                    if (['L1', 'L2', 'L3'].includes(tid)) return [['T1', 'T2', 'T3'][['L1', 'L2', 'L3'].indexOf(tid)]];
+                    if (['T1', 'T2', 'T3'].includes(tid)) return [['L1', 'L2', 'L3'][['T1', 'T2', 'T3'].indexOf(tid)]];
                 }
                 if (c instanceof Contactor && c.state.engaged) {
-                    if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
-                    if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
+                    if (['L1', 'L2', 'L3'].includes(tid)) return [['T1', 'T2', 'T3'][['L1', 'L2', 'L3'].indexOf(tid)]];
+                    if (['T1', 'T2', 'T3'].includes(tid)) return [['L1', 'L2', 'L3'][['T1', 'T2', 'T3'].indexOf(tid)]];
                 }
                 if (c instanceof ThermalRelay && !c.state.tripped) {
-                    if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
-                    if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
+                    if (['L1', 'L2', 'L3'].includes(tid)) return [['T1', 'T2', 'T3'][['L1', 'L2', 'L3'].indexOf(tid)]];
+                    if (['T1', 'T2', 'T3'].includes(tid)) return [['L1', 'L2', 'L3'][['T1', 'T2', 'T3'].indexOf(tid)]];
                 }
                 if (c instanceof PhaseBridge) {
                     return ['1', '2', '3'].filter(t => t !== tid);
@@ -718,13 +718,12 @@ class Multimeter {
 
             wires.forEach(w => {
                 if (w.isTriple) {
-                    const fromSet = ['L1','L2','L3'], toSet = ['T1','T2','T3'];
-                    const motorSet = ['U1','V1','W1'], motorSet2 = ['W2','U2','V2'];
-                    const sets = [fromSet, toSet, motorSet, motorSet2, ['U','V','W']];
+                    const fromSet = ['L1', 'L2', 'L3'], toSet = ['T1', 'T2', 'T3'];
+                    const motorSet = ['U1', 'V1', 'W1'], motorSet2 = ['W2', 'U2', 'V2'];
+                    const sets = [fromSet, toSet, motorSet, motorSet2, ['U', 'V', 'W']];
                     
                     const activeSet = sets.find(s => s.includes(w.fromId));
                     if (activeSet) {
-                         const phaseIdx = activeSet.indexOf(w.fromId);
                          const mySet = sets.find(s => s.includes(termId));
                          if (mySet) {
                              const myIdx = mySet.indexOf(termId);
@@ -744,22 +743,40 @@ class Multimeter {
             });
         };
 
+        // Identificar la fase exacta en el punto de medición
+        let measuredPhase = null;
         if (target.wire) {
             const w = target.wire;
             if (w.isTriple && target.terminalId) {
+                const phaseSets = [
+                    ['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], 
+                    ['U', 'V', 'W'], ['U1', 'V1', 'W1'], ['W2', 'U2', 'V2']
+                ];
+                const activeSet = phaseSets.find(s => s.includes(w.fromId));
+                if (activeSet) {
+                    const idx = activeSet.indexOf(target.terminalId);
+                    const phasesAtWire = nodes[`${w.from.id}_${target.terminalId}`];
+                    if (phasesAtWire && phasesAtWire.size > 0) measuredPhase = [...phasesAtWire][0];
+                }
                 trace(w.from.id, target.terminalId);
                 trace(w.to.id, target.toTerminalId);
             } else {
+                const phasesAtWire = nodes[`${w.from.id}_${w.fromId}`];
+                if (phasesAtWire && phasesAtWire.size > 0) measuredPhase = [...phasesAtWire][0];
                 trace(w.from.id, w.fromId);
                 trace(w.to.id, w.toId);
             }
         } else if (target.component) {
+            const phasesAtTerm = nodes[`${target.component.id}_${target.terminalId}`];
+            if (phasesAtTerm && phasesAtTerm.size > 0) measuredPhase = [...phasesAtTerm][0];
             trace(target.component.id, target.terminalId);
         }
 
         let totalCurrent = 0;
+        const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
+        
         activeMotors.forEach(m => {
-            let actualV = m.state.voltage; // Fallback
+            let actualV = m.state.voltage; 
             if (m instanceof Motor) {
                 const uP = nodes[`${m.id}_U`], vP = nodes[`${m.id}_V`];
                 actualV = this.getVoltage(uP, vP, nodes);
@@ -768,8 +785,15 @@ class Multimeter {
                 actualV = this.getVoltage(u1P, v1P, nodes);
             }
             
-            // Ley de Ohm simplificada para carga inductiva: I = I_nom * (V_actual / V_nom)
-            const current = (m.state.nominalCurrent || 6.5) * (actualV / (m.state.voltage || 480));
+            // Factor de desequilibrio de fase si conocemos la fase medida
+            let phaseFactor = 1.0;
+            if (measuredPhase && source && source.state.phaseShifts) {
+                let sKey = measuredPhase;
+                if (measuredPhase === 'L1' && !source.state.phaseShifts.L1 && source.state.phaseShifts.L) sKey = 'L';
+                phaseFactor = source.state.phaseShifts[sKey] || 1.0;
+            }
+
+            const current = (m.state.nominalCurrent || 6.5) * (actualV / (m.state.voltage || 480)) * phaseFactor;
             totalCurrent += current;
         });
 
@@ -1960,6 +1984,16 @@ function setupEventListeners() {
                     selectedComponent = null;
                     draw();
                 }
+            } else {
+                // Borrar multímetro si el mouse está encima
+                for (let i = multimeters.length - 1; i >= 0; i--) {
+                    const m = multimeters[i];
+                    if (mousePos.x > m.x && mousePos.x < m.x + m.width && mousePos.y > m.y && mousePos.y < m.y + m.height) {
+                        multimeters.splice(i, 1);
+                        draw();
+                        return;
+                    }
+                }
             }
         }
     });
@@ -2014,12 +2048,9 @@ function setupEventListeners() {
     const btnTester = document.getElementById('btn-add-tester');
     if (btnTester) {
         btnTester.onclick = () => {
-            if (activeMultimeter) {
-                activeMultimeter = null;
-            } else {
-                // Spawn near the center of the visible area
-                activeMultimeter = new Multimeter(400, 300);
-            }
+            if (isSimulating) return;
+            // Permitir múltiples multímetros
+            multimeters.push(new Multimeter(400 + multimeters.length * 20, 300 + multimeters.length * 20));
             draw();
         };
     }
@@ -2052,8 +2083,7 @@ function setupEventListeners() {
         }
 
         // Buscar si clicamos en el multímetro
-        if (activeMultimeter) {
-            const m = activeMultimeter;
+        for (const m of multimeters) {
             if (mx > m.x && mx < m.x + m.width && my > m.y && my < m.y + m.height) {
                 showContextMenu(e.clientX, e.clientY, m);
                 return;
@@ -2079,7 +2109,7 @@ function setupEventListeners() {
         const inputLimit = document.getElementById('input-limit');
         
         // Handle title for different component types
-        if (component instanceof Multimeter || component === activeMultimeter) {
+        if (component instanceof Multimeter) {
             title.innerText = 'MULTÍMETRO';
         } else if (component.type) {
             title.innerText = component.type.replace('-', ' ').toUpperCase();
@@ -2392,8 +2422,7 @@ function onMouseDown(e) {
     }
 
     // 0.2 Multímetro (Instrumento)
-    if (activeMultimeter) {
-        const m = activeMultimeter;
+    for (const m of multimeters) {
         if (m.mode === 'VAC') {
             if (Math.hypot(mx - m.probes.red.x, my - m.probes.red.y) < 20) {
                 m.draggingProbe = 'red';
@@ -2411,7 +2440,7 @@ function onMouseDown(e) {
             }
         }
         
-        // Body Dragging (Check this BEFORE the selector to favor movement, or refine selector area)
+        // Body Dragging
         const isOnKnob = Math.hypot(mx - (m.x + m.width/2), my - (m.y + 80)) < 15;
         
         if (isOnKnob) {
@@ -2562,17 +2591,18 @@ function onMouseMove(e) {
          draw();
     }
 
-    if (activeMultimeter) {
-        const m = activeMultimeter;
+    for (const m of multimeters) {
         if (m.draggingProbe) {
             const p = m.draggingProbe === 'clamp' ? m.clamp : m.probes[m.draggingProbe];
             p.x = mousePos.x;
             p.y = mousePos.y;
             draw();
+            return; // Only drag one thing at a time
         } else if (m.draggingBody) {
             m.x = mousePos.x - m.offX;
             m.y = mousePos.y - m.offY;
             draw();
+            return;
         }
     }
 }
@@ -2585,8 +2615,7 @@ function onMouseUp(e) {
     dragItem = null;
     draggingHandle = null;
 
-    if (activeMultimeter) {
-        const m = activeMultimeter;
+    for (const m of multimeters) {
         if (m.draggingProbe) {
             const probeKey = m.draggingProbe;
             const p = probeKey === 'clamp' ? m.clamp : m.probes[probeKey];
@@ -3221,10 +3250,10 @@ function draw() {
     }
 
     // 4. Multímetro
-    if (activeMultimeter) {
-        activeMultimeter.update();
-        activeMultimeter.draw(ctx);
-    }
+    multimeters.forEach(m => {
+        m.update();
+        m.draw(ctx);
+    });
 
     ctx.restore();
 }
