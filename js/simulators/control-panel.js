@@ -679,18 +679,18 @@ class Multimeter {
         ctx.strokeStyle = '#475569';
         ctx.strokeRect(this.x + 10, this.y + 15, this.width - 20, 35);
 
-        // Valor digital
+        // Valor digital (Adjusted for high current values)
         ctx.fillStyle = '#00ff41'; // Matrix neon green
         ctx.shadowColor = '#00ff41';
         ctx.shadowBlur = 5;
-        ctx.font = 'bold 22px "Courier New", monospace';
+        ctx.font = 'bold 18px "Courier New", monospace';
         ctx.textAlign = 'right';
-        const displayValue = isSimulating ? this.value.toFixed(1).padStart(5, ' ') : '0.0';
-        ctx.fillText(displayValue, this.x + this.width - 25, this.y + 40);
+        const displayValue = isSimulating ? this.value.toFixed(1).padStart(5, ' ') : '  0.0';
+        ctx.fillText(displayValue, this.x + this.width - 22, this.y + 40);
         
         ctx.shadowBlur = 0;
-        ctx.font = 'bold 10px Inter';
-        ctx.fillText(this.unit, this.x + this.width - 15, this.y + 40);
+        ctx.font = 'bold 9px Inter';
+        ctx.fillText(this.unit, this.x + this.width - 12, this.y + 40);
 
         // Perilla (Selector) - Girar según modo
         ctx.save();
