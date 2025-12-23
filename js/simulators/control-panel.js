@@ -1855,13 +1855,16 @@ class AlternatingRelay extends Component {
     }
 
     draw(ctx) {
-        if (assets['alternating-relay']) {
+        const img = assets['alternating-relay'];
+        if (img && img.complete && img.naturalWidth > 0) {
+            ctx.save();
             ctx.shadowColor = 'rgba(0,0,0,0.4)';
             ctx.shadowBlur = 12;
-            ctx.drawImage(assets['alternating-relay'], this.x, this.y, this.width, this.height);
-            ctx.shadowBlur = 0;
+            ctx.drawImage(img, this.x, this.y, this.width, this.height);
+            ctx.restore();
         } else {
-            // Fallback: Black Body
+            // Fallback: Black Body (Dinamico)
+            ctx.save();
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(this.x, this.y, this.width, this.height);
             ctx.strokeStyle = '#334155';
@@ -1873,16 +1876,19 @@ class AlternatingRelay extends Component {
             ctx.textAlign = 'center';
             ctx.fillText('ELECTROMATICS', this.x + this.width/2, this.y + 70);
             ctx.fillText('RELÉ ALTERNADOR', this.x + this.width/2, this.y + 80);
+            ctx.restore();
         }
 
         // LEDs indicadores
         const ledY = this.y + 42;
+        ctx.save();
         // LED M1 (Cerca de t6)
         ctx.fillStyle = (this.state.coilActive && this.state.currentPump === 1) ? '#22c55e' : '#475569';
         ctx.beginPath(); ctx.arc(this.x + 26, ledY, 3, 0, Math.PI*2); ctx.fill();
         // LED M2 (Cerca de t8)
         ctx.fillStyle = (this.state.coilActive && this.state.currentPump === 2) ? '#22c55e' : '#475569';
         ctx.beginPath(); ctx.arc(this.x + 58, ledY, 3, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
 
         this.drawTerminals(ctx);
     }
@@ -2862,15 +2868,18 @@ function solveCircuit() {
         // Nota: esto es recursivo dentro del loop principal de solveCircuit
         
         // Resolvemos los relés de alternancia
-        components.filter(c => c instanceof AlternatingRelay).forEach(r => {
+        components.forEach(r => {
+             if (!(r instanceof AlternatingRelay)) return;
+             
              // 1-8 Terminal Logic (GRA-MV Style)
              // T2: Sensor, T3: Neutral/Supply, T4: Phase/Supply
              // Alterna cuando el sensor (T2) se abre respecto a T3 (Neutral)
-             const s2Nodes = window.lastSolvedNodes ? window.lastSolvedNodes[`${r.id}_2`] : null;
-             const s3Nodes = window.lastSolvedNodes ? window.lastSolvedNodes[`${r.id}_3`] : null;
+             const s2Key = `${r.id}_2`, s3Key = `${r.id}_3`;
+             const s2Nodes = window.lastSolvedNodes ? window.lastSolvedNodes[s2Key] : null;
+             const s3Nodes = window.lastSolvedNodes ? window.lastSolvedNodes[s3Key] : null;
              
              // Detectamos si 2 y 3 están en el mismo nodo (contacto cerrado)
-             const sensorClosed = s2Nodes && s3Nodes && [...s2Nodes].some(p => s3Nodes.has(p));
+             const sensorClosed = !!(s2Nodes && s3Nodes && [...s2Nodes].some(p => s3Nodes.has(p)));
              
              if (r.state.lastSensorClosed && !sensorClosed) {
                  r.state.currentPump = r.state.currentPump === 1 ? 2 : 1;
@@ -3023,9 +3032,8 @@ function solveCircuit() {
                     const hasL1 = hasPhase(c, '4', 'L1') || hasPhase(c, '4', 'L');
                     const hasL2 = hasPhase(c, '3', 'L2') || hasPhase(c, '3', 'L3') || hasPhase(c, '3', 'N');
                     if (hasL1 && hasL2 && c.state.coilActive) {
-                        const commonKey = `${c.id}_7`;
                         const targetTerm = c.state.currentPump === 1 ? '6' : '8';
-                        const targetKey = `${c.id}_${targetTerm}`;
+                        const commonKey = `${c.id}_7`, targetKey = `${c.id}_${targetTerm}`;
                         if (nodes[commonKey]) nodes[commonKey].forEach(p => setNode(c, targetTerm, p));
                         if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, '7', p));
                     }
