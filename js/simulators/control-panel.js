@@ -27,6 +27,7 @@ let selectedComponent = null; // New state
 let currentWireColor = window.currentWireColor;
 let draggingHandle = null; // {wire, cp: 1|2}
 let isTripleMode = false; // New state for Triple Cable tool
+let activeMultimeter = null; // Instancia global del tester
 
 // Audio y Deshacer/Rehacer
 let audioUnlocked = false;
@@ -434,6 +435,192 @@ class SinglePhaseSource extends Component {
                 ctx.fillText(t.label, tx, ly);
             }
         }
+    }
+}
+
+class Multimeter {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 80;
+        this.height = 120;
+        this.probes = {
+            red: { x: x - 50, y: y + 150, target: null },
+            black: { x: x + 130, y: y + 150, target: null }
+        };
+        this.draggingProbe = null;
+        this.draggingBody = false;
+        this.value = 0;
+        this.unit = 'V';
+    }
+
+    update() {
+        if (!isSimulating) {
+            this.value = 0;
+            return;
+        }
+
+        const nodes = window.lastSolvedNodes || {};
+        
+        // Función para obtener fases de un objetivo (clic point)
+        const getPhases = (probe) => {
+            if (probe.target) {
+                const key = `${probe.target.component.id}_${probe.target.terminalId}`;
+                return nodes[key] || new Set();
+            }
+            return new Set();
+        };
+
+        const redPhases = getPhases(this.probes.red);
+        const blackPhases = getPhases(this.probes.black);
+
+        if (redPhases.size === 0 || blackPhases.size === 0) {
+            this.value = 0;
+            return;
+        }
+
+        // Lógica de Voltaje Simplificada para el simulador
+        const getVoltage = (p1, p2) => {
+            const has = (set, phase) => set.has(phase);
+            
+            // Si alguna punta no tiene fase, es 0V
+            if (p1.size === 0 || p2.size === 0) return 0;
+
+            // Diferencia entre fases
+            // N-L = 120V (o 277V según configuración, pero usaremos 120V/240V/480V)
+            // L1-L2 = Line Voltage
+            
+            const isN1 = has(p1, 'N');
+            const isN2 = has(p2, 'N');
+            const isL1_1 = has(p1, 'L1'), isL2_1 = has(p1, 'L2'), isL3_1 = has(p1, 'L3');
+            const isL1_2 = has(p2, 'L1'), isL2_2 = has(p2, 'L2'), isL3_2 = has(p2, 'L3');
+
+            // Caso Neutro vs Fase
+            if ((isN1 && (isL1_2 || isL2_2 || isL3_2)) || (isN2 && (isL1_1 || isL2_1 || isL3_1))) {
+                // Buscamos la fuente para saber su voltaje nominal
+                const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
+                const vNominal = source ? source.state.voltage : 120;
+                
+                if (source?.type === 'power-source') {
+                    // En trifásica L-N es V/sqrt(3) -> 480/1.73 = 277V, 208/1.73 = 120V
+                    return Math.round(vNominal / Math.sqrt(3));
+                }
+                return vNominal; // En monofásica 120V es L-N
+            }
+
+            // Caso Fase vs Fase
+            if ((isL1_1 && isL2_2) || (isL1_2 && isL2_1) || 
+                (isL2_1 && isL3_2) || (isL2_2 && isL3_1) || 
+                (isL3_1 && isL1_2) || (isL3_2 && isL1_1)) {
+                
+                const source = components.find(c => c.type === 'power-source');
+                return source ? source.state.voltage : 0;
+            }
+
+            // Misma fase
+            return 0;
+        };
+
+        this.value = getVoltage(redPhases, blackPhases);
+    }
+
+    draw(ctx) {
+        // Dibujar cables (Curvas de Bezier)
+        const drawCable = (startX, startY, endX, endY, color) => {
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.bezierCurveTo(
+                startX, startY + 50,
+                endX, endY + 50,
+                endX, endY
+            );
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            // Efecto de brillo en el cable
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        };
+
+        drawCable(this.x + 20, this.y + this.height - 10, this.probes.black.x, this.probes.black.y, '#333');
+        drawCable(this.x + 60, this.y + this.height - 10, this.probes.red.x, this.probes.red.y, '#b91c1c');
+
+        // Cuerpo del Tester
+        ctx.fillStyle = '#ef4444'; // Rojo Multímetro
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.roundRect(this.x, this.y, this.width, this.height, 10);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.strokeStyle = '#991b1b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Pantalla (Digital)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(this.x + 10, this.y + 15, this.width - 20, 35);
+        ctx.strokeStyle = '#475569';
+        ctx.strokeRect(this.x + 10, this.y + 15, this.width - 20, 35);
+
+        // Valor digital
+        ctx.fillStyle = '#4ade80';
+        ctx.font = '22px "Courier New"';
+        ctx.textAlign = 'right';
+        const displayValue = isSimulating ? this.value.toString().padStart(3, ' ') : '0.0';
+        ctx.fillText(displayValue, this.x + this.width - 25, this.y + 40);
+        ctx.font = '10px Inter';
+        ctx.fillText(this.unit, this.x + this.width - 15, this.y + 40);
+
+        // Perilla (Selector)
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(this.x + this.width / 2, this.y + 80, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#475569';
+        ctx.stroke();
+        
+        // Marca de la perilla
+        ctx.save();
+        ctx.translate(this.x + this.width / 2, this.y + 80);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(-2, -15, 4, 10);
+        ctx.restore();
+
+        // Puertos de entrada
+        const drawPort = (px, py, pColor) => {
+            ctx.fillStyle = pColor;
+            ctx.beginPath();
+            ctx.arc(px, py, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+        };
+        drawPort(this.x + 20, this.y + this.height - 15, '#333'); // COM
+        drawPort(this.x + 60, this.y + this.height - 15, '#b91c1c'); // V
+
+        // Dibujar Puntas (Probes)
+        const drawProbe = (px, py, pColor) => {
+            // Cuerpo del mango
+            ctx.fillStyle = pColor;
+            ctx.fillRect(px - 5, py, 10, 40);
+            // Punta metálica
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(px - 1, py - 10, 2, 10);
+            
+            // Brillo
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(px - 3, py + 5, 2, 30);
+        };
+
+        drawProbe(this.probes.black.x, this.probes.black.y, '#333');
+        drawProbe(this.probes.red.x, this.probes.red.y, '#b91c1c');
     }
 }
 
@@ -1462,6 +1649,20 @@ function setupEventListeners() {
         }
     });
 
+    // Multímetro (Tester)
+    const btnTester = document.getElementById('btn-add-tester');
+    if (btnTester) {
+        btnTester.onclick = () => {
+            if (activeMultimeter) {
+                activeMultimeter = null;
+            } else {
+                // Spawn near the center of the visible area
+                activeMultimeter = new Multimeter(400, 300);
+            }
+            draw();
+        };
+    }
+
     // Mouse Interaction
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
@@ -1750,6 +1951,27 @@ function onMouseDown(e) {
         }
     }
 
+    // 0.2 Multímetro (Instrumento)
+    if (activeMultimeter) {
+        const m = activeMultimeter;
+        // Tocar puntas?
+        if (Math.hypot(mx - m.probes.red.x, my - m.probes.red.y) < 20) {
+            m.draggingProbe = 'red';
+            return;
+        }
+        if (Math.hypot(mx - m.probes.black.x, my - m.probes.black.y) < 20) {
+            m.draggingProbe = 'black';
+            return;
+        }
+        // Tocar cuerpo?
+        if (mx > m.x && mx < m.x + m.width && my > m.y && my < m.y + m.height) {
+            m.draggingBody = true;
+            m.offX = mx - m.x;
+            m.offY = my - m.y;
+            return;
+        }
+    }
+
     // 0.5 Reset Selection (unless clicking valid object)
     let hitObject = false;
 
@@ -1848,6 +2070,19 @@ function onMouseMove(e) {
          draggingHandle.wire.path[draggingHandle.index].y = snapToGrid(mousePos.y);
          draw();
     }
+
+    if (activeMultimeter) {
+        const m = activeMultimeter;
+        if (m.draggingProbe) {
+            m.probes[m.draggingProbe].x = mousePos.x;
+            m.probes[m.draggingProbe].y = mousePos.y;
+            draw();
+        } else if (m.draggingBody) {
+            m.x = mousePos.x - m.offX;
+            m.y = mousePos.y - m.offY;
+            draw();
+        }
+    }
 }
 
 function onMouseUp(e) {
@@ -1857,6 +2092,25 @@ function onMouseUp(e) {
     }
     dragItem = null;
     draggingHandle = null;
+
+    if (activeMultimeter) {
+        const m = activeMultimeter;
+        if (m.draggingProbe) {
+            // Intentar conectar punta a un terminal
+            m.probes[m.draggingProbe].target = null;
+            for (const c of components) {
+                const t = c.getHoveredTerminal(mousePos.x, mousePos.y);
+                if (t) {
+                    m.probes[m.draggingProbe].x = c.x + t.x;
+                    m.probes[m.draggingProbe].y = c.y + t.y;
+                    m.probes[m.draggingProbe].target = { component: c, terminalId: t.id };
+                    break;
+                }
+            }
+        }
+        m.draggingProbe = null;
+        m.draggingBody = false;
+    }
 
     // Finalizar Cableado (Solo si soltamos sobre un terminal válido)
     if (wireStartObj) {
@@ -2398,6 +2652,12 @@ function draw() {
         });
         ctx.stroke();
         ctx.setLineDash([]);
+    }
+
+    // 4. Multímetro
+    if (activeMultimeter) {
+        activeMultimeter.update();
+        activeMultimeter.draw(ctx);
     }
 
     ctx.restore();
