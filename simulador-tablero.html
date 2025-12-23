@@ -482,6 +482,15 @@
                 </select>
             </div>
         </div>
+        <div id="multimeter-controls" style="display:none;">
+            <div class="menu-item">
+                <span>Modo:</span>
+                <select id="select-tester-mode" style="background:#0f172a; color:white; border:1px solid #475569; border-radius:4px; padding:2px 5px; font-size:12px;">
+                    <option value="VAC">Voltaje (AC)</option>
+                    <option value="AAC">Corriente (Amps)</option>
+                </select>
+            </div>
+        </div>
         <div class="menu-item danger" id="btn-delete-comp">
             <span>Eliminar Componente</span>
             <i class="fas fa-trash"></i>
@@ -743,6 +752,15 @@
               <i class="fa-solid fa-magnifying-glass-minus"></i>
             </button>
             <div class="toolbar-divider"></div>
+            <!-- Multímetro Controls -->
+        <div id="multimeter-controls" style="display: none; padding: 10px; border-top: 1px solid #444;">
+            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #999;">MODO:</label>
+            <select id="select-tester-mode" style="width: 100%; padding: 5px; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px;">
+                <option value="VAC">Voltaje (AC)</option>
+                <option value="AAC">Corriente (Amps)</option>
+            </select>
+        </div>
+
             <!-- Persistencia -->
             <button class="toolbar-btn" id="btn-save-local" title="Guardar en Navegador">
               <i class="fa-solid fa-cloud-arrow-up"></i>

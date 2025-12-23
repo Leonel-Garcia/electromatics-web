@@ -450,11 +450,27 @@ class Multimeter {
         };
         this.draggingProbe = null;
         this.draggingBody = false;
+        this.offX = 0;
+        this.offY = 0;
+        this.mode = 'VAC'; // 'VAC' or 'AAC'
         this.value = 0;
         this.unit = 'V';
     }
 
     update() {
+        // Probe Stability: Follow targets if they exist
+        ['red', 'black'].forEach(color => {
+            const probe = this.probes[color];
+            if (probe.target && probe.target.component) {
+                const c = probe.target.component;
+                const t = c.terminals[probe.target.terminalId];
+                if (t) {
+                    probe.x = c.x + t.x;
+                    probe.y = c.y + t.y;
+                }
+            }
+        });
+
         if (!isSimulating) {
             this.value = 0;
             return;
@@ -521,7 +537,31 @@ class Multimeter {
             return 0;
         };
 
-        this.value = getVoltage(redPhases, blackPhases);
+        if (this.mode === 'VAC') {
+            this.value = getVoltage(redPhases, blackPhases);
+            this.unit = 'V';
+        } else if (this.mode === 'AAC') {
+            // Current measurement: simplified logic
+            // In series mode, we calculate current based on connected motors
+            this.value = this.calculateCurrent();
+            this.unit = 'A';
+        }
+    }
+
+    calculateCurrent() {
+        // Simplified current calculation
+        // Find all motors downstream from the probes
+        let totalCurrent = 0;
+        
+        components.filter(c => c instanceof Motor || c instanceof Motor6T).forEach(m => {
+            if (m.state.running) {
+                // Nominal current for a running motor (simplified)
+                // Assume 5A per motor as a baseline
+                totalCurrent += 5.0;
+            }
+        });
+        
+        return Math.round(totalCurrent * 10) / 10; // Round to 1 decimal
     }
 
     draw(ctx) {
@@ -1689,6 +1729,16 @@ function setupEventListeners() {
                 return;
             }
         }
+
+        // Buscar si clicamos en el multímetro
+        if (activeMultimeter) {
+            const m = activeMultimeter;
+            if (mx > m.x && mx < m.x + m.width && my > m.y && my < m.y + m.height) {
+                showContextMenu(e.clientX, e.clientY, m);
+                return;
+            }
+        }
+
         ctxMenu.style.display = 'none';
     });
 
@@ -1795,6 +1845,22 @@ function setupEventListeners() {
                 };
             } else {
                 sourceControls.style.display = 'none';
+            }
+        }
+
+        // Multímetro Controls
+        const multimeterControls = document.getElementById('multimeter-controls');
+        if (multimeterControls) {
+            if (component instanceof Multimeter || component === activeMultimeter) {
+                multimeterControls.style.display = 'block';
+                const selectMode = document.getElementById('select-tester-mode');
+                selectMode.value = component.mode || 'VAC';
+                selectMode.onchange = (e) => {
+                    component.mode = e.target.value;
+                    draw();
+                };
+            } else {
+                multimeterControls.style.display = 'none';
             }
         }
 
