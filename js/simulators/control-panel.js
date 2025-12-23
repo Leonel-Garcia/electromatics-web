@@ -206,7 +206,8 @@ const ASSET_PATHS = {
     'pilot-red': 'img/simulators/control-panel/pilot-red.png',
     'pilot-amber': 'img/simulators/control-panel/pilot-ambar.png',
     'timer': 'img/simulators/control-panel/timer.png',
-    'motor6t': 'img/simulators/control-panel/motor6t.png'
+    'motor6t': 'img/simulators/control-panel/motor6t.png',
+    'alternating-relay': 'img/simulators/control-panel/alternating-relay.png'
 };
 
 // ... (Rest of file) ...
@@ -1833,6 +1834,83 @@ class PhaseBridge extends Component {
     }
 }
 
+class AlternatingRelay extends Component {
+    constructor(x, y) {
+        super('alternating-relay', x, y, 70, 110);
+        this.terminals = {
+            '5': { x: 10, y: 10, label: '5', unused: true },
+            '6': { x: 26, y: 10, label: '6' },
+            '7': { x: 42, y: 10, label: '7' },
+            '8': { x: 58, y: 10, label: '8' },
+            '1': { x: 10, y: 100, label: '1', unused: true },
+            '2': { x: 26, y: 100, label: '2' },
+            '3': { x: 42, y: 100, label: '3' },
+            '4': { x: 58, y: 100, label: '4' }
+        };
+        this.state = {
+            currentPump: 1, // 1 or 2
+            lastSensorClosed: false,
+            coilActive: false
+        };
+    }
+
+    draw(ctx) {
+        if (assets['alternating-relay']) {
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 12;
+            ctx.drawImage(assets['alternating-relay'], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+            // Fallback: Black Body
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 8px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('ELECTROMATICS', this.x + this.width/2, this.y + 70);
+            ctx.fillText('RELÉ ALTERNADOR', this.x + this.width/2, this.y + 80);
+        }
+
+        // LEDs indicadores
+        const ledY = this.y + 42;
+        // LED M1 (Cerca de t6)
+        ctx.fillStyle = (this.state.coilActive && this.state.currentPump === 1) ? '#22c55e' : '#475569';
+        ctx.beginPath(); ctx.arc(this.x + 26, ledY, 3, 0, Math.PI*2); ctx.fill();
+        // LED M2 (Cerca de t8)
+        ctx.fillStyle = (this.state.coilActive && this.state.currentPump === 2) ? '#22c55e' : '#475569';
+        ctx.beginPath(); ctx.arc(this.x + 58, ledY, 3, 0, Math.PI*2); ctx.fill();
+
+        this.drawTerminals(ctx);
+    }
+
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            if (t.unused) continue;
+
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'center';
+            const labelY = ty < this.y + 55 ? ty - 10 : ty + 18;
+            ctx.fillText(id, tx, labelY);
+        }
+    }
+}
+
+
 
 // ================= LOGICA DE INTERACCION =================
 
@@ -2164,6 +2242,20 @@ function setupEventListeners() {
             }
         }
 
+        // Relé Alternador Controls
+        const relayControls = document.getElementById('relay-controls');
+        if (relayControls) {
+            if (component instanceof AlternatingRelay || component.type === 'alternating-relay') {
+                relayControls.style.display = 'block';
+                document.getElementById('btn-toggle-pump').onclick = () => {
+                    component.state.currentPump = component.state.currentPump === 1 ? 2 : 1;
+                    draw();
+                };
+            } else {
+                relayControls.style.display = 'none';
+            }
+        }
+
         // Fuente de Poder Controls
         const sourceControls = document.getElementById('source-controls');
         if (sourceControls) {
@@ -2385,6 +2477,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'timer': c = new TimerRelay(x, y); break;
         case 'bridge': c = new PhaseBridge(x, y); break;
         case 'motor6t': c = new Motor6T(x, y); break;
+        case 'alternating-relay': c = new AlternatingRelay(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -2757,11 +2850,36 @@ function updateStatus() {
 function solveCircuit() {
     let circuitChanged = true;
     let stabilityLoop = 0;
-    const MAX_STABILITY_LOOPS = 5; // Evitar oscilaciones infinitas
+    const MAX_STABILITY_LOOPS = 5; 
 
     while(circuitChanged && stabilityLoop < MAX_STABILITY_LOOPS) {
         circuitChanged = false;
         
+        // ==========================================
+        // FASE 0: PRE-PROCESAMIENTO LÓGICO (Relés de Control)
+        // ==========================================
+        // Resolvemos primero los voltajes para detectar estados de control
+        // Nota: esto es recursivo dentro del loop principal de solveCircuit
+        
+        // Resolvemos los relés de alternancia
+        components.filter(c => c instanceof AlternatingRelay).forEach(r => {
+             // 1-8 Terminal Logic (GRA-MV Style)
+             // T2: Sensor, T3: Neutral/Supply, T4: Phase/Supply
+             // Alterna cuando el sensor (T2) se abre respecto a T3 (Neutral)
+             const s2Nodes = window.lastSolvedNodes ? window.lastSolvedNodes[`${r.id}_2`] : null;
+             const s3Nodes = window.lastSolvedNodes ? window.lastSolvedNodes[`${r.id}_3`] : null;
+             
+             // Detectamos si 2 y 3 están en el mismo nodo (contacto cerrado)
+             const sensorClosed = s2Nodes && s3Nodes && [...s2Nodes].some(p => s3Nodes.has(p));
+             
+             if (r.state.lastSensorClosed && !sensorClosed) {
+                 r.state.currentPump = r.state.currentPump === 1 ? 2 : 1;
+                 circuitChanged = true;
+             }
+             r.state.lastSensorClosed = sensorClosed;
+             r.state.coilActive = sensorClosed;
+        });
+
         // ==========================================
         // FASE 1: RESOLVER VOLTAJES (Red de Nodos)
         // ==========================================
@@ -2900,6 +3018,17 @@ function solveCircuit() {
                         if(nodes[k1]) nodes[k1].forEach(p => setNode(c, t2, p));
                         if(nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
                     });
+                }
+                if (c instanceof AlternatingRelay) {
+                    const hasL1 = hasPhase(c, '4', 'L1') || hasPhase(c, '4', 'L');
+                    const hasL2 = hasPhase(c, '3', 'L2') || hasPhase(c, '3', 'L3') || hasPhase(c, '3', 'N');
+                    if (hasL1 && hasL2 && c.state.coilActive) {
+                        const commonKey = `${c.id}_7`;
+                        const targetTerm = c.state.currentPump === 1 ? '6' : '8';
+                        const targetKey = `${c.id}_${targetTerm}`;
+                        if (nodes[commonKey]) nodes[commonKey].forEach(p => setNode(c, targetTerm, p));
+                        if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, '7', p));
+                    }
                 }
             });
 

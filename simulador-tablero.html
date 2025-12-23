@@ -482,6 +482,12 @@
                 </select>
             </div>
         </div>
+        <div id="relay-controls" style="display:none;">
+            <div class="menu-item" id="btn-toggle-pump">
+                <span>Forzar Alternancia</span>
+                <i class="fas fa-sync-alt" style="margin-left: 10px;"></i>
+            </div>
+        </div>
         <div id="multimeter-controls" style="display:none;">
             <div class="menu-item">
                 <span>Modo:</span>
@@ -683,6 +689,16 @@
                   <div style="position:absolute; top:20px; left:20px; width:4px; height:4px; background:#fbbf24; border-radius:50%;"></div>
                </div>
                <span>Temporizador</span>
+            </button>
+            <button class="component-btn" draggable="true" data-component="alternating-relay" style="border-left: 4px solid var(--active-color);">
+               <!-- CSS Alternating Relay Icon -->
+               <div class="component-img" style="position:relative; background:#cbd5e1; border:1px solid #94a3b8; border-radius:4px;">
+                   <div style="position:absolute; top:4px; left:8px; width:28px; height:8px; background:#1e293b; border-radius:1px;"></div> <!-- Electromatics logo placeholder -->
+                   <div style="position:absolute; top:20px; left:10px; width:8px; height:8px; background:#475569; border-radius:50%;"></div> <!-- LED M1 -->
+                   <div style="position:absolute; top:20px; left:26px; width:8px; height:8px; background:#475569; border-radius:50%;"></div> <!-- LED M2 -->
+                   <div style="position:absolute; top:34px; left:4px; width:36px; height:4px; background:#334155;"></div> <!-- Terminals bottom -->
+               </div>
+               <span>Relé Alternador</span>
             </button>
           </div>
 
