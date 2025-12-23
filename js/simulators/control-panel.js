@@ -464,6 +464,8 @@ class Multimeter {
         // Probe & Clamp Stability: Follow targets if they exist
         const activeProbes = this.mode === 'VAC' ? ['red', 'black'] : ['clamp'];
         activeProbes.forEach(key => {
+            if (this.draggingProbe === key) return; // Don't override position while dragging
+
             const p = key === 'clamp' ? this.clamp : this.probes[key];
             if (p.target) {
                 if (p.target.component) {
@@ -474,8 +476,6 @@ class Multimeter {
                         p.y = c.y + t.y;
                     }
                 } else if (p.target.wire && p.target.snapPos) {
-                    // Wires don't move unless endpoints move, but we don't have reactive wire paths yet
-                    // For now, keep the snap position
                     p.x = p.target.snapPos.x;
                     p.y = p.target.snapPos.y;
                 }
@@ -546,6 +546,7 @@ class Multimeter {
         const activeMotors = new Set();
         
         const trace = (compId, termId) => {
+            if (!termId) return;
             const key = `${compId}_${termId}`;
             if (visited.has(key)) return;
             visited.add(key);
@@ -581,14 +582,44 @@ class Multimeter {
             linked.forEach(nextTerm => trace(compId, nextTerm));
 
             wires.forEach(w => {
-                if (w.from.id === compId && w.fromId === termId) trace(w.to.id, w.toId);
-                else if (w.to.id === compId && w.toId === termId) trace(w.from.id, w.fromId);
+                if (w.isTriple) {
+                    const fromSet = ['L1','L2','L3'], toSet = ['T1','T2','T3'];
+                    const motorSet = ['U1','V1','W1'], motorSet2 = ['W2','U2','V2'];
+                    const sets = [fromSet, toSet, motorSet, motorSet2, ['U','V','W']];
+                    
+                    const activeSet = sets.find(s => s.includes(w.fromId));
+                    if (activeSet) {
+                         const phaseIdx = activeSet.indexOf(w.fromId);
+                         // This logic is simplified. Triple wires usually connect L1-L1, L2-L2, etc.
+                         // If the current term is in the set, we propagate to the corresponding other side.
+                         const mySet = sets.find(s => s.includes(termId));
+                         if (mySet) {
+                             const myIdx = mySet.indexOf(termId);
+                             if (w.from.id === compId && myIdx !== -1) {
+                                 const targetSet = sets.find(s => s.includes(w.toId)) || activeSet;
+                                 trace(w.to.id, targetSet[myIdx]);
+                             } else if (w.to.id === compId && myIdx !== -1) {
+                                 const targetSet = sets.find(s => s.includes(w.fromId)) || activeSet;
+                                 trace(w.from.id, targetSet[myIdx]);
+                             }
+                         }
+                    }
+                } else {
+                    if (w.from.id === compId && w.fromId === termId) trace(w.to.id, w.toId);
+                    else if (w.to.id === compId && w.toId === termId) trace(w.from.id, w.fromId);
+                }
             });
         };
 
         if (target.wire) {
-            trace(target.wire.from.id, target.wire.fromId);
-            trace(target.wire.to.id, target.wire.toId);
+            const w = target.wire;
+            if (w.isTriple && target.terminalId) {
+                trace(w.from.id, target.terminalId);
+                trace(w.to.id, target.toTerminalId);
+            } else {
+                trace(w.from.id, w.fromId);
+                trace(w.to.id, w.toId);
+            }
         } else if (target.component) {
             trace(target.component.id, target.terminalId);
         }
@@ -706,7 +737,7 @@ class Multimeter {
             drawProbe(this.probes.black.x, this.probes.black.y, '#333');
             drawProbe(this.probes.red.x, this.probes.red.y, '#b91c1c');
         } else {
-            // Dibujar Pinza Amperimétrica (Clamp) - TAMAÑO REDUCIDO (50%)
+            // Dibujar Pinza Amperimétrica (Clamp) - MINIATURA
             const cx = this.clamp.x;
             const cy = this.clamp.y;
             
@@ -715,33 +746,33 @@ class Multimeter {
             
             // Mango de la pinza
             ctx.fillStyle = '#f59e0b'; // Ambar
-            ctx.roundRect(-6, 5, 12, 30, 3);
+            ctx.roundRect(-4, 0, 8, 20, 2);
             ctx.fill();
             
-            // Mandíbulas (Abiertas/Cerradas según target)
+            // Mandíbulas
             const isClosed = !!this.clamp.target;
-            const gap = isClosed ? 1 : 8;
-            ctx.strokeStyle = '#475569';
-            ctx.lineWidth = 4;
+            const gap = isClosed ? 0.5 : 5;
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3;
             ctx.lineCap = 'round';
             
-            const jawRadius = 9;
+            const jawRadius = 6;
             // Mandíbula izquierda
             ctx.beginPath();
-            ctx.arc(-5 - gap/2, 0, jawRadius, Math.PI * 0.5, Math.PI * 1.5);
+            ctx.arc(-3 - gap/2, -4, jawRadius, Math.PI * 0.5, Math.PI * 1.5);
             ctx.stroke();
             
             // Mandíbula derecha
             ctx.beginPath();
-            ctx.arc(5 + gap/2, 0, jawRadius, Math.PI * 1.5, Math.PI * 2.5);
+            ctx.arc(3 + gap/2, -4, jawRadius, Math.PI * 1.5, Math.PI * 2.5);
             ctx.stroke();
             
             // Gatillo
             ctx.fillStyle = '#b45309';
             ctx.beginPath();
-            ctx.moveTo(-6, 12);
-            ctx.lineTo(-12, 17);
-            ctx.lineTo(-6, 22);
+            ctx.moveTo(-4, 5);
+            ctx.lineTo(-8, 9);
+            ctx.lineTo(-4, 13);
             ctx.fill();
             
             ctx.restore();
@@ -2393,32 +2424,68 @@ function onMouseUp(e) {
             if (!p.target && probeKey === 'clamp') {
                 for (const w of wires) {
                     if (isMouseOverWire(mousePos.x, mousePos.y, w)) {
-                        // Snapping a la línea del cable
                         const p1 = w.from.getTerminal(w.fromId);
                         const p2 = w.to.getTerminal(w.toId);
                         const fullPath = [p1, ...(w.path || []), p2];
                         let bestDist = Infinity;
                         let snapPos = { x: mousePos.x, y: mousePos.y };
+                        let phaseIdx = 0;
+
+                        const phaseSets = [
+                            ['L1', 'L2', 'L3'], ['T1', 'T2', 'T3'], 
+                            ['U', 'V', 'W'], ['U1', 'V1', 'W1'], ['W2', 'U2', 'V2']
+                        ];
+                        const activeSet = w.isTriple ? phaseSets.find(s => s.includes(w.fromId)) : null;
 
                         for (let i = 0; i < fullPath.length - 1; i++) {
                             const segStart = fullPath[i], segEnd = fullPath[i+1];
-                            const dist = pDist(mousePos.x, mousePos.y, segStart.x, segStart.y, segEnd.x, segEnd.y);
-                            if (dist < bestDist) {
-                                bestDist = dist;
-                                // Calcular punto más cercano en el segmento
-                                const A = mousePos.x - segStart.x, B = mousePos.y - segStart.y;
-                                const C = segEnd.x - segStart.x, D = segEnd.y - segStart.y;
-                                const dot = A * C + B * D, len_sq = C * C + D * D;
-                                let param = (len_sq !== 0) ? dot / len_sq : -1;
-                                if (param < 0) { snapPos.x = segStart.x; snapPos.y = segStart.y; }
-                                else if (param > 1) { snapPos.x = segEnd.x; snapPos.y = segEnd.y; }
-                                else { snapPos.x = segStart.x + param * C; snapPos.y = segStart.y + param * D; }
+                            
+                            if (w.isTriple && activeSet) {
+                                const index = activeSet.indexOf(w.fromId);
+                                const spacing = 32;
+                                const offsets = [(0 - index) * spacing, (1 - index) * spacing, (2 - index) * spacing];
+                                
+                                offsets.forEach((offset, idx) => {
+                                    const dist = pDist(mousePos.x, mousePos.y, segStart.x + offset, segStart.y, segEnd.x + offset, segEnd.y);
+                                    if (dist < bestDist) {
+                                        bestDist = dist;
+                                        phaseIdx = idx;
+                                        const A = mousePos.x - (segStart.x + offset), B = mousePos.y - segStart.y;
+                                        const C = segEnd.x - segStart.x, D = segEnd.y - segStart.y;
+                                        const dot = A * C + B * D, len_sq = C * C + D * D;
+                                        let param = (len_sq !== 0) ? dot / len_sq : -1;
+                                        if (param < 0) { snapPos.x = segStart.x + offset; snapPos.y = segStart.y; }
+                                        else if (param > 1) { snapPos.x = segEnd.x + offset; snapPos.y = segEnd.y; }
+                                        else { snapPos.x = (segStart.x + offset) + param * C; snapPos.y = segStart.y + param * D; }
+                                    }
+                                });
+                            } else {
+                                const dist = pDist(mousePos.x, mousePos.y, segStart.x, segStart.y, segEnd.x, segEnd.y);
+                                if (dist < bestDist) {
+                                    bestDist = dist;
+                                    const A = mousePos.x - segStart.x, B = mousePos.y - segStart.y;
+                                    const C = segEnd.x - segStart.x, D = segEnd.y - segStart.y;
+                                    const dot = A * C + B * D, len_sq = C * C + D * D;
+                                    let param = (len_sq !== 0) ? dot / len_sq : -1;
+                                    if (param < 0) { snapPos.x = segStart.x; snapPos.y = segStart.y; }
+                                    else if (param > 1) { snapPos.x = segEnd.x; snapPos.y = segEnd.y; }
+                                    else { snapPos.x = segStart.x + param * C; snapPos.y = segStart.y + param * D; }
+                                }
                             }
                         }
                         
                         p.x = snapPos.x;
                         p.y = snapPos.y;
-                        p.target = { wire: w, snapPos: snapPos };
+                        
+                        let tid = w.fromId;
+                        let toTid = w.toId;
+                        if (w.isTriple && activeSet) {
+                            tid = activeSet[phaseIdx];
+                            const toSet = phaseSets.find(s => s.includes(w.toId)) || activeSet;
+                            toTid = toSet[phaseIdx];
+                        }
+
+                        p.target = { wire: w, snapPos: snapPos, phaseIndex: phaseIdx, terminalId: tid, toTerminalId: toTid };
                         break;
                     }
                 }
