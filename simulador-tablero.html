@@ -491,6 +491,37 @@
                 </select>
             </div>
         </div>
+        <div id="motor-controls" style="display:none;">
+            <div class="menu-item">
+                <span>Voltaje:</span>
+                <select id="select-motor-voltage" style="background:#0f172a; color:white; border:1px solid #475569; border-radius:4px; padding:2px 5px; font-size:12px;">
+                    <option value="208">208 V</option>
+                    <option value="480">480 V</option>
+                </select>
+            </div>
+            <div class="menu-item">
+                <span>Potencia (HP):</span>
+                <select id="select-motor-hp" style="background:#0f172a; color:white; border:1px solid #475569; border-radius:4px; padding:2px 5px; font-size:12px;">
+                    <option value="5">5 HP</option>
+                    <option value="7.5">7.5 HP</option>
+                    <option value="10">10 HP</option>
+                    <option value="15">15 HP</option>
+                    <option value="20">20 HP</option>
+                    <option value="25">25 HP</option>
+                    <option value="30">30 HP</option>
+                    <option value="40">40 HP</option>
+                    <option value="50">50 HP</option>
+                </select>
+            </div>
+            <div class="menu-item">
+                <span>FP:</span>
+                <input type="number" id="input-motor-pf" step="0.01" min="0.5" max="1.0" value="0.86" style="width:60px;">
+            </div>
+            <div class="menu-item">
+                <span>Efic. (%):</span>
+                <input type="number" id="input-motor-eff" step="1" min="70" max="98" value="90" style="width:60px;">
+            </div>
+        </div>
         <div class="menu-item danger" id="btn-delete-comp">
             <span>Eliminar Componente</span>
             <i class="fas fa-trash"></i>

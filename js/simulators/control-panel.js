@@ -891,13 +891,32 @@ class Motor extends Component {
             running: false, 
             angle: 0, 
             direction: 1,
-            nominalCurrent: 6.5 // Corriente que consume al girar
+            hp: 5,
+            voltage: 480,
+            pf: 0.86,
+            eff: 90,
+            rpm: 1800,
+            nominalCurrent: 6.5 // Default baseline
         }; 
         this.terminals = {
             'U': {x: 20, y: 35, label: 'U'}, 
             'V': {x: 52, y: 35, label: 'V'}, 
             'W': {x: 84, y: 35, label: 'W'}
         };
+        this.calculateFLA();
+    }
+
+    calculateFLA() {
+        // formula: FLA = (HP * 746) / (V * sqrt(3) * PF * EFF)
+        const hpToWatts = this.state.hp * 746;
+        const root3 = Math.sqrt(3);
+        const pf = this.state.pf;
+        const eff = this.state.eff / 100;
+        const v = this.state.voltage;
+        
+        const fla = hpToWatts / (v * root3 * pf * eff);
+        this.state.nominalCurrent = Math.round(fla * 10) / 10;
+        return this.state.nominalCurrent;
     }
     draw(ctx) {
         // Dibuja imagen base si existe
@@ -989,6 +1008,13 @@ class Motor extends Component {
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(this.state.direction > 0 ? '⟳' : '⟲', this.x + 20, this.y + 130);
+
+            // Placa de características (Nameplate info)
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${this.state.hp}HP ${this.state.voltage}V`, this.x + 100, this.y + 110);
+            ctx.fillText(`${this.state.nominalCurrent}A ${this.state.rpm}RPM`, this.x + 100, this.y + 125);
         }
         
         // Terminales
@@ -1321,7 +1347,30 @@ class Motor6T extends Component {
             'U1': {x: 40, y: 30, label: 'U1'}, 'V1': {x: 80, y: 30, label: 'V1'}, 'W1': {x: 120, y: 30, label: 'W1'},
             'W2': {x: 40, y: 130, label: 'W2'}, 'U2': {x: 80, y: 130, label: 'U2'}, 'V2': {x: 120, y: 130, label: 'V2'}
         };
-        this.state = { running: false, direction: 1, connection: 'None' };
+        this.state = { 
+            running: false, 
+            direction: 1, 
+            connection: 'None',
+            hp: 7.5,
+            voltage: 480,
+            pf: 0.86,
+            eff: 90,
+            rpm: 1750,
+            nominalCurrent: 10.0
+        };
+        this.calculateFLA();
+    }
+
+    calculateFLA() {
+        const hpToWatts = this.state.hp * 746;
+        const root3 = Math.sqrt(3);
+        const pf = this.state.pf;
+        const eff = this.state.eff / 100;
+        const v = this.state.voltage;
+        
+        const fla = hpToWatts / (v * root3 * pf * eff);
+        this.state.nominalCurrent = Math.round(fla * 10) / 10;
+        return this.state.nominalCurrent;
     }
     draw(ctx) {
         if (assets['motor6t']) {
@@ -1422,6 +1471,13 @@ class Motor6T extends Component {
             // Flecha de dirección
             ctx.font = 'bold 14px Arial';
             ctx.fillText(this.state.direction > 0 ? '⟳' : '⟲', this.x + 20, this.y + 80);
+
+            // Placa de características (Nameplate info)
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${this.state.hp}HP ${this.state.voltage}V`, this.x + 100, this.y + 70);
+            ctx.fillText(`${this.state.nominalCurrent}A ${this.state.rpm}RPM`, this.x + 100, this.y + 85);
         }
         
         this.drawTerminals(ctx);
@@ -1876,6 +1932,50 @@ function setupEventListeners() {
                 };
             } else {
                 multimeterControls.style.display = 'none';
+            }
+        }
+
+        // Motor Controls
+        const motorControls = document.getElementById('motor-controls');
+        if (motorControls) {
+            if (component instanceof Motor || component instanceof Motor6T) {
+                motorControls.style.display = 'block';
+                
+                const selectVoltage = document.getElementById('select-motor-voltage');
+                const selectHP = document.getElementById('select-motor-hp');
+                const inputPF = document.getElementById('input-motor-pf');
+                const inputEff = document.getElementById('input-motor-eff');
+                
+                selectVoltage.value = component.state.voltage;
+                selectHP.value = component.state.hp;
+                inputPF.value = component.state.pf;
+                inputEff.value = component.state.eff;
+                
+                selectVoltage.onchange = (e) => {
+                    component.state.voltage = parseInt(e.target.value);
+                    component.calculateFLA();
+                    draw();
+                };
+                
+                selectHP.onchange = (e) => {
+                    component.state.hp = parseFloat(e.target.value);
+                    component.calculateFLA();
+                    draw();
+                };
+                
+                inputPF.onchange = (e) => {
+                    component.state.pf = parseFloat(e.target.value);
+                    component.calculateFLA();
+                    draw();
+                };
+                
+                inputEff.onchange = (e) => {
+                    component.state.eff = parseFloat(e.target.value);
+                    component.calculateFLA();
+                    draw();
+                };
+            } else {
+                motorControls.style.display = 'none';
             }
         }
 
