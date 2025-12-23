@@ -518,10 +518,16 @@ class Multimeter {
                 const vNominal = source ? source.state.voltage : 120;
                 
                 if (source?.type === 'power-source') {
-                    // En trifásica L-N es V/sqrt(3) -> 480/1.73 = 277V, 208/1.73 = 120V
+                    // En trifásica L-N es V/sqrt(3)
+                    // 480V trifásico -> 277V fase-neutro
+                    // 208V trifásico -> 120V fase-neutro
                     return Math.round(vNominal / Math.sqrt(3));
+                } else if (source?.type === 'single-phase-source') {
+                    // En monofásica, el voltaje nominal es el voltaje L-N
+                    // 120V, 208V, o 240V son todos L-N directamente
+                    return vNominal;
                 }
-                return vNominal; // En monofásica 120V es L-N
+                return 120; // Fallback
             }
 
             // Caso Fase vs Fase
@@ -1757,7 +1763,15 @@ function setupEventListeners() {
         const thermal = document.getElementById('thermal-controls');
         const inputLimit = document.getElementById('input-limit');
         
-        title.innerText = component.type.replace('-', ' ').toUpperCase();
+        // Handle title for different component types
+        if (component instanceof Multimeter || component === activeMultimeter) {
+            title.innerText = 'MULTÍMETRO';
+        } else if (component.type) {
+            title.innerText = component.type.replace('-', ' ').toUpperCase();
+        } else {
+            title.innerText = 'COMPONENTE';
+        }
+        
         ctxMenu.style.left = `${x}px`;
         ctxMenu.style.top = `${y}px`;
         ctxMenu.style.display = 'block';
