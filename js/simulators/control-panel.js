@@ -534,27 +534,33 @@ class Multimeter {
             // 1. Through internal connectivity
             const getLinkedTerms = (c, tid) => {
                 // Standard logic for Breakers, Contactors, Thermal Relays
+                // Power flow is usually L (input) -> T (output)
                 if (c instanceof Breaker && c.state.closed) {
                     if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
+                    if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
                 }
                 if (c instanceof Contactor && c.state.engaged) {
                     if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
+                    if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
                 }
                 if (c instanceof ThermalRelay && !c.state.tripped) {
                     if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
+                    if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
                 }
-                // Motor terminals are inputs, they don't propagate further as "series" tracing for current
+                if (c instanceof PhaseBridge) {
+                    return ['1', '2', '3'].filter(t => t !== tid);
+                }
                 return [];
             };
 
             const linked = getLinkedTerms(comp, termId);
             linked.forEach(nextTerm => trace(compId, nextTerm));
 
-            // 2. Through wires (downstream)
+            // 2. Through wires (bidirectional search for loads)
             wires.forEach(w => {
-                if (w.from === comp && w.fromId === termId) {
+                if (w.from.id === compId && w.fromId === termId) {
                     trace(w.to.id, w.toId);
-                } else if (w.to === comp && w.toId === termId) {
+                } else if (w.to.id === compId && w.toId === termId) {
                     trace(w.from.id, w.fromId);
                 }
             });
@@ -2194,18 +2200,16 @@ function onMouseDown(e) {
             }
         }
         
-        // Context Menu or Toggle Mode (Right Click or Special Area)
-        // For now, let's add a small area to toggle mode? 
-        // Or just clicking the selector knob?
-        if (Math.hypot(mx - (m.x + m.width/2), my - (m.y + 80)) < 25) {
+        // Selector Knob Toggle (Strict Hitbox)
+        if (Math.hypot(mx - (m.x + m.width/2), my - (m.y + 80)) < 15) {
             m.mode = (m.mode === 'VAC' ? 'AAC' : 'VAC');
             m.value = 0;
             draw();
             return;
         }
 
-        // Tocar cuerpo?
-        if (mx > m.x && mx < m.x + m.width && my > m.y && my < m.y + m.height) {
+        // Body Dragging
+        if (mx > m.x && mx <= m.x + m.width && my > m.y && my <= m.y + m.height) {
             m.draggingBody = true;
             m.offX = mx - m.x;
             m.offY = my - m.y;
