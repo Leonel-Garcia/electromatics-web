@@ -465,12 +465,19 @@ class Multimeter {
         const activeProbes = this.mode === 'VAC' ? ['red', 'black'] : ['clamp'];
         activeProbes.forEach(key => {
             const p = key === 'clamp' ? this.clamp : this.probes[key];
-            if (p.target && p.target.component) {
-                const c = p.target.component;
-                const t = c.terminals[p.target.terminalId];
-                if (t) {
-                    p.x = c.x + t.x;
-                    p.y = c.y + t.y;
+            if (p.target) {
+                if (p.target.component) {
+                    const c = p.target.component;
+                    const t = c.terminals[p.target.terminalId];
+                    if (t) {
+                        p.x = c.x + t.x;
+                        p.y = c.y + t.y;
+                    }
+                } else if (p.target.wire && p.target.snapPos) {
+                    // Wires don't move unless endpoints move, but we don't have reactive wire paths yet
+                    // For now, keep the snap position
+                    p.x = p.target.snapPos.x;
+                    p.y = p.target.snapPos.y;
                 }
             }
         });
@@ -699,7 +706,7 @@ class Multimeter {
             drawProbe(this.probes.black.x, this.probes.black.y, '#333');
             drawProbe(this.probes.red.x, this.probes.red.y, '#b91c1c');
         } else {
-            // Dibujar Pinza Amperimétrica (Clamp)
+            // Dibujar Pinza Amperimétrica (Clamp) - TAMAÑO REDUCIDO (50%)
             const cx = this.clamp.x;
             const cy = this.clamp.y;
             
@@ -708,31 +715,33 @@ class Multimeter {
             
             // Mango de la pinza
             ctx.fillStyle = '#f59e0b'; // Ambar
-            ctx.roundRect(-10, 10, 20, 50, 5);
+            ctx.roundRect(-6, 5, 12, 30, 3);
             ctx.fill();
             
             // Mandíbulas (Abiertas/Cerradas según target)
-            const gap = this.clamp.target ? 2 : 15;
+            const isClosed = !!this.clamp.target;
+            const gap = isClosed ? 1 : 8;
             ctx.strokeStyle = '#475569';
-            ctx.lineWidth = 8;
+            ctx.lineWidth = 4;
             ctx.lineCap = 'round';
             
+            const jawRadius = 9;
             // Mandíbula izquierda
             ctx.beginPath();
-            ctx.arc(-10 - gap/2, 0, 15, Math.PI * 0.5, Math.PI * 1.5);
+            ctx.arc(-5 - gap/2, 0, jawRadius, Math.PI * 0.5, Math.PI * 1.5);
             ctx.stroke();
             
             // Mandíbula derecha
             ctx.beginPath();
-            ctx.arc(10 + gap/2, 0, 15, Math.PI * 1.5, Math.PI * 2.5);
+            ctx.arc(5 + gap/2, 0, jawRadius, Math.PI * 1.5, Math.PI * 2.5);
             ctx.stroke();
             
             // Gatillo
             ctx.fillStyle = '#b45309';
             ctx.beginPath();
-            ctx.moveTo(-10, 25);
-            ctx.lineTo(-20, 35);
-            ctx.lineTo(-10, 45);
+            ctx.moveTo(-6, 12);
+            ctx.lineTo(-12, 17);
+            ctx.lineTo(-6, 22);
             ctx.fill();
             
             ctx.restore();
@@ -2216,7 +2225,7 @@ function onMouseDown(e) {
             }
         } else {
             // AAC Mode (Clamp)
-            if (Math.hypot(mx - m.clamp.x, my - m.clamp.y) < 30) {
+            if (Math.hypot(mx - m.clamp.x, my - m.clamp.y) < 20) {
                 m.draggingProbe = 'clamp';
                 return;
             }
@@ -2384,8 +2393,32 @@ function onMouseUp(e) {
             if (!p.target && probeKey === 'clamp') {
                 for (const w of wires) {
                     if (isMouseOverWire(mousePos.x, mousePos.y, w)) {
-                        p.target = { wire: w };
-                        // Se queda en la posición donde se soltó
+                        // Snapping a la línea del cable
+                        const p1 = w.from.getTerminal(w.fromId);
+                        const p2 = w.to.getTerminal(w.toId);
+                        const fullPath = [p1, ...(w.path || []), p2];
+                        let bestDist = Infinity;
+                        let snapPos = { x: mousePos.x, y: mousePos.y };
+
+                        for (let i = 0; i < fullPath.length - 1; i++) {
+                            const segStart = fullPath[i], segEnd = fullPath[i+1];
+                            const dist = pDist(mousePos.x, mousePos.y, segStart.x, segStart.y, segEnd.x, segEnd.y);
+                            if (dist < bestDist) {
+                                bestDist = dist;
+                                // Calcular punto más cercano en el segmento
+                                const A = mousePos.x - segStart.x, B = mousePos.y - segStart.y;
+                                const C = segEnd.x - segStart.x, D = segEnd.y - segStart.y;
+                                const dot = A * C + B * D, len_sq = C * C + D * D;
+                                let param = (len_sq !== 0) ? dot / len_sq : -1;
+                                if (param < 0) { snapPos.x = segStart.x; snapPos.y = segStart.y; }
+                                else if (param > 1) { snapPos.x = segEnd.x; snapPos.y = segEnd.y; }
+                                else { snapPos.x = segStart.x + param * C; snapPos.y = segStart.y + param * D; }
+                            }
+                        }
+                        
+                        p.x = snapPos.x;
+                        p.y = snapPos.y;
+                        p.target = { wire: w, snapPos: snapPos };
                         break;
                     }
                 }
