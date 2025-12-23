@@ -608,76 +608,74 @@ class Multimeter {
 
         const nodes = window.lastSolvedNodes || {};
         
-        // Función para obtener fases de un objetivo (clic point)
-        const getPhases = (probe) => {
-            if (probe.target && probe.target.component) {
-                const key = `${probe.target.component.id}_${probe.target.terminalId}`;
-                return nodes[key] || new Set();
-            }
-            return new Set();
-        };
-
-        // Lógica de Voltaje
-        const getVoltage = (p1, p2) => {
-            const has = (set, phase) => set.has(phase);
-            if (p1.size === 0 || p2.size === 0) return 0;
-            
-            const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
-            if (!source) return 0;
-
-            const shifts = source.state.phaseShifts || { L1: 1, L2: 1, L3: 1, L: 1, N: 0 };
-            const vBase = source.state.voltage;
-
-            // Determinar fase predominante en cada punta
-            const ph1 = [...p1][0], ph2 = [...p2][0];
-            
-            const getInstVal = (ph) => {
-                if (ph === 'N') return 0;
-                let sKey = ph;
-                if (ph === 'L1' && !shifts.L1 && shifts.L) sKey = 'L'; // Map Mono to L
-                return vBase * (shifts[sKey] || 1);
-            };
-
-            const v1 = getInstVal(ph1);
-            const v2 = getInstVal(ph2);
-
-            // Diferencia Neutral - Fase
-            if ((ph1 === 'N' && ph2 !== 'N') || (ph2 === 'N' && ph1 !== 'N')) {
-                const activePh = ph1 === 'N' ? ph2 : ph1;
-                const val = getInstVal(activePh);
-                if (source.type === 'power-source') return Math.round(val / Math.sqrt(3));
-                return Math.round(val);
-            }
-
-            // Linea - Linea
-            if (ph1 !== ph2 && ph1 !== 'N' && ph2 !== 'N') {
-                // Simplificación: Asumimos 120 grados. En DC o monofasica real 180 si es L1-L2 de transformador.
-                // Aquí usamos el voltaje nominal ajustado por los consumos/fluctuaciones.
-                const avgShift = (getInstVal(ph1) + getInstVal(ph2)) / 2;
-                return Math.round(avgShift); 
-            }
-
-            return 0;
-        };
-
         if (this.mode === 'VAC') {
-            const redPhases = getPhases(this.probes.red);
-            const blackPhases = getPhases(this.probes.black);
+            const redPhases = this.getPhases(this.probes.red, nodes);
+            const blackPhases = this.getPhases(this.probes.black, nodes);
 
             if (redPhases.size === 0 || blackPhases.size === 0) {
                 this.value = 0;
                 return;
             }
-            this.value = getVoltage(redPhases, blackPhases);
+            this.value = this.getVoltage(redPhases, blackPhases, nodes);
             this.unit = 'V';
         } else if (this.mode === 'AAC') {
-            this.value = this.calculateCurrent(this.clamp.target);
+            this.value = this.calculateCurrent(this.clamp.target, nodes);
             this.unit = 'A';
         }
     }
 
-    calculateCurrent(target) {
-        if (!target || !isSimulating) return 0;
+    // Función para obtener fases de un objetivo (clic point)
+    getPhases(probe, nodes) {
+        if (probe.target && probe.target.component) {
+            const key = `${probe.target.component.id}_${probe.target.terminalId}`;
+            return nodes[key] || new Set();
+        }
+        return new Set();
+    }
+
+    // Lógica de Voltaje
+    getVoltage(p1, p2, nodes) {
+        if (!p1 || !p2 || p1.size === 0 || p2.size === 0) return 0;
+        
+        const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
+        if (!source) return 0;
+
+        const shifts = source.state.phaseShifts || { L1: 1, L2: 1, L3: 1, L: 1, N: 0 };
+        const vBase = source.state.voltage;
+
+        // Determinar fase predominante en cada punta
+        const ph1 = [...p1][0], ph2 = [...p2][0];
+        
+        const getInstVal = (ph) => {
+            if (ph === 'N') return 0;
+            let sKey = ph;
+            if (ph === 'L1' && !shifts.L1 && shifts.L) sKey = 'L'; // Map Mono to L
+            return vBase * (shifts[sKey] || 1);
+        };
+
+        const v1 = getInstVal(ph1);
+        const v2 = getInstVal(ph2);
+
+        // Diferencia Neutral - Fase
+        if ((ph1 === 'N' && ph2 !== 'N') || (ph2 === 'N' && ph1 !== 'N')) {
+            const activePh = ph1 === 'N' ? ph2 : ph1;
+            const val = getInstVal(activePh);
+            if (source.type === 'power-source') return Math.round(val / Math.sqrt(3));
+            return Math.round(val);
+        }
+
+        // Linea - Linea
+        if (ph1 !== ph2 && ph1 !== 'N' && ph2 !== 'N') {
+            // Simplificación: Asumimos 120 grados. En DC o monofasica real 180 si es L1-L2 de transformador.
+            const avgShift = (getInstVal(ph1) + getInstVal(ph2)) / 2;
+            return Math.round(avgShift); 
+        }
+
+        return 0;
+    }
+
+    calculateCurrent(target, nodes) {
+        if (!target || !isSimulating || !nodes) return 0;
 
         const visited = new Set();
         const activeMotors = new Set();
@@ -727,8 +725,6 @@ class Multimeter {
                     const activeSet = sets.find(s => s.includes(w.fromId));
                     if (activeSet) {
                          const phaseIdx = activeSet.indexOf(w.fromId);
-                         // This logic is simplified. Triple wires usually connect L1-L1, L2-L2, etc.
-                         // If the current term is in the set, we propagate to the corresponding other side.
                          const mySet = sets.find(s => s.includes(termId));
                          if (mySet) {
                              const myIdx = mySet.indexOf(termId);
@@ -763,7 +759,18 @@ class Multimeter {
 
         let totalCurrent = 0;
         activeMotors.forEach(m => {
-            totalCurrent += m.state.nominalCurrent || 6.5;
+            let actualV = m.state.voltage; // Fallback
+            if (m instanceof Motor) {
+                const uP = nodes[`${m.id}_U`], vP = nodes[`${m.id}_V`];
+                actualV = this.getVoltage(uP, vP, nodes);
+            } else if (m instanceof Motor6T) {
+                const u1P = nodes[`${m.id}_U1`], v1P = nodes[`${m.id}_V1`];
+                actualV = this.getVoltage(u1P, v1P, nodes);
+            }
+            
+            // Ley de Ohm simplificada para carga inductiva: I = I_nom * (V_actual / V_nom)
+            const current = (m.state.nominalCurrent || 6.5) * (actualV / (m.state.voltage || 480));
+            totalCurrent += current;
         });
 
         return Math.round(totalCurrent * 10) / 10;
