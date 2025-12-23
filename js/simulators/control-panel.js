@@ -484,11 +484,36 @@ class Multimeter {
         
         // Función para obtener fases de un objetivo (clic point)
         const getPhases = (probe) => {
-            if (probe.target) {
+            if (probe.target && probe.target.component) {
                 const key = `${probe.target.component.id}_${probe.target.terminalId}`;
                 return nodes[key] || new Set();
             }
             return new Set();
+        };
+
+        // Lógica de Voltaje
+        const getVoltage = (p1, p2) => {
+            const has = (set, phase) => set.has(phase);
+            if (p1.size === 0 || p2.size === 0) return 0;
+            const isN1 = has(p1, 'N');
+            const isN2 = has(p2, 'N');
+            const isL1_1 = has(p1, 'L1'), isL2_1 = has(p1, 'L2'), isL3_1 = has(p1, 'L3');
+            const isL1_2 = has(p2, 'L1'), isL2_2 = has(p2, 'L2'), isL3_2 = has(p2, 'L3');
+
+            if ((isN1 && (isL1_2 || isL2_2 || isL3_2)) || (isN2 && (isL1_1 || isL2_1 || isL3_1))) {
+                const source = components.find(c => c.type === 'power-source' || c.type === 'single-phase-source');
+                const vNominal = source ? source.state.voltage : 120;
+                if (source?.type === 'power-source') return Math.round(vNominal / Math.sqrt(3));
+                return vNominal;
+            }
+
+            if ((isL1_1 && isL2_2) || (isL1_2 && isL2_1) || 
+                (isL2_1 && isL3_2) || (isL2_2 && isL3_1) || 
+                (isL3_1 && isL1_2) || (isL3_2 && isL1_1)) {
+                const source = components.find(c => c.type === 'power-source');
+                return source ? source.state.voltage : 0;
+            }
+            return 0;
         };
 
         if (this.mode === 'VAC') {
@@ -502,7 +527,6 @@ class Multimeter {
             this.value = getVoltage(redPhases, blackPhases);
             this.unit = 'V';
         } else if (this.mode === 'AAC') {
-            // Current measurement: logic based on clamp position
             this.value = this.calculateCurrent(this.clamp.target);
             this.unit = 'A';
         }
@@ -511,11 +535,9 @@ class Multimeter {
     calculateCurrent(target) {
         if (!target || !isSimulating) return 0;
 
-        // Start tracing from the target component/terminal
         const visited = new Set();
         const activeMotors = new Set();
         
-        // Find all motors that are fed from this point
         const trace = (compId, termId) => {
             const key = `${compId}_${termId}`;
             if (visited.has(key)) return;
@@ -524,17 +546,12 @@ class Multimeter {
             const comp = components.find(c => c.id === compId);
             if (!comp) return;
 
-            // If it's a motor and it's running, add it
             if ((comp instanceof Motor || comp instanceof Motor6T) && comp.state.running) {
                 activeMotors.add(comp);
-                return; // Reached a load
+                return;
             }
 
-            // Propagate through the component logic
-            // 1. Through internal connectivity
             const getLinkedTerms = (c, tid) => {
-                // Standard logic for Breakers, Contactors, Thermal Relays
-                // Power flow is usually L (input) -> T (output)
                 if (c instanceof Breaker && c.state.closed) {
                     if (['L1','L2','L3'].includes(tid)) return [['T1','T2','T3'][['L1','L2','L3'].indexOf(tid)]];
                     if (['T1','T2','T3'].includes(tid)) return [['L1','L2','L3'][['T1','T2','T3'].indexOf(tid)]];
@@ -556,17 +573,18 @@ class Multimeter {
             const linked = getLinkedTerms(comp, termId);
             linked.forEach(nextTerm => trace(compId, nextTerm));
 
-            // 2. Through wires (bidirectional search for loads)
             wires.forEach(w => {
-                if (w.from.id === compId && w.fromId === termId) {
-                    trace(w.to.id, w.toId);
-                } else if (w.to.id === compId && w.toId === termId) {
-                    trace(w.from.id, w.fromId);
-                }
+                if (w.from.id === compId && w.fromId === termId) trace(w.to.id, w.toId);
+                else if (w.to.id === compId && w.toId === termId) trace(w.from.id, w.fromId);
             });
         };
 
-        trace(target.component.id, target.terminalId);
+        if (target.wire) {
+            trace(target.wire.from.id, target.wire.fromId);
+            trace(target.wire.to.id, target.wire.toId);
+        } else if (target.component) {
+            trace(target.component.id, target.terminalId);
+        }
 
         let totalCurrent = 0;
         activeMotors.forEach(m => {
@@ -624,12 +642,16 @@ class Multimeter {
         ctx.strokeRect(this.x + 10, this.y + 15, this.width - 20, 35);
 
         // Valor digital
-        ctx.fillStyle = '#4ade80';
-        ctx.font = '22px "Courier New"';
+        ctx.fillStyle = '#00ff41'; // Matrix neon green
+        ctx.shadowColor = '#00ff41';
+        ctx.shadowBlur = 5;
+        ctx.font = 'bold 22px "Courier New", monospace';
         ctx.textAlign = 'right';
-        const displayValue = isSimulating ? this.value.toString().padStart(3, ' ') : '0.0';
+        const displayValue = isSimulating ? this.value.toFixed(1).padStart(5, ' ') : '0.0';
         ctx.fillText(displayValue, this.x + this.width - 25, this.y + 40);
-        ctx.font = '10px Inter';
+        
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 10px Inter';
         ctx.fillText(this.unit, this.x + this.width - 15, this.y + 40);
 
         // Perilla (Selector) - Girar según modo
@@ -2200,15 +2222,16 @@ function onMouseDown(e) {
             }
         }
         
-        // Selector Knob Toggle (Strict Hitbox)
-        if (Math.hypot(mx - (m.x + m.width/2), my - (m.y + 80)) < 15) {
+        // Body Dragging (Check this BEFORE the selector to favor movement, or refine selector area)
+        const isOnKnob = Math.hypot(mx - (m.x + m.width/2), my - (m.y + 80)) < 15;
+        
+        if (isOnKnob) {
             m.mode = (m.mode === 'VAC' ? 'AAC' : 'VAC');
             m.value = 0;
             draw();
             return;
         }
 
-        // Body Dragging
         if (mx > m.x && mx <= m.x + m.width && my > m.y && my <= m.y + m.height) {
             m.draggingBody = true;
             m.offX = mx - m.x;
@@ -2348,13 +2371,23 @@ function onMouseUp(e) {
             // Intentar conectar punta a un terminal
             p.target = null;
             for (const c of components) {
-                // For clamp, we can also snap to components directly or their terminals
                 const t = c.getHoveredTerminal(mousePos.x, mousePos.y);
                 if (t) {
                     p.x = c.x + t.x;
                     p.y = c.y + t.y;
                     p.target = { component: c, terminalId: t.id };
                     break;
+                }
+            }
+
+            // Si no conectó a terminal y es la pinza, probar con cables
+            if (!p.target && probeKey === 'clamp') {
+                for (const w of wires) {
+                    if (isMouseOverWire(mousePos.x, mousePos.y, w)) {
+                        p.target = { wire: w };
+                        // Se queda en la posición donde se soltó
+                        break;
+                    }
                 }
             }
         }
