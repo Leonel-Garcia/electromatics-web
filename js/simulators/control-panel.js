@@ -410,20 +410,6 @@ class PowerSource extends Component {
         }
 
         this.drawTerminals(ctx);
-
-        // Neutral
-        const t = this.getTerminal('N');
-        if(t) {
-             ctx.beginPath();
-             ctx.arc(this.x + t.x, this.y + t.y, 5, 0, Math.PI*2);
-             ctx.fillStyle = '#e2e8f0';
-             ctx.fill();
-             ctx.strokeStyle = '#64748b';
-             ctx.stroke();
-             ctx.fillStyle = '#fff';
-             ctx.font = 'bold 10px Inter';
-             ctx.fillText('N', this.x + t.x, this.y + t.y + 18);
-        }
     }
 }
 
