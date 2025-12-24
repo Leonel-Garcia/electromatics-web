@@ -1986,6 +1986,103 @@ class FloatSwitch extends Component {
     }
 }
 
+class TerminalBlock extends Component {
+    constructor(x, y, poles = 6) {
+        super('terminal-block', x, y, poles * 20, 80);
+        this.state = { poles: poles };
+        this.updateTerminals();
+    }
+
+    updateTerminals() {
+        this.terminals = {};
+        this.width = this.state.poles * 20;
+        for (let i = 1; i <= this.state.poles; i++) {
+            const offsetX = -this.width / 2 + (i - 1) * 20 + 10;
+            // Superior (n)
+            this.terminals[`${i}`] = { x: offsetX, y: -30, label: `${i}` };
+            // Inferior (n')
+            this.terminals[`${i}'`] = { x: offsetX, y: 30, label: `${i}'` };
+        }
+    }
+
+    updatePoles(count) {
+        this.state.poles = Math.max(2, Math.min(20, count));
+        this.updateTerminals();
+        if (typeof draw === 'function') draw();
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // DIN Rail Background (Simulated)
+        ctx.fillStyle = '#64748b'; // Steel rail color
+        ctx.fillRect(-this.width/2 - 5, -10, this.width + 10, 20);
+        ctx.strokeStyle = '#475569';
+        ctx.strokeRect(-this.width/2 - 5, -10, this.width + 10, 20);
+
+        // Draw each pole body
+        for (let i = 0; i < this.state.poles; i++) {
+            const px = -this.width/2 + i * 20;
+            
+            // Plastic body
+            ctx.fillStyle = '#cbd5e1'; // Gray/Beige plastic
+            ctx.fillRect(px + 1, -this.height/2, 18, this.height);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 1, -this.height/2, 18, this.height);
+
+            // Middle separator
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(px + 1, -2, 18, 4);
+
+            // Screw holes/Terminals Visual
+            ctx.fillStyle = '#334155'; // Metal/Shadow
+            // Top screw
+            ctx.beginPath(); ctx.arc(px + 10, -30, 4, 0, Math.PI*2); ctx.fill();
+            // Bottom screw
+            ctx.beginPath(); ctx.arc(px + 10, 30, 4, 0, Math.PI*2); ctx.fill();
+            
+            // Screw head detail (Cross)
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            [-30, 30].forEach(y => {
+                ctx.beginPath();
+                ctx.moveTo(px + 7, y); ctx.lineTo(px + 13, y);
+                ctx.moveTo(px + 10, y - 3); ctx.lineTo(px + 10, y + 3);
+                ctx.stroke();
+            });
+
+            // Label
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 9px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(i + 1, px + 10, 4);
+        }
+
+        ctx.restore();
+        this.drawTerminals(ctx);
+    }
+
+    drawTerminals(ctx) {
+        // We override this to draw smaller, more integrated terminal markers
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            
+            ctx.beginPath();
+            ctx.arc(tx, ty, 4, 0, Math.PI*2);
+            ctx.fillStyle = '#f59e0b'; // Amber for terminal hits
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Label is already drawn in the main draw loop for better placement
+        }
+    }
+}
+
 
 
 // ================= LOGICA DE INTERACCION =================
@@ -2350,6 +2447,26 @@ function setupEventListeners() {
             }
         }
 
+        // Regleta de Bornes Controls
+        const terminalControls = document.getElementById('terminal-controls');
+        if (terminalControls) {
+            if (component instanceof TerminalBlock || component.type === 'terminal-block') {
+                terminalControls.style.display = 'block';
+                const inputPoles = document.getElementById('input-terminal-poles');
+                const valDisplay = document.getElementById('poles-count-val');
+                inputPoles.value = component.state.poles;
+                valDisplay.innerText = component.state.poles;
+                
+                inputPoles.oninput = (e) => {
+                    const count = parseInt(e.target.value);
+                    valDisplay.innerText = count;
+                    component.updatePoles(count);
+                };
+            } else {
+                terminalControls.style.display = 'none';
+            }
+        }
+
         // Fuente de Poder Controls
         const sourceControls = document.getElementById('source-controls');
         if (sourceControls) {
@@ -2573,6 +2690,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'motor6t': c = new Motor6T(x, y); break;
         case 'alternating-relay': c = new AlternatingRelay(x, y); break;
         case 'float-switch': c = new FloatSwitch(x, y); break;
+        case 'terminal-block': c = new TerminalBlock(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -3133,6 +3251,13 @@ function solveCircuit() {
                     const comKey = `${c.id}_COM`, targetKey = `${c.id}_${targetTerm}`;
                     if (nodes[comKey]) nodes[comKey].forEach(p => setNode(c, targetTerm, p));
                     if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, 'COM', p));
+                }
+                if (c instanceof TerminalBlock) {
+                    for (let i = 1; i <= c.state.poles; i++) {
+                        const topKey = `${c.id}_${i}`, botKey = `${c.id}_${i}'`;
+                        if (nodes[topKey]) nodes[topKey].forEach(p => setNode(c, `${i}'`, p));
+                        if (nodes[botKey]) nodes[botKey].forEach(p => setNode(c, `${i}`, p));
+                    }
                 }
             });
 
