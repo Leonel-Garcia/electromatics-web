@@ -1917,6 +1917,79 @@ class AlternatingRelay extends Component {
     }
 }
 
+class FloatSwitch extends Component {
+    constructor(x, y) {
+        super('float-switch', x, y, 70, 50);
+        this.terminals = {
+            'COM': { x: -30, y: 0, label: 'COM (Negro)' }, 
+            'NO': { x: -30, y: 15, label: 'NO (Azul)' },
+            'NC': { x: -30, y: -15, label: 'NC (Marrón)' }
+        };
+        this.state = {
+            highLevel: false, // false = Down (NC closed), true = Up (NO closed)
+            angle: Math.PI / 4
+        };
+    }
+
+    draw(ctx) {
+        const targetAngle = this.state.highLevel ? -Math.PI / 4 : Math.PI / 4;
+        this.state.angle += (targetAngle - this.state.angle) * 0.1;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.beginPath();
+        ctx.moveTo(-100, 0); 
+        ctx.quadraticCurveTo(-50, 0, 0, 0);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.rotate(this.state.angle);
+        const img = assets['float-switch'];
+        if (img && img.complete && img.naturalWidth > 0) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 10;
+            ctx.drawImage(img, -this.width/2, -this.height/2, this.width, this.height);
+        } else {
+            ctx.fillStyle = this.state.highLevel ? '#3b82f6' : '#fbbf24';
+            ctx.beginPath();
+            ctx.roundRect(-this.width/2, -this.height/2, this.width, this.height, 10);
+            ctx.fill();
+        }
+        ctx.restore();
+        this.drawTerminals(ctx);
+    }
+
+    drawTerminals(ctx) {
+        for (const [id, t] of Object.entries(this.terminals)) {
+            const tx = this.x + t.x;
+            const ty = this.y + t.y;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 6, 0, Math.PI*2);
+            ctx.fillStyle = (id === 'COM') ? '#1e293b' : (id === 'NO' ? '#3b82f6' : '#92400e');
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText(id, tx - 12, ty + 4);
+        }
+    }
+
+    onMouseUp(mx, my) {
+        const dist = Math.hypot(mx - this.x, my - this.y);
+        if (dist < 40) {
+            this.state.highLevel = !this.state.highLevel;
+            if (typeof draw === 'function') draw();
+        }
+    }
+}
+
 
 
 // ================= LOGICA DE INTERACCION =================
