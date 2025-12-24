@@ -2122,6 +2122,16 @@ function setupEventListeners() {
     // Delete Key listener
     window.addEventListener('keydown', (e) => {
         if (isSimulating) return; // Proteccion: No borrar mientras se simula
+        if (e.key === 'Escape') {
+            if (wireStartObj) {
+                wireStartObj = null;
+                draw();
+            }
+            if (selectedWire) {
+                selectedWire = null;
+                draw();
+            }
+        }
         if (e.key === 'Delete' || e.key === 'Backspace') {
             if (selectedWire) {
                 const idx = wires.indexOf(selectedWire);
@@ -2226,6 +2236,14 @@ function setupEventListeners() {
     const ctxMenu = document.getElementById('context-menu');
     canvas.addEventListener('contextmenu', e => {
         e.preventDefault();
+        
+        // Si estamos cableando, el click derecho CANCELA el cableado
+        if (wireStartObj) {
+            wireStartObj = null;
+            draw();
+            return;
+        }
+
         const pos = getEventPos(e);
         const mx = pos.x;
         const my = pos.y;
