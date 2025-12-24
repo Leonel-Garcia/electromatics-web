@@ -207,7 +207,8 @@ const ASSET_PATHS = {
     'pilot-amber': 'img/simulators/control-panel/pilot-ambar.png',
     'timer': 'img/simulators/control-panel/timer.png',
     'motor6t': 'img/simulators/control-panel/motor6t.png',
-    'alternating-relay': 'img/simulators/control-panel/alternating-relay.png'
+    'alternating-relay': 'img/simulators/control-panel/alternating-relay.png',
+    'float-switch': 'img/simulators/control-panel/float-switch.png'
 };
 
 // ... (Rest of file) ...
@@ -2484,6 +2485,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'bridge': c = new PhaseBridge(x, y); break;
         case 'motor6t': c = new Motor6T(x, y); break;
         case 'alternating-relay': c = new AlternatingRelay(x, y); break;
+        case 'float-switch': c = new FloatSwitch(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -3037,6 +3039,12 @@ function solveCircuit() {
                         if (nodes[commonKey]) nodes[commonKey].forEach(p => setNode(c, targetTerm, p));
                         if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, '7', p));
                     }
+                }
+                if (c instanceof FloatSwitch) {
+                    const targetTerm = c.state.highLevel ? 'NO' : 'NC';
+                    const comKey = `${c.id}_COM`, targetKey = `${c.id}_${targetTerm}`;
+                    if (nodes[comKey]) nodes[comKey].forEach(p => setNode(c, targetTerm, p));
+                    if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, 'COM', p));
                 }
             });
 
