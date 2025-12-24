@@ -208,7 +208,9 @@ const ASSET_PATHS = {
     'timer': 'img/simulators/control-panel/timer.png',
     'motor6t': 'img/simulators/control-panel/motor6t.png',
     'alternating-relay': 'img/simulators/control-panel/alternating-relay.png',
-    'float-switch': 'img/simulators/control-panel/float-switch.png'
+    'float-switch': 'img/simulators/control-panel/float-switch.png',
+    'terminal-block': 'img/simulators/control-panel/terminal-block.png',
+    'pressure-switch': 'img/simulators/control-panel/pressure-switch.png'
 };
 
 // ... (Rest of file) ...
@@ -2083,6 +2085,63 @@ class TerminalBlock extends Component {
     }
 }
 
+class PressureSwitch extends Component {
+    constructor(x, y) {
+        super('pressure-switch', x, y, 60, 70);
+        this.terminals = {
+            '1': { x: -20, y: -25, label: 'L1 (In)' },
+            '2': { x: 20, y: -25, label: 'L2 (In)' },
+            '3': { x: -20, y: 25, label: 'T1 (Out)' },
+            '4': { x: 20, y: 25, label: 'T2 (Out)' }
+        };
+        this.state = {
+            highPressure: false, // false = < 20 PSI (Closed), true = > 40 PSI (Open)
+            contactsClosed: true
+        };
+    }
+
+    toggle() {
+        this.state.highPressure = !this.state.highPressure;
+        this.state.contactsClosed = !this.state.highPressure;
+        if (typeof draw === 'function') draw();
+    }
+
+    draw(ctx) {
+        const img = assets['pressure-switch'];
+        if (img && img.complete && img.naturalWidth > 0) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 8;
+            ctx.drawImage(img, this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            ctx.restore();
+        } else {
+            // Fallback robusto
+            ctx.save();
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            ctx.restore();
+        }
+
+        // Indicador de Presión
+        ctx.save();
+        const indicatorColor = this.state.highPressure ? '#ef4444' : '#22c55e';
+        ctx.fillStyle = indicatorColor;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + 10, 4, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 8px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.state.highPressure ? '40 PSI' : '20 PSI', this.x, this.y + 22);
+        ctx.restore();
+
+        this.drawTerminals(ctx);
+    }
+}
+
 
 
 // ================= LOGICA DE INTERACCION =================
@@ -2691,6 +2750,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'alternating-relay': c = new AlternatingRelay(x, y); break;
         case 'float-switch': c = new FloatSwitch(x, y); break;
         case 'terminal-block': c = new TerminalBlock(x, y); break;
+        case 'pressure-switch': c = new PressureSwitch(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -2796,6 +2856,7 @@ function onMouseDown(e) {
             if (c instanceof Breaker) c.toggle();
             if (c instanceof Selector) c.toggle();
             if (c instanceof FloatSwitch) c.toggle();
+            if (c instanceof PressureSwitch) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
 
             // Selección y arrastre (Solo si NO estamos simulando)
@@ -3258,6 +3319,14 @@ function solveCircuit() {
                         if (nodes[topKey]) nodes[topKey].forEach(p => setNode(c, `${i}'`, p));
                         if (nodes[botKey]) nodes[botKey].forEach(p => setNode(c, `${i}`, p));
                     }
+                }
+                if (c instanceof PressureSwitch && c.state.contactsClosed) {
+                    // 1 connects to 3, 2 connects to 4
+                    [['1', '3'], ['2', '4']].forEach(([t1, t2]) => {
+                        const k1 = `${c.id}_${t1}`, k2 = `${c.id}_${t2}`;
+                        if (nodes[k1]) nodes[k1].forEach(p => setNode(c, t2, p));
+                        if (nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
+                    });
                 }
             });
 
