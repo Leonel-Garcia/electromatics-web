@@ -229,13 +229,34 @@ class Component {
         this.terminals = {}; 
         this.state = {}; 
         this.dragging = false;
+        this.rotation = 0; // 0, 90, 180, 270
+    }
+
+    getTerminalPos(id) {
+        const t = this.terminals[id];
+        if (!t) return { x: this.x, y: this.y };
+
+        const cx = this.x + this.width / 2;
+        const cy = this.y + this.height / 2;
+        const rad = (this.rotation * Math.PI) / 180;
+
+        // Relative to center
+        const rx = (this.x + t.x) - cx;
+        const ry = (this.y + t.y) - cy;
+
+        // Rotate
+        const rotatedX = rx * Math.cos(rad) - ry * Math.sin(rad);
+        const rotatedY = rx * Math.sin(rad) + ry * Math.cos(rad);
+
+        return { x: cx + rotatedX, y: cy + rotatedY };
     }
 
     getTerminal(id) {
         if (!this.terminals[id]) return null;
+        const pos = this.getTerminalPos(id);
         return { 
-            x: this.x + this.terminals[id].x, 
-            y: this.y + this.terminals[id].y,
+            x: pos.x, 
+            y: pos.y,
             id: id,
             component: this
         };
@@ -243,11 +264,9 @@ class Component {
 
     // Hit test para terminales con area expandida para facilitar click
     getHoveredTerminal(mx, my) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            // Ajustar radio de hit según zoom si fuera necesario, pero coordenadas ya vienen transformadas
-            if (Math.hypot(mx - tx, my - ty) < 12) return this.getTerminal(id);
+        for (const id of Object.keys(this.terminals)) {
+            const pos = this.getTerminalPos(id);
+            if (Math.hypot(mx - pos.x, my - pos.y) < 12) return this.getTerminal(id);
         }
         return null;
     }
@@ -288,8 +307,9 @@ class Component {
 
     drawTerminals(ctx) {
         for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
+            const pos = this.getTerminalPos(id);
+            const tx = pos.x;
+            const ty = pos.y;
             
             // Verificar tensión para feedback visual en terminales
             const nodes = window.lastSolvedNodes || {};
@@ -1336,19 +1356,24 @@ class PushButton extends Component {
         this.state = { pressed: false };
     }
     draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x + this.width/2, this.y + this.height/2);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        ctx.translate(-this.width/2, -this.height/2);
+
         // Si hay imagen cargada, usar la imagen base y solo agregar efectos de presión
         if (assets[this.type]) {
             // Sombra para dar profundidad
             ctx.shadowColor = 'rgba(0,0,0,0.3)';
             ctx.shadowBlur = 15;
-            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.drawImage(assets[this.type], 0, 0, this.width, this.height);
             ctx.shadowBlur = 0;
             
             // Efecto de presión: oscurecer levemente el botón
             if (this.state.pressed) {
                 ctx.fillStyle = 'rgba(0,0,0,0.3)';
                 ctx.beginPath();
-                ctx.arc(this.x + 30, this.y + 25, 18, 0, Math.PI * 2);
+                ctx.arc(30, 25, 18, 0, Math.PI * 2);
                 ctx.fill();
             }
         } else {
@@ -1357,12 +1382,12 @@ class PushButton extends Component {
             const pressOffset = this.state.pressed ? 2 : 0;
             
             // Casing ring
-            ctx.beginPath(); ctx.arc(this.x+30, this.y+25, 22, 0, Math.PI*2); 
+            ctx.beginPath(); ctx.arc(30, 25, 22, 0, Math.PI*2); 
             ctx.fillStyle = '#cbd5e1'; ctx.fill(); ctx.stroke();
 
             // Button itself
-            ctx.beginPath(); ctx.arc(this.x+30, this.y+25 + pressOffset, 18, 0, Math.PI*2);
-            const grad = ctx.createRadialGradient(this.x+30-5, this.y+25+pressOffset-5, 2, this.x+30, this.y+25+pressOffset, 18);
+            ctx.beginPath(); ctx.arc(30, 25 + pressOffset, 18, 0, Math.PI*2);
+            const grad = ctx.createRadialGradient(30-5, 25+pressOffset-5, 2, 30, 25+pressOffset, 18);
             grad.addColorStop(0, this.state.pressed ? '#334155' : '#fff');
             grad.addColorStop(1, this.state.pressed ? '#0f172a' : btnColor);
             ctx.fillStyle = grad;
@@ -1374,8 +1399,9 @@ class PushButton extends Component {
                ctx.stroke();
             }
         }
+        ctx.restore();
         
-        // Dibujar terminales (heredado de Component pero llamamos directamente para control)
+        // Dibujar terminales
         this.drawTerminals(ctx);
     }
     
@@ -1411,17 +1437,22 @@ class PilotLight extends Component {
         this.state = { on: false };
     }
     draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x + this.width/2, this.y + this.height/2);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        ctx.translate(-this.width/2, -this.height/2);
+
         // 1. Dibujar imagen base si existe
         if (assets[this.type]) {
             ctx.shadowColor = 'rgba(0,0,0,0.3)';
             ctx.shadowBlur = 15;
-            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.drawImage(assets[this.type], 0, 0, this.width, this.height);
             ctx.shadowBlur = 0;
         } else {
             // Fallback: círculo gris
             ctx.fillStyle = '#cbd5e1';
             ctx.beginPath();
-            ctx.arc(this.x + 25, this.y + 25, 20, 0, Math.PI * 2);
+            ctx.arc(25, 25, 20, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#64748b';
             ctx.stroke();
@@ -1436,32 +1467,15 @@ class PilotLight extends Component {
             ctx.fillStyle = color;
             ctx.globalAlpha = 0.7;
             ctx.beginPath(); 
-            ctx.arc(this.x + 25, this.y + 25, 14, 0, Math.PI * 2); 
+            ctx.arc(25, 25, 14, 0, Math.PI * 2); 
             ctx.fill();
             ctx.globalAlpha = 1.0; 
             ctx.shadowBlur = 0;
         }
+        ctx.restore();
         
-        // 3. Terminales (Gold Standard + Edges)
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
-            ctx.fillStyle = '#fbbf24';
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.fillStyle = '#fff';
-            ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
-            ctx.font = 'bold 10px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText(id, tx, ty + 18);
-            ctx.shadowBlur = 0;
-        }
+        // 3. Terminales
+        this.drawTerminals(ctx);
     }
 }
 
@@ -2628,6 +2642,18 @@ function setupEventListeners() {
             } else {
                 motorControls.style.display = 'none';
             }
+        }
+
+        // Rotación de Componentes
+        const btnRotate = document.getElementById('btn-rotate-comp');
+        if (btnRotate) {
+             const canRotate = (component instanceof PushButton || component instanceof PilotLight);
+             btnRotate.style.display = canRotate ? 'flex' : 'none';
+             btnRotate.onclick = () => {
+                 component.rotation = (component.rotation + 90) % 360;
+                 ctxMenu.style.display = 'none';
+                 draw();
+             };
         }
 
         // Eliminar Genérico
