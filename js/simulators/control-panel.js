@@ -2380,7 +2380,7 @@ function setupEventListeners() {
         // Multímetro Controls
         const multimeterControls = document.getElementById('multimeter-controls');
         if (multimeterControls) {
-            if (component instanceof Multimeter || component === activeMultimeter) {
+            if (component instanceof Multimeter) {
                 multimeterControls.style.display = 'block';
                 const selectMode = document.getElementById('select-tester-mode');
                 selectMode.value = component.mode || 'VAC';
