@@ -1352,7 +1352,10 @@ class Motor extends Component {
 class PushButton extends Component {
     constructor(type, x, y) {
         super(type, x, y, 60, 60);
-        this.terminals = { '1': {x: 0, y: 50}, '2': {x: 60, y: 50} };
+        this.terminals = { 
+            '1': {x: 0, y: 50, label: '1'}, 
+            '2': {x: 60, y: 50, label: '2'} 
+        };
         this.state = { pressed: false };
     }
     draw(ctx) {
@@ -1433,7 +1436,10 @@ class PushButton extends Component {
 class PilotLight extends Component {
     constructor(type, x, y) {
         super(type, x, y, 50, 50);
-        this.terminals = { 'X1': {x: 0, y: 45}, 'X2': {x: 50, y: 45} };
+        this.terminals = { 
+            'X1': {x: 0, y: 45, label: 'X1'}, 
+            'X2': {x: 50, y: 45, label: 'X2'} 
+        };
         this.state = { on: false };
     }
     draw(ctx) {
@@ -2103,10 +2109,10 @@ class PressureSwitch extends Component {
     constructor(x, y) {
         super('pressure-switch', x, y, 60, 70);
         this.terminals = {
-            '1': { x: -20, y: -25, label: 'L1 (In)' },
-            '2': { x: 20, y: -25, label: 'L2 (In)' },
-            '3': { x: -20, y: 25, label: 'T1 (Out)' },
-            '4': { x: 20, y: 25, label: 'T2 (Out)' }
+            '1': { x: -20, y: -25, label: '1' },
+            '2': { x: 20, y: -25, label: '2' },
+            '3': { x: -20, y: 25, label: '3' },
+            '4': { x: 20, y: 25, label: '4' }
         };
         this.state = {
             highPressure: false, // false = < 20 PSI (Closed), true = > 40 PSI (Open)
