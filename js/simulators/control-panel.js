@@ -1981,12 +1981,8 @@ class FloatSwitch extends Component {
         }
     }
 
-    onMouseUp(mx, my) {
-        const dist = Math.hypot(mx - this.x, my - this.y);
-        if (dist < 40) {
-            this.state.highLevel = !this.state.highLevel;
-            if (typeof draw === 'function') draw();
-        }
+    toggle() {
+        this.state.highLevel = !this.state.highLevel;
     }
 }
 
@@ -2681,6 +2677,7 @@ function onMouseDown(e) {
             // Interacción Click (Siempre permitida si es componente interactivo)
             if (c instanceof Breaker) c.toggle();
             if (c instanceof Selector) c.toggle();
+            if (c instanceof FloatSwitch) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
 
             // Selección y arrastre (Solo si NO estamos simulando)
