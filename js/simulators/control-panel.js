@@ -282,6 +282,7 @@ class Component {
             type: this.type,
             x: this.x,
             y: this.y,
+            rotation: this.rotation,
             state: JSON.parse(JSON.stringify(this.state)) // Deep copy
         };
     }
@@ -330,13 +331,19 @@ class Component {
             ctx.stroke();
 
             // Etiquetas de terminales (L1, T1...)
-            if (t.label) {
+            const labelText = t.label || id;
+            if (labelText) {
                 ctx.fillStyle = '#fff';
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
                 ctx.font = 'bold 10px Inter, sans-serif';
                 ctx.textAlign = 'center';
-                // Posicionar etiqueta según ubicación
-                const ly = ty < this.y + 20 ? ty - 10 : ty + 18; 
-                ctx.fillText(t.label, tx, ly);
+                // Posicionar etiqueta según ubicación relativa al centro para que rote bien
+                const rad = (this.rotation * Math.PI) / 180;
+                // Si ty es menor que el centro, poner arriba, sino abajo
+                const cy = this.y + this.height/2;
+                const ly = ty < cy ? ty - 10 : ty + 18; 
+                ctx.fillText(labelText, tx, ly);
+                ctx.shadowBlur = 0;
             }
         }
     }
@@ -1010,37 +1017,6 @@ class Breaker extends Component {
         this.drawTerminals(ctx);
     }
     
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            // Halo / Base Oro
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Etiqueta
-            if (t.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 10px Inter';
-                ctx.textAlign = 'center';
-                // Lower label to avoid overlap
-                const ly = ty + 18; 
-                if(ty < this.y + 20) {
-                     // Top terminals (Input) still above
-                     ctx.fillText(t.label, tx, ty - 10);
-                } else {
-                     // Side/Bottom terminals below
-                     ctx.fillText(t.label, tx, ly);
-                }
-            }
-        }
-    }
     
     toggle() { this.state.closed = !this.state.closed; }
 }
@@ -1085,32 +1061,6 @@ class Contactor extends Component {
         this.drawTerminals(ctx);
     }
     
-    drawTerminals(ctx) {
-        // Misma lógica visual dorada para Contactores
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            if (t.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px Inter';
-                ctx.textAlign = 'center';
-                let ly = ty + 15;
-                if(ty < this.y + 20) ly = ty - 8; // Top terminals
-                if(id.startsWith('A')) ly = ty + 18; // Coil side text (Moved down)
-                
-                ctx.fillText(t.label, tx, ly);
-            }
-        }
-    }
 }
 
 class ThermalRelay extends Component {
@@ -1163,26 +1113,6 @@ class ThermalRelay extends Component {
         this.drawTerminals(ctx);
     }
     
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Etiquetas (Lowered)
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(id, tx, ty + 18);
-        }
-    }
 }
 
 
@@ -1324,27 +1254,6 @@ class Motor extends Component {
     }
 
     
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            if (t.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(t.label, tx, ty + 15); // Label correction
-            }
-        }
-    }
 }
 
 
@@ -1408,29 +1317,6 @@ class PushButton extends Component {
         this.drawTerminals(ctx);
     }
     
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            // Gold Standard
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI * 2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Label Lowered
-            ctx.fillStyle = '#fff'; // White text
-            ctx.shadowColor = '#000'; ctx.shadowBlur = 4; // Shadow for readability
-            ctx.font = 'bold 10px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText(id, tx, ty + 18);
-            ctx.shadowBlur = 0;
-        }
-    }
 }
 
 class PilotLight extends Component {
@@ -1536,27 +1422,6 @@ class Selector extends Component {
         this.drawTerminals(ctx);
     }
 
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            if (t.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(t.label, tx, ty + 18);
-            }
-        }
-    }
 }
 
 class TimerRelay extends Component {
@@ -1609,34 +1474,6 @@ class TimerRelay extends Component {
         this.drawTerminals(ctx);
     }
 
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            if (id.includes('A')) {
-                // Coil terminals
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(id, tx + 12, ty + 3); 
-            } else if (t.label || id) {
-                 // Side terminals
-                 ctx.fillStyle = '#fff';
-                 ctx.font = 'bold 9px Inter';
-                 ctx.textAlign = 'center';
-                 ctx.fillText(id, tx, ty + 18);
-            }
-        }
-    }
 }
 
 class Motor6T extends Component {
@@ -1774,39 +1611,12 @@ class Motor6T extends Component {
             ctx.font = 'bold 14px Arial';
             ctx.fillText(this.state.direction > 0 ? '⟳' : '⟲', this.x + 20, this.y + 80);
 
-            // Placa de características (Nameplate info)
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'left';
-            ctx.fillText(`${this.state.hp}HP ${this.state.voltage}V`, this.x + 100, this.y + 70);
-            ctx.fillText(`${this.state.nominalCurrent}A ${this.state.rpm}RPM`, this.x + 100, this.y + 85);
+            ctx.fillText(`${this.state.hp}HP ${this.state.voltage}V`, this.x + 100, this.y + 110);
+            ctx.fillText(`${this.state.nominalCurrent}A ${this.state.rpm}RPM`, this.x + 100, this.y + 125);
         }
         
         this.drawTerminals(ctx);
-    }
-
-    
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24'; 
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            if (t.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 10px Inter';
-                ctx.textAlign = 'center';
-                const ly = ty < this.y + 80 ? ty - 10 : ty + 18; // Top vs Bottom
-                ctx.fillText(t.label, tx, ly);
-            }
-        }
     }
 }
 
@@ -1914,28 +1724,6 @@ class AlternatingRelay extends Component {
         ctx.restore();
 
         this.drawTerminals(ctx);
-    }
-
-    drawTerminals(ctx) {
-        for (const [id, t] of Object.entries(this.terminals)) {
-            if (t.unused) continue;
-
-            const tx = this.x + t.x;
-            const ty = this.y + t.y;
-            ctx.beginPath();
-            ctx.arc(tx, ty, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#fbbf24';
-            ctx.fill();
-            ctx.strokeStyle = '#78350f';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Inter';
-            ctx.textAlign = 'center';
-            const labelY = ty < this.y + 55 ? ty - 10 : ty + 18;
-            ctx.fillText(id, tx, labelY);
-        }
     }
 }
 
@@ -2653,10 +2441,17 @@ function setupEventListeners() {
         // Rotación de Componentes
         const btnRotate = document.getElementById('btn-rotate-comp');
         if (btnRotate) {
-             const canRotate = (component instanceof PushButton || component instanceof PilotLight);
+             const type = component.type || "";
+             const canRotate = (component instanceof PushButton || component instanceof PilotLight || 
+                                type.includes('btn') || type.includes('pilot'));
+             
              btnRotate.style.display = canRotate ? 'flex' : 'none';
-             btnRotate.onclick = () => {
-                 component.rotation = (component.rotation + 90) % 360;
+             btnRotate.onclick = (e) => {
+                 e.preventDefault();
+                 e.stopPropagation();
+                 component.rotation = (component.rotation || 0) + 90;
+                 if (component.rotation >= 360) component.rotation = 0;
+                 console.log(`Rotating ${component.type} to ${component.rotation}`);
                  ctxMenu.style.display = 'none';
                  draw();
              };
