@@ -3419,14 +3419,14 @@ function draw() {
                  ctx.save();
                  ctx.shadowColor = (w.color && w.color !== '#000000') ? w.color : '#fbbf24';
                  ctx.shadowBlur = 10;
-                 ctx.lineWidth = isSelected ? 8 : 6;
+                 ctx.lineWidth = isSelected ? 4 : 3;
                  if (w.color === '#ef4444') ctx.strokeStyle = '#f87171';
                  else if (w.color === '#22c55e') ctx.strokeStyle = '#4ade80';
                  else if (w.color === '#3b82f6') ctx.strokeStyle = '#60a5fa';
                  else ctx.strokeStyle = '#fcd34d';
              } else {
                  ctx.strokeStyle = isSelected ? '#fbbf24' : (w.color || '#3b82f6'); 
-                 ctx.lineWidth = isSelected ? 6 : 4;
+                 ctx.lineWidth = isSelected ? 3 : 2;
              }
 
              if (w.isTriple) {
