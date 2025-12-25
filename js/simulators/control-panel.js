@@ -3125,9 +3125,12 @@ function solveCircuit() {
                     });
                 }
                 if (c instanceof AlternatingRelay) {
-                    const hasL1 = hasPhase(c, '4', 'L1') || hasPhase(c, '4', 'L');
-                    const hasL2 = hasPhase(c, '3', 'L2') || hasPhase(c, '3', 'L3') || hasPhase(c, '3', 'N');
-                    if (hasL1 && hasL2 && c.state.coilActive) {
+                    // Terminal 4 is the power input, Terminal 7 is the common output
+                    // Terminal 6 is output for pump 1, Terminal 8 is output for pump 2
+                    // The relay connects 7 to either 6 or 8 based on currentPump state
+                    const hasPower = hasPhase(c, '4', 'L1') || hasPhase(c, '4', 'L2') || 
+                                     hasPhase(c, '4', 'L3') || hasPhase(c, '4', 'L') || hasPhase(c, '4', 'N');
+                    if (hasPower) {
                         const targetTerm = c.state.currentPump === 1 ? '6' : '8';
                         const commonKey = `${c.id}_7`, targetKey = `${c.id}_${targetTerm}`;
                         if (nodes[commonKey]) nodes[commonKey].forEach(p => setNode(c, targetTerm, p));
