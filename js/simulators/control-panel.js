@@ -1124,10 +1124,14 @@ class Guardamotor extends Component {
         this.state = { 
             closed: false,
             tripped: false,
-            currentLimit: 6.0,
+            currentSetting: 6.0,
+            range: '4-6.3', // Default range
             currentSense: 0.0,
             tripEnabled: true
         };
+        // Parse range for logic usage
+        this.rangeMin = 4;
+        this.rangeMax = 6.3;
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
             'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'}
@@ -1164,6 +1168,12 @@ class Guardamotor extends Component {
             ctx.font = 'bold 10px Inter';
             ctx.fillText('TRIP', this.x + this.width - 20, this.y + 30);
         }
+
+        // Draw text setting
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Set: ${this.state.currentSetting}A`, this.x + this.width/2, this.y + 75);
 
         this.drawTerminals(ctx);
     }
@@ -2322,22 +2332,67 @@ function setupEventListeners() {
         ctxMenu.style.display = 'block';
 
         // Mostrar controles específicos
-        if (component instanceof ThermalRelay || component.type === 'thermal-relay' || 
-            component instanceof Guardamotor || component.type === 'guardamotor') {
-            
-            thermal.style.display = 'block';
-            inputLimit.value = component.state.currentLimit;
-            // Guardar referencia al componente actual para el input
-            inputLimit.onchange = (e) => {
-                component.state.currentLimit = parseFloat(e.target.value);
-            };
-            document.getElementById('btn-reset-relay').onclick = () => {
-                component.state.tripped = false;
-                if (component instanceof Guardamotor) component.state.closed = false; // Reset to OFF
-                draw();
-            };
+        
+        // 1. Controls for Thermal Relay
+        if (component instanceof ThermalRelay || component.type === 'thermal-relay') {
+             thermal.style.display = 'block';
+             const inputLimit = document.getElementById('input-limit');
+             inputLimit.value = component.state.currentLimit;
+             inputLimit.onchange = (e) => component.state.currentLimit = parseFloat(e.target.value);
+             document.getElementById('btn-reset-relay').onclick = () => { component.state.tripped = false; draw(); };
         } else {
-            thermal.style.display = 'none';
+             thermal.style.display = 'none';
+        }
+
+        // 2. Controls for Guardamotor
+        const gmControls = document.getElementById('guardamotor-controls');
+        if (component instanceof Guardamotor) {
+             gmControls.style.display = 'block';
+             
+             const rangeSelect = document.getElementById('select-guardamotor-range');
+             const settingInput = document.getElementById('input-guardamotor-setting');
+             
+             // Sync UI with State
+             rangeSelect.value = component.state.range;
+             settingInput.value = component.state.currentSetting;
+             settingInput.min = component.rangeMin;
+             settingInput.max = component.rangeMax;
+
+             // Listeners
+             rangeSelect.onchange = (e) => {
+                 const val = e.target.value;
+                 component.state.range = val;
+                 const [min, max] = val.split('-').map(parseFloat);
+                 component.rangeMin = min;
+                 component.rangeMax = max;
+                 
+                 // Auto-adjust setting if out of new range
+                 if (component.state.currentSetting < min) component.state.currentSetting = min;
+                 if (component.state.currentSetting > max) component.state.currentSetting = max;
+                 
+                 settingInput.min = min;
+                 settingInput.max = max;
+                 settingInput.value = component.state.currentSetting;
+                 draw();
+             };
+
+             settingInput.onchange = (e) => {
+                 let val = parseFloat(e.target.value);
+                 if (val < component.rangeMin) val = component.rangeMin;
+                 if (val > component.rangeMax) val = component.rangeMax;
+                 component.state.currentSetting = val;
+                 e.target.value = val;
+                 draw(); // Update visuals
+             };
+
+             document.getElementById('btn-reset-guardamotor').onclick = () => {
+                 component.state.tripped = false;
+                 component.state.closed = false; // Reset to OFF
+                 draw();
+             };
+
+        } else {
+             if(gmControls) gmControls.style.display = 'none';
         }
 
         // Toggle Espaciado Puente
@@ -3428,10 +3483,11 @@ function solveCircuit() {
 
         // Guardamotor Trip Logic
         components.filter(c => c instanceof Guardamotor).forEach(r => {
-             if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
+             // Trip condition: Current > Setting (allowing small margin or delay logic if deeper sim, but direct > here)
+             if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentSetting * 1.05) { // 5% tolerance
                  r.state.tripped = true;
-                 r.state.closed = false; // Mechanical trip opens contacts
-                 console.log(`Guardamotor ${r.id} TRIPPED`);
+                 r.state.closed = false; 
+                 console.log(`Guardamotor ${r.id} TRIPPED at ${r.state.currentSense}A (Limit: ${r.state.currentSetting}A)`);
                  circuitChanged = true;
              }
         });

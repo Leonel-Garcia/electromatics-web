@@ -461,6 +461,36 @@
                 <span style="font-size:10px;">(Cerrar NC)</span>
             </div>
         </div>
+        <div id="guardamotor-controls" style="display:none;">
+            <div class="menu-item">
+                <span>Rango (A):</span>
+                <select id="select-guardamotor-range" style="background:#0f172a; color:white; border:1px solid #475569; border-radius:4px; padding:2px 5px; font-size:12px; width: 100px;">
+                    <option value="0.1-0.16">0.1 - 0.16 A</option>
+                    <option value="0.16-0.25">0.16 - 0.25 A</option>
+                    <option value="0.25-0.4">0.25 - 0.4 A</option>
+                    <option value="0.4-0.63">0.4 - 0.63 A</option>
+                    <option value="0.63-1">0.63 - 1 A</option>
+                    <option value="1-1.6">1 - 1.6 A</option>
+                    <option value="1.6-2.5">1.6 - 2.5 A</option>
+                    <option value="2.5-4">2.5 - 4 A</option>
+                    <option value="4-6.3">4 - 6.3 A</option>
+                    <option value="6-10">6 - 10 A</option>
+                    <option value="9-14">9 - 14 A</option>
+                    <option value="13-18">13 - 18 A</option>
+                    <option value="17-23">17 - 23 A</option>
+                    <option value="20-25">20 - 25 A</option>
+                    <option value="24-32">24 - 32 A</option>
+                </select>
+            </div>
+            <div class="menu-item">
+                <span>Ajuste (A):</span>
+                <input type="number" id="input-guardamotor-setting" step="0.1" style="width: 60px;">
+            </div>
+            <div class="menu-item" id="btn-reset-guardamotor">
+                <span>Resetear</span>
+                <i class="fas fa-undo" style="font-size:10px;"></i>
+            </div>
+        </div>
         <div id="bridge-controls" style="display:none;">
             <div class="menu-item" id="btn-toggle-spacing">
                 <span>Cambiar Espaciado</span>
