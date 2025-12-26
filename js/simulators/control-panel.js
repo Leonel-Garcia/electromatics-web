@@ -2609,10 +2609,52 @@ function setupEventListeners() {
                     selectVoltage.appendChild(el);
                 });
 
+                // Sliders
+                const sL1 = document.getElementById('slider-vL1');
+                const sL2 = document.getElementById('slider-vL2');
+                const sL3 = document.getElementById('slider-vL3');
+                const vL1 = document.getElementById('val-vL1');
+                const vL2 = document.getElementById('val-vL2');
+                const vL3 = document.getElementById('val-vL3');
+
+                // Init Values
+                selectVoltage.value = component.state.voltage;
+                
+                // Initialize state if undefined (backward compatibility)
+                if (component.state.vL1 === undefined) component.state.vL1 = component.state.voltage;
+                if (component.state.vL2 === undefined) component.state.vL2 = component.state.voltage;
+                if (component.state.vL3 === undefined) component.state.vL3 = component.state.voltage;
+
+                if(sL1) { sL1.value = component.state.vL1; if(vL1) vL1.innerText = component.state.vL1; }
+                if(sL2) { sL2.value = component.state.vL2; if(vL2) vL2.innerText = component.state.vL2; }
+                if(sL3) { sL3.value = component.state.vL3; if(vL3) vL3.innerText = component.state.vL3; }
+
+                // Handlers
                 selectVoltage.onchange = (e) => {
-                    component.state.voltage = parseInt(e.target.value);
+                    const val = parseInt(e.target.value);
+                    component.state.voltage = val;
+                    // Reset all phases to base
+                    component.state.vL1 = val;
+                    component.state.vL2 = val;
+                    component.state.vL3 = val;
+                    // Update UI
+                    if(sL1) { sL1.value = val; if(vL1) vL1.innerText = val; }
+                    if(sL2) { sL2.value = val; if(vL2) vL2.innerText = val; }
+                    if(sL3) { sL3.value = val; if(vL3) vL3.innerText = val; }
                     draw();
                 };
+
+                const updatePhase = (phase, val) => {
+                    component.state[phase] = parseInt(val);
+                    if(phase === 'vL1' && vL1) vL1.innerText = val;
+                    if(phase === 'vL2' && vL2) vL2.innerText = val;
+                    if(phase === 'vL3' && vL3) vL3.innerText = val;
+                    draw();
+                };
+
+                if(sL1) sL1.oninput = (e) => updatePhase('vL1', e.target.value);
+                if(sL2) sL2.oninput = (e) => updatePhase('vL2', e.target.value);
+                if(sL3) sL3.oninput = (e) => updatePhase('vL3', e.target.value);
             } else {
                 sourceControls.style.display = 'none';
             }
@@ -3285,8 +3327,16 @@ function solveCircuit() {
         };
 
         // 1.1 Fuentes (Semillas)
+        // 1.1 Fuentes (Semillas)
         components.filter(c => c instanceof PowerSource).forEach(p => {
-            setNode(p, 'L1', 'L1'); setNode(p, 'L2', 'L2'); setNode(p, 'L3', 'L3'); setNode(p, 'N', 'N');
+            const vL1 = p.state.vL1 !== undefined ? p.state.vL1 : p.state.voltage;
+            const vL2 = p.state.vL2 !== undefined ? p.state.vL2 : p.state.voltage;
+            const vL3 = p.state.vL3 !== undefined ? p.state.vL3 : p.state.voltage;
+
+            setNode(p, 'L1', { voltage: vL1, phase: 0 }); 
+            setNode(p, 'L2', { voltage: vL2, phase: 120 });
+            setNode(p, 'L3', { voltage: vL3, phase: 240 });
+            setNode(p, 'N', { voltage: 0, phase: 0 });
         });
         components.filter(c => c instanceof SinglePhaseSource).forEach(p => {
             setNode(p, 'L', 'L1'); setNode(p, 'N', 'N');

@@ -365,13 +365,31 @@
                 <input type="number" id="input-supervisor-time" min="0" max="300" step="1" value="5" style="width: 60px;">
             </div>
         </div>
-        <div id="source-controls" style="display:none;">
+        <div id="source-controls" style="display:none; width: 220px;">
             <div class="menu-item">
-                <span>Voltaje:</span>
+                <span>Base:</span>
                 <select id="select-voltage" style="background:#0f172a; color:white; border:1px solid #475569; border-radius:4px; padding:2px 5px; font-size:12px;">
                     <option value="480">480 V</option>
                     <option value="208">208 V</option>
                 </select>
+            </div>
+            <div class="menu-item" style="flex-direction:column; align-items:flex-start;">
+                <div style="display:flex; justify-content:space-between; width:100%;">
+                    <span>L1:</span> <span id="val-vL1">208</span> V
+                </div>
+                <input type="range" id="slider-vL1" min="0" max="600" step="1" style="width:100%;">
+            </div>
+            <div class="menu-item" style="flex-direction:column; align-items:flex-start;">
+                 <div style="display:flex; justify-content:space-between; width:100%;">
+                    <span>L2:</span> <span id="val-vL2">208</span> V
+                </div>
+                <input type="range" id="slider-vL2" min="0" max="600" step="1" style="width:100%;">
+            </div>
+            <div class="menu-item" style="flex-direction:column; align-items:flex-start;">
+                 <div style="display:flex; justify-content:space-between; width:100%;">
+                    <span>L3:</span> <span id="val-vL3">208</span> V
+                </div>
+                <input type="range" id="slider-vL3" min="0" max="600" step="1" style="width:100%;">
             </div>
         </div>
         <div id="multimeter-controls" style="display:none;">
