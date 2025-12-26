@@ -69,7 +69,15 @@ const AIDispatcher = {
             };
         }
 
-        // 3. General Query
+        // 3. Course Generation
+        if (lower.includes('curso') || lower.includes('aprender') || lower.includes('tutorial') || lower.includes('clase') || lower.includes('enseñame')) {
+            return {
+                type: 'COURSE_GENERATION',
+                topic: text
+            };
+        }
+
+        // 4. General Query
         return {
             type: 'QUERY',
             text: text
@@ -83,6 +91,43 @@ const AIDispatcher = {
             AIDispatcher.renderMotorForm(intent.params, container);
         } else if (intent.type === 'RESIDENTIAL_CALC') {
             AIDispatcher.renderResidentialForm(intent.params, container);
+        } else if (intent.type === 'COURSE_GENERATION') {
+             container.innerHTML = `<div class="ai-message-bubble"><i class="fa-solid fa-graduation-cap fa-bounce"></i> Diseñando plan de estudios personalizado...</div>`;
+             
+             const prompt = `
+                Genera un curso estructurado sobre: "${intent.topic}".
+                Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin bloques de código) con esta estructura exacta:
+                {
+                    "title": "Título del Curso",
+                    "description": "Breve descripción",
+                    "modules": [
+                        {
+                            "title": "Título del Módulo",
+                            "slides": [
+                                {
+                                    "type": "concept", 
+                                    "title": "Título de la Diapositiva",
+                                    "content": "Explicación clara y didáctica (máx 50 palabras).",
+                                    "icon": "fa-solid fa-lightbulb" (elige un icono fontawesome v6 apropiado)
+                                }
+                            ]
+                        }
+                    ]
+                }
+                El curso debe tener al menos 3 módulos y 3 diapositivas por módulo.
+             `;
+
+             ElectrIA.getResponse(prompt).then(response => {
+                try {
+                    // Clean response if it contains markdown code blocks
+                    const cleanJson = response.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const courseData = JSON.parse(cleanJson);
+                    AIDispatcher.renderCourseView(courseData, container);
+                } catch (e) {
+                    console.error("Error parsing course JSON", e);
+                    container.innerHTML = `<div class="ai-message-bubble error">Error generando el curso. Intenta de nuevo con otro tema.</div>`;
+                }
+             });
         } else {
             // Use existing ElectrIA logic for general queries
             // Show loading state
@@ -657,6 +702,97 @@ const AIDispatcher = {
         if(summaryBoxes) summaryBoxes.style.display = 'none';
 
         document.getElementById(`disp-res-results-${uid}`).classList.remove('hidden');
+    renderCourseView: (courseData, container) => {
+        // Flatten slides for linear navigation
+        const allSlides = [];
+        courseData.modules.forEach(mod => {
+            // Module Intro Slide
+            allSlides.push({
+                isModuleIntro: true,
+                title: mod.title,
+                content: `Módulo: ${mod.title}`,
+                icon: "fa-solid fa-layer-group"
+            });
+            mod.slides.forEach(slide => allSlides.push(slide));
+        });
+
+        const uid = Date.now();
+        let currentSlideIdx = 0;
+
+        const renderSlide = () => {
+             const slide = allSlides[currentSlideIdx];
+             const progress = ((currentSlideIdx + 1) / allSlides.length) * 100;
+             const slideHtml = `
+                <div class="course-player" id="course-${uid}" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
+                    <!-- Header -->
+                    <div style="padding: 15px 20px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--safety-orange); font-weight: 600; font-size: 12px; letter-spacing: 1px;">CURSO IA</span>
+                        <span style="color: #fff; opacity: 0.7; font-size: 12px;">${currentSlideIdx + 1} / ${allSlides.length}</span>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div style="height: 4px; background: rgba(255,255,255,0.1); width: 100%;">
+                        <div style="height: 100%; width: ${progress}%; background: var(--safety-orange); transition: width 0.3s ease;"></div>
+                    </div>
+
+                    <!-- Slide Content -->
+                    <div style="padding: 40px; min-height: 300px; display: flex; flex-direction: column; justify-content: center; text-align: center; animation: slideIn 0.5s ease;">
+                        <div style="font-size: 48px; color: ${slide.isModuleIntro ? 'var(--safety-orange)' : 'var(--electric-blue)'}; margin-bottom: 20px;">
+                            <i class="${slide.icon || 'fa-solid fa-star'}"></i>
+                        </div>
+                        <h2 style="color: #fff; font-size: 24px; margin-bottom: 20px; line-height: 1.3;">${slide.title}</h2>
+                        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">${slide.content}</p>
+                    </div>
+
+                    <!-- Controls -->
+                    <div style="padding: 20px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; gap: 10px;">
+                        <button class="nav-btn prev" ${currentSlideIdx === 0 ? 'disabled style="opacity:0.3"' : ''} style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            <i class="fa-solid fa-arrow-left"></i> Anterior
+                        </button>
+                        <button class="nav-btn next" style="background: var(--electric-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 600;">
+                            ${currentSlideIdx === allSlides.length - 1 ? 'Finalizar <i class="fa-solid fa-check"></i>' : 'Siguiente <i class="fa-solid fa-arrow-right"></i>'}
+                        </button>
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes slideIn {
+                        from { opacity: 0; transform: translateX(20px); }
+                        to { opacity: 1; transform: translateX(0); }
+                    }
+                </style>
+             `;
+             
+             container.innerHTML = slideHtml;
+
+             // Re-attach listeners after render
+             const player = document.getElementById(`course-${uid}`);
+             player.querySelector('.prev').onclick = () => {
+                 if(currentSlideIdx > 0) {
+                     currentSlideIdx--;
+                     renderSlide();
+                 }
+             };
+             player.querySelector('.next').onclick = () => {
+                 if(currentSlideIdx < allSlides.length - 1) {
+                     currentSlideIdx++;
+                     renderSlide();
+                 } else {
+                     // Finish screen
+                     container.innerHTML = `
+                        <div class="ai-message-bubble" style="text-align: center;">
+                            <i class="fa-solid fa-trophy" style="font-size: 40px; color: #FFD700; margin-bottom: 10px;"></i>
+                            <h3>¡Curso Completado!</h3>
+                            <p>Has finalizado el curso: <strong>${courseData.title}</strong></p>
+                            <button class="btn btn-primary" onclick="AIDispatcher.processCommand('Genera un examen sobre este curso')">Generar Examen</button>
+                        </div>
+                     `;
+                 }
+             };
+        };
+
+        // Initial render
+        renderSlide();
     }
 };
 
