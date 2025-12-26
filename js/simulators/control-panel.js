@@ -3328,15 +3328,21 @@ function solveCircuit() {
 
         // 1.1 Fuentes (Semillas)
         // 1.1 Fuentes (Semillas)
+        let sourceVoltages = { 'L1': 208, 'L2': 208, 'L3': 208 }; // Default
+
         components.filter(c => c instanceof PowerSource).forEach(p => {
             const vL1 = p.state.vL1 !== undefined ? p.state.vL1 : p.state.voltage;
             const vL2 = p.state.vL2 !== undefined ? p.state.vL2 : p.state.voltage;
             const vL3 = p.state.vL3 !== undefined ? p.state.vL3 : p.state.voltage;
+            
+            sourceVoltages['L1'] = vL1;
+            sourceVoltages['L2'] = vL2;
+            sourceVoltages['L3'] = vL3;
 
-            setNode(p, 'L1', { voltage: vL1, phase: 0 }); 
-            setNode(p, 'L2', { voltage: vL2, phase: 120 });
-            setNode(p, 'L3', { voltage: vL3, phase: 240 });
-            setNode(p, 'N', { voltage: 0, phase: 0 });
+            setNode(p, 'L1', 'L1'); 
+            setNode(p, 'L2', 'L2'); 
+            setNode(p, 'L3', 'L3'); 
+            setNode(p, 'N', 'N');
         });
         components.filter(c => c instanceof SinglePhaseSource).forEach(p => {
             setNode(p, 'L', 'L1'); setNode(p, 'N', 'N');
@@ -3736,12 +3742,24 @@ function solveCircuit() {
              } else {
                  const p1 = [...hasL1][0], p2 = [...hasL2][0], p3 = [...hasL3][0];
                  
+                 // Check Voltage Levels
+                 const v1 = sourceVoltages[p1] || s.state.voltageSetting || 208;
+                 const v2 = sourceVoltages[p2] || s.state.voltageSetting || 208;
+                 const v3 = sourceVoltages[p3] || s.state.voltageSetting || 208;
+
+                 const avgV = (v1 + v2 + v3) / 3;
+                 
+                 // Simple Logic for simulator
+                 if (avgV < s.state.voltageSetting) fault = 'UnderVoltage';
+                 else if (s.state.maxVoltageSetting && avgV > s.state.maxVoltageSetting) fault = 'OverVoltage';
+                 else fault = 'None'; 
+
                  // 2. Check Sequence (L1->L2->L3 or equivalent rotation)
                  // Valid: (L1,L2,L3), (L2,L3,L1), (L3,L1,L2) assuming standard naming
                  // Simplification: Check against known source phases if possible, or just unique
                  if (p1 === p2 || p2 === p3 || p1 === p3) {
                      fault = 'PhaseLoss'; // Duplicated phase treated as loss
-                 } else {
+                 } else if (fault === 'None') {
                      // Check if Sequence is Negative?
                      // Expected: L1-L2, L2-L3, L3-L1 order
                      // p1='L1', p2='L3' -> Reverse
@@ -3758,12 +3776,6 @@ function solveCircuit() {
                  // Simplification: Use global voltage from first PowerSource for now?
                  // Better: Each node tracks its source in a real EM sim, but here we just have strings.
                  // Let's grab the first PowerSource's voltage state.
-                 const source = components.find(c => c instanceof PowerSource);
-                 if (source && fault === 'None') {
-                     const v = source.state.voltage;
-                     // Range check (hysteresis could be added)
-                     if (v < s.state.voltageSetting) fault = 'UnderVoltage';
-                     if (v > 264) fault = 'OverVoltage'; // Hardcoded max from image?
                  }
              }
              
