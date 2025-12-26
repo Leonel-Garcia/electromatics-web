@@ -210,7 +210,8 @@ const ASSET_PATHS = {
     'alternating-relay': 'img/simulators/control-panel/alternating-relay.png',
     'float-switch': 'img/simulators/control-panel/float-switch.png',
     'terminal-block': 'img/simulators/control-panel/terminal-block.png',
-    'pressure-switch': 'img/simulators/control-panel/pressure-switch.png'
+    'pressure-switch': 'img/simulators/control-panel/pressure-switch.png',
+    'guardamotor': 'img/simulators/control-panel/guardamotor.png'
 };
 
 // ... (Rest of file) ...
@@ -1115,6 +1116,67 @@ class ThermalRelay extends Component {
     
 }
 
+
+
+class Guardamotor extends Component {
+    constructor(x, y) {
+        super('guardamotor', x, y, 100, 120);
+        this.state = { 
+            closed: false,
+            tripped: false,
+            currentLimit: 6.0,
+            currentSense: 0.0,
+            tripEnabled: true
+        };
+        this.terminals = {
+            'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
+            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'}
+        };
+    }
+    
+    draw(ctx) {
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+
+        const ledX = this.x + this.width - 20;
+        const ledY = this.y + 45;
+        
+        let color = '#ef4444'; 
+        if (this.state.closed && !this.state.tripped) color = '#22c55e';
+        
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (this.state.tripped) {
+            ctx.fillStyle = '#fce7f3';
+            ctx.font = 'bold 10px Inter';
+            ctx.fillText('TRIP', this.x + this.width - 20, this.y + 30);
+        }
+
+        this.drawTerminals(ctx);
+    }
+    
+    toggle() {
+        if (this.state.tripped) {
+            this.state.tripped = false;
+            this.state.closed = false; 
+        } else {
+            this.state.closed = !this.state.closed;
+        }
+    }
+}
 
 class Motor extends Component {
     constructor(x, y) {
@@ -2247,6 +2309,8 @@ function setupEventListeners() {
         // Handle title for different component types
         if (component instanceof Multimeter) {
             title.innerText = 'MULTÍMETRO';
+        } else if (component instanceof Guardamotor) {
+             title.innerText = 'GUARDAMOTOR';
         } else if (component.type) {
             title.innerText = component.type.replace('-', ' ').toUpperCase();
         } else {
@@ -2258,7 +2322,9 @@ function setupEventListeners() {
         ctxMenu.style.display = 'block';
 
         // Mostrar controles específicos
-        if (component instanceof ThermalRelay || component.type === 'thermal-relay') {
+        if (component instanceof ThermalRelay || component.type === 'thermal-relay' || 
+            component instanceof Guardamotor || component.type === 'guardamotor') {
+            
             thermal.style.display = 'block';
             inputLimit.value = component.state.currentLimit;
             // Guardar referencia al componente actual para el input
@@ -2267,6 +2333,7 @@ function setupEventListeners() {
             };
             document.getElementById('btn-reset-relay').onclick = () => {
                 component.state.tripped = false;
+                if (component instanceof Guardamotor) component.state.closed = false; // Reset to OFF
                 draw();
             };
         } else {
@@ -2577,7 +2644,9 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'alternating-relay': c = new AlternatingRelay(x, y); break;
         case 'float-switch': c = new FloatSwitch(x, y); break;
         case 'terminal-block': c = new TerminalBlock(x, y); break;
+        case 'terminal-block': c = new TerminalBlock(x, y); break;
         case 'pressure-switch': c = new PressureSwitch(x, y); break;
+        case 'guardamotor': c = new Guardamotor(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -3026,6 +3095,15 @@ function solveCircuit() {
                         });
                     }
                 }
+                if (c instanceof Guardamotor) {
+                    if (c.state.closed && !c.state.tripped) {
+                        ['L1','L2','L3'].forEach((inT, i) => {
+                            const outT = ['T1','T2','T3'][i];
+                            if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
+                            if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
+                        });
+                    }
+                }
                 if (c instanceof Contactor) {
                     if (c.state.engaged) {
                         // Principales
@@ -3200,7 +3278,7 @@ function solveCircuit() {
         
         // C. Consumidores
         // Limpiar sensores de corriente
-        components.filter(c => c instanceof ThermalRelay).forEach(r => r.state.currentSense = 0);
+        components.filter(c => c instanceof ThermalRelay || c instanceof Guardamotor).forEach(r => r.state.currentSense = 0);
 
         // A. BOBINAS DE CONTACTORES
         components.filter(c => c instanceof Contactor).forEach(k => {
@@ -3269,8 +3347,8 @@ function solveCircuit() {
                     else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
                     else m.state.direction = 1;
 
-                    // Corriente -> Térmicos
-                    components.filter(c => c instanceof ThermalRelay && !c.state.tripped).forEach(r => {
+                    // Corriente -> Térmicos y Guardamotores
+                    components.filter(c => (c instanceof ThermalRelay || c instanceof Guardamotor) && !c.state.tripped).forEach(r => {
                         const hasT1 = nodes[`${r.id}_T1`], hasT2 = nodes[`${r.id}_T2`], hasT3 = nodes[`${r.id}_T3`];
                         const connected = (t, mP) => t && mP && [...t].some(p => mP.has(p));
                         if (connected(hasT1, hasU) && connected(hasT2, hasV) && connected(hasT3, hasW)) {
@@ -3345,6 +3423,16 @@ function solveCircuit() {
                  r.state.tripped = true;
                  console.log(`Relé Térmico ${r.id} TRIPPED`);
                  circuitChanged = true; // Topología cambia (NC abre)
+             }
+        });
+
+        // Guardamotor Trip Logic
+        components.filter(c => c instanceof Guardamotor).forEach(r => {
+             if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
+                 r.state.tripped = true;
+                 r.state.closed = false; // Mechanical trip opens contacts
+                 console.log(`Guardamotor ${r.id} TRIPPED`);
+                 circuitChanged = true;
              }
         });
 
