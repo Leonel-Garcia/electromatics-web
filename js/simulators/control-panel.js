@@ -1193,6 +1193,7 @@ class Guardamotor extends Component {
 }
 
 class ThreePhaseMonitor extends Component {
+    // Version: Fix-Sequence-Indication-v2
     constructor(x, y) {
         super('supervisor', x, y, 140, 100); 
         this.label = 'SUP';
