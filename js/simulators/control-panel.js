@@ -1239,7 +1239,7 @@ class ThreePhaseMonitor extends Component {
         // Draw LEDs
         // Vertical stack on left side typically
         const ledX = this.x + 18;
-        const startY = this.y + 40;
+        const startY = this.y + 30;
         const gap = 11;
 
         const drawLed = (y, color, on) => {
@@ -3771,6 +3771,9 @@ function solveCircuit() {
                  if (p1 === p2 || p2 === p3 || p1 === p3) {
                      fault = 'PhaseLoss'; // Duplicated phase treated as loss
                  } else if (fault === 'None') {
+                     // Debug Sequence
+                     // console.log(`Monitor ${s.id}: p1=${p1}, p2=${p2}, p3=${p3}`);
+                     
                      // Check if Sequence is Negative?
                      // Expected: L1-L2, L2-L3, L3-L1 order
                      // p1='L1', p2='L3' -> Reverse
