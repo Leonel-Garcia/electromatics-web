@@ -210,8 +210,14 @@
     </footer>
 
     <!-- Auth Scripts -->
-    <script src="js/auth-mock.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/simple-auth.js"></script>
+    <script src="js/simulator-auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             SimulatorAuth.init();
+        });
+    </script>
     <!-- Simulator Script -->
     <script src="js/simulators/produccion.js"></script>
 </body>
