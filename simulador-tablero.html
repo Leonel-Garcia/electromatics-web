@@ -491,6 +491,16 @@
                 <i class="fas fa-undo" style="font-size:10px;"></i>
             </div>
         </div>
+        <div id="supervisor-controls" style="display:none;">
+            <div class="menu-item">
+                <span>Min Voltaje (V):</span>
+                <input type="number" id="input-supervisor-min" min="180" max="240" step="1" value="208" style="width: 60px;">
+            </div>
+            <div class="menu-item">
+                <span>Temporizador (s):</span>
+                <input type="number" id="input-supervisor-time" min="0" max="300" step="1" value="5" style="width: 60px;">
+            </div>
+        </div>
         <div id="bridge-controls" style="display:none;">
             <div class="menu-item" id="btn-toggle-spacing">
                 <span>Cambiar Espaciado</span>
@@ -679,6 +689,15 @@
                         style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2;">
                </div>
                <span>Guardamotor</span>
+            </button>
+            <button class="component-btn" draggable="true" data-component="supervisor">
+               <div class="component-img" style="background: #0f172a; border: 1px solid #334155; position: relative; overflow: hidden;">
+                   <img src="img/simulators/control-panel/supervisor.png" 
+                        alt="" 
+                        onerror="this.style.display='none'"
+                        style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2;">
+               </div>
+               <span>Sup. Trifásico</span>
             </button>
           </div>
 

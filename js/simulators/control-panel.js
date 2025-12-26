@@ -211,7 +211,8 @@ const ASSET_PATHS = {
     'float-switch': 'img/simulators/control-panel/float-switch.png',
     'terminal-block': 'img/simulators/control-panel/terminal-block.png',
     'pressure-switch': 'img/simulators/control-panel/pressure-switch.png',
-    'guardamotor': 'img/simulators/control-panel/guardamotor.png'
+    'guardamotor': 'img/simulators/control-panel/guardamotor.png',
+    'supervisor': 'img/simulators/control-panel/supervisor.png'
 };
 
 // ... (Rest of file) ...
@@ -1187,6 +1188,97 @@ class Guardamotor extends Component {
             this.state.closed = false; 
         } else {
             this.state.closed = !this.state.closed;
+        }
+    }
+}
+
+class ThreePhaseMonitor extends Component {
+    constructor(x, y) {
+        super('supervisor', x, y, 140, 100); 
+        this.label = 'SUP';
+        this.terminals = {
+            // Inputs (L1, L2, L3)
+            // Left to right based on Image: 98, 95, 96 | L1, L2, L3
+            // Relays on left:
+            '98': {x: 20, y: 85, label: '98'},
+            '95': {x: 40, y: 85, label: '95'},
+            '96': {x: 60, y: 85, label: '96'},
+            
+            // Phases on right:
+            'L1': {x: 90, y: 85, label: 'L1'},
+            'L2': {x: 110, y: 85, label: 'L2'},
+            'L3': {x: 130, y: 85, label: 'L3'}
+        };
+        
+        this.state = {
+            voltageSetting: 208, // Min Voltage
+            timerSetting: 5000,  // On Delay in ms
+            timerCurrent: 0,
+            active: false,      // Relay Output (95-98 Closed?)
+            fault: 'None',      // None, PhaseLoss, Sequence, UnderVoltage, OverVoltage
+            supplyOk: false
+        };
+    }
+
+    draw(ctx) {
+        // Draw Body (Image)
+        if (assets['supervisor']) {
+             ctx.shadowColor = 'rgba(0,0,0,0.3)';
+             ctx.shadowBlur = 15;
+            ctx.drawImage(assets['supervisor'], this.x, this.y, this.width, this.height);
+             ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // Draw LEDs
+        // Vertical stack on left side typically
+        const ledX = this.x + 18;
+        const startY = this.y + 40;
+        const gap = 11;
+
+        const drawLed = (y, color, on) => {
+            ctx.beginPath();
+            ctx.arc(ledX, y, 3.5, 0, Math.PI*2);
+            ctx.fillStyle = on ? color : '#334155';
+            ctx.fill();
+            if(on) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        };
+
+        // 1. Control (Relay Active) - Green
+        drawLed(startY, '#22c55e', this.state.active);
+        
+        // 2. Espera (Waiting) - Yellow
+        const waiting = this.state.supplyOk && !this.state.active && this.state.fault === 'None';
+        drawLed(startY + gap, '#fbbf24', waiting);
+        
+        // 3. Sobre Voltaje - Red
+        drawLed(startY + gap*2, '#ef4444', this.state.fault === 'OverVoltage');
+        
+        // 4. Bajo Voltaje - Red
+        drawLed(startY + gap*3, '#ef4444', this.state.fault === 'UnderVoltage');
+        
+        // 5. Secuencia - Red
+        drawLed(startY + gap*4, '#ef4444', this.state.fault === 'Sequence' || this.state.fault === 'PhaseLoss');
+
+        // Draw Terminals
+        this.drawTerminals(ctx);
+        
+        // Hover Overlay for Settings
+        if (this.isMouseOver(mousePos.x, mousePos.y)) {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(this.x, this.y - 22, this.width, 20);
+            ctx.fillStyle = '#fff';
+            ctx.font = '11px Inter';
+            ctx.fillText(`Vmin:${this.state.voltageSetting}V  T:${this.state.timerSetting/1000}s`, this.x + 5, this.y - 8);
         }
     }
 }
@@ -2398,6 +2490,28 @@ function setupEventListeners() {
              if(gmControls) gmControls.style.display = 'none';
         }
 
+        // 3. Controls for Supervisor
+        const supControls = document.getElementById('supervisor-controls');
+        if (supControls) {
+            if (component instanceof ThreePhaseMonitor) {
+                supControls.style.display = 'block';
+                const inputMin = document.getElementById('input-supervisor-min');
+                const inputTime = document.getElementById('input-supervisor-time');
+                
+                inputMin.value = component.state.voltageSetting;
+                inputTime.value = component.state.timerSetting / 1000;
+                
+                inputMin.onchange = (e) => {
+                    component.state.voltageSetting = parseFloat(e.target.value);
+                };
+                inputTime.onchange = (e) => {
+                    component.state.timerSetting = parseFloat(e.target.value) * 1000;
+                };
+            } else {
+                supControls.style.display = 'none';
+            }
+        }
+
         // Toggle Espaciado Puente
         const bridgeControls = document.getElementById('bridge-controls');
         if (bridgeControls) {
@@ -2705,6 +2819,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'terminal-block': c = new TerminalBlock(x, y); break;
         case 'pressure-switch': c = new PressureSwitch(x, y); break;
         case 'guardamotor': c = new Guardamotor(x, y); break;
+        case 'supervisor': c = new ThreePhaseMonitor(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -3284,11 +3399,22 @@ function solveCircuit() {
                         if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, '7', p));
                     }
                 }
-                if (c instanceof FloatSwitch) {
-                    const targetTerm = c.state.highLevel ? 'NO' : 'NC';
-                    const comKey = `${c.id}_COM`, targetKey = `${c.id}_${targetTerm}`;
-                    if (nodes[comKey]) nodes[comKey].forEach(p => setNode(c, targetTerm, p));
-                    if (nodes[targetKey]) nodes[targetKey].forEach(p => setNode(c, 'COM', p));
+                if (c instanceof ThreePhaseMonitor) {
+                    // Logic handled in separate phase, here just pass contacts if active
+                    if (c.state.active) {
+                         // Relay NO (95-98) Closed (Active = OK)
+                         // Wait, usually 95-96 is NC (Fault/Off?) and 95-98 is NO (OK?)
+                         // Standard: 95 Com. 96 NC. 98 NO.
+                         // If Active (Green LED), supply is good -> 95 connects to 98.
+                         const k95 = `${c.id}_95`, k98 = `${c.id}_98`;
+                         if(nodes[k95]) nodes[k95].forEach(p => setNode(c, '98', p));
+                         if(nodes[k98]) nodes[k98].forEach(p => setNode(c, '95', p));
+                    } else {
+                         // Relay NC (95-96) Closed (Inactive/Fault)
+                         const k95 = `${c.id}_95`, k96 = `${c.id}_96`;
+                         if(nodes[k95]) nodes[k95].forEach(p => setNode(c, '96', p));
+                         if(nodes[k96]) nodes[k96].forEach(p => setNode(c, '95', p));
+                    }
                 }
                 if (c instanceof TerminalBlock) {
                     for (let i = 1; i <= c.state.poles; i++) {
@@ -3503,6 +3629,75 @@ function solveCircuit() {
                  r.state.closed = false; 
                  console.log(`Guardamotor ${r.id} TRIPPED at ${r.state.currentSense}A (Limit: ${r.state.currentSetting}A)`);
                  circuitChanged = true;
+             }
+        });
+
+        // Supervisor Trifásico Logic
+        components.filter(c => c instanceof ThreePhaseMonitor).forEach(s => {
+             const hasL1 = nodes[`${s.id}_L1`];
+             const hasL2 = nodes[`${s.id}_L2`];
+             const hasL3 = nodes[`${s.id}_L3`];
+             
+             let fault = 'None';
+             let supplyOk = false;
+             
+             // 1. Check Phase Presence
+             if (!hasL1 || !hasL1.size || !hasL2 || !hasL2.size || !hasL3 || !hasL3.size) {
+                 fault = 'PhaseLoss';
+             } else {
+                 const p1 = [...hasL1][0], p2 = [...hasL2][0], p3 = [...hasL3][0];
+                 
+                 // 2. Check Sequence (L1->L2->L3 or equivalent rotation)
+                 // Valid: (L1,L2,L3), (L2,L3,L1), (L3,L1,L2) assuming standard naming
+                 // Simplification: Check against known source phases if possible, or just unique
+                 if (p1 === p2 || p2 === p3 || p1 === p3) {
+                     fault = 'PhaseLoss'; // Duplicated phase treated as loss
+                 } else {
+                     // Check if Sequence is Negative?
+                     // Expected: L1-L2, L2-L3, L3-L1 order
+                     // p1='L1', p2='L3' -> Reverse
+                     if ((p1.endsWith('L1') && p2.endsWith('L3')) ||
+                         (p1.endsWith('L2') && p2.endsWith('L1')) ||
+                         (p1.endsWith('L3') && p2.endsWith('L2'))) {
+                         fault = 'Sequence';
+                     }
+                 }
+                 
+                 // 3. Check Voltage (Simulated)
+                 // We need to find the source voltage. Iterate sources? 
+                 // Heuristic: Find source connected to these nodes.
+                 // Simplification: Use global voltage from first PowerSource for now?
+                 // Better: Each node tracks its source in a real EM sim, but here we just have strings.
+                 // Let's grab the first PowerSource's voltage state.
+                 const source = components.find(c => c instanceof PowerSource);
+                 if (source && fault === 'None') {
+                     const v = source.state.voltage;
+                     // Range check (hysteresis could be added)
+                     if (v < s.state.voltageSetting) fault = 'UnderVoltage';
+                     if (v > 264) fault = 'OverVoltage'; // Hardcoded max from image?
+                 }
+             }
+             
+             if (fault === 'None') supplyOk = true;
+             s.state.fault = fault;
+             s.state.supplyOk = supplyOk;
+             
+             // Timer Logic
+             if (supplyOk) {
+                 if (!s.state.active) {
+                     s.state.timerCurrent += 16; // 16ms per frame
+                     if (s.state.timerCurrent >= s.state.timerSetting) {
+                         s.state.active = true;
+                         s.state.timerCurrent = 0;
+                         circuitChanged = true;
+                     }
+                 }
+             } else {
+                 s.state.timerCurrent = 0;
+                 if (s.state.active) {
+                     s.state.active = false;
+                     circuitChanged = true;
+                 }
              }
         });
 
