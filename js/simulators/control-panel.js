@@ -1267,8 +1267,16 @@ class ThreePhaseMonitor extends Component {
         // 4. Bajo Voltaje - Red
         drawLed(startY + gap*3, '#ef4444', this.state.fault === 'UnderVoltage');
         
-        // 5. Secuencia - Red
-        drawLed(startY + gap*4, '#ef4444', this.state.fault === 'Sequence' || this.state.fault === 'PhaseLoss');
+        // 5. Falta de Fase - Red
+    drawLed(startY + gap*4, '#ef4444', this.state.fault === 'PhaseLoss');
+
+    // 6. Secuencia Invertida - Red
+    drawLed(startY + gap*5, '#ef4444', this.state.fault === 'Sequence');
+    if (!assets['supervisor']) {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px Arial';
+        ctx.fillText('SEC', ledX + 10, startY + gap*5 + 3);
+    }
 
         // Draw Terminals
         this.drawTerminals(ctx);
