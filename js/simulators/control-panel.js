@@ -3743,16 +3743,18 @@ function solveCircuit() {
                  const p1 = [...hasL1][0], p2 = [...hasL2][0], p3 = [...hasL3][0];
                  
                  // Check Voltage Levels
-                 const v1 = sourceVoltages[p1] || s.state.voltageSetting || 208;
-                 const v2 = sourceVoltages[p2] || s.state.voltageSetting || 208;
-                 const v3 = sourceVoltages[p3] || s.state.voltageSetting || 208;
+                  const v1 = sourceVoltages[p1] || s.state.voltageSetting || 208;
+                  const v2 = sourceVoltages[p2] || s.state.voltageSetting || 208;
+                  const v3 = sourceVoltages[p3] || s.state.voltageSetting || 208;
 
-                 const avgV = (v1 + v2 + v3) / 3;
-                 
-                 // Simple Logic for simulator
-                 if (avgV < s.state.voltageSetting) fault = 'UnderVoltage';
-                 else if (s.state.maxVoltageSetting && avgV > s.state.maxVoltageSetting) fault = 'OverVoltage';
-                 else fault = 'None'; 
+                  // Check Individual Phases (Any phase out of range triggers fault)
+                  if (v1 < s.state.voltageSetting || v2 < s.state.voltageSetting || v3 < s.state.voltageSetting) {
+                      fault = 'UnderVoltage';
+                  } else if (s.state.maxVoltageSetting && (v1 > s.state.maxVoltageSetting || v2 > s.state.maxVoltageSetting || v3 > s.state.maxVoltageSetting)) {
+                      fault = 'OverVoltage';
+                  } else {
+                      fault = 'None'; 
+                  }
 
                  // 2. Check Sequence (L1->L2->L3 or equivalent rotation)
                  // Valid: (L1,L2,L3), (L2,L3,L1), (L3,L1,L2) assuming standard naming
