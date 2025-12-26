@@ -146,7 +146,7 @@ const SimpleAuth = {
                     width: 100%;
                     height: 100%;
                     background: rgba(0,0,0,0.8);
-                    z-index: 1000;
+                    z-index: 20000;
                     justify-content: center;
                     align-items: center;
                 }
@@ -462,7 +462,7 @@ const SimpleAuth = {
 
             if (result.success) {
                 SimpleAuth.showMessage('login-form-container', '¡Bienvenido!', 'success');
-                setTimeout(() => modal.classList.remove('active'), 1000);
+                setTimeout(() => window.location.reload(), 1000);
             } else {
                 SimpleAuth.showMessage('login-form-container', result.message, 'error');
             }
@@ -486,7 +486,7 @@ const SimpleAuth = {
 
             if (result.success) {
                 SimpleAuth.showMessage('register-form-container', '¡Cuenta creada!', 'success');
-                setTimeout(() => modal.classList.remove('active'), 1000);
+                setTimeout(() => window.location.reload(), 1000);
             } else {
                 SimpleAuth.showMessage('register-form-container', result.message, 'error');
             }
