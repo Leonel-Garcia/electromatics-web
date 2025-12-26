@@ -40,7 +40,16 @@ const AIDispatcher = {
     detectIntent: (text) => {
         const lower = text.toLowerCase();
 
-        // 1. Motor Calculation
+        // 1. Course Generation (Priority High)
+        // Check this first so "curso de motores" doesn't trigger motor calculator
+        if (lower.includes('curso') || lower.includes('aprender') || lower.includes('tutorial') || lower.includes('clase') || lower.includes('enseñame') || lower.includes('presentación') || lower.includes('diapositivas')) {
+            return {
+                type: 'COURSE_GENERATION',
+                topic: text
+            };
+        }
+
+        // 2. Motor Calculation
         if (lower.includes('motor') || lower.includes('bomba')) {
             const hpMatch = lower.match(/(\d+(\.\d+)?)\s*(hp|cv)/);
             const voltageMatch = lower.match(/(\d+)\s*v/);
@@ -56,7 +65,7 @@ const AIDispatcher = {
             };
         }
 
-        // 2. Residential Calculation
+        // 3. Residential Calculation
         if (lower.includes('casa') || lower.includes('residencial') || lower.includes('vivienda') || 
             lower.includes('apartamento') || lower.includes('carga residencial') || 
             lower.includes('área') || lower.includes('area') && (lower.includes('m2') || lower.includes('m²') || lower.includes('metros'))) {
@@ -66,14 +75,6 @@ const AIDispatcher = {
                 params: {
                     area: areaMatch ? parseFloat(areaMatch[1]) : null
                 }
-            };
-        }
-
-        // 3. Course Generation
-        if (lower.includes('curso') || lower.includes('aprender') || lower.includes('tutorial') || lower.includes('clase') || lower.includes('enseñame')) {
-            return {
-                type: 'COURSE_GENERATION',
-                topic: text
             };
         }
 
@@ -702,6 +703,8 @@ const AIDispatcher = {
         if(summaryBoxes) summaryBoxes.style.display = 'none';
 
         document.getElementById(`disp-res-results-${uid}`).classList.remove('hidden');
+    },
+
     renderCourseView: (courseData, container) => {
         // Flatten slides for linear navigation
         const allSlides = [];
@@ -711,7 +714,8 @@ const AIDispatcher = {
                 isModuleIntro: true,
                 title: mod.title,
                 content: `Módulo: ${mod.title}`,
-                icon: "fa-solid fa-layer-group"
+                icon: "fa-solid fa-layer-group",
+                color: "#1e293b"
             });
             mod.slides.forEach(slide => allSlides.push(slide));
         });
@@ -719,46 +723,90 @@ const AIDispatcher = {
         const uid = Date.now();
         let currentSlideIdx = 0;
 
+        // Visual Assets (Gradients)
+        const gradients = [
+            'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', // Default Dark
+            'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)', // Teal/Dark
+            'linear-gradient(135deg, #1a2a6c 0%, #b21f1f 100%, #fdbb2d 100%)', // Tri-color (too loud?) -> No, use safer:
+            'linear-gradient(135deg, #000428 0%, #004e92 100%)', // Deep Blue
+            'linear-gradient(135deg, #373B44 0%, #4286f4 100%)' // Grey-Blue
+        ];
+
         const renderSlide = () => {
              const slide = allSlides[currentSlideIdx];
              const progress = ((currentSlideIdx + 1) / allSlides.length) * 100;
+             const isIntro = slide.isModuleIntro;
+             
+             // Choose a random gradient for intros, or sticky for content? Let's use deep blue for content, fancy for intro
+             const bgStyle = isIntro ? 
+                `background: ${gradients[1]};` : 
+                `background: ${gradients[3]};`;
+                
              const slideHtml = `
-                <div class="course-player" id="course-${uid}" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="course-player" id="course-${uid}" style="${bgStyle} border-radius: 15px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); position: relative;">
+                    
+                    <!-- Decorative Background Icon (Watermark) -->
+                    <i class="${slide.icon || 'fa-solid fa-lightbulb'}" style="position: absolute; top: 10%; right: -5%; font-size: 300px; color: rgba(255,255,255,0.03); transform: rotate(-15deg); pointer-events: none;"></i>
+
                     <!-- Header -->
-                    <div style="padding: 15px 20px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--safety-orange); font-weight: 600; font-size: 12px; letter-spacing: 1px;">CURSO IA</span>
-                        <span style="color: #fff; opacity: 0.7; font-size: 12px;">${currentSlideIdx + 1} / ${allSlides.length}</span>
+                    <div style="padding: 20px 30px; background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(5px);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: var(--safety-orange); font-weight: 800; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">ELECTRMATICS IA</span>
+                            <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 10px; color: #fff;">BETA</span>
+                        </div>
+                        <span style="color: #fff; font-weight: 500; font-family: monospace;">SLIDE ${currentSlideIdx + 1} / ${allSlides.length}</span>
                     </div>
                     
                     <!-- Progress Bar -->
-                    <div style="height: 4px; background: rgba(255,255,255,0.1); width: 100%;">
-                        <div style="height: 100%; width: ${progress}%; background: var(--safety-orange); transition: width 0.3s ease;"></div>
+                    <div style="height: 6px; background: rgba(0,0,0,0.4); width: 100%;">
+                        <div style="height: 100%; width: ${progress}%; background: linear-gradient(90deg, var(--safety-orange), #ff5722); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);"></div>
                     </div>
 
-                    <!-- Slide Content -->
-                    <div style="padding: 40px; min-height: 300px; display: flex; flex-direction: column; justify-content: center; text-align: center; animation: slideIn 0.5s ease;">
-                        <div style="font-size: 48px; color: ${slide.isModuleIntro ? 'var(--safety-orange)' : 'var(--electric-blue)'}; margin-bottom: 20px;">
-                            <i class="${slide.icon || 'fa-solid fa-star'}"></i>
+                    <!-- Slide Content Area -->
+                    <div style="padding: 50px; min-height: 350px; display: flex; flex-direction: column; justify-content: center; text-align: center; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 2;">
+                        
+                        ${isIntro ? 
+                            `<div style="margin-bottom: 30px;">
+                                <div style="width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 0 20px rgba(255,255,255,0.1);">
+                                    <i class="${slide.icon}" style="font-size: 40px; color: #FFD700;"></i>
+                                </div>
+                             </div>` 
+                            : 
+                            `<div style="font-size: 48px; color: var(--electric-blue); margin-bottom: 25px; text-shadow: 0 0 20px rgba(0, 180, 216, 0.4);">
+                                <i class="${slide.icon || 'fa-solid fa-star'}"></i>
+                             </div>`
+                        }
+
+                        <h2 style="color: #fff; font-size: ${isIntro ? '36px' : '28px'}; margin-bottom: 25px; font-weight: 700; line-height: 1.2; letter-spacing: -0.5px;">${slide.title}</h2>
+                        
+                        <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; border-left: 4px solid ${isIntro ? 'var(--safety-orange)' : 'var(--electric-blue)'}; max-width: 80%; margin: 0 auto;">
+                            <p style="color: #e2e8f0; font-size: 18px; line-height: 1.7; font-weight: 400; margin: 0;">${slide.content}</p>
                         </div>
-                        <h2 style="color: #fff; font-size: 24px; margin-bottom: 20px; line-height: 1.3;">${slide.title}</h2>
-                        <p style="color: #cbd5e1; font-size: 16px; line-height: 1.6;">${slide.content}</p>
+
                     </div>
 
                     <!-- Controls -->
-                    <div style="padding: 20px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; gap: 10px;">
-                        <button class="nav-btn prev" ${currentSlideIdx === 0 ? 'disabled style="opacity:0.3"' : ''} style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                            <i class="fa-solid fa-arrow-left"></i> Anterior
+                    <div style="padding: 25px; background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; gap: 20px; backdrop-filter: blur(5px); border-top: 1px solid rgba(255,255,255,0.05);">
+                        <button class="nav-btn prev" ${currentSlideIdx === 0 ? 'disabled style="opacity:0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 25px; border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+                            <i class="fa-solid fa-chevron-left"></i> Anterior
                         </button>
-                        <button class="nav-btn next" style="background: var(--electric-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 600;">
-                            ${currentSlideIdx === allSlides.length - 1 ? 'Finalizar <i class="fa-solid fa-check"></i>' : 'Siguiente <i class="fa-solid fa-arrow-right"></i>'}
+                        <button class="nav-btn next" style="background: var(--electric-blue); border: none; color: white; padding: 12px 30px; border-radius: 10px; cursor: pointer; flex: 1; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3); transition: transform 0.2s;">
+                            ${currentSlideIdx === allSlides.length - 1 ? 'Finalizar Curso <i class="fa-solid fa-flag-checkered"></i>' : 'Siguiente <i class="fa-solid fa-arrow-right"></i>'}
                         </button>
                     </div>
                 </div>
                 
                 <style>
-                    @keyframes slideIn {
-                        from { opacity: 0; transform: translateX(20px); }
-                        to { opacity: 1; transform: translateX(0); }
+                    @keyframes slideUp {
+                        from { opacity: 0; transform: translateY(20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .nav-btn:hover:not(:disabled) {
+                        transform: translateY(-2px);
+                        filter: brightness(1.1);
+                    }
+                    .nav-btn:active:not(:disabled) {
+                        transform: translateY(0);
                     }
                 </style>
              `;
@@ -780,11 +828,15 @@ const AIDispatcher = {
                  } else {
                      // Finish screen
                      container.innerHTML = `
-                        <div class="ai-message-bubble" style="text-align: center;">
-                            <i class="fa-solid fa-trophy" style="font-size: 40px; color: #FFD700; margin-bottom: 10px;"></i>
-                            <h3>¡Curso Completado!</h3>
-                            <p>Has finalizado el curso: <strong>${courseData.title}</strong></p>
-                            <button class="btn btn-primary" onclick="AIDispatcher.processCommand('Genera un examen sobre este curso')">Generar Examen</button>
+                        <div class="ai-message-bubble" style="text-align: center; padding: 40px; background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); border-radius: 20px; color: white;">
+                            <i class="fa-solid fa-trophy" style="font-size: 60px; color: #FFD700; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));"></i>
+                            <h3 style="font-size: 28px; margin-bottom: 10px;">¡Curso Completado!</h3>
+                            <p style="margin-bottom: 30px; font-size: 18px; opacity: 0.9;">Has dominado el tema: <strong>${courseData.title}</strong></p>
+                            
+                            <div style="display: flex; gap: 15px; justify-content: center;">
+                                <button class="btn btn-secondary" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> Crear Otro</button>
+                                <button class="btn btn-primary" onclick="AIDispatcher.processCommand('Genera otro curso relacionado')">Profundizar</button>
+                            </div>
                         </div>
                      `;
                  }
