@@ -389,17 +389,66 @@ class GeminiRequest(pydantic.BaseModel):
 @app.post("/generate-content")
 async def generate_content_proxy(request: Request):
     """
-    Secure proxy for Gemini API calls.
-    Frontend sends the payload, Backend adds the key and calls Google.
+    Secure proxy for AI API calls.
+     prioritized DeepSeek -> fallback to Gemini (or others).
     """
     try:
         body = await request.json()
+        
+        # 1. Try DeepSeek first (User Preference)
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-09180722007046cd8ac3cc7007f4dcd8"
+        
+        if deepseek_key:
+            try:
+                # Extract text from Gemini-format payload
+                user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
+                
+                deepseek_url = "https://api.deepseek.com/chat/completions"
+                deepseek_payload = {
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": "You are ElectrIA, an expert electrical engineering assistant. Always output valid JSON when requested."},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": 0.7
+                }
+                
+                response = requests.post(
+                    deepseek_url,
+                    json=deepseek_payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {deepseek_key}"
+                    },
+                    timeout=60 # Extended timeout for courses
+                )
+                
+                if response.status_code == 200:
+                    ds_data = response.json()
+                    content = ds_data['choices'][0]['message']['content']
+                    
+                    # Convert back to Gemini format for frontend compatibility
+                    return {
+                        "candidates": [{
+                            "content": {
+                                "parts": [{ "text": content }]
+                            }
+                        }]
+                    }
+                else:
+                    print(f"DeepSeek Error {response.status_code}: {response.text}")
+                    # Fallthrough to Gemini if DeepSeek fails
+            except Exception as e:
+                print(f"DeepSeek Exception: {str(e)}")
+                # Fallthrough to Gemini
+        
+        # 2. Fallback to Gemini
         api_key = os.getenv("GEMINI_API_KEY")
         
         if not api_key:
-            raise HTTPException(status_code=500, detail="Server misconfiguration: No API Key")
+            raise HTTPException(status_code=500, detail="Server misconfiguration: No API Keys available")
 
-        # Using gemini-2.5-flash - confirmed available via API test
+        # Using gemini-2.5-flash
         url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
         
         # Forward the request to Google
@@ -410,7 +459,6 @@ async def generate_content_proxy(request: Request):
         )
         
         if google_response.status_code != 200:
-            # Relay the error details from Google
             return JSONResponse(
                 status_code=google_response.status_code,
                 content=google_response.json()
@@ -428,4 +476,5 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
+    # Reload disabled to prevent loop in some envs, but usually fine
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
