@@ -1239,8 +1239,8 @@ class ThreePhaseMonitor extends Component {
         // Draw LEDs
         // Vertical stack on left side typically
         const ledX = this.x + 18;
-        const startY = this.y + 30;
-        const gap = 11;
+        const startY = this.y + 26;
+        const gap = 10;
 
         const drawLed = (y, color, on) => {
             ctx.beginPath();
