@@ -1134,7 +1134,10 @@ class Guardamotor extends Component {
         this.rangeMax = 6.3;
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
-            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'}
+            'T1': {x: 20, y: 110, label: 'T1'}, 'T2': {x: 52, y: 110, label: 'T2'}, 'T3': {x: 84, y: 110, label: 'T3'},
+            // Auxiliares (Side/Front simulated positions)
+            'NO13': {x: 10, y: 45, label: '13'}, 'NO14': {x: 90, y: 45, label: '14'},
+            'NC21': {x: 10, y: 75, label: '21'}, 'NC22': {x: 90, y: 75, label: '22'}
         };
     }
     
@@ -3153,11 +3156,21 @@ function solveCircuit() {
                 }
                 if (c instanceof Guardamotor) {
                     if (c.state.closed && !c.state.tripped) {
+                        // Main Power
                         ['L1','L2','L3'].forEach((inT, i) => {
                             const outT = ['T1','T2','T3'][i];
                             if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
                             if (nodes[`${c.id}_${outT}`]) nodes[`${c.id}_${outT}`].forEach(p => setNode(c, inT, p));
                         });
+                        // Aux NO (13-14) Closed
+                        const k13 = `${c.id}_NO13`, k14 = `${c.id}_NO14`;
+                        if(nodes[k13]) nodes[k13].forEach(p => setNode(c, 'NO14', p));
+                        if(nodes[k14]) nodes[k14].forEach(p => setNode(c, 'NO13', p));
+                    } else {
+                        // Aux NC (21-22) Closed (When OFF or TRIPPED)
+                        const k21 = `${c.id}_NC21`, k22 = `${c.id}_NC22`;
+                        if(nodes[k21]) nodes[k21].forEach(p => setNode(c, 'NC22', p));
+                        if(nodes[k22]) nodes[k22].forEach(p => setNode(c, 'NC21', p));
                     }
                 }
                 if (c instanceof Contactor) {
