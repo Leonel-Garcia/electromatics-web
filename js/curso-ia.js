@@ -13,7 +13,11 @@ const CursoIA = {
         variations: [],
         selectedVariation: null,
         course: null,
-        quizAnswers: {}
+        course: null,
+        quizAnswers: {},
+        presentationMode: false,
+        currentSlide: 0,
+        slides: []
     },
 
     // Initialize the application
@@ -39,6 +43,15 @@ const CursoIA = {
         // Setup tab functionality
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => CursoIA.switchTab(btn.dataset.tab));
+        });
+
+        // Keyboard navigation for presentation
+        document.addEventListener('keydown', (e) => {
+            if (CursoIA.state.presentationMode) {
+                if (e.key === 'ArrowRight' || e.key === 'Space') CursoIA.nextSlide();
+                if (e.key === 'ArrowLeft') CursoIA.prevSlide();
+                if (e.key === 'Escape') CursoIA.togglePresentation();
+            }
         });
 
         console.log('✅ CursoAPP initialized');
@@ -699,6 +712,126 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
         } catch (error) {
             console.error("Proxy Error:", error);
             throw error;
+        }
+    },
+
+    // Presentation Mode Logic
+    togglePresentation: () => {
+        const overlay = document.getElementById('presentation-overlay');
+        const course = CursoIA.state.course;
+        
+        if (!course) return;
+
+        CursoIA.state.presentationMode = !CursoIA.state.presentationMode;
+
+        if (CursoIA.state.presentationMode) {
+            // Prepare slides
+            CursoIA.prepareSlides(course);
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+            CursoIA.renderSlide(0);
+        } else {
+            overlay.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    },
+
+    prepareSlides: (course) => {
+        const slides = [];
+
+        // Title Slide
+        slides.push({
+            type: 'Introducción',
+            title: course.title,
+            content: `<p>${course.description}</p>`,
+            isTitle: true
+        });
+
+        // Objectives Slide
+        slides.push({
+            type: 'Objetivos',
+            title: '¿Qué aprenderás?',
+            content: `<ul>${course.objectives.map(o => `<li>${o}</li>`).join('')}</ul>`
+        });
+
+        // Content Blocks (Split into digestible chunks if needed, keeping simple for now)
+        course.blocks.forEach((block, idx) => {
+            slides.push({
+                type: `Módulo ${block.id}`,
+                title: block.title,
+                content: block.content, // HTML content
+                keyPoints: block.keyPoints
+            });
+        });
+
+        // Examples
+        if (course.examples) {
+            course.examples.forEach((ex, idx) => {
+                slides.push({
+                    type: 'Ejemplo Práctico',
+                    title: ex.title,
+                    content: `
+                        <p>${ex.description}</p>
+                        <div style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
+                            <strong>Pasos:</strong>
+                            <ol style="margin-top: 10px;">${ex.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+                        </div>
+                        <div style="margin-top: 20px; color: #4caf50;">
+                            <strong><i class="fa-solid fa-check-circle"></i> Resultado:</strong> ${ex.result}
+                        </div>
+                    `
+                });
+            });
+        }
+
+        CursoIA.state.slides = slides;
+        CursoIA.state.currentSlide = 0;
+    },
+
+    renderSlide: (index) => {
+        if (index < 0 || index >= CursoIA.state.slides.length) return;
+        
+        CursoIA.state.currentSlide = index;
+        const slide = CursoIA.state.slides[index];
+        const container = document.getElementById('slide-content');
+        
+        // Check for special key points formatting
+        let extraContent = '';
+        if (slide.keyPoints) {
+            extraContent = `
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <strong style="color: var(--electric-blue); text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Puntos Clave</strong>
+                    <ul style="margin-top: 15px;">${slide.keyPoints.map(k => `<li>${k}</li>`).join('')}</ul>
+                </div>
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="slide-type">${slide.type}</div>
+            <h2 class="slide-title" style="${slide.isTitle ? 'font-size: 56px; text-align: center;' : ''}">${slide.title}</h2>
+            <div class="slide-body" style="${slide.isTitle ? 'text-align: center;' : ''}">
+                ${slide.content}
+                ${extraContent}
+            </div>
+        `;
+
+        // Update progress
+        document.getElementById('current-slide').textContent = index + 1;
+        document.getElementById('total-slides').textContent = CursoIA.state.slides.length;
+        
+        const progressPercent = ((index + 1) / CursoIA.state.slides.length) * 100;
+        document.getElementById('slide-progress-bar').style.width = `${progressPercent}%`;
+    },
+
+    nextSlide: () => {
+        if (CursoIA.state.currentSlide < CursoIA.state.slides.length - 1) {
+            CursoIA.renderSlide(CursoIA.state.currentSlide + 1);
+        }
+    },
+
+    prevSlide: () => {
+        if (CursoIA.state.currentSlide > 0) {
+            CursoIA.renderSlide(CursoIA.state.currentSlide - 1);
         }
     },
 
