@@ -3776,7 +3776,6 @@ function solveCircuit() {
                  // Simplification: Use global voltage from first PowerSource for now?
                  // Better: Each node tracks its source in a real EM sim, but here we just have strings.
                  // Let's grab the first PowerSource's voltage state.
-                 }
              }
              
              if (fault === 'None') supplyOk = true;
