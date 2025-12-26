@@ -18,7 +18,8 @@ const getApiUrl = () => {
     
     // Para desarrollo local (localhost, 127.0.0.1, o IPs de red local como 192.168.x.x)
     // Asumimos que el backend corre en el puerto 8001
-    return `http://${hostname}:8001`;
+    const host = hostname || '127.0.0.1';
+    return `http://${host}:8001`;
 };
 
 const API_BASE_URL = getApiUrl();
