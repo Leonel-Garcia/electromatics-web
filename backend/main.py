@@ -209,6 +209,145 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
         }
     }
 
+@app.get("/admin/users")
+def get_all_users(
+    skip: int = 0, 
+    limit: int = 20, 
+    search: str = None,
+    current_user: models.User = Depends(auth.get_current_user), 
+    db: Session = Depends(database.get_db)
+):
+    """
+    Get all users with pagination and optional search.
+    Admin only endpoint.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Base query
+    query = db.query(models.User)
+    
+    # Apply search filter if provided
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (models.User.email.ilike(search_filter)) | 
+            (models.User.full_name.ilike(search_filter))
+        )
+    
+    # Get total count for pagination
+    total = query.count()
+    
+    # Apply pagination
+    users = query.order_by(models.User.id.desc()).offset(skip).limit(limit).all()
+    
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "users": users
+    }
+
+@app.get("/admin/users/export")
+def export_users_csv(
+    current_user: models.User = Depends(auth.get_current_user), 
+    db: Session = Depends(database.get_db)
+):
+    """
+    Export all users to CSV format.
+    Admin only endpoint.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get all users
+    users = db.query(models.User).order_by(models.User.id.desc()).all()
+    
+    # Create CSV content
+    import io
+    import csv
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['ID', 'Email', 'Nombre Completo', 'Fecha Registro', 'Premium', 'Verificado', 'Admin'])
+    
+    # Write user data
+    for user in users:
+        writer.writerow([
+            user.id,
+            user.email,
+            user.full_name,
+            user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '',
+            'Sí' if user.is_premium else 'No',
+            'Sí' if user.email_verified else 'No',
+            'Sí' if user.is_admin else 'No'
+        ])
+    
+    # Get CSV content
+    csv_content = output.getvalue()
+    output.close()
+    
+    # Return as downloadable file
+    from fastapi.responses import Response
+    filename = f"usuarios_electromatics_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
+@app.put("/admin/users/{user_id}", response_model=schemas.User)
+def update_user(
+    user_id: int,
+    user_update: schemas.UserUpdate,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Update a user's details. Admin only.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    update_data = user_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+        
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+@app.delete("/admin/users/{user_id}")
+def delete_user(
+    user_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Delete a user. Admin only.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    db.delete(db_user)
+    db.commit()
+    
+    return {"success": True, "message": "User deleted successfully"}
+
+
 @app.post("/analytics/visit")
 def record_visit(visit: schemas.VisitCreate, db: Session = Depends(database.get_db), current_user_token: str = None):
     # Try to identify user from token if present (optional)

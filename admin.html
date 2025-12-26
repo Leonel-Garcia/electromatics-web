@@ -62,6 +62,59 @@
         }
         .status-verified { background: rgba(0, 230, 118, 0.15); color: #00E676; }
         .status-pending { background: rgba(255, 152, 0, 0.15); color: #FF9800; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: var(--medium-bg-hex);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            background: var(--dark-bg-hex);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #fff;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -158,12 +211,122 @@
                     </div>
                 </div>
             </div>
+
+            <!-- NEW: Complete User Management Section -->
+            <div style="margin-top: 50px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="color: var(--safety-orange);">
+                        <i class="fa-solid fa-users-gear"></i> Gestión de Usuarios
+                    </h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-copy-emails" class="btn btn-secondary" title="Copiar todos los emails al portapapeles">
+                            <i class="fa-solid fa-copy"></i> Copiar Emails
+                        </button>
+                        <button id="btn-export-csv" class="btn btn-primary">
+                            <i class="fa-solid fa-download"></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div style="margin-bottom: 20px;">
+                    <input 
+                        type="text" 
+                        id="search-users" 
+                        placeholder="Buscar por email o nombre..." 
+                        style="width: 100%; max-width: 400px; padding: 10px; background: var(--medium-bg-hex); border: 1px solid var(--border-color); border-radius: 6px; color: #fff;"
+                    >
+                </div>
+
+                <!-- Full User Table -->
+                <div class="user-list">
+                    <table id="all-users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Nombre</th>
+                                <th>Registro</th>
+                                <th>Premium</th>
+                                <th>Verificado</th>
+                                <th>Rol</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-users-tbody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px;"></i>
+                                    <p>Cargando usuarios...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div id="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: var(--medium-bg-hex); border-radius: 8px;">
+                    <div style="color: var(--text-secondary);">
+                        Mostrando <span id="showing-range">0-0</span> de <span id="total-count">0</span> usuarios
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-prev-page" class="btn btn-secondary" disabled>
+                            <i class="fa-solid fa-chevron-left"></i> Anterior
+                        </button>
+                        <span id="page-info" style="padding: 8px 16px; color: var(--text-primary);">Página 1</span>
+                        <button id="btn-next-page" class="btn btn-secondary" disabled>
+                            Siguiente <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <h2 style="margin-bottom: 25px; color: var(--electric-blue);">Editar Usuario</h2>
+            <form id="editUserForm">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" id="edit-fullname" class="form-input">
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="edit-is-premium">
+                    <label for="edit-is-premium">Usuario Premium</label>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="edit-is-admin">
+                    <label for="edit-is-admin" style="color: #FFD700;">Administrador</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="edit-is-active">
+                    <label for="edit-is-active">Cuenta Activa</label>
+                </div>
+
+                <div style="margin-top: 30px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()" style="margin-right: 10px;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="js/config.js"></script>
     <script src="js/simple-auth.js"></script>
     <script>
+        // Pagination state
+        let currentPage = 0;
+        const pageSize = 20;
+        let currentSearch = '';
+        let allUsersData = [];
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth
             const token = localStorage.getItem('auth_token');
@@ -175,6 +338,8 @@
             try {
                 // Use global API_BASE_URL from config.js or fallback
                 const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+                
+                // Load stats
                 const response = await fetch(`${apiUrl}/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -205,6 +370,7 @@
                         });
                     }
 
+                    // Recent Users (keep existing)
                     const tbody = document.querySelector('#users-table tbody');
                     tbody.innerHTML = '';
                     data.recent_users.forEach(user => {
@@ -219,6 +385,9 @@
 
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('dashboard-content').style.display = 'block';
+                    
+                    // Load all users for the new table
+                    await loadAllUsers();
                 } else {
                     alert('Acceso denegado. Se requieren permisos de administrador.');
                     window.location.href = 'index.html';
@@ -228,6 +397,261 @@
                 alert('No se pudo conectar con el servidor.');
             }
         });
+
+        // Load all users with pagination
+        async function loadAllUsers(page = 0, search = '') {
+            const token = localStorage.getItem('auth_token');
+            const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+            
+            try {
+                const skip = page * pageSize;
+                let url = `${apiUrl}/admin/users?skip=${skip}&limit=${pageSize}`;
+                if (search) {
+                    url += `&search=${encodeURIComponent(search)}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    allUsersData = data.users;
+                    
+                    // Update table
+                    const tbody = document.getElementById('all-users-tbody');
+                    tbody.innerHTML = '';
+                    
+                    if (data.users.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                                    <i class="fa-solid fa-inbox" style="font-size: 48px; margin-bottom: 10px; display: block;"></i>
+                                    No se encontraron usuarios
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        data.users.forEach(user => {
+                            const tr = document.createElement('tr');
+                            const regDate = user.created_at ? new Date(user.created_at).toLocaleDateString('es-VE') : 'N/A';
+                            tr.innerHTML = `
+                                <td>#${user.id}</td>
+                                <td style="color: var(--electric-blue);">${user.email}</td>
+                                <td>${user.full_name || 'N/A'}</td>
+                                <td>${regDate}</td>
+                                <td><span class="status-badge ${user.is_premium ? 'status-verified' : 'status-pending'}">${user.is_premium ? 'Sí' : 'No'}</span></td>
+                                <td><span class="status-badge ${user.email_verified ? 'status-verified' : 'status-pending'}">${user.email_verified ? 'Sí' : 'No'}</span></td>
+                                <td style="color: ${user.is_admin ? '#FFD700' : '#fff'}; font-weight: ${user.is_admin ? 'bold' : 'normal'};">${user.is_admin ? 'Admin' : 'User'}</td>
+                                <td>
+                                    <button onclick="openEditModal(${user.id})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" title="Editar">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button onclick="confirmDeleteUser(${user.id})" class="btn" style="background: rgba(244, 67, 54, 0.2); color: #F44336; padding: 5px 10px; font-size: 12px;" title="Eliminar">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                    
+                    // Update pagination info
+                    const start = skip + 1;
+                    const end = Math.min(skip + data.users.length, data.total);
+                    document.getElementById('showing-range').textContent = `${start}-${end}`;
+                    document.getElementById('total-count').textContent = data.total;
+                    document.getElementById('page-info').textContent = `Página ${page + 1}`;
+                    
+                    // Update pagination buttons
+                    document.getElementById('btn-prev-page').disabled = page === 0;
+                    document.getElementById('btn-next-page').disabled = end >= data.total;
+                    
+                    currentPage = page;
+                    currentSearch = search;
+                } else {
+                    console.error('Error loading users');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Search functionality with debounce
+        let searchTimeout;
+        document.getElementById('search-users').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadAllUsers(0, e.target.value);
+            }, 500); // Wait 500ms after user stops typing
+        });
+
+        // Pagination controls
+        document.getElementById('btn-prev-page').addEventListener('click', () => {
+            if (currentPage > 0) {
+                loadAllUsers(currentPage - 1, currentSearch);
+            }
+        });
+
+        document.getElementById('btn-next-page').addEventListener('click', () => {
+            loadAllUsers(currentPage + 1, currentSearch);
+        });
+
+        // Export CSV
+        document.getElementById('btn-export-csv').addEventListener('click', async () => {
+            const token = localStorage.getItem('auth_token');
+            const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+            
+            try {
+                const response = await fetch(`${apiUrl}/admin/users/export`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `usuarios_electromatics_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    // Show success message
+                    alert('✅ CSV exportado exitosamente!');
+                } else {
+                    alert('Error al exportar CSV');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al exportar CSV');
+            }
+        });
+
+        // Copy emails to clipboard
+        document.getElementById('btn-copy-emails').addEventListener('click', async () => {
+            const token = localStorage.getItem('auth_token');
+            const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+            
+            try {
+                // Get all users (no pagination for email copy)
+                const response = await fetch(`${apiUrl}/admin/users?skip=0&limit=10000`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const emails = data.users.map(u => u.email).join(', ');
+                    
+                    // Copy to clipboard
+                    await navigator.clipboard.writeText(emails);
+                    
+                    // Show success message
+                    const btn = document.getElementById('btn-copy-emails');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡Copiado!';
+                    btn.style.background = '#22c55e';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.style.background = '';
+                    }, 2000);
+                } else {
+                    alert('Error al copiar emails');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al copiar emails');
+            }
+        });
+
+        // Edit/Delete Logic
+        function openEditModal(userId) {
+            const user = allUsersData.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('edit-user-id').value = user.id;
+            document.getElementById('edit-fullname').value = user.full_name || '';
+            document.getElementById('edit-is-premium').checked = user.is_premium;
+            document.getElementById('edit-is-admin').checked = user.is_admin;
+            document.getElementById('edit-is-active').checked = user.is_active !== false; 
+
+            document.getElementById('editUserModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('edit-user-id').value;
+            const token = localStorage.getItem('auth_token');
+            const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+
+            const updateData = {
+                full_name: document.getElementById('edit-fullname').value,
+                is_premium: document.getElementById('edit-is-premium').checked,
+                is_admin: document.getElementById('edit-is-admin').checked,
+                is_active: document.getElementById('edit-is-active').checked
+            };
+
+            try {
+                const response = await fetch(`${apiUrl}/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    alert('✅ Usuario actualizado');
+                    closeEditModal();
+                    loadAllUsers(currentPage, currentSearch); // Refresh list
+                } else {
+                    const err = await response.json();
+                    alert('Error: ' + err.detail);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión');
+            }
+        });
+
+        async function confirmDeleteUser(userId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) return;
+
+            const token = localStorage.getItem('auth_token');
+            const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+
+            try {
+                const response = await fetch(`${apiUrl}/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('🗑️ Usuario eliminado');
+                    loadAllUsers(currentPage, currentSearch);
+                } else {
+                    alert('Error al eliminar usuario');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión');
+            }
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('editUserModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
     </script>
 </body>
 </html>

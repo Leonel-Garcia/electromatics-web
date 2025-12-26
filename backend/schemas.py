@@ -22,6 +22,12 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    is_premium: Optional[bool] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
