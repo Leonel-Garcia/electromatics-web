@@ -2808,6 +2808,7 @@ function onMouseDown(e) {
             if (c instanceof Selector) c.toggle();
             if (c instanceof FloatSwitch) c.toggle();
             if (c instanceof PressureSwitch) c.toggle();
+            if (c instanceof Guardamotor) c.toggle();
             if (c instanceof PushButton) c.state.pressed = true;
 
             // Selección y arrastre (Solo si NO estamos simulando)
