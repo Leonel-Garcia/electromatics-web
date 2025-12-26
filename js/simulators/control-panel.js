@@ -1212,6 +1212,7 @@ class ThreePhaseMonitor extends Component {
         
         this.state = {
             voltageSetting: 208, // Min Voltage
+            maxVoltageSetting: 250, // Max Voltage
             timerSetting: 5000,  // On Delay in ms
             timerCurrent: 0,
             active: false,      // Relay Output (95-98 Closed?)
@@ -1278,7 +1279,8 @@ class ThreePhaseMonitor extends Component {
             ctx.fillRect(this.x, this.y - 22, this.width, 20);
             ctx.fillStyle = '#fff';
             ctx.font = '11px Inter';
-            ctx.fillText(`Vmin:${this.state.voltageSetting}V  T:${this.state.timerSetting/1000}s`, this.x + 5, this.y - 8);
+            ctx.fillText(`Vmin:${this.state.voltageSetting}V Vmax:${this.state.maxVoltageSetting}V`, this.x + 5, this.y - 8);
+            ctx.fillText(`T:${this.state.timerSetting/1000}s`, this.x + 5, this.y + 4);
         }
     }
 }
@@ -2674,6 +2676,43 @@ function setupEventListeners() {
                 };
             } else {
                 motorControls.style.display = 'none';
+            }
+        }
+
+        // Supervisor Trifásico Controls
+        const supervisorControls = document.getElementById('supervisor-controls');
+        if (supervisorControls) {
+            if (component instanceof ThreePhaseMonitor) {
+                supervisorControls.style.display = 'block';
+                const inputMin = document.getElementById('input-supervisor-min');
+                const inputMax = document.getElementById('input-supervisor-max');
+                const inputTime = document.getElementById('input-supervisor-time');
+                
+                if (inputMin) {
+                    inputMin.value = component.state.voltageSetting;
+                    inputMin.onchange = (e) => {
+                        component.state.voltageSetting = parseInt(e.target.value);
+                        draw();
+                    };
+                }
+
+                if (inputMax) {
+                    inputMax.value = component.state.maxVoltageSetting || 250;
+                    inputMax.onchange = (e) => {
+                        component.state.maxVoltageSetting = parseInt(e.target.value);
+                        draw();
+                    };
+                }
+                
+                if (inputTime) {
+                    inputTime.value = component.state.timerSetting / 1000;
+                    inputTime.onchange = (e) => {
+                        component.state.timerSetting = parseFloat(e.target.value) * 1000;
+                        draw();
+                    };
+                }
+            } else {
+                supervisorControls.style.display = 'none';
             }
         }
 
