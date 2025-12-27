@@ -3535,6 +3535,20 @@ function solveCircuit() {
                         if (nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
                     });
                 }
+                if (c instanceof FloatSwitch) {
+                    const com = `${c.id}_COM`;
+                    if (c.state.highLevel) {
+                        // Up: Close COM-NO
+                        const no = `${c.id}_NO`;
+                        if (nodes[com]) nodes[com].forEach(p => setNode(c, 'NO', p));
+                        if (nodes[no]) nodes[no].forEach(p => setNode(c, 'COM', p));
+                    } else {
+                        // Down: Close COM-NC
+                        const nc = `${c.id}_NC`;
+                        if (nodes[com]) nodes[com].forEach(p => setNode(c, 'NC', p));
+                        if (nodes[nc]) nodes[nc].forEach(p => setNode(c, 'COM', p));
+                    }
+                }
             });
 
             // B. Cables
