@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Análisis de Placa Característica - Electromatics</title>
+    
+    <!-- Site Standard Styles (minimal for header integration if needed, but we keep this standalone mostly) -->
+    <!-- We will rely on Tailwind for the content as provided, but add our own UI for navigation -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .ppt-slide {
+                @apply relative w-[1280px] h-[720px] mx-auto box-border overflow-hidden shadow-2xl bg-white
+            }
+        }
+    </style>
+    <style>
+        body {
+            font-family: "Roboto", sans-serif;
+            background: #121212; /* Dark background for presentation mode */
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .primary-blue { color: #0066B3 }
+        .accent-blue { color: #00AEEF }
+        .bg-overlay { background: linear-gradient(135deg, rgba(0, 52, 102, 0.88) 0%, rgba(0, 102, 179, 0.82) 100%) }
+        h1 { font-family: "Montserrat", sans-serif }
+        .material-icons { width: 1em; direction: rtl; }
+
+        /* Navigation UI */
+        .viewer-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            z-index: 50;
+        }
+        .nav-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .slide-counter {
+            color: white;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 50;
+            transition: background 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        /* Responsive Scaling for smaller screens */
+        #slide-container {
+            transform-origin: top center;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+        }
+        
+        @media (max-width: 1300px) {
+            .scale-wrapper {
+                width: 100%;
+                overflow: hidden;
+                display: flex;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Back Button -->
+    <a href="electro-info.html" class="back-btn">
+        <i class="fa-solid fa-arrow-left"></i> Volver a Electro Info
+    </a>
+
+    <div class="flex-grow flex items-center justify-center py-10 overflow-hidden">
+        <div class="scale-wrapper">
+            <div id="slide-container">
+                
+                <!-- SLIDE 1: Title -->
+                <div class="slide-item block" id="slide-1">
+                    <div class="ppt-slide">
+                        <!-- Background Image -->
+                        <div class="absolute top-0 left-0 w-full h-full">
+                            <img src="https://sfile.chatglm.cn/images-ppt/d61d14ae2569.jpg" alt="Motor Eléctrico Industrial" class="w-full h-full object-cover"/>
+                            <div class="absolute top-0 left-0 w-full h-full bg-overlay"></div>
+                        </div>
+                        
+                        <!-- Content Container - Centered -->
+                        <div class="relative z-10 h-full flex flex-col justify-center items-center px-[70px]">
+                            <div class="text-center max-w-5xl">
+                                <!-- Main Title -->
+                                <h1 class="text-[62px] font-bold leading-tight text-white mb-8">
+                                    Análisis de la Placa Característica<br/>
+                                    <span class="text-[64px]">de Motores Eléctricos</span>
+                                </h1>
+                                
+                                <!-- Decorative Line -->
+                                <div class="w-32 h-1 bg-[#00AEEF] mx-auto mb-8"></div>
+                                
+                                <!-- Subtitle -->
+                                <h2 class="text-[26px] font-light text-gray-100 tracking-wide">
+                                    Curso para Ingenieros y Técnicos de Operación
+                                </h2>
+                                
+                                <!-- Additional Info -->
+                                <div class="mt-12 flex justify-center items-center space-x-8 text-white">
+                                    <div class="flex items-center">
+                                        <i class="material-icons text-[#00AEEF] mr-2">engineering</i>
+                                        <span class="text-lg font-light">Ingeniería Eléctrica</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="material-icons text-[#00AEEF] mr-2">settings</i>
+                                        <span class="text-lg font-light">Mantenimiento Industrial</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="material-icons text-[#00AEEF] mr-2">assessment</i>
+                                        <span class="text-lg font-light">Análisis Técnico</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom Accent -->
+                        <div class="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-[#0066B3] via-[#00AEEF] to-[#0066B3]"></div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 2: Summary -->
+                <div class="slide-item hidden" id="slide-2">
+                    <div class="ppt-slide bg-white">
+                        <!-- Header -->
+                        <div class="h-[85px] bg-gradient-to-r from-[#0066B3] to-[#00AEEF] flex items-center px-[70px]">
+                            <h1 class="text-[40px] font-bold text-white">Resumen y Puntos Clave</h1>
+                        </div>
+                        
+                        <!-- Main Content -->
+                        <div class="flex h-[635px]">
+                            <!-- Left Content - Summary Points -->
+                            <div class="w-3/5 px-[70px] py-10 flex flex-col justify-center">
+                                <div class="space-y-4">
+                                    <!-- Datos Eléctricos -->
+                                    <div class="flex items-start">
+                                        <div class="w-12 h-12 bg-[#0066B3] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                                            <i class="material-icons text-white text-[28px]">electrical_services</i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-[24px] font-semibold primary-blue mb-1">Datos Eléctricos</h3>
+                                            <p class="text-[20px] text-gray-600">Voltaje, corriente, frecuencia, número de fases</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Datos de Potencia -->
+                                    <div class="flex items-start">
+                                        <div class="w-12 h-12 bg-[#0066B3] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                                            <i class="material-icons text-white text-[28px]">speed</i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-[24px] font-semibold primary-blue mb-1">Datos de Potencia y Rendimiento</h3>
+                                            <p class="text-[20px] text-gray-600">HP/kW, eficiencia, factor de potencia, factor de servicio</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Datos Mecánicos -->
+                                    <div class="flex items-start">
+                                        <div class="w-12 h-12 bg-[#00AEEF] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                                            <i class="material-icons text-white text-[28px]">settings</i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-[24px] font-semibold accent-blue mb-1">Datos Mecánicos y Operativos</h3>
+                                            <p class="text-[20px] text-gray-600">RPM, torque, régimen de servicio (S1-S5)</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Datos de Protección -->
+                                    <div class="flex items-start">
+                                        <div class="w-12 h-12 bg-[#00AEEF] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                                            <i class="material-icons text-white text-[28px]">shield</i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-[24px] font-semibold accent-blue mb-1">Datos de Protección y Aislamiento</h3>
+                                            <p class="text-[20px] text-gray-600">IP, clase de aislamiento, temperatura ambiente, altura</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Importance Statement -->
+                                <div class="mt-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-5 border-l-4 border-[#00AEEF]">
+                                    <p class="text-[22px] text-gray-700 leading-relaxed">
+                                        <span class="font-semibold accent-blue">Comprender estos datos</span> es fundamental para garantizar una 
+                                        <span class="font-semibold primary-blue">operación eficiente y segura</span> de los motores eléctricos en todas sus aplicaciones industriales.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Content - Image -->
+                            <div class="w-2/5 py-10 pr-[70px] flex flex-col justify-center">
+                                <div class="bg-gray-50 rounded-xl p-5 shadow-lg">
+                                    <img src="https://sfile.chatglm.cn/images-ppt/9d9785841638.jpg" alt="Placa característica completa" class="w-full h-[500px] object-contain rounded-lg"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer Controls -->
+    <div class="viewer-controls">
+        <button id="prev-btn" class="nav-btn" onclick="changeSlide(-1)">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span class="slide-counter"><span id="current-slide">1</span> / 2</span>
+        <button id="next-btn" class="nav-btn" onclick="changeSlide(1)">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <script>
+        let currentSlideIndex = 1;
+        const totalSlides = 2;
+
+        function updateSlides() {
+            // Hide all
+            document.querySelectorAll('.slide-item').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+
+            // Show current
+            const current = document.getElementById(`slide-${currentSlideIndex}`);
+            if (current) {
+                current.classList.remove('hidden');
+                current.classList.add('block');
+            }
+
+            // Update counter
+            document.getElementById('current-slide').innerText = currentSlideIndex;
+
+            // Update buttons
+            document.getElementById('prev-btn').disabled = currentSlideIndex === 1;
+            document.getElementById('next-btn').disabled = currentSlideIndex === totalSlides;
+        }
+
+        function changeSlide(direction) {
+            const newIndex = currentSlideIndex + direction;
+            if (newIndex >= 1 && newIndex <= totalSlides) {
+                currentSlideIndex = newIndex;
+                updateSlides();
+            }
+        }
+
+        // Auto-scale logic to fit screen
+        function scaleSlides() {
+            const container = document.getElementById('slide-container');
+            const slideWidth = 1280;
+            const slideHeight = 720;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // Calculate available space (taking padding into account)
+            const availableWidth = windowWidth - 40;
+            const availableHeight = windowHeight - 100; // Space for controls/header
+
+            const scaleX = availableWidth / slideWidth;
+            const scaleY = availableHeight / slideHeight;
+            const scale = Math.min(scaleX, scaleY, 1); // Never scale up beyond 1.0
+
+            container.style.transform = `scale(${scale})`;
+            
+            // Adjust margin to center vertically if scaled down heavily
+            // (optional refinement)
+        }
+
+        window.addEventListener('resize', scaleSlides);
+        window.addEventListener('load', () => {
+            updateSlides();
+            scaleSlides();
+        });
+    </script>
+</body>
+</html>
