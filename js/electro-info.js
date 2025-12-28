@@ -138,6 +138,12 @@ document.addEventListener('DOMContentLoaded', function() {
   downloadButtons.forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
+
+      // Allow normal navigation if it's a real link
+      if (this.getAttribute('href') !== '#' && this.getAttribute('href') !== '') {
+        window.location.href = this.getAttribute('href');
+        return;
+      }
       
       // Find the parent card
       const card = this.closest('.book-card');
