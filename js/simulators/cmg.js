@@ -317,7 +317,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // ROTOR VISUALIZATION
         // Rotor rotates at Nr speed (slower than field at Ns)
         // Calculate rotor angle based on its speed relative to field
-        const rotorAngleRad = (state.currentTimeAngle * (state.Nr / state.Ns)) * (Math.PI / 180);
+        const direction = state.reverse ? -1 : 1;
+        const rotorAngleRad = direction * (state.currentTimeAngle * (state.Nr / state.Ns)) * (Math.PI / 180);
         
         // Draw rotor body (inner circle)
         ctx.beginPath();
