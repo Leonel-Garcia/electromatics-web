@@ -3,10 +3,10 @@ import time
 import sys
 
 def test_server():
-    print("Testing connection to http://127.0.0.1:8000/ ...")
+    print("Testing connection to http://127.0.0.1:8001/ ...")
     try:
         # Test Root Endpoint
-        response = requests.get("http://127.0.0.1:8000/")
+        response = requests.get("http://127.0.0.1:8001/")
         if response.status_code == 200:
             print("Server is reachable! Response:", response.json())
         else:
@@ -20,7 +20,7 @@ def test_server():
             "password": "TestPassword123!",
             "full_name": "Test User"
         }
-        response = requests.post("http://127.0.0.1:8000/register", json=payload)
+        response = requests.post("http://127.0.0.1:8001/register", json=payload)
         
         if response.status_code == 200:
             print("Registration successful! User created:", response.json())

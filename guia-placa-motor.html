@@ -5,16 +5,23 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Análisis de Placa Característica - Electromatics</title>
     
+    <script src="js/config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .ppt-slide {
-                @apply relative w-[1280px] h-[720px] mx-auto box-border overflow-hidden shadow-2xl bg-white
-            }
+    <style>
+        .ppt-slide {
+            position: relative;
+            width: 1280px;
+            height: 720px;
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            background-color: white;
         }
     </style>
     <style>
