@@ -650,23 +650,46 @@
                </div>
              </div>
 
-             <!-- Guía 2: Ampacidad -->
-             <div class="book-card">
-                <img src="images/resources/tabla_ampacidad.png" alt="Ampacidad de Conductores" class="book-cover">
-                <div class="book-info">
-                    <h3>Tablas Técnicas Fondonorma 200</h3>
-                    <p class="author">CEN 200:2009</p>
-                    <p class="reference">Tablas 310.16, 430.250 y C1</p>
-                    <p class="description">Ampacidad de conductores, corrientes de motores trifásicos y capacidad de tuberías. Referencia rápida del Código Eléctrico Nacional.</p>
-                    <a href="guia-tablas-fondonorma.html" class="view-btn">
-                        <i class="fa-solid fa-table"></i> VER TABLAS
-                    </a>
-                </div>
-             </div>
-          </div>
+              <!-- Guía 2: Ampacidad -->
+              <div class="book-card">
+                 <img src="images/resources/tabla_ampacidad.png" alt="Ampacidad de Conductores" class="book-cover">
+                 <div class="book-info">
+                     <h3>Tablas Técnicas Fondonorma 200</h3>
+                     <p class="author">CEN 200:2009</p>
+                     <p class="reference">Tablas 310.16, 430.250 y C1</p>
+                     <p class="description">Ampacidad de conductores, corrientes de motores trifásicos y capacidad de tuberías. Referencia rápida del Código Eléctrico Nacional.</p>
+                     <a href="guia-tablas-fondonorma.html" class="view-btn">
+                         <i class="fa-solid fa-table"></i> VER TABLAS
+                     </a>
+                 </div>
+              </div>
 
-          <!-- CONVERSOR DE UNIDADES -->
-          <div class="converter-container" id="conversor-tecnico" style="margin-top: 60px;">
+              <!-- Guía 3: Conversor (NUEVO) -->
+              <div class="book-card highlight-card" id="card-conversor" style="cursor: pointer;">
+                <div style="height: 300px; overflow: hidden; background: linear-gradient(135deg, #001a33 0%, #003466 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                   <i class="fa-solid fa-calculator" style="font-size: 80px; color: var(--electric-blue); opacity: 0.8;"></i>
+                   <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); padding: 10px; text-align: center; color: white; font-weight: bold;">
+                     HERRAMIENTA INTERACTIVA
+                   </div>
+                </div>
+                <div class="book-info">
+                  <h4 class="book-title">Conversor Técnico de Magnitudes</h4>
+                  <p class="book-author">Electromatics</p>
+                  <p class="book-year">2025</p>
+                  <p class="book-summary">
+                    Calculadora avanzada para conversión de Potencia, Presión, Flujo, Fuerza, Torque y más. Incluye tabla de prefijos SI.
+                  </p>
+                  <button class="book-download" style="width: 100%; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-rocket"></i>
+                    ABRIR CONVERSOR
+                  </button>
+                </div>
+              </div>
+           </div>
+
+          <!-- CONVERSOR DE UNIDADES (OCULTO POR DEFECTO) -->
+          <div id="converter-wrapper" style="display: none; margin-top: 40px; border-top: 2px dashed var(--border-color); padding-top: 40px; animation: slideDown 0.5s ease;">
+            <div class="converter-container" id="conversor-tecnico">
             <div class="converter-header">
               <h2><i class="fa-solid fa-calculator"></i> Conversor de Magnitudes Físicas</h2>
               <p>Herramienta dinámica para la conversión rápida de unidades técnicas y de ingeniería.</p>
@@ -733,9 +756,9 @@
               </div>
             </div>
           </div>
+        </div>
 
-
-          <div style="text-align: center; margin-top: 50px; padding: 30px; background: rgba(255, 109, 0, 0.1); border-radius: 12px; border: 1px solid var(--safety-orange);">
+        <div style="text-align: center; margin-top: 50px; padding: 30px; background: rgba(255, 109, 0, 0.1); border-radius: 12px; border: 1px solid var(--safety-orange);">
             <p style="color: var(--text-secondary); margin: 0;">
               <i class="fa-solid fa-info-circle" style="color: var(--safety-orange); margin-right: 10px;"></i>
               <strong>Nota Importante:</strong> Los enlaces de descarga dirigen a buscadores especializados. Asegúrese de respetar los derechos de autor y utilizar fuentes legales.

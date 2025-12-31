@@ -202,6 +202,25 @@ function initConverter() {
             setTimeout(() => copyBtn.innerHTML = originalIcon, 2000);
         });
     };
+
+    // Toggle logic for the card
+    const cardConversor = document.getElementById('card-conversor');
+    if (cardConversor) {
+        cardConversor.onclick = toggleConverter;
+    }
+}
+
+function toggleConverter() {
+    const wrapper = document.getElementById('converter-wrapper');
+    if (wrapper) {
+        if (wrapper.style.display === 'none') {
+            wrapper.style.display = 'block';
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Track click if needed
+        } else {
+            wrapper.style.display = 'none';
+        }
+    }
 }
 
 function switchCategory(catKey) {
