@@ -22,6 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css?v=3.0" />
     <link rel="stylesheet" href="css/electro-info.css" />
+    <link rel="stylesheet" href="css/unit-converter.css" />
     <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -664,6 +665,75 @@
              </div>
           </div>
 
+          <!-- CONVERSOR DE UNIDADES -->
+          <div class="converter-container" id="conversor-tecnico" style="margin-top: 60px;">
+            <div class="converter-header">
+              <h2><i class="fa-solid fa-calculator"></i> Conversor de Magnitudes Físicas</h2>
+              <p>Herramienta dinámica para la conversión rápida de unidades técnicas y de ingeniería.</p>
+            </div>
+
+            <div class="category-grid" id="converter-categories">
+              <!-- JS-populated -->
+            </div>
+
+            <div class="converter-main">
+              <!-- From Side -->
+              <div class="converter-box">
+                <label class="unit-label">De:</label>
+                <div class="converter-input-wrapper">
+                  <input type="number" id="from-value" class="converter-input" value="1" placeholder="Valor">
+                  <select id="from-unit" class="unit-select">
+                    <!-- JS-populated -->
+                  </select>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="converter-actions">
+                <button class="action-btn" id="swap-units" title="Intercambiar unidades">
+                  <i class="fa-solid fa-right-left"></i>
+                </button>
+                <button class="action-btn copy-btn" id="copy-result" title="Copiar resultado">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+
+              <!-- To Side -->
+              <div class="converter-box">
+                <label class="unit-label">A:</label>
+                <div class="converter-input-wrapper">
+                  <input type="text" id="to-value" class="converter-input" readonly placeholder="Resultado">
+                  <select id="to-unit" class="unit-select">
+                    <!-- JS-populated -->
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- TABLA DE PREFIJOS SI -->
+            <div class="si-section">
+              <div class="si-header">
+                <i class="fa-solid fa-table-list"></i>
+                <h3>Sufijos y Prefijos del Sistema Internacional (SI)</h3>
+              </div>
+              <div class="si-table-container">
+                <table class="si-table">
+                  <thead>
+                    <tr>
+                      <th>Prefijo</th>
+                      <th>Símbolo</th>
+                      <th>Factor</th>
+                      <th>Ejemplo / Equivalencia</th>
+                    </tr>
+                  </thead>
+                  <tbody id="si-table-body">
+                    <!-- JS-populated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
 
           <div style="text-align: center; margin-top: 50px; padding: 30px; background: rgba(255, 109, 0, 0.1); border-radius: 12px; border: 1px solid var(--safety-orange);">
             <p style="color: var(--text-secondary); margin: 0;">
@@ -1033,5 +1103,6 @@
     <script src="js/simple-auth.js"></script>
     <script src="js/ui.js?v=1.0"></script>
     <script src="js/electro-info.js"></script>
+    <script src="js/unit-converter.js"></script>
   </body>
 </html>
