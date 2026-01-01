@@ -138,37 +138,38 @@ const SimpleAuth = {
         };
 
         try {
-            // 1. Inyectar UI INMEDIATAMENTE para que el botón funcione
+            // 1. Inicializar almacenamiento persistente IMMEDIATAMENTE (Safe wrapper)
+            SafeStorage.init();
+
+            // 2. Inyectar UI para que el botón funcione
             SimpleAuth.injectModal();
             SimpleAuth.setupUI(); 
             SimpleAuth.setupPasswordToggle();
             
-            // 2. Primer intento de actualización UI (con estado actual/tentativo)
+            // 3. Primer intento de actualización UI
             SimpleAuth.updateUI();
 
-            // 3. Inicializar almacenamiento persistente con retraso de asentamiento en móviles
+            // 4. Retraso de asentamiento solo para carga de sesión en móviles
             if (isMobile()) {
-                console.log('📱 Mobile detected, delaying session load for storage settlement...');
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
-            SafeStorage.init();
             
-            // SEGURO DE PERSISTENCIA (Bypass inmediato de Guardia)
-            const insurance = localStorage.getItem('auth_loop_insurance') || sessionStorage.getItem('auth_loop_insurance');
-            const isInsured = insurance && (Date.now() - parseInt(insurance) < 25000); // 25s de gracia
+            // SEGURO DE PERSISTENCIA (Bypass inmediato usando el wrapper seguro)
+            const insurance = SafeStorage.getItem('auth_loop_insurance');
+            const isInsured = insurance && (Date.now() - parseInt(insurance) < 25000); 
             
             if (SafeStorage.getItem('access_token') || isInsured) {
                 console.log('🎫 SimpleAuth: Tentative login enabled');
                 SimpleAuth.state.isLoggedIn = true;
                 if (isInsured) SimpleAuth.state.isRestricted = false;
-                SimpleAuth.updateUI(); // Segunda actualización si detectamos login tentativo
+                SimpleAuth.updateUI(); 
             }
             
-            // 4. Cargar sesión y esperar validación real
+            // 5. Cargar sesión y esperar validación real
             console.log('📡 SimpleAuth: Validating session...');
             await SimpleAuth.loadSession();
             
-            // 5. Actualización final
+            // 6. Actualización final
             SimpleAuth.updateUI();
             
             // 5. Ejecutar guardia de seguridad global (AHORA ESPERAMOS A QUE TERMINE)
@@ -183,8 +184,8 @@ const SimpleAuth = {
     // Verificar si el usuario puede estar en la página actual
     checkGuard: async () => {
         // --- SEGURO DE PERSISTENCIA (Móviles) ---
-        // Si acabamos de loguearnos, ignorar cualquier guardia por 20 segundos
-        const insurance = localStorage.getItem('auth_loop_insurance') || sessionStorage.getItem('auth_loop_insurance');
+        // Usar SafeStorage para evitar errores de acceso denegado
+        const insurance = SafeStorage.getItem('auth_loop_insurance');
         const isInsured = insurance && (Date.now() - parseInt(insurance) < 20000);
 
         if (isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
@@ -468,9 +469,8 @@ const SimpleAuth = {
         let token = SafeStorage.getItem('access_token') || SafeStorage.getItem('auth_token');
         
         if (token) {
-            // OPTIMISMO MÓVIL: Si hay seguro nuclear, no esperamos validación del servidor
-            // para marcar como logueado. Esto evita que el guardia se dispare en redes lentas.
-            const insurance = localStorage.getItem('auth_loop_insurance') || sessionStorage.getItem('auth_loop_insurance');
+            // OPTIMISMO MÓVIL: UsarSafeStorage para evitar bloqueos
+            const insurance = SafeStorage.getItem('auth_loop_insurance');
             if (insurance && (Date.now() - parseInt(insurance) < 25000)) {
                 console.log('🛡️ loadSession: Insured session, adopting optimistic state');
                 SimpleAuth.state.isLoggedIn = true;
@@ -756,8 +756,7 @@ const SimpleAuth = {
                 
                 // 2. ACTIVAR SEGURO NUCLEAR contra bucles de recarga
                 const now = Date.now().toString();
-                localStorage.setItem('auth_loop_insurance', now);
-                sessionStorage.setItem('auth_loop_insurance', now);
+                SafeStorage.setItem('auth_loop_insurance', now);
                 SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0001);
 
                 // Notificar éxito
@@ -810,8 +809,7 @@ const SimpleAuth = {
                 
                 // Nuclear Insurance
                 const now = Date.now().toString();
-                localStorage.setItem('auth_loop_insurance', now);
-                sessionStorage.setItem('auth_loop_insurance', now);
+                SafeStorage.setItem('auth_loop_insurance', now);
                 SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0001);
                 
                 SimpleAuth.showMessage('register-form-container', '¡Cuenta Creada! Refrescando...', 'success');
