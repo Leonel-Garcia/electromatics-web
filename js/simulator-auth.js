@@ -10,6 +10,16 @@ const SimulatorAuth = {
      * @returns {Promise<boolean>} True if user is authenticated
      */
     checkAccess: async function() {
+        // --- ESCUDO DE PERSISTENCIA (v5.0) ---
+        if (typeof SafeStorage !== 'undefined') {
+            const insurance = SafeStorage.getItem('auth_loop_insurance');
+            const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000); // 2 minutos
+            if (isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
+                console.log('🛡️ SimulatorAuth: Shield active, granting instant access');
+                return true;
+            }
+        }
+
         // 1. Esperar a que SimpleAuth termine de cargar
         if (window.SimpleAuth) {
             if (window.SimpleAuth.state.isLoading) {

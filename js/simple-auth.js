@@ -162,14 +162,13 @@ const SimpleAuth = {
             
             // SEGURO DE PERSISTENCIA (Bypass inmediato usando el wrapper seguro)
             const insurance = SafeStorage.getItem('auth_loop_insurance');
-            const isInsured = insurance && (Date.now() - parseInt(insurance) < 25000); 
+            // Seguro ampliado a 2 minutos para estabilidad en redes móviles
+            const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000); 
             
-            if (SafeStorage.getItem('access_token') || isInsured) {
-                console.log('🎫 SimpleAuth: Tentative login enabled');
+            if (SafeStorage.getItem('access_token') || isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
+                console.log('🎫 SimpleAuth: Shield Active (Insured or Token)');
                 SimpleAuth.state.isLoggedIn = true;
-                SimpleAuth.state.isRestricted = false; // El seguro nuclear libera restricciones
-                
-                // Actualizamos UI inmediatamente con estado tentativo
+                SimpleAuth.state.isRestricted = false;
                 SimpleAuth.updateUI(); 
             }
             
@@ -191,26 +190,27 @@ const SimpleAuth = {
 
     // Verificar si el usuario puede estar en la página actual
     checkGuard: async () => {
-        // --- SEGURO DE PERSISTENCIA (Móviles) ---
-        // Usar SafeStorage para evitar errores de acceso denegado
+        // --- ESCUDO DE PERSISTENCIA MÓVIL (Nuclear Shield) ---
         const insurance = SafeStorage.getItem('auth_loop_insurance');
-        const isInsured = insurance && (Date.now() - parseInt(insurance) < 20000);
+        const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
 
         if (isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
-            console.log('🛡️ Auth Guard: Loop insurance active, bypassing check');
-            SimpleAuth.state.isLoggedIn = true; // Forzar estado para evitar reapertura
-            const modal = document.getElementById('auth-modal');
-            if (modal) {
-                modal.classList.remove('active');
-                modal.classList.remove('restricted');
-            }
+            console.log('🛡️ Auth Guard: Shield is active, suppress any prompt.');
+            SimpleAuth.state.isLoggedIn = true;
+            SimpleAuth.state.isRestricted = false;
+            SimpleAuth.updateUI(); 
             return;
         }
 
-        // Detectar móvil para aplicar un pequeño retraso de "asentamiento" de sesión
+        // Retraso de seguridad obligatorio en móviles para evitar parpadeos
         if (isMobile() && !SimpleAuth.state.isLoggedIn) {
-            console.log('📱 Mobile detected, applying guard grace period...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('📱 Mobile Shield: Mandatory settlement delay (1.5s)...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Re-evaluar tras el delay
+            if (SafeStorage.getItem('access_token')) {
+                SimpleAuth.state.isLoggedIn = true;
+                return;
+            }
         }
 
         // Normalizar URL: quitar parámetros de búsqueda y fragmentos
@@ -692,9 +692,12 @@ const SimpleAuth = {
         const subscribeBtn = document.getElementById('subscribe-btn');
 
         window.openAuthModal = (tab = 'login') => {
-            // No abrir si ya estamos logueados Y NO estamos en modo restringido
-            if (SimpleAuth.state.isLoggedIn && !SimpleAuth.state.isRestricted) {
-                console.log('🎫 openAuthModal: Bypassing - already logged in');
+            // BLOQUEO ABSOLUTO: Si estamos logueados o asegurados, el panel TIENE PROHIBIDO abrirse
+            const insurance = SafeStorage.getItem('auth_loop_insurance');
+            const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
+
+            if ((SimpleAuth.state.isLoggedIn || isInsured) && !SimpleAuth.state.isRestricted) {
+                console.log('🚫 openAuthModal: Blocked - session active or insured.');
                 return;
             }
 
@@ -781,10 +784,10 @@ const SimpleAuth = {
                 const token = SimpleAuth.state.token;
                 SafeStorage.setItem('access_token', token);
                 
-                // 2. ACTIVAR SEGURO NUCLEAR contra bucles de recarga
+                // 2. ACTIVAR ESCUDO NUCLEAR contra bucles de recarga (2 MINUTOS)
                 const now = Date.now().toString();
                 SafeStorage.setItem('auth_loop_insurance', now);
-                SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0001);
+                SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0015); // ~2 minutos
 
                 // Notificar éxito
                 SimpleAuth.showMessage('login-form-container', '¡Sesión Iniciada! Refrescando...', 'success');
@@ -834,10 +837,10 @@ const SimpleAuth = {
                 console.log('🔐 Synchronizing register session...');
                 SafeStorage.setItem('access_token', SimpleAuth.state.token);
                 
-                // Nuclear Insurance
+                // Nuclear Shield (2 minutes)
                 const now = Date.now().toString();
                 SafeStorage.setItem('auth_loop_insurance', now);
-                SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0001);
+                SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0015);
                 
                 SimpleAuth.showMessage('register-form-container', '¡Cuenta Creada! Refrescando...', 'success');
                 
