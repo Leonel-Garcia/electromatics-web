@@ -79,25 +79,35 @@ const SimpleAuth = {
 
     // Verificar si el usuario puede estar en la página actual
     checkGuard: () => {
+        // Normalizar URL: quitar parámetros de búsqueda y fragmentos
         const path = window.location.pathname;
-        const page = path.split("/").pop() || "index.html";
+        const pageName = path.split("/").pop() || "index.html";
+        const cleanPage = pageName.split('?')[0].split('#')[0];
         
-        // Whitelist de páginas públicas
+        console.log('🛡️ Auth Guard checking path:', cleanPage);
+
+        // Whitelist de páginas públicas (soporta con y sin .html)
         const publicPages = [
             'index.html', 
             '', 
-            'servicios.html', 
-            'proyectos.html', 
-            'nosotros.html', 
-            'contacto.html'
+            '/',
+            'servicios.html', 'servicios',
+            'proyectos.html', 'proyectos',
+            'nosotros.html', 'nosotros',
+            'contacto.html', 'contacto',
+            'museo.html', 'museo'
         ];
 
-        const isProtected = !publicPages.includes(page);
+        const isProtected = !publicPages.includes(cleanPage);
         
         // Si el usuario ya está logueado o está cargando, no hacer nada todavía
-        if (SimpleAuth.state.isLoading) return;
+        if (SimpleAuth.state.isLoading) {
+            console.log('⏳ Auth Guard waiting for session load...');
+            return;
+        }
         
         if (isProtected && !SimpleAuth.state.isLoggedIn) {
+            console.warn('🚫 Protected page detected! Redirecting or showing modal...');
             // Activar modo restringido: no se puede cerrar el modal
             SimpleAuth.state.isRestricted = true;
             
@@ -340,14 +350,25 @@ const SimpleAuth = {
                     };
                     SimpleAuth.state.isLoggedIn = true;
                     SimpleAuth.state.isPremium = user.is_premium;
-                } else {
-                    // Token inválido o expirado
+                    console.log('✅ Session validated for:', user.email);
+                } else if (response.status === 401 || response.status === 403) {
+                    // Solo limpiamos si el servidor nos dice explícitamente que el token no es válido
+                    console.warn('❌ Session expired or invalid (401/403)');
                     SimpleAuth.clearSession();
+                } else {
+                    // En caso de error de servidor (500 etc), mantenemos la sesión local 
+                    // para no bloquear al usuario por un error técnico del backend
+                    console.error('⚠️ Server error during validation:', response.status);
+                    SimpleAuth.state.isLoggedIn = true; 
                 }
             } catch (error) {
-                console.error("Error validando sesión:", error);
-                // No limpiamos en caso de error de red para permitir reintentos automáticos si la página se refresca
+                console.error("🌐 Network error during session validation:", error);
+                // Si hay error de red, asumimos que está logueado si tiene token,
+                // para evitar prompts falsos en conexiones inestables
+                SimpleAuth.state.isLoggedIn = true;
             }
+        } else {
+            console.log('ℹ️ No token found in storage');
         }
         
         SimpleAuth.state.isLoading = false;
