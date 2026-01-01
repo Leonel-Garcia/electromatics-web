@@ -27,10 +27,14 @@ const SimulatorAuth = {
             }
         }
 
-        // 2. Fallback al token estándar en localStorage
-        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        // 2. Fallback al token estándar en localStorage (múltiples keys por compatibilidad)
+        const token = localStorage.getItem('access_token') || 
+                      sessionStorage.getItem('access_token') ||
+                      localStorage.getItem('auth_token') ||
+                      SafeStorage.getCookie('access_token');
         
         if (!token) {
+            console.log('ℹ️ SimulatorAuth: No token found in any storage');
             return false;
         }
 

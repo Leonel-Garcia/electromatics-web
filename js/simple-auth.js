@@ -32,7 +32,9 @@ const SafeStorage = {
         const d = new Date();
         d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
         const expires = "expires=" + d.toUTCString();
-        document.cookie = name + "=" + (value || "") + ";" + expires + ";path=/;SameSite=Lax";
+        // Añadir Secure si es HTTPS
+        const secure = window.location.protocol === 'https:' ? ";Secure" : "";
+        document.cookie = name + "=" + (value || "") + ";" + expires + ";path=/;SameSite=Lax" + secure;
     },
 
     getCookie: (name) => {
@@ -52,13 +54,18 @@ const SafeStorage = {
         if (SafeStorage.storage) {
             val = SafeStorage.storage.getItem(key);
         }
-        // 2. Intentar Cookies (Fallback/Redundancia)
+        // 2. Intentar SessionStorage (redundancia de pestaña)
+        if (!val) {
+            try { val = sessionStorage.getItem(key); } catch(e) {}
+        }
+        // 3. Intentar Cookies (Fallback/Redundancia)
         if (!val) {
             val = SafeStorage.getCookie(key);
-            // Si estaba en cookie pero no en storage, repoblar storage para consistencia
+            // Re-poblar storage para consistencia
             if (val && SafeStorage.storage) SafeStorage.storage.setItem(key, val);
+            if (val) try { sessionStorage.setItem(key, val); } catch(e) {}
         }
-        // 3. Memoria
+        // 4. Memoria
         return val || SafeStorage.inMemoryStore[key] || null;
     },
 
@@ -67,6 +74,7 @@ const SafeStorage = {
         if (SafeStorage.storage) {
             try { SafeStorage.storage.setItem(key, value); } catch(e) {}
         }
+        try { sessionStorage.setItem(key, value); } catch(e) {}
         SafeStorage.setCookie(key, value);
         SafeStorage.inMemoryStore[key] = value;
     },
@@ -75,6 +83,7 @@ const SafeStorage = {
         if (SafeStorage.storage) {
             try { SafeStorage.storage.removeItem(key); } catch(e) {}
         }
+        try { sessionStorage.removeItem(key); } catch(e) {}
         SafeStorage.setCookie(key, "", -1); // Expira cookie
         delete SafeStorage.inMemoryStore[key];
     }
@@ -137,7 +146,14 @@ const SimpleAuth = {
     },
 
     // Verificar si el usuario puede estar en la página actual
-    checkGuard: () => {
+    checkGuard: async () => {
+        // Detectar móvil para aplicar un pequeño retraso de "asentamiento" de sesión
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile && !SimpleAuth.state.isLoggedIn) {
+            console.log('📱 Mobile detected, applying grace period for session settling...');
+            await new Promise(resolve => setTimeout(resolve, 600)); // 600ms de gracia
+        }
+
         // Normalizar URL: quitar parámetros de búsqueda y fragmentos
         const path = window.location.pathname;
         const pageName = path.split("/").pop() || "index.html";
