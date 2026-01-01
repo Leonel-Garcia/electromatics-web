@@ -106,6 +106,28 @@ const unitData = {
             ft: { name: "Pies (ft)", factor: 0.3048 }
         }
     },
+    temperatura: {
+        title: "Temperatura",
+        icon: "fa-temperature-half",
+        units: {
+            C: { name: "Celsius (°C)" },
+            F: { name: "Fahrenheit (°F)" },
+            K: { name: "Kelvin (K)" }
+        }
+    },
+    tiempo: {
+        title: "Tiempo",
+        icon: "fa-clock",
+        units: {
+            s: { name: "Segundos (s)", factor: 1 },
+            min: { name: "Minutos (min)", factor: 60 },
+            h: { name: "Horas (h)", factor: 3600 },
+            d: { name: "Días (d)", factor: 86400 },
+            semana: { name: "Semanas", factor: 604800 },
+            mes: { name: "Meses (30.4d)", factor: 2629746 },
+            año: { name: "Años (365d)", factor: 31557600 }
+        }
+    },
     frecuencia: {
         title: "Frecuencia",
         icon: "fa-wave-square",
@@ -113,7 +135,7 @@ const unitData = {
             Hz: { name: "Herzios (Hz)", factor: 1 },
             kHz: { name: "Kiloherzios (kHz)", factor: 1000 },
             MHz: { name: "Megaherzios (MHz)", factor: 1000000 },
-            "rad/s": { name: "Radianes por seg (rad/s)", factor: 1/6.283185 }
+            "rad/s": { name: "Radianes por seg (rad/s)", factor: 0.159155 }
         }
     }
 };
@@ -276,9 +298,24 @@ function performConversion() {
         return;
     }
 
+    let convertedValue;
     const units = unitData[currentCategory].units;
-    const valueInBase = fromValue * units[fromUnit].factor;
-    const convertedValue = valueInBase / units[toUnit].factor;
+
+    if (currentCategory === 'temperatura') {
+        // Special logic for Temperature (Base: Celsius)
+        let valueInBase;
+        if (fromUnit === 'C') valueInBase = fromValue;
+        else if (fromUnit === 'F') valueInBase = (fromValue - 32) * 5 / 9;
+        else if (fromUnit === 'K') valueInBase = fromValue - 273.15;
+
+        if (toUnit === 'C') convertedValue = valueInBase;
+        else if (toUnit === 'F') convertedValue = (valueInBase * 9 / 5) + 32;
+        else if (toUnit === 'K') convertedValue = valueInBase + 273.15;
+    } else {
+        // Standard Factor-based logic
+        const valueInBase = fromValue * units[fromUnit].factor;
+        convertedValue = valueInBase / units[toUnit].factor;
+    }
 
     // Precision handling
     const precision = 6;
