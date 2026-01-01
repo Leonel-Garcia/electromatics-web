@@ -21,6 +21,23 @@ const SafeStorage = {
     inMemoryStore: {},
     
     init: () => {
+        // --- 0. INYECTAR KILL SWITCH CSS INMEDIATAMENTE ---
+        if (!document.getElementById('auth-kill-switch')) {
+            const style = document.createElement('style');
+            style.id = 'auth-kill-switch';
+            style.textContent = `
+                body.is-authenticated .auth-modal,
+                body.is-authenticated #simulator-auth-overlay { 
+                    display: none !important; 
+                    visibility: hidden !important;
+                    pointer-events: none !important;
+                    opacity: 0 !important;
+                    z-index: -100 !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         try {
             const testKey = '__test__';
             localStorage.setItem(testKey, testKey);
@@ -30,6 +47,16 @@ const SafeStorage = {
         } catch (e) {
             console.warn('⚠️ LocalStorage restricted, using memory/cookie store');
             SafeStorage.storage = null;
+        }
+
+        // --- 1. DETECCIÓN ULTRA-TEMPRANA DE SESIÓN ---
+        const token = SafeStorage.getItem('access_token');
+        const insurance = SafeStorage.getItem('auth_loop_insurance');
+        const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
+
+        if (token || isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
+            document.body.classList.add('is-authenticated');
+            console.log('🛡️ SafeStorage: Session detected, armor activated.');
         }
     },
 
@@ -136,11 +163,16 @@ const SimpleAuth = {
         if (SimpleAuth.state.isInitialized) return;
         SimpleAuth.state.isInitialized = true;
 
-        console.log('🚀 SimpleAuth: Initializing [v4.0]...');
+        console.log('🚀 SimpleAuth: Initializing [v7.0 - CSS Shield]...');
         
-        // REINICIO DE ESTADO CRÍTICO: Asegurar limpieza en reloads calientes
+        // REINICIO DE ESTADO CRÍTICO
         SimpleAuth.state.isLoading = true;
         SimpleAuth.state.isRestricted = false;
+
+        // Asegurar que el body refleje el estado detectado por SafeStorage
+        if (SafeStorage.getItem('access_token')) {
+            document.body.classList.add('is-authenticated');
+        }
         
         // 0. Hook inmediato para el botón de login para evitar 'undefined'
         window.openAuthModal = (tab = 'login') => {
@@ -200,12 +232,22 @@ const SimpleAuth = {
 
     // Verificar si el usuario puede estar en la página actual
     checkGuard: async () => {
+        // --- ESCUDO FÍSICO (v7.0) ---
+        // Si el body tiene la clase de autenticación, nada puede molestarnos.
+        if (document.body.classList.contains('is-authenticated')) {
+            console.log('🛡️ Auth Guard: Body Armor Active, bypassing all checks.');
+            SimpleAuth.state.isLoggedIn = true;
+            SimpleAuth.state.isRestricted = false;
+            return;
+        }
+
         // --- ESCUDO DE PERSISTENCIA MÓVIL (Nuclear Shield) ---
         const insurance = SafeStorage.getItem('auth_loop_insurance');
         const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
 
         if (isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
             console.log('🛡️ Auth Guard: Shield is active, suppress any prompt.');
+            document.body.classList.add('is-authenticated');
             SimpleAuth.state.isLoggedIn = true;
             SimpleAuth.state.isRestricted = false;
             SimpleAuth.updateUI(); 
@@ -214,10 +256,11 @@ const SimpleAuth = {
 
         // Retraso de seguridad obligatorio en móviles para evitar parpadeos
         if (isMobile() && !SimpleAuth.state.isLoggedIn) {
-            console.log('📱 Mobile Shield: Mandatory settlement delay (1.5s)...');
+            console.log('📱 Mobile Shield: Settlement delay (1.5s)...');
             await new Promise(resolve => setTimeout(resolve, 1500));
             // Re-evaluar tras el delay
             if (SafeStorage.getItem('access_token')) {
+                document.body.classList.add('is-authenticated');
                 SimpleAuth.state.isLoggedIn = true;
                 return;
             }
@@ -662,6 +705,7 @@ const SimpleAuth = {
 
     // Logout
     logout: () => {
+        document.body.classList.remove('is-authenticated');
         SimpleAuth.clearSession();
         SimpleAuth.state.isLoading = false;
         SimpleAuth.state.isRestricted = false;
@@ -904,15 +948,15 @@ const SimpleAuth = {
         const loginBtn = document.getElementById('login-btn');
         const modal = document.getElementById('auth-modal');
         
+        if (SimpleAuth.state.isLoggedIn) {
+            document.body.classList.add('is-authenticated');
+        }
+
         if (loginBtn) {
             if (SimpleAuth.state.isLoggedIn) {
-                // SI ESTAMOS LOGUEADOS: EL MODAL DEBE MORIR DEFINITIVAMENTE
+                // SI ESTAMOS LOGUEADOS: EL MODAL DEBE MORIR DEFINITIVAMENTE (Fuerza Bruta CSS)
                 if (modal && !SimpleAuth.state.isRestricted) {
-                    modal.style.display = 'none';
-                    modal.style.zIndex = '-1';
                     modal.classList.remove('active', 'restricted');
-                    modal.style.opacity = '0';
-                    modal.style.pointerEvents = 'none';
                 }
                 // Fallback de nombre para móviles/sesiones lentas
                 const userName = (SimpleAuth.state.user && SimpleAuth.state.user.name) 

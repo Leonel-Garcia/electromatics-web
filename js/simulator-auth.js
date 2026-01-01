@@ -10,6 +10,12 @@ const SimulatorAuth = {
      * @returns {Promise<boolean>} True if user is authenticated
      */
     checkAccess: async function() {
+        // --- ESCUDO FÍSICO PRIORITARIO (v7.0) ---
+        if (document.body.classList.contains('is-authenticated')) {
+            console.log('🛡️ SimulatorAuth: Global armor detected, granting access.');
+            return true;
+        }
+
         // --- ESCUDO DE PERSISTENCIA (v5.0) ---
         if (typeof SafeStorage !== 'undefined') {
             const insurance = SafeStorage.getItem('auth_loop_insurance');
