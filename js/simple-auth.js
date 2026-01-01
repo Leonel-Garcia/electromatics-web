@@ -105,23 +105,40 @@ const SimpleAuth = {
 
         console.log('🚀 SimpleAuth: Initializing...');
         
-        // 1. Inicializar almacenamiento persistente (localStorage)
-        SafeStorage.init();
-        
-        // 2. Inyectar UI
-        SimpleAuth.injectModal();
-        SimpleAuth.setupUI();
-        SimpleAuth.setupPasswordToggle();
-        
-        // 3. Cargar sesión y esperar validación
-        console.log('📡 SimpleAuth: Loading session...');
-        await SimpleAuth.loadSession();
-        
-        // 4. Actualizar visualmente
-        SimpleAuth.updateUI();
-        
-        // 5. Ejecutar guardia de seguridad global después de cargar datos
-        SimpleAuth.checkGuard();
+        // 0. Hook inmediato para el botón de login para evitar 'undefined'
+        window.openAuthModal = (tab = 'login') => {
+            const modal = document.getElementById('auth-modal');
+            if (modal) {
+                modal.classList.add('active');
+                SimpleAuth.switchTab(tab);
+            } else {
+                console.error('❌ SimpleAuth: Modal not injected yet!');
+            }
+        };
+
+        try {
+            // 1. Inicializar almacenamiento persistente
+            SafeStorage.init();
+            
+            // 2. Inyectar UI
+            SimpleAuth.injectModal();
+            SimpleAuth.setupUI(); // Esto sobrescribirá el hook temporal del paso 0 con la lógica real
+            SimpleAuth.setupPasswordToggle();
+            
+            // 3. Cargar sesión y esperar validación
+            console.log('📡 SimpleAuth: Loading session...');
+            await SimpleAuth.loadSession();
+            
+            // 4. Actualizar visualmente
+            SimpleAuth.updateUI();
+            
+            // 5. Ejecutar guardia de seguridad global
+            SimpleAuth.checkGuard();
+            
+            console.log('✅ SimpleAuth: Initialized successfully');
+        } catch (error) {
+            console.error('❌ SimpleAuth: Critical error during initialization:', error);
+        }
     },
 
     // Verificar si el usuario puede estar en la página actual

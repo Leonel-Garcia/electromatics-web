@@ -63,6 +63,7 @@
       }
     }
     </script>
+  </head>
   <body>
     <!-- Header y Navegación -->
     <header class="main-header">
@@ -1062,59 +1063,7 @@
       </div>
     </footer>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="auth-modal">
-      <div class="auth-content">
-        <button id="close-auth" class="close-auth"><i class="fa-solid fa-xmark"></i></button>
-        
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
-          <button class="auth-tab" data-tab="register">Registrarse</button>
-        </div>
-
-        <div id="login-form-container" class="auth-form-container active">
-          <h2>Bienvenido de nuevo</h2>
-          <form id="login-form">
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="login-email" required>
-            </div>
-            <div class="form-group">
-              <label>Contraseña</label>
-              <div class="password-input-wrapper">
-                <input type="password" id="login-password" required>
-                <i class="fa-solid fa-eye password-toggle" data-target="login-password"></i>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary full-width">Acceder</button>
-          </form>
-          <p class="auth-footer">¿No tienes cuenta? <a href="#" id="switch-to-register">Regístrate</a></p>
-        </div>
-
-        <div id="register-form-container" class="auth-form-container">
-          <h2>Crear Cuenta</h2>
-          <form id="register-form">
-            <div class="form-group">
-              <label>Nombre Completo</label>
-              <input type="text" id="reg-name" required>
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="reg-email" required>
-            </div>
-            <div class="form-group">
-              <label>Contraseña</label>
-              <div class="password-input-wrapper">
-                <input type="password" id="reg-password" required>
-                <i class="fa-solid fa-eye password-toggle" data-target="reg-password"></i>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary full-width">Registrarse</button>
-          </form>
-          <p class="auth-footer">¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a></p>
-        </div>
-      </div>
-    </div>
+    <!-- El modal de autenticación se inyecta dinámicamente desde js/simple-auth.js -->
 
     <!-- Chat Widget -->
     <div id="chat-widget-container"></div>
@@ -1122,7 +1071,6 @@
     <!-- Scripts -->
     <script src="js/config.js?v=7.0"></script>
     <script src="js/ai-chat.js?v=7.0"></script>
-    <script src="js/config.js"></script>
     <script src="js/simple-auth.js"></script>
     <script src="js/ui.js?v=1.0"></script>
     <script src="js/electro-info.js"></script>
