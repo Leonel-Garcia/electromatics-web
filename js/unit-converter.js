@@ -332,13 +332,18 @@ function performConversion() {
         convertedValue = valueInBase / units[toUnit].factor;
     }
 
-    // Precision handling
+    // Precision handling and Venezuelan number format (comma for decimals, period for thousands)
     const precision = 6;
-    let result = convertedValue;
-    if (convertedValue.toString().includes('e')) {
-        result = convertedValue.toExponential(4);
+    let result;
+    if (convertedValue.toString().includes('e') || Math.abs(convertedValue) > 1e9 || (Math.abs(convertedValue) < 0.0001 && convertedValue !== 0)) {
+        // Use exponential notation for very large or very small numbers
+        result = convertedValue.toExponential(4).replace('.', ',');
     } else {
-        result = parseFloat(convertedValue.toFixed(precision));
+        // Format with Venezuelan locale
+        result = parseFloat(convertedValue.toFixed(precision)).toLocaleString('es-VE', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: precision
+        });
     }
 
     toInput.value = result;
