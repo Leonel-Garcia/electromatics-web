@@ -58,18 +58,22 @@ const SimpleAuth = {
         isLoggedIn: false,
         isPremium: false,
         user: null,
-        token: null
+        token: null,
+        isLoading: true // Estado de carga inicial
     },
 
     // Inicializar
     init: async () => {
-        await SimpleAuth.loadSession();
         SimpleAuth.injectModal();
         SimpleAuth.setupUI();
         SimpleAuth.setupPasswordToggle();
+        
+        // Cargar sesión y esperar validación
+        await SimpleAuth.loadSession();
+        
         SimpleAuth.updateUI();
         
-        // Ejecutar guardia de seguridad global
+        // Ejecutar guardia de seguridad global después de cargar datos
         SimpleAuth.checkGuard();
     },
 
@@ -90,22 +94,25 @@ const SimpleAuth = {
 
         const isProtected = !publicPages.includes(page);
         
+        // Si el usuario ya está logueado o está cargando, no hacer nada todavía
+        if (SimpleAuth.state.isLoading) return;
+        
         if (isProtected && !SimpleAuth.state.isLoggedIn) {
             // Activar modo restringido: no se puede cerrar el modal
             SimpleAuth.state.isRestricted = true;
             
-            // Abrir modal después de un pequeño delay para asegurar que el DOM esté listo
-            setTimeout(() => {
-                if (window.openAuthModal) {
-                    window.openAuthModal('login');
-                    
-                    // Ajustes visuales para modo restringido
-                    const modal = document.getElementById('auth-modal');
-                    const closeBtn = document.getElementById('close-auth');
-                    if (modal) modal.classList.add('restricted');
-                    if (closeBtn) closeBtn.style.display = 'none';
+            // Abrir modal inmediatamente si ya cargó y no hay sesión
+            if (window.openAuthModal) {
+                window.openAuthModal('login');
+                
+                // Ajustes visuales para modo restringido
+                const modal = document.getElementById('auth-modal');
+                const closeBtn = document.getElementById('close-auth');
+                if (modal) modal.classList.add('restricted');
+                if (closeBtn) {
+                    closeBtn.style.display = 'none';
                 }
-            }, 500);
+            }
         }
     },
 
@@ -302,8 +309,18 @@ const SimpleAuth = {
 
     // Cargar sesión desde LocalStorage (Token)
     loadSession: async () => {
-        const token = SafeStorage.getItem('auth_token');
+        SimpleAuth.state.isLoading = true;
+        
+        // Standardize to 'access_token' for global consistency
+        let token = SafeStorage.getItem('access_token') || SafeStorage.getItem('auth_token');
+        
         if (token) {
+            // Migrar token si usa el nombre viejo
+            if (SafeStorage.getItem('auth_token')) {
+                SafeStorage.setItem('access_token', token);
+                SafeStorage.removeItem('auth_token');
+            }
+            
             SimpleAuth.state.token = token;
             // Validar token y obtener datos del usuario
             try {
@@ -323,19 +340,24 @@ const SimpleAuth = {
                     };
                     SimpleAuth.state.isLoggedIn = true;
                     SimpleAuth.state.isPremium = user.is_premium;
-                    SimpleAuth.updateUI();
                 } else {
                     // Token inválido o expirado
-                    SimpleAuth.logout();
+                    SimpleAuth.clearSession();
                 }
             } catch (error) {
                 console.error("Error validando sesión:", error);
-                // Si falla validación, solo limpiamos token, no recargamos para evitar bucles
-                SafeStorage.removeItem('auth_token');
-                SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null };
-                SimpleAuth.updateUI();
+                // No limpiamos en caso de error de red para permitir reintentos automáticos si la página se refresca
             }
         }
+        
+        SimpleAuth.state.isLoading = false;
+    },
+
+    // Limpia localmente sin recargar si no es necesario
+    clearSession: () => {
+        SafeStorage.removeItem('access_token');
+        SafeStorage.removeItem('auth_token');
+        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false };
     },
 
     // Registrar usuario (POST /register)
@@ -386,9 +408,8 @@ const SimpleAuth = {
                 const data = await response.json();
                 const token = data.access_token;
                 
-                // Guardar token
-                // Guardar token
-                SafeStorage.setItem('auth_token', token);
+                // Guardar token estándar
+                SafeStorage.setItem('access_token', token);
                 SimpleAuth.state.token = token;
                 
                 // Cargar datos de usuario
@@ -436,8 +457,9 @@ const SimpleAuth = {
 
     // Logout
     logout: () => {
+        SafeStorage.removeItem('access_token');
         SafeStorage.removeItem('auth_token');
-        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null };
+        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false };
         SimpleAuth.updateUI();
         window.location.reload();
     },
