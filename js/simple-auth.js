@@ -3,8 +3,13 @@
  * Sistema de Autenticación Conectado al Backend (FastAPI)
  */
 
-// Usar configuración global de js/config.js
-const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:8001';
+// Usar configuración global de js/config.js con resolución dinámica
+const getApiUrl = () => {
+    if (typeof API_BASE_URL !== 'undefined') return API_BASE_URL;
+    if (window.API_BASE_URL) return window.API_BASE_URL;
+    return 'https://electromatics-api.onrender.com'; // Producción por defecto
+};
+const API_URL = getApiUrl();
 
 /**
  * SafeStorage
@@ -20,33 +25,63 @@ const SafeStorage = {
             localStorage.setItem(testKey, testKey);
             localStorage.removeItem(testKey);
             SafeStorage.storage = localStorage;
+            console.log('✅ LocalStorage available');
         } catch (e) {
-            console.warn('LocalStorage restricted, using memory store');
+            console.warn('⚠️ LocalStorage restricted, using memory/cookie store');
             SafeStorage.storage = null;
         }
     },
 
-    getItem: (key) => {
-        if (SafeStorage.storage) {
-            return SafeStorage.storage.getItem(key);
+    // Aux para cookies (redundancia móvil)
+    setCookie: (name, value, days = 7) => {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + d.toUTCString();
+        document.cookie = name + "=" + (value || "") + ";" + expires + ";path=/;SameSite=Lax";
+    },
+
+    getCookie: (name) => {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
         }
-        return SafeStorage.inMemoryStore[key] || null;
+        return null;
+    },
+
+    getItem: (key) => {
+        // 1. Intentar LocalStorage
+        let val = null;
+        if (SafeStorage.storage) {
+            val = SafeStorage.storage.getItem(key);
+        }
+        // 2. Intentar Cookies (Fallback/Redundancia)
+        if (!val) {
+            val = SafeStorage.getCookie(key);
+            // Si estaba en cookie pero no en storage, repoblar storage para consistencia
+            if (val && SafeStorage.storage) SafeStorage.storage.setItem(key, val);
+        }
+        // 3. Memoria
+        return val || SafeStorage.inMemoryStore[key] || null;
     },
 
     setItem: (key, value) => {
+        // Guardar en todas partes para máxima persistencia
         if (SafeStorage.storage) {
-            SafeStorage.storage.setItem(key, value);
-        } else {
-            SafeStorage.inMemoryStore[key] = value;
+            try { SafeStorage.storage.setItem(key, value); } catch(e) {}
         }
+        SafeStorage.setCookie(key, value);
+        SafeStorage.inMemoryStore[key] = value;
     },
 
     removeItem: (key) => {
         if (SafeStorage.storage) {
-            SafeStorage.storage.removeItem(key);
-        } else {
-            delete SafeStorage.inMemoryStore[key];
+            try { SafeStorage.storage.removeItem(key); } catch(e) {}
         }
+        SafeStorage.setCookie(key, "", -1); // Expira cookie
+        delete SafeStorage.inMemoryStore[key];
     }
 };
 
@@ -600,6 +635,14 @@ const SimpleAuth = {
             submitBtn.textContent = "Acceder";
 
             if (result.success) {
+                // Verificar persistencia antes de recargar (Crucial para móviles)
+                const verifyToken = SafeStorage.getItem('access_token');
+                if (!verifyToken) {
+                    console.error('❌ Persistence Failure: Token not saved!');
+                    // Re-intentar forzado
+                    SafeStorage.setItem('access_token', SimpleAuth.state.token);
+                }
+                
                 SimpleAuth.showMessage('login-form-container', '¡Bienvenido!', 'success');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
@@ -624,6 +667,13 @@ const SimpleAuth = {
             submitBtn.textContent = "Registrarse";
 
             if (result.success) {
+                // Verificar persistencia antes de recargar
+                const verifyToken = SafeStorage.getItem('access_token');
+                if (!verifyToken) {
+                    console.error('❌ Persistence Failure after register!');
+                    SafeStorage.setItem('access_token', SimpleAuth.state.token);
+                }
+
                 SimpleAuth.showMessage('register-form-container', '¡Cuenta creada!', 'success');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
