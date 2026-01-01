@@ -4,12 +4,7 @@
  */
 
 // Usar configuración global de js/config.js con resolución dinámica
-const getApiUrl = () => {
-    if (typeof API_BASE_URL !== 'undefined') return API_BASE_URL;
-    if (window.API_BASE_URL) return window.API_BASE_URL;
-    return 'https://electromatics-api.onrender.com'; // Producción por defecto
-};
-const API_URL = getApiUrl();
+const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : (window.API_BASE_URL || 'https://electromatics-api.onrender.com');
 
 /**
  * SafeStorage

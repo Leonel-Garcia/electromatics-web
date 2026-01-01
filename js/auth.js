@@ -4,7 +4,7 @@
  */
 
 // API_BASE_URL is now defined in config.js
-const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:8001';
+const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : (window.API_BASE_URL || 'https://electromatics-api.onrender.com');
 
 const Auth = {
     state: {
