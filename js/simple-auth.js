@@ -10,6 +10,8 @@ const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : (window.API
  * SafeStorage
  * Wrapper para manejar localStorage de forma segura en móviles/incógnito
  */
+const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 const SafeStorage = {
     storage: null,
     inMemoryStore: {},
@@ -137,6 +139,14 @@ const SimpleAuth = {
             // 1. Inicializar almacenamiento persistente
             SafeStorage.init();
             
+            // TENTATIVE LOGIN (Optimista): Si ya existe un token, asumimos login 
+            // preventivamente para que el guardia (checkGuard) no abra el modal
+            // mientras validamos con el servidor.
+            if (SafeStorage.getItem('access_token')) {
+                console.log('🎫 SimpleAuth: Token detected, applying tentative login state');
+                SimpleAuth.state.isLoggedIn = true;
+            }
+            
             // 2. Inyectar UI
             SimpleAuth.injectModal();
             SimpleAuth.setupUI(); // Esto sobrescribirá el hook temporal del paso 0 con la lógica real
@@ -161,10 +171,9 @@ const SimpleAuth = {
     // Verificar si el usuario puede estar en la página actual
     checkGuard: async () => {
         // Detectar móvil para aplicar un pequeño retraso de "asentamiento" de sesión
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (isMobile && !SimpleAuth.state.isLoggedIn) {
+        if (isMobile() && !SimpleAuth.state.isLoggedIn) {
             console.log('📱 Mobile detected, applying grace period for session settling...');
-            await new Promise(resolve => setTimeout(resolve, 600)); // 600ms de gracia
+            await new Promise(resolve => setTimeout(resolve, 800)); // 800ms de gracia
         }
 
         // Normalizar URL: quitar parámetros de búsqueda y fragmentos
@@ -243,8 +252,15 @@ const SimpleAuth = {
                     z-index: 20000;
                     justify-content: center;
                     align-items: center;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s ease;
                 }
-                .auth-modal.active { display: flex; }
+                .auth-modal.active { 
+                    display: flex; 
+                    opacity: 1;
+                    pointer-events: all;
+                }
                 .auth-content {
                     background: #1a2733;
                     padding: 30px;
@@ -681,16 +697,33 @@ const SimpleAuth = {
             submitBtn.textContent = "Acceder";
 
             if (result.success) {
-                // Verificar persistencia MULTI-CAPA antes de recargar (Crucial para móviles)
+                // Sincronizar y actualizar estado inmediatamente
+                SimpleAuth.state.isLoggedIn = true;
+                SimpleAuth.state.isRestricted = false; // Quitar modo restringido para permitir cerrar
+                
+                // Actualizar UI sin esperar al reload
+                SimpleAuth.updateUI();
+                
+                // Cerrar modal inmediatamente
+                if (modal) {
+                    modal.classList.remove('active');
+                    modal.classList.remove('restricted');
+                }
+                
+                // Sincronizar persistencia HARDWARE antes de recargar
                 console.log('🔐 Synchronizing session across all storage layers...');
                 const token = SimpleAuth.state.token;
                 SafeStorage.setItem('access_token', token);
                 
-                // Pequeña espera para asegurar que el navegador móvil haya escrito en disco
+                // Notificar éxito
                 SimpleAuth.showMessage('login-form-container', '¡Sesión Iniciada! Refrescando...', 'success');
+                
+                // Reload demorado para persistencia física en móviles
+                const delay = isMobile() ? 2000 : 1000;
                 setTimeout(() => {
-                    window.location.reload();
-                }, isMobile ? 1200 : 800); 
+                    // Force refresh bypass cache
+                    window.location.href = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 't=' + Date.now();
+                }, delay); 
             } else {
                 SimpleAuth.showMessage('login-form-container', result.message, 'error');
             }
@@ -713,15 +746,30 @@ const SimpleAuth = {
             submitBtn.textContent = "Registrarse";
 
             if (result.success) {
-                // Verificar persistencia antes de recargar
-                const verifyToken = SafeStorage.getItem('access_token');
-                if (!verifyToken) {
-                    console.error('❌ Persistence Failure after register!');
-                    SafeStorage.setItem('access_token', SimpleAuth.state.token);
+                // Sincronizar y actualizar estado inmediatamente
+                SimpleAuth.state.isLoggedIn = true;
+                SimpleAuth.state.isRestricted = false;
+                
+                // Actualizar UI sin esperar al reload
+                SimpleAuth.updateUI();
+                
+                // Cerrar modal inmediatamente
+                if (modal) {
+                    modal.classList.remove('active');
+                    modal.classList.remove('restricted');
                 }
 
-                SimpleAuth.showMessage('register-form-container', '¡Cuenta creada!', 'success');
-                setTimeout(() => window.location.reload(), 1000);
+                // Sincronizar persistencia HARDWARE antes de recargar
+                console.log('🔐 Synchronizing register session...');
+                SafeStorage.setItem('access_token', SimpleAuth.state.token);
+                
+                SimpleAuth.showMessage('register-form-container', '¡Cuenta Creada! Refrescando...', 'success');
+                
+                const delay = isMobile() ? 2000 : 1000;
+                setTimeout(() => {
+                    // Force refresh bypass cache
+                    window.location.href = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 't=' + Date.now();
+                }, delay);
             } else {
                 SimpleAuth.showMessage('register-form-container', result.message, 'error');
             }
