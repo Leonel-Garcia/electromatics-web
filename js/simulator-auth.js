@@ -69,16 +69,31 @@ const SimulatorAuth = {
     openRegister: function() { if (window.openAuthModal) window.openAuthModal('register'); },
     openLogin: function() { if (window.openAuthModal) window.openAuthModal('login'); },
 
-    /**
-     * Initialize simulator with authentication check
-     */
     init: async function(initCallback) {
-        console.log('🛡️ SimulatorAuth: Syncing with SimpleAuth...');
+        console.log('🛡️ SimulatorAuth: Syncing with SimpleAuth lifecycle...');
+        
+        // Esperar a que SimpleAuth esté TOTALMENTE inicializado y VALIDADO
+        let attempts = 0;
+        const maxAttempts = 50; // 5 segundos max
+        while (attempts < maxAttempts) {
+            if (window.SimpleAuth && window.SimpleAuth.state.isInitialized && !window.SimpleAuth.state.isLoading) {
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+
         const hasAccess = await this.checkAccess();
         
         if (!hasAccess) {
+            console.warn('🛡️ SimulatorAuth: Access denied, showing prompt');
             this.showLoginPrompt();
             return false;
+        }
+
+        // Si tenemos acceso, informamos a SimpleAuth por si acaso (verifica nivel de suscripción)
+        if (window.SimpleAuth) {
+            SimpleAuth.checkSubscription();
         }
 
         // Hide overlay if it exists

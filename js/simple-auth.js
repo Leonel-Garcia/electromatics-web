@@ -173,10 +173,10 @@ const SimpleAuth = {
             console.log('📡 SimpleAuth: Validating session...');
             await SimpleAuth.loadSession();
             
-            // 6. Actualización final
+            // 6. Actualización final (ya con datos oficiales)
             SimpleAuth.updateUI();
             
-            // 5. Ejecutar guardia de seguridad global (AHORA ESPERAMOS A QUE TERMINE)
+            // 7. Ejecutar guardia de seguridad global (AHORA ESPERAMOS A QUE TERMINE)
             await SimpleAuth.checkGuard();
             
             console.log('✅ SimpleAuth: Initialized successfully');
@@ -239,10 +239,13 @@ const SimpleAuth = {
 
         // Si ya está logueado, asegurarse de que el modal esté cerrado (especialmente útil en móviles si hubo delay)
         if (SimpleAuth.state.isLoggedIn) {
+            console.log('🛡️ Auth Guard: User is confirmed. Suppressing modal.');
             const modal = document.getElementById('auth-modal');
-            if (modal && modal.classList.contains('active')) {
-                console.log('✅ User is logged in, auto-closing lingering modal');
+            if (modal) {
                 modal.classList.remove('active');
+                modal.classList.remove('restricted');
+                // Forzar invisibilidad total
+                modal.style.display = 'none';
             }
             return;
         }
@@ -668,6 +671,11 @@ const SimpleAuth = {
         const modal = document.getElementById('auth-modal');
         if (!modal) return;
 
+        // Limpieza preventiva: si ya estamos logueados, el modal debe estar oculto
+        if (SimpleAuth.state.isLoggedIn && !SimpleAuth.state.isRestricted) {
+            modal.style.display = 'none';
+        }
+
         const closeBtn = document.getElementById('close-auth');
         const tabs = document.querySelectorAll('.auth-tab');
         const loginForm = document.getElementById('login-form');
@@ -677,6 +685,13 @@ const SimpleAuth = {
         const subscribeBtn = document.getElementById('subscribe-btn');
 
         window.openAuthModal = (tab = 'login') => {
+            // No abrir si ya estamos logueados (a menos que sea una llamada explícita con intención)
+            if (SimpleAuth.state.isLoggedIn && !SimpleAuth.state.isRestricted) {
+                console.log('🎫 openAuthModal: User is already logged in, ignoring open request');
+                return;
+            }
+
+            modal.style.display = 'flex';
             modal.classList.add('active');
             SimpleAuth.switchTab(tab);
             
@@ -864,8 +879,15 @@ const SimpleAuth = {
 
     updateUI: () => {
         const loginBtn = document.getElementById('login-btn');
+        const modal = document.getElementById('auth-modal');
+        
         if (loginBtn) {
             if (SimpleAuth.state.isLoggedIn) {
+                // Si estamos logueados oficialmente, el modal NO debe existir visualmente
+                if (modal && !SimpleAuth.state.isRestricted) {
+                    modal.style.display = 'none';
+                    modal.classList.remove('active');
+                }
                 // Fallback de nombre para móviles/sesiones lentas
                 const userName = (SimpleAuth.state.user && SimpleAuth.state.user.name) 
                                 ? SimpleAuth.state.user.name.split(' ')[0] 
