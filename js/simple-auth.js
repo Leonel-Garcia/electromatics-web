@@ -11,7 +11,9 @@ const API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : (window.API
  * Wrapper para manejar localStorage de forma segura en móviles/incógnito
  */
 const isMobile = () => {
-    return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth <= 850);
+    return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           (window.innerWidth <= 850) || 
+           (navigator.maxTouchPoints > 0);
 };
 
 const SafeStorage = {
@@ -162,6 +164,8 @@ const SimpleAuth = {
                 console.log('🎫 SimpleAuth: Tentative login enabled');
                 SimpleAuth.state.isLoggedIn = true;
                 if (isInsured) SimpleAuth.state.isRestricted = false;
+                
+                // --- CAMBIO CLAVE: Actualizamos UI inmediatamente con estado tentativo ---
                 SimpleAuth.updateUI(); 
             }
             
@@ -861,17 +865,25 @@ const SimpleAuth = {
     updateUI: () => {
         const loginBtn = document.getElementById('login-btn');
         if (loginBtn) {
-            if (SimpleAuth.state.isLoggedIn && SimpleAuth.state.user) {
-                loginBtn.textContent = SimpleAuth.state.user.name.split(' ')[0];
+            if (SimpleAuth.state.isLoggedIn) {
+                // Fallback de nombre para móviles/sesiones lentas
+                const userName = (SimpleAuth.state.user && SimpleAuth.state.user.name) 
+                                ? SimpleAuth.state.user.name.split(' ')[0] 
+                                : 'Usuario';
+                                
+                loginBtn.textContent = userName;
                 loginBtn.href = "#";
                 loginBtn.onclick = (e) => {
                     e.preventDefault();
-                    const action = confirm(`Hola ${SimpleAuth.state.user.name}\n\n¿Desea cerrar sesión?`);
+                    const greeting = (SimpleAuth.state.user && SimpleAuth.state.user.name) 
+                                    ? `Hola ${SimpleAuth.state.user.name}` 
+                                    : 'Hola';
+                    const action = confirm(`${greeting}\n\n¿Desea cerrar sesión?`);
                     if (action) SimpleAuth.logout();
                 };
 
                 // Mostrar link de admin si es admin
-                if (SimpleAuth.state.user.isAdmin) {
+                if (SimpleAuth.state.user && SimpleAuth.state.user.isAdmin) {
                     const nav = document.querySelector('.desktop-nav');
                     if (nav && !document.getElementById('admin-link')) {
                         const adminLink = document.createElement('a');
