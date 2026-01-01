@@ -10,15 +10,33 @@ const SimulatorAuth = {
      * @returns {Promise<boolean>} True if user is authenticated
      */
     checkAccess: async function() {
-        const token = localStorage.getItem('auth_token');
+        // 1. Preferir el estado de SimpleAuth si está disponible
+        if (window.SimpleAuth && window.SimpleAuth.state) {
+            if (window.SimpleAuth.state.isLoading) {
+                // Esperar un poco si SimpleAuth está cargando
+                await new Promise(resolve => {
+                    const check = () => {
+                        if (!window.SimpleAuth.state.isLoading) resolve();
+                        else setTimeout(check, 50);
+                    };
+                    check();
+                });
+            }
+            if (window.SimpleAuth.state.isLoggedIn) {
+                return true;
+            }
+        }
+
+        // 2. Fallback al token estándar en localStorage
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
         
         if (!token) {
             return false;
         }
 
-        // Validate token with backend
+        // 3. Validar token con backend (solo si SimpleAuth falló o no está presente)
         try {
-            const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
+            const apiUrl = window.API_BASE_URL || 'https://electromatics-api.onrender.com';
             const response = await fetch(`${apiUrl}/users/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -28,7 +46,8 @@ const SimulatorAuth = {
             return response.ok;
         } catch (error) {
             console.error('Auth check failed:', error);
-            return false;
+            // Si hay error de red pero tenemos token, permitimos acceso temporal
+            return !!token;
         }
     },
 
@@ -251,12 +270,19 @@ const SimulatorAuth = {
      * @param {Function} initCallback - Function to call if user is authenticated
      */
     init: async function(initCallback) {
+        console.log('🛡️ SimulatorAuth: Initializing simulator guard...');
         const hasAccess = await this.checkAccess();
         
         if (!hasAccess) {
+            console.warn('🚫 SimulatorAuth: Access denied, showing overlay');
             this.showLoginPrompt();
             return false;
         }
+
+        console.log('✅ SimulatorAuth: Access granted');
+        // Hide overlay if it was shown (rare case on quick login)
+        const overlay = document.getElementById('simulator-auth-overlay');
+        if (overlay) overlay.style.display = 'none';
 
         // User is authenticated, initialize simulator
         if (typeof initCallback === 'function') {
