@@ -89,13 +89,16 @@ const SafeStorage = {
     },
 
     setItem: (key, value) => {
+        // Soporte para objetos (identidad del usuario)
+        const stringValue = (typeof value === 'object') ? JSON.stringify(value) : value;
+
         // Guardar en todas partes para máxima persistencia
         if (SafeStorage.storage) {
-            try { SafeStorage.storage.setItem(key, value); } catch(e) {}
+            try { SafeStorage.storage.setItem(key, stringValue); } catch(e) {}
         }
-        try { sessionStorage.setItem(key, value); } catch(e) {}
-        SafeStorage.setCookie(key, value);
-        SafeStorage.inMemoryStore[key] = value;
+        try { sessionStorage.setItem(key, stringValue); } catch(e) {}
+        SafeStorage.setCookie(key, stringValue);
+        SafeStorage.inMemoryStore[key] = stringValue;
     },
 
     removeItem: (key) => {
@@ -105,6 +108,13 @@ const SafeStorage = {
         try { sessionStorage.removeItem(key); } catch(e) {}
         SafeStorage.setCookie(key, "", -1); // Expira cookie
         delete SafeStorage.inMemoryStore[key];
+    },
+
+    // Auxiliar para leer JSON de forma segura
+    getJSON: (key) => {
+        const val = SafeStorage.getItem(key);
+        if (!val) return null;
+        try { return JSON.parse(val); } catch(e) { return null; }
     }
 };
 
@@ -172,11 +182,11 @@ const SimpleAuth = {
                 SimpleAuth.updateUI(); 
             }
             
-            // 5. Cargar sesión y esperar validación real
+            // 5. Cargar sesión (Intento de recuperación inmediata desde cache)
             console.log('📡 SimpleAuth: Validating session...');
             await SimpleAuth.loadSession();
             
-            // 6. Actualización final (ya con datos oficiales)
+            // 6. Actualización final con datos frescos
             SimpleAuth.updateUI();
             
             // 7. Ejecutar guardia de seguridad global (AHORA ESPERAMOS A QUE TERMINE)
@@ -478,63 +488,65 @@ const SimpleAuth = {
     // Cargar sesión desde LocalStorage (Token)
     loadSession: async () => {
         SimpleAuth.state.isLoading = true;
-        SimpleAuth.state.isRestricted = false; // Reset preventivo en cada carga
+        SimpleAuth.state.isRestricted = false;
         
-        // Standardize to 'access_token' for global consistency
-        let token = SafeStorage.getItem('access_token') || SafeStorage.getItem('auth_token');
-        
+        // 1. INTENTO DE RECUPERACIÓN DESDE CACHE LOCAL (Persistencia Inmediata Global)
+        const cachedUser = SafeStorage.getJSON('user_data');
+        const token = SafeStorage.getItem('access_token');
+
+        if (token && cachedUser) {
+            console.log('💎 loadSession: Identity restored from cache');
+            SimpleAuth.state.user = cachedUser;
+            SimpleAuth.state.isLoggedIn = true;
+            SimpleAuth.state.token = token;
+            SimpleAuth.updateUI(); // Reflejar identidad inmediatamente antes de validar
+        }
+
         if (token) {
-            // OPTIMISMO MÓVIL: UsarSafeStorage para evitar bloqueos
+            // El seguro nuclear permite bypass de guardas lentas
             const insurance = SafeStorage.getItem('auth_loop_insurance');
-            if (insurance && (Date.now() - parseInt(insurance) < 25000)) {
-                console.log('🛡️ loadSession: Insured session, adopting optimistic state');
+            if (insurance && (Date.now() - parseInt(insurance) < 30000)) {
                 SimpleAuth.state.isLoggedIn = true;
             }
 
-            // Migrar token si usa el nombre viejo
-            if (SafeStorage.getItem('auth_token')) {
-                SafeStorage.setItem('access_token', token);
-                SafeStorage.removeItem('auth_token');
-            }
-            
             SimpleAuth.state.token = token;
-            // Validar token y obtener datos del usuario
+
+            // Validar token y obtener datos FRESCOS del usuario
             try {
                 const response = await fetch(`${API_URL}/users/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (response.ok) {
                     const user = await response.json();
-                    SimpleAuth.state.user = {
+                    const userData = {
                         name: user.full_name,
                         email: user.email,
                         isPremium: user.is_premium,
                         isAdmin: user.is_admin
                     };
+                    
+                    // Actualizar estado y CACHE GLOBAL
+                    SimpleAuth.state.user = userData;
                     SimpleAuth.state.isLoggedIn = true;
                     SimpleAuth.state.isPremium = user.is_premium;
-                    console.log('✅ Session validated for:', user.email);
+                    SafeStorage.setItem('user_data', userData);
+                    
+                    console.log('✅ Session validated and cached for:', user.email);
                 } else if (response.status === 401 || response.status === 403) {
-                    // Solo limpiamos si el servidor nos dice explícitamente que el token no es válido
-                    console.warn('❌ Session expired or invalid (401/403)');
+                    console.warn('❌ Session expired or invalid');
                     SimpleAuth.clearSession();
                 } else {
-                    // En caso de error de servidor (500 etc), mantenemos la sesión local 
-                    // para no bloquear al usuario por un error técnico del backend
-                    console.error('⚠️ Server error during validation:', response.status);
-                    SimpleAuth.state.isLoggedIn = true; 
+                    // Si el servidor falla pero tenemos cache, mantenemos optimismo
+                    if (SimpleAuth.state.user) {
+                        console.warn('⚠️ Server validation failed (Status: ' + response.status + '), keeping cached identity');
+                        SimpleAuth.state.isLoggedIn = true;
+                    }
                 }
             } catch (error) {
-                console.error("🌐 Network error during session validation:", error);
-                // Si hay error de red, asumimos que está logueado si tiene token,
-                // para evitar prompts falsos en conexiones inestables
-                SimpleAuth.state.isLoggedIn = true;
+                console.error("🌐 Network error, relying on cache/token persistence");
+                if (token) SimpleAuth.state.isLoggedIn = true;
             }
-        } else {
-            console.log('ℹ️ No token found in storage');
         }
         
         SimpleAuth.state.isLoading = false;
@@ -544,6 +556,8 @@ const SimpleAuth = {
     clearSession: () => {
         SafeStorage.removeItem('access_token');
         SafeStorage.removeItem('auth_token');
+        SafeStorage.removeItem('user_data');
+        SafeStorage.removeItem('auth_loop_insurance');
         // Mantener isInitialized y isLoading pero limpiar autenticación
         SimpleAuth.state.isLoggedIn = false;
         SimpleAuth.state.isPremium = false;
@@ -648,11 +662,9 @@ const SimpleAuth = {
 
     // Logout
     logout: () => {
-        SafeStorage.removeItem('access_token');
-        SafeStorage.removeItem('auth_token');
-        SafeStorage.removeItem('auth_loop_insurance');
-        SafeStorage.setCookie('auth_sync_insurance', '', -1);
-        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false, isRestricted: false };
+        SimpleAuth.clearSession();
+        SimpleAuth.state.isLoading = false;
+        SimpleAuth.state.isRestricted = false;
         SimpleAuth.updateUI();
         window.location.reload();
     },

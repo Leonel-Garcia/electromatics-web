@@ -36,12 +36,16 @@ const SimulatorAuth = {
             if (window.SimpleAuth.state.isLoggedIn) return true;
         }
 
-        // 2. Fallback redundante para móviles (Cookies/Storage)
+        // 2. Fallback redundante para móviles (Cookies/Storage/Identity Cache)
         const token = (typeof SafeStorage !== 'undefined') 
             ? SafeStorage.getItem('access_token') 
             : localStorage.getItem('access_token');
             
-        return !!token;
+        const cachedUser = (typeof SafeStorage !== 'undefined')
+            ? SafeStorage.getJSON('user_data')
+            : null;
+            
+        return !!(token && (cachedUser || isInsured));
     },
 
     /**
