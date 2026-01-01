@@ -206,17 +206,25 @@ function initConverter() {
     // Toggle logic for the card
     const cardConversor = document.getElementById('card-conversor');
     if (cardConversor) {
-        cardConversor.onclick = toggleConverter;
+        cardConversor.addEventListener('click', function(e) {
+            // Prevent event from bubbling up to general handlers if any
+            e.stopPropagation();
+            toggleConverter();
+        });
     }
 }
 
 function toggleConverter() {
     const wrapper = document.getElementById('converter-wrapper');
     if (wrapper) {
-        if (wrapper.style.display === 'none') {
+        // Use getComputedStyle or check explicit style
+        const isHidden = window.getComputedStyle(wrapper).display === 'none';
+        
+        if (isHidden) {
             wrapper.style.display = 'block';
-            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Track click if needed
+            setTimeout(() => {
+                wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         } else {
             wrapper.style.display = 'none';
         }

@@ -137,11 +137,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
   downloadButtons.forEach(btn => {
     btn.addEventListener('click', function(e) {
+      // 1. Skip if this is the converter button (it has its own logic in unit-converter.js)
+      if (this.closest('#card-conversor')) {
+        return; 
+      }
+
       e.preventDefault();
 
-      // Allow normal navigation if it's a real link
-      if (this.getAttribute('href') !== '#' && this.getAttribute('href') !== '') {
-        window.location.href = this.getAttribute('href');
+      const href = this.getAttribute('href');
+      // 2. Allow normal navigation only if it's a valid link and not a placeholder
+      if (href && href !== '#' && href !== '') {
+        window.location.href = href;
         return;
       }
       
