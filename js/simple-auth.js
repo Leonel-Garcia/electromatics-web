@@ -62,12 +62,51 @@ const SimpleAuth = {
     },
 
     // Inicializar
-    init: () => {
-        SimpleAuth.loadSession();
+    init: async () => {
+        await SimpleAuth.loadSession();
         SimpleAuth.injectModal();
         SimpleAuth.setupUI();
         SimpleAuth.setupPasswordToggle();
         SimpleAuth.updateUI();
+        
+        // Ejecutar guardia de seguridad global
+        SimpleAuth.checkGuard();
+    },
+
+    // Verificar si el usuario puede estar en la página actual
+    checkGuard: () => {
+        const path = window.location.pathname;
+        const page = path.split("/").pop() || "index.html";
+        
+        // Whitelist de páginas públicas
+        const publicPages = [
+            'index.html', 
+            '', 
+            'servicios.html', 
+            'proyectos.html', 
+            'nosotros.html', 
+            'contacto.html'
+        ];
+
+        const isProtected = !publicPages.includes(page);
+        
+        if (isProtected && !SimpleAuth.state.isLoggedIn) {
+            // Activar modo restringido: no se puede cerrar el modal
+            SimpleAuth.state.isRestricted = true;
+            
+            // Abrir modal después de un pequeño delay para asegurar que el DOM esté listo
+            setTimeout(() => {
+                if (window.openAuthModal) {
+                    window.openAuthModal('login');
+                    
+                    // Ajustes visuales para modo restringido
+                    const modal = document.getElementById('auth-modal');
+                    const closeBtn = document.getElementById('close-auth');
+                    if (modal) modal.classList.add('restricted');
+                    if (closeBtn) closeBtn.style.display = 'none';
+                }
+            }, 500);
+        }
     },
 
     // Inyectar HTML del modal
@@ -126,6 +165,16 @@ const SimpleAuth = {
                             <button type="submit" class="btn btn-primary full-width">Registrarse</button>
                         </form>
                         <p class="auth-footer">¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a></p>
+                    </div>
+
+                    <!-- Footer para modo restringido -->
+                    <div id="auth-restricted-footer" class="auth-restricted-footer" style="display: none; margin-top: 20px; text-align: center; border-top: 1px solid #2c3e50; padding-top: 15px;">
+                        <a href="index.html" class="btn btn-secondary" style="width: 100%; display: block; text-decoration: none;">
+                            <i class="fa-solid fa-house"></i> Volver al Inicio
+                        </a>
+                        <p style="font-size: 12px; color: #8899a6; margin-top: 10px;">
+                            Se requiere registro para acceder a herramientas técnicas.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -235,6 +284,16 @@ const SimpleAuth = {
                 }
                 .password-toggle.active {
                     color: #FFD700;
+                }
+                
+                /* Restricted Mode Styles */
+                .auth-modal.restricted {
+                    cursor: not-allowed;
+                }
+                .auth-modal.restricted .auth-content {
+                    cursor: default;
+                    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+                    border: 2px solid #FFD700;
                 }
             `;
             document.head.appendChild(style);
@@ -415,10 +474,25 @@ const SimpleAuth = {
         window.openAuthModal = (tab = 'login') => {
             modal.classList.add('active');
             SimpleAuth.switchTab(tab);
+            
+            // Mostrar footer de retorno si está en modo restringido
+            const restrictedFooter = document.getElementById('auth-restricted-footer');
+            if (restrictedFooter) {
+                restrictedFooter.style.display = SimpleAuth.state.isRestricted ? 'block' : 'none';
+            }
         };
 
-        if (closeBtn) closeBtn.onclick = () => modal.classList.remove('active');
-        modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+        if (closeBtn) closeBtn.onclick = () => {
+            if (!SimpleAuth.state.isRestricted) {
+                modal.classList.remove('active');
+            }
+        };
+        
+        modal.onclick = (e) => { 
+            if (e.target === modal && !SimpleAuth.state.isRestricted) {
+                modal.classList.remove('active'); 
+            }
+        };
 
         tabs.forEach(tab => {
             tab.onclick = () => SimpleAuth.switchTab(tab.dataset.tab);
