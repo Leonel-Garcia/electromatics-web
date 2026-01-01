@@ -408,6 +408,7 @@
   margin-bottom: 15px;
   background: linear-gradient(90deg, var(--text-primary), var(--electric-blue));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
