@@ -61,12 +61,25 @@ const SafeStorage = {
         // 3. Intentar Cookies (Fallback/Redundancia)
         if (!val) {
             val = SafeStorage.getCookie(key);
-            // Re-poblar storage para consistencia
-            if (val && SafeStorage.storage) SafeStorage.storage.setItem(key, val);
-            if (val) try { sessionStorage.setItem(key, val); } catch(e) {}
         }
+
         // 4. Memoria
-        return val || SafeStorage.inMemoryStore[key] || null;
+        if (!val) val = SafeStorage.inMemoryStore[key] || null;
+
+        // --- AUTOSYNC: Si lo encontramos en un sitio pero falta en otros, sincronizar ---
+        if (val && key === 'access_token') {
+            if (SafeStorage.storage && !SafeStorage.storage.getItem(key)) {
+                try { SafeStorage.storage.setItem(key, val); } catch(e) {}
+            }
+            try {
+                if (!sessionStorage.getItem(key)) sessionStorage.setItem(key, val);
+            } catch(e) {}
+            if (!SafeStorage.getCookie(key)) {
+                SafeStorage.setCookie(key, val);
+            }
+        }
+
+        return val;
     },
 
     setItem: (key, value) => {
@@ -136,8 +149,8 @@ const SimpleAuth = {
             // 4. Actualizar visualmente
             SimpleAuth.updateUI();
             
-            // 5. Ejecutar guardia de seguridad global
-            SimpleAuth.checkGuard();
+            // 5. Ejecutar guardia de seguridad global (AHORA ESPERAMOS A QUE TERMINE)
+            await SimpleAuth.checkGuard();
             
             console.log('✅ SimpleAuth: Initialized successfully');
         } catch (error) {
@@ -170,7 +183,8 @@ const SimpleAuth = {
             'proyectos.html', 'proyectos',
             'nosotros.html', 'nosotros',
             'contacto.html', 'contacto',
-            'museo.html', 'museo'
+            'museo.html', 'museo',
+            'admin.html', 'admin'
         ];
 
         const isProtected = !publicPages.includes(cleanPage);
@@ -667,16 +681,16 @@ const SimpleAuth = {
             submitBtn.textContent = "Acceder";
 
             if (result.success) {
-                // Verificar persistencia antes de recargar (Crucial para móviles)
-                const verifyToken = SafeStorage.getItem('access_token');
-                if (!verifyToken) {
-                    console.error('❌ Persistence Failure: Token not saved!');
-                    // Re-intentar forzado
-                    SafeStorage.setItem('access_token', SimpleAuth.state.token);
-                }
+                // Verificar persistencia MULTI-CAPA antes de recargar (Crucial para móviles)
+                console.log('🔐 Synchronizing session across all storage layers...');
+                const token = SimpleAuth.state.token;
+                SafeStorage.setItem('access_token', token);
                 
-                SimpleAuth.showMessage('login-form-container', '¡Bienvenido!', 'success');
-                setTimeout(() => window.location.reload(), 1000);
+                // Pequeña espera para asegurar que el navegador móvil haya escrito en disco
+                SimpleAuth.showMessage('login-form-container', '¡Sesión Iniciada! Refrescando...', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, isMobile ? 1200 : 800); 
             } else {
                 SimpleAuth.showMessage('login-form-container', result.message, 'error');
             }

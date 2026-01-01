@@ -329,7 +329,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = 'index.html';
                 return;
@@ -400,7 +400,7 @@
 
         // Load all users with pagination
         async function loadAllUsers(page = 0, search = '') {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token');
             const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
             
             try {
@@ -499,7 +499,7 @@
 
         // Export CSV
         document.getElementById('btn-export-csv').addEventListener('click', async () => {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token');
             const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
             
             try {
@@ -531,7 +531,7 @@
 
         // Copy emails to clipboard
         document.getElementById('btn-copy-emails').addEventListener('click', async () => {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token');
             const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
             
             try {
@@ -587,7 +587,7 @@
         document.getElementById('editUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const userId = document.getElementById('edit-user-id').value;
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token');
             const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
 
             const updateData = {
@@ -624,7 +624,7 @@
         async function confirmDeleteUser(userId) {
             if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) return;
 
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token');
             const apiUrl = window.API_BASE_URL || 'http://localhost:8001';
 
             try {
