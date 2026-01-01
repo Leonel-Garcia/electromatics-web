@@ -16,6 +16,20 @@ const isMobile = () => {
            (navigator.maxTouchPoints > 0);
 };
 
+// --- GLOBAL ACCESS HOOK (v8.0) ---
+// Returns true immediately if ANY session evidence exists in storage
+window.hasActiveSession = () => {
+    const token = localStorage.getItem('access_token') || 
+                  sessionStorage.getItem('access_token') || 
+                  document.cookie.includes('access_token');
+    
+    const insurance = localStorage.getItem('auth_loop_insurance') || 
+                      sessionStorage.getItem('auth_loop_insurance');
+    const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
+    
+    return !!(token || isInsured);
+};
+
 const SafeStorage = {
     storage: null,
     inMemoryStore: {},
@@ -232,12 +246,13 @@ const SimpleAuth = {
 
     // Verificar si el usuario puede estar en la página actual
     checkGuard: async () => {
-        // --- ESCUDO FÍSICO (v7.0) ---
-        // Si el body tiene la clase de autenticación, nada puede molestarnos.
-        if (document.body.classList.contains('is-authenticated')) {
-            console.log('🛡️ Auth Guard: Body Armor Active, bypassing all checks.');
+        // --- AUTORIDAD ABSOLUTA (v8.0) ---
+        // Si tenemos sesión activa (vía token o seguro), pasamos instantáneamente.
+        if (window.hasActiveSession() || document.body.classList.contains('is-authenticated')) {
+            console.log('🛡️ Auth Guard: Bypass activated (Session found)');
             SimpleAuth.state.isLoggedIn = true;
             SimpleAuth.state.isRestricted = false;
+            document.body.classList.add('is-authenticated');
             return;
         }
 
@@ -254,16 +269,11 @@ const SimpleAuth = {
             return;
         }
 
-        // Retraso de seguridad obligatorio en móviles para evitar parpadeos
+        // Solo aplicamos retrasos si NO hay sesión y es móvil, para evitar falsos positivos
         if (isMobile() && !SimpleAuth.state.isLoggedIn) {
-            console.log('📱 Mobile Shield: Settlement delay (1.5s)...');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            // Re-evaluar tras el delay
-            if (SafeStorage.getItem('access_token')) {
-                document.body.classList.add('is-authenticated');
-                SimpleAuth.state.isLoggedIn = true;
-                return;
-            }
+            console.log('📱 Mobile Shield: Verification delay...');
+            await new Promise(resolve => setTimeout(resolve, 800));
+            if (window.hasActiveSession()) return;
         }
 
         // Normalizar URL: quitar parámetros de búsqueda y fragmentos
@@ -542,22 +552,19 @@ const SimpleAuth = {
             SimpleAuth.state.user = cachedUser;
             SimpleAuth.state.isLoggedIn = true;
             SimpleAuth.state.token = token;
-            SimpleAuth.updateUI(); // Reflejar identidad inmediatamente antes de validar
+            document.body.classList.add('is-authenticated');
+            SimpleAuth.updateUI(); 
         }
 
-        if (token) {
-            // El seguro nuclear permite bypass de guardas lentas
-            const insurance = SafeStorage.getItem('auth_loop_insurance');
-            if (insurance && (Date.now() - parseInt(insurance) < 30000)) {
-                SimpleAuth.state.isLoggedIn = true;
-            }
-
-            SimpleAuth.state.token = token;
+        if (token || window.hasActiveSession()) {
+            SimpleAuth.state.isLoggedIn = true;
+            document.body.classList.add('is-authenticated');
+            SimpleAuth.state.token = token || SafeStorage.getItem('access_token');
 
             // Validar token y obtener datos FRESCOS del usuario
             try {
                 const response = await fetch(`${API_URL}/users/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${SimpleAuth.state.token}` }
                 });
                 
                 if (response.ok) {

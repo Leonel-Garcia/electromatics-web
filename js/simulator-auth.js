@@ -10,6 +10,12 @@ const SimulatorAuth = {
      * @returns {Promise<boolean>} True if user is authenticated
      */
     checkAccess: async function() {
+        // --- BYPASS ABSOLUTO (v8.0) ---
+        if (typeof window.hasActiveSession === 'function' && window.hasActiveSession()) {
+            console.log('🛡️ SimulatorAuth: Global session detected, direct access granted.');
+            return true;
+        }
+
         // --- ESCUDO FÍSICO PRIORITARIO (v7.0) ---
         if (document.body.classList.contains('is-authenticated')) {
             console.log('🛡️ SimulatorAuth: Global armor detected, granting access.');
