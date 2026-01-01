@@ -138,9 +138,17 @@ const SimpleAuth = {
         };
 
         try {
-            // 1. Inicializar almacenamiento persistente con retraso de asentamiento en móviles
+            // 1. Inyectar UI INMEDIATAMENTE para que el botón funcione
+            SimpleAuth.injectModal();
+            SimpleAuth.setupUI(); 
+            SimpleAuth.setupPasswordToggle();
+            
+            // 2. Primer intento de actualización UI (con estado actual/tentativo)
+            SimpleAuth.updateUI();
+
+            // 3. Inicializar almacenamiento persistente con retraso de asentamiento en móviles
             if (isMobile()) {
-                console.log('📱 Mobile detected, waiting for storage settlement...');
+                console.log('📱 Mobile detected, delaying session load for storage settlement...');
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
             SafeStorage.init();
@@ -150,21 +158,17 @@ const SimpleAuth = {
             const isInsured = insurance && (Date.now() - parseInt(insurance) < 25000); // 25s de gracia
             
             if (SafeStorage.getItem('access_token') || isInsured) {
-                console.log('🎫 SimpleAuth: Tentative login enabled (Insurance or Token present)');
+                console.log('🎫 SimpleAuth: Tentative login enabled');
                 SimpleAuth.state.isLoggedIn = true;
                 if (isInsured) SimpleAuth.state.isRestricted = false;
+                SimpleAuth.updateUI(); // Segunda actualización si detectamos login tentativo
             }
             
-            // 2. Inyectar UI
-            SimpleAuth.injectModal();
-            SimpleAuth.setupUI(); // Esto sobrescribirá el hook temporal del paso 0 con la lógica real
-            SimpleAuth.setupPasswordToggle();
-            
-            // 3. Cargar sesión y esperar validación
-            console.log('📡 SimpleAuth: Loading session...');
+            // 4. Cargar sesión y esperar validación real
+            console.log('📡 SimpleAuth: Validating session...');
             await SimpleAuth.loadSession();
             
-            // 4. Actualizar visualmente
+            // 5. Actualización final
             SimpleAuth.updateUI();
             
             // 5. Ejecutar guardia de seguridad global (AHORA ESPERAMOS A QUE TERMINE)
