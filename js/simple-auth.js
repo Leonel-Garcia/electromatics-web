@@ -59,21 +59,33 @@ const SimpleAuth = {
         isPremium: false,
         user: null,
         token: null,
-        isLoading: true // Estado de carga inicial
+        isLoading: true, // Estado de carga inicial
+        isInitialized: false // Evitar doble inicialización
     },
 
     // Inicializar
     init: async () => {
+        if (SimpleAuth.state.isInitialized) return;
+        SimpleAuth.state.isInitialized = true;
+
+        console.log('🚀 SimpleAuth: Initializing...');
+        
+        // 1. Inicializar almacenamiento persistente (localStorage)
+        SafeStorage.init();
+        
+        // 2. Inyectar UI
         SimpleAuth.injectModal();
         SimpleAuth.setupUI();
         SimpleAuth.setupPasswordToggle();
         
-        // Cargar sesión y esperar validación
+        // 3. Cargar sesión y esperar validación
+        console.log('📡 SimpleAuth: Loading session...');
         await SimpleAuth.loadSession();
         
+        // 4. Actualizar visualmente
         SimpleAuth.updateUI();
         
-        // Ejecutar guardia de seguridad global después de cargar datos
+        // 5. Ejecutar guardia de seguridad global después de cargar datos
         SimpleAuth.checkGuard();
     },
 
@@ -103,6 +115,16 @@ const SimpleAuth = {
         // Si el usuario ya está logueado o está cargando, no hacer nada todavía
         if (SimpleAuth.state.isLoading) {
             console.log('⏳ Auth Guard waiting for session load...');
+            return;
+        }
+
+        // Si ya está logueado, asegurarse de que el modal esté cerrado (especialmente útil en móviles si hubo delay)
+        if (SimpleAuth.state.isLoggedIn) {
+            const modal = document.getElementById('auth-modal');
+            if (modal && modal.classList.contains('active')) {
+                console.log('✅ User is logged in, auto-closing lingering modal');
+                modal.classList.remove('active');
+            }
             return;
         }
         
