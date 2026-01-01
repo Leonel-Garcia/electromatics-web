@@ -4,24 +4,18 @@
  */
 
 const unitData = {
-    potencia: {
-        title: "Potencia",
-        icon: "fa-bolt",
+    area: {
+        title: "Área",
+        icon: "fa-vector-square",
         units: {
-            W: { name: "Vatios (W)", factor: 1 },
-            kW: { name: "Kilovatios (kW)", factor: 1000 },
-            MW: { name: "Megavatios (MW)", factor: 1000000 },
-            hp: { name: "Caballos de Fuerza (hp)", factor: 745.7 },
-            "BTU/h": { name: "BTU por hora", factor: 0.293071 }
-        }
-    },
-    voltaje: {
-        title: "Voltaje",
-        icon: "fa-plug",
-        units: {
-            V: { name: "Voltios (V)", factor: 1 },
-            mV: { name: "Milivoltios (mV)", factor: 0.001 },
-            kV: { name: "Kilovoltios (kV)", factor: 1000 }
+            m2: { name: "Metro cuadrado (m²)", factor: 1 },
+            cm2: { name: "Centímetro cuadrado (cm²)", factor: 0.0001 },
+            mm2: { name: "Milímetro cuadrado (mm²)", factor: 0.000001 },
+            km2: { name: "Kilómetro cuadrado (km²)", factor: 1000000 },
+            ha: { name: "Hectárea (ha)", factor: 10000 },
+            in2: { name: "Pulgada cuadrada (in²)", factor: 0.00064516 },
+            ft2: { name: "Pie cuadrado (ft²)", factor: 0.092903 },
+            acre: { name: "Acre", factor: 4046.86 }
         }
     },
     corriente: {
@@ -30,17 +24,7 @@ const unitData = {
         units: {
             A: { name: "Amperios (A)", factor: 1 },
             mA: { name: "Miliamperios (mA)", factor: 0.001 },
-            kA: { name: "Kilocamperios (kA)", factor: 1000 }
-        }
-    },
-    resistencia: {
-        title: "Resistencia",
-        icon: "fa-omega",
-        units: {
-            ohm: { name: "Ohmios (Ω)", factor: 1 },
-            mohm: { name: "Miliohmios (mΩ)", factor: 0.001 },
-            kohm: { name: "Kilohmios (kΩ)", factor: 1000 },
-            Mohm: { name: "Megahmios (MΩ)", factor: 1000000 }
+            kA: { name: "Kiloamperios (kA)", factor: 1000 }
         }
     },
     energia: {
@@ -54,17 +38,6 @@ const unitData = {
             kcal: { name: "Kilocalorías (kcal)", factor: 4184 }
         }
     },
-    presion: {
-        title: "Presión",
-        icon: "fa-gauge-high",
-        units: {
-            Pa: { name: "Pascal (Pa)", factor: 1 },
-            kPa: { name: "Kilopascal (kPa)", factor: 1000 },
-            bar: { name: "Bar (bar)", factor: 100000 },
-            psi: { name: "PSI (lb/in²)", factor: 6894.76 },
-            atm: { name: "Atmósfera (atm)", factor: 101325 }
-        }
-    },
     flujo: {
         title: "Flujo",
         icon: "fa-faucet",
@@ -73,6 +46,16 @@ const unitData = {
             LPM: { name: "Litros por min (LPM)", factor: 1/60000 },
             GPM: { name: "Galones por min (GPM)", factor: 1/15850.3 },
             "ft3/min": { name: "Pies cúbicos por min (CFM)", factor: 1/2118.88 }
+        }
+    },
+    frecuencia: {
+        title: "Frecuencia",
+        icon: "fa-wave-square",
+        units: {
+            Hz: { name: "Herzios (Hz)", factor: 1 },
+            kHz: { name: "Kiloherzios (kHz)", factor: 1000 },
+            MHz: { name: "Megaherzios (MHz)", factor: 1000000 },
+            "rad/s": { name: "Radianes por seg (rad/s)", factor: 0.159155 }
         }
     },
     fuerza: {
@@ -85,15 +68,6 @@ const unitData = {
             kgf: { name: "Kilogramos-fuerza (kgf)", factor: 9.80665 }
         }
     },
-    torque: {
-        title: "Torque",
-        icon: "fa-rotate",
-        units: {
-            "N·m": { name: "Newton-metro (N·m)", factor: 1 },
-            "lb·ft": { name: "Libra-pie (lb·ft)", factor: 1.35582 },
-            "kg·m": { name: "Kilogramos-metro (kg·m)", factor: 9.80665 }
-        }
-    },
     longitud: {
         title: "Longitud",
         icon: "fa-ruler-horizontal",
@@ -104,6 +78,50 @@ const unitData = {
             km: { name: "Kilómetros (km)", factor: 1000 },
             in: { name: "Pulgadas (in)", factor: 0.0254 },
             ft: { name: "Pies (ft)", factor: 0.3048 }
+        }
+    },
+    masa: {
+        title: "Masa",
+        icon: "fa-weight-hanging",
+        units: {
+            kg: { name: "Kilogramos (kg)", factor: 1 },
+            g: { name: "Gramos (g)", factor: 0.001 },
+            mg: { name: "Miligramos (mg)", factor: 0.000001 },
+            t: { name: "Toneladas métricas (t)", factor: 1000 },
+            lb: { name: "Libras (lb)", factor: 0.453592 },
+            oz: { name: "Onzas (oz)", factor: 0.0283495 }
+        }
+    },
+    potencia: {
+        title: "Potencia",
+        icon: "fa-bolt",
+        units: {
+            W: { name: "Vatios (W)", factor: 1 },
+            kW: { name: "Kilovatios (kW)", factor: 1000 },
+            MW: { name: "Megavatios (MW)", factor: 1000000 },
+            hp: { name: "Caballos de Fuerza (hp)", factor: 745.7 },
+            "BTU/h": { name: "BTU por hora", factor: 0.293071 }
+        }
+    },
+    presion: {
+        title: "Presión",
+        icon: "fa-gauge-high",
+        units: {
+            Pa: { name: "Pascal (Pa)", factor: 1 },
+            kPa: { name: "Kilopascal (kPa)", factor: 1000 },
+            bar: { name: "Bar (bar)", factor: 100000 },
+            psi: { name: "PSI (lb/in²)", factor: 6894.76 },
+            atm: { name: "Atmósfera (atm)", factor: 101325 }
+        }
+    },
+    resistencia: {
+        title: "Resistencia",
+        icon: "fa-omega",
+        units: {
+            ohm: { name: "Ohmios (Ω)", factor: 1 },
+            mohm: { name: "Miliohmios (mΩ)", factor: 0.001 },
+            kohm: { name: "Kilohmios (kΩ)", factor: 1000 },
+            Mohm: { name: "Megahmios (MΩ)", factor: 1000000 }
         }
     },
     temperatura: {
@@ -128,17 +146,38 @@ const unitData = {
             año: { name: "Años (365d)", factor: 31557600 }
         }
     },
-    frecuencia: {
-        title: "Frecuencia",
-        icon: "fa-wave-square",
+    torque: {
+        title: "Torque",
+        icon: "fa-rotate",
         units: {
-            Hz: { name: "Herzios (Hz)", factor: 1 },
-            kHz: { name: "Kiloherzios (kHz)", factor: 1000 },
-            MHz: { name: "Megaherzios (MHz)", factor: 1000000 },
-            "rad/s": { name: "Radianes por seg (rad/s)", factor: 0.159155 }
+            "N·m": { name: "Newton-metro (N·m)", factor: 1 },
+            "lb·ft": { name: "Libra-pie (lb·ft)", factor: 1.35582 },
+            "kg·m": { name: "Kilogramos-metro (kg·m)", factor: 9.80665 }
+        }
+    },
+    voltaje: {
+        title: "Voltaje",
+        icon: "fa-plug",
+        units: {
+            V: { name: "Voltios (V)", factor: 1 },
+            mV: { name: "Milivoltios (mV)", factor: 0.001 },
+            kV: { name: "Kilovoltios (kV)", factor: 1000 }
+        }
+    },
+    volumen: {
+        title: "Volumen",
+        icon: "fa-cube",
+        units: {
+            m3: { name: "Metro cúbico (m³)", factor: 1 },
+            L: { name: "Litros (L)", factor: 0.001 },
+            mL: { name: "Mililitros (mL)", factor: 0.000001 },
+            gal: { name: "Galones (gal)", factor: 0.00378541 },
+            ft3: { name: "Pies cúbicos (ft³)", factor: 0.0283168 },
+            in3: { name: "Pulgadas cúbicas (in³)", factor: 0.0000163871 }
         }
     }
 };
+
 
 const siPrefixes = [
     { prefix: "Yotta", symbol: "Y", factor: "10²⁴", example: "1 YW = 1,000,000,000,000,000,000,000,000 W" },
@@ -164,7 +203,7 @@ const siPrefixes = [
     { prefix: "Yocto", symbol: "y", factor: "10⁻²⁴", example: "1 yg = 10⁻²⁴ g" }
 ];
 
-let currentCategory = 'potencia';
+let currentCategory = 'area';
 
 function initConverter() {
     const categoryGrid = document.getElementById('converter-categories');
