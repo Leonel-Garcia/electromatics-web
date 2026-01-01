@@ -185,78 +185,7 @@ const SimpleAuth = {
 
     // Inyectar HTML del modal
     injectModal: () => {
-        if (document.getElementById('auth-modal')) return;
-
-        const modalHTML = `
-            <div id="auth-modal" class="auth-modal">
-                <div class="auth-content">
-                    <button id="close-auth" class="close-auth"><i class="fa-solid fa-xmark"></i></button>
-                    
-                    <div class="auth-tabs">
-                        <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
-                        <button class="auth-tab" data-tab="register">Registrarse</button>
-                    </div>
-
-                    <!-- Login Form -->
-                    <div id="login-form-container" class="auth-form-container active">
-                        <h2>Bienvenido de nuevo</h2>
-                        <form id="login-form">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="login-email" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Contraseña</label>
-                                <div class="password-input-wrapper">
-                                    <input type="password" id="login-password" required>
-                                    <i class="fa-solid fa-eye password-toggle" data-target="login-password"></i>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary full-width">Acceder</button>
-                        </form>
-                        <p class="auth-footer">¿No tienes cuenta? <a href="#" id="switch-to-register">Regístrate</a></p>
-                    </div>
-
-                    <!-- Register Form -->
-                    <div id="register-form-container" class="auth-form-container">
-                        <h2>Crear Cuenta</h2>
-                        <form id="register-form">
-                            <div class="form-group">
-                                <label>Nombre Completo</label>
-                                <input type="text" id="reg-name" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="reg-email" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Contraseña</label>
-                                <div class="password-input-wrapper">
-                                    <input type="password" id="reg-password" required>
-                                    <i class="fa-solid fa-eye password-toggle" data-target="reg-password"></i>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary full-width">Registrarse</button>
-                        </form>
-                        <p class="auth-footer">¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a></p>
-                    </div>
-
-                    <!-- Footer para modo restringido -->
-                    <div id="auth-restricted-footer" class="auth-restricted-footer" style="display: none; margin-top: 20px; text-align: center; border-top: 1px solid #2c3e50; padding-top: 15px;">
-                        <a href="index.html" class="btn btn-secondary" style="width: 100%; display: block; text-decoration: none;">
-                            <i class="fa-solid fa-house"></i> Volver al Inicio
-                        </a>
-                        <p style="font-size: 12px; color: #8899a6; margin-top: 10px;">
-                            Se requiere registro para acceder a herramientas técnicas.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Agregar estilos
+        // Asegurar estilos primero (siempre se inyectan)
         if (!document.getElementById('auth-styles')) {
             const style = document.createElement('style');
             style.id = 'auth-styles';
@@ -372,6 +301,77 @@ const SimpleAuth = {
             `;
             document.head.appendChild(style);
         }
+
+        if (document.getElementById('auth-modal')) return;
+
+        const modalHTML = `
+            <div id="auth-modal" class="auth-modal">
+                <div class="auth-content">
+                    <button id="close-auth" class="close-auth"><i class="fa-solid fa-xmark"></i></button>
+                    
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+                        <button class="auth-tab" data-tab="register">Registrarse</button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <div id="login-form-container" class="auth-form-container active">
+                        <h2>Bienvenido de nuevo</h2>
+                        <form id="login-form">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="login-email" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Contraseña</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="login-password" required>
+                                    <i class="fa-solid fa-eye password-toggle" data-target="login-password"></i>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary full-width">Acceder</button>
+                        </form>
+                        <p class="auth-footer">¿No tienes cuenta? <a href="#" id="switch-to-register">Regístrate</a></p>
+                    </div>
+
+                    <!-- Register Form -->
+                    <div id="register-form-container" class="auth-form-container">
+                        <h2>Crear Cuenta</h2>
+                        <form id="register-form">
+                            <div class="form-group">
+                                <label>Nombre Completo</label>
+                                <input type="text" id="reg-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="reg-email" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Contraseña</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="reg-password" required>
+                                    <i class="fa-solid fa-eye password-toggle" data-target="reg-password"></i>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary full-width">Registrarse</button>
+                        </form>
+                        <p class="auth-footer">¿Ya tienes cuenta? <a href="#" id="switch-to-login">Inicia Sesión</a></p>
+                    </div>
+
+                    <!-- Footer para modo restringido -->
+                    <div id="auth-restricted-footer" class="auth-restricted-footer" style="display: none; margin-top: 20px; text-align: center; border-top: 1px solid #2c3e50; padding-top: 15px;">
+                        <a href="index.html" class="btn btn-secondary" style="width: 100%; display: block; text-decoration: none;">
+                            <i class="fa-solid fa-house"></i> Volver al Inicio
+                        </a>
+                        <p style="font-size: 12px; color: #8899a6; margin-top: 10px;">
+                            Se requiere registro para acceder a herramientas técnicas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
     },
 
     // Cargar sesión desde LocalStorage (Token)
@@ -435,7 +435,11 @@ const SimpleAuth = {
     clearSession: () => {
         SafeStorage.removeItem('access_token');
         SafeStorage.removeItem('auth_token');
-        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false };
+        // Mantener isInitialized y isLoading pero limpiar autenticación
+        SimpleAuth.state.isLoggedIn = false;
+        SimpleAuth.state.isPremium = false;
+        SimpleAuth.state.user = null;
+        SimpleAuth.state.token = null;
     },
 
     // Registrar usuario (POST /register)
