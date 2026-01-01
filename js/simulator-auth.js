@@ -35,6 +35,30 @@ const SimulatorAuth = {
     },
 
     /**
+     * Logs out the user by clearing authentication tokens and reloading the page.
+     * Requires SimpleAuth to be present.
+     */
+    logout: () => {
+        if (typeof SafeStorage !== 'undefined') {
+            SafeStorage.removeItem('access_token');
+            SafeStorage.removeItem('auth_token');
+            SafeStorage.removeItem('auth_loop_insurance');
+            SafeStorage.setCookie('auth_sync_insurance', '', -1);
+        } else {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_loop_insurance');
+            // No equivalent for cookie in localStorage fallback
+        }
+
+        if (window.SimpleAuth) {
+            window.SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false, isRestricted: false };
+            window.SimpleAuth.updateUI();
+        }
+        window.location.reload();
+    },
+
+    /**
      * Show login prompt overlay
      */
     showLoginPrompt: function() {
@@ -91,9 +115,11 @@ const SimulatorAuth = {
             return false;
         }
 
-        // Si tenemos acceso, informamos a SimpleAuth por si acaso (verifica nivel de suscripción)
+        // --- SEGURO ANTI-MODAL: Si tenemos acceso, forzamos a SimpleAuth a estar en paz ---
         if (window.SimpleAuth) {
-            SimpleAuth.checkSubscription();
+            window.SimpleAuth.state.isRestricted = false;
+            window.SimpleAuth.updateUI();
+            window.SimpleAuth.checkSubscription();
         }
 
         // Hide overlay if it exists

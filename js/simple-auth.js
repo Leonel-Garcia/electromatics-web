@@ -126,7 +126,11 @@ const SimpleAuth = {
         if (SimpleAuth.state.isInitialized) return;
         SimpleAuth.state.isInitialized = true;
 
-        console.log('🚀 SimpleAuth: Initializing...');
+        console.log('🚀 SimpleAuth: Initializing [v4.0]...');
+        
+        // REINICIO DE ESTADO CRÍTICO: Asegurar limpieza en reloads calientes
+        SimpleAuth.state.isLoading = true;
+        SimpleAuth.state.isRestricted = false;
         
         // 0. Hook inmediato para el botón de login para evitar 'undefined'
         window.openAuthModal = (tab = 'login') => {
@@ -163,9 +167,9 @@ const SimpleAuth = {
             if (SafeStorage.getItem('access_token') || isInsured) {
                 console.log('🎫 SimpleAuth: Tentative login enabled');
                 SimpleAuth.state.isLoggedIn = true;
-                if (isInsured) SimpleAuth.state.isRestricted = false;
+                SimpleAuth.state.isRestricted = false; // El seguro nuclear libera restricciones
                 
-                // --- CAMBIO CLAVE: Actualizamos UI inmediatamente con estado tentativo ---
+                // Actualizamos UI inmediatamente con estado tentativo
                 SimpleAuth.updateUI(); 
             }
             
@@ -239,13 +243,15 @@ const SimpleAuth = {
 
         // Si ya está logueado, asegurarse de que el modal esté cerrado (especialmente útil en móviles si hubo delay)
         if (SimpleAuth.state.isLoggedIn) {
-            console.log('🛡️ Auth Guard: User is confirmed. Suppressing modal.');
+            console.log('🛡️ Auth Guard [PASS]: User is confirmed. Force closing modal.');
+            SimpleAuth.state.isRestricted = false; // Liberar restricción
             const modal = document.getElementById('auth-modal');
             if (modal) {
-                modal.classList.remove('active');
-                modal.classList.remove('restricted');
-                // Forzar invisibilidad total
+                modal.classList.remove('active', 'restricted');
                 modal.style.display = 'none';
+                modal.style.zIndex = '-1';
+                modal.style.opacity = '0';
+                modal.style.pointerEvents = 'none';
             }
             return;
         }
@@ -284,17 +290,18 @@ const SimpleAuth = {
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background: rgba(0,0,0,0.9);
+                    background: rgba(0,0,0,0.95);
                     z-index: -1;
                     justify-content: center;
                     align-items: center;
                     opacity: 0;
                     pointer-events: none;
+                    transition: opacity 0.3s ease;
                 }
                 .auth-modal.active { 
                     display: flex !important; 
                     opacity: 1;
-                    z-index: 30000;
+                    z-index: 90000;
                     pointer-events: all;
                 }
                 .auth-content {
@@ -471,6 +478,7 @@ const SimpleAuth = {
     // Cargar sesión desde LocalStorage (Token)
     loadSession: async () => {
         SimpleAuth.state.isLoading = true;
+        SimpleAuth.state.isRestricted = false; // Reset preventivo en cada carga
         
         // Standardize to 'access_token' for global consistency
         let token = SafeStorage.getItem('access_token') || SafeStorage.getItem('auth_token');
@@ -642,10 +650,9 @@ const SimpleAuth = {
     logout: () => {
         SafeStorage.removeItem('access_token');
         SafeStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_loop_insurance');
-        sessionStorage.removeItem('auth_loop_insurance');
+        SafeStorage.removeItem('auth_loop_insurance');
         SafeStorage.setCookie('auth_sync_insurance', '', -1);
-        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false };
+        SimpleAuth.state = { isLoggedIn: false, isPremium: false, user: null, token: null, isLoading: false, isRestricted: false };
         SimpleAuth.updateUI();
         window.location.reload();
     },
@@ -685,13 +692,14 @@ const SimpleAuth = {
         const subscribeBtn = document.getElementById('subscribe-btn');
 
         window.openAuthModal = (tab = 'login') => {
-            // No abrir si ya estamos logueados (a menos que sea una llamada explícita con intención)
+            // No abrir si ya estamos logueados Y NO estamos en modo restringido
             if (SimpleAuth.state.isLoggedIn && !SimpleAuth.state.isRestricted) {
-                console.log('🎫 openAuthModal: User is already logged in, ignoring open request');
+                console.log('🎫 openAuthModal: Bypassing - already logged in');
                 return;
             }
 
             modal.style.display = 'flex';
+            modal.style.zIndex = '90000';
             modal.classList.add('active');
             SimpleAuth.switchTab(tab);
             
@@ -883,10 +891,13 @@ const SimpleAuth = {
         
         if (loginBtn) {
             if (SimpleAuth.state.isLoggedIn) {
-                // Si estamos logueados oficialmente, el modal NO debe existir visualmente
+                // SI ESTAMOS LOGUEADOS: EL MODAL DEBE MORIR DEFINITIVAMENTE
                 if (modal && !SimpleAuth.state.isRestricted) {
                     modal.style.display = 'none';
-                    modal.classList.remove('active');
+                    modal.style.zIndex = '-1';
+                    modal.classList.remove('active', 'restricted');
+                    modal.style.opacity = '0';
+                    modal.style.pointerEvents = 'none';
                 }
                 // Fallback de nombre para móviles/sesiones lentas
                 const userName = (SimpleAuth.state.user && SimpleAuth.state.user.name) 
