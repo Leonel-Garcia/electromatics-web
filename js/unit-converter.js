@@ -35,9 +35,11 @@ const unitData = {
             kJ: { name: "Kilojulios (kJ)", factor: 1000 },
             kWh: { name: "Kilovatios-hora (kWh)", factor: 3600000 },
             cal: { name: "Calorías (cal)", factor: 4.184 },
-            kcal: { name: "Kilocalorías (kcal)", factor: 4184 }
+            kcal: { name: "Kilocalorías (kcal)", factor: 4184 },
+            BTU: { name: "BTU", factor: 1055.06 }
         }
     },
+
     flujo: {
         title: "Flujo",
         icon: "fa-faucet",
