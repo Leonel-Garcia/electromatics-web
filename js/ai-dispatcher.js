@@ -285,16 +285,17 @@ const AIDispatcher = {
             // Store inputs for report generation
             motorInputs.push({ hp, volt, phase });
 
-            // Render Branch Result
+            // Render Branch Result (using Venezuelan format)
+            const fmt = window.formatNumber || ((n) => n);
             const resHtml = `
                 <div style="margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
                     <strong style="color: var(--text-primary);">Motor ${index + 1} (${hp}HP):</strong>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; font-size: 0.9em;">
-                        <div>FLC: <span style="color: var(--electric-blue);">${res.flc} A</span></div>
+                        <div>FLC: <span style="color: var(--electric-blue);">${fmt(res.flc)} A</span></div>
                         <div>Breaker: <span style="color: var(--electric-blue);">${res.breakerSize} A</span></div>
-                        <div>Conductor: <span style="color: var(--electric-blue);">${res.conductorAmps} A (${res.wireSize})</span></div>
+                        <div>Conductor: <span style="color: var(--electric-blue);">${fmt(res.conductorAmps)} A (${res.wireSize})</span></div>
                         <div>Contactor: <span style="color: var(--electric-blue);">${res.contactorAmps} A</span></div>
-                        <div style="grid-column: span 2;">Relé Térmico: <span style="color: var(--electric-blue);">${res.overloadProtection} A (Rango: ${res.relayRange})</span></div>
+                        <div style="grid-column: span 2;">Relé Térmico: <span style="color: var(--electric-blue);">${fmt(res.overloadProtection)} A (Rango: ${res.relayRange})</span></div>
                         <div style="grid-column: span 2; font-size: 0.8em; color: var(--text-secondary);">
                             Refs: ${res.references.conductor}, ${res.references.overload}
                         </div>
@@ -302,6 +303,7 @@ const AIDispatcher = {
                 </div>
             `;
             resultsContainer.innerHTML += resHtml;
+
         });
 
         if (motorResults.length === 0) return;
@@ -318,14 +320,16 @@ const AIDispatcher = {
         };
 
         if (feederRes) {
-            document.getElementById('res-f-amps').textContent = feederRes.feederAmpacity + ' A';
+            const fmtNum = window.formatNumber || ((n) => n);
+            document.getElementById('res-f-amps').textContent = fmtNum(feederRes.feederAmpacity) + ' A';
             document.getElementById('res-f-wire').textContent = feederRes.wireSize;
-            document.getElementById('res-f-prot').textContent = feederRes.feederProtectionMax + ' A';
+            document.getElementById('res-f-prot').textContent = fmtNum(feederRes.feederProtectionMax) + ' A';
             document.getElementById('res-f-brk').textContent = feederRes.recommendedFeederBreaker + ' A';
             
             document.getElementById('disp-motor-results').classList.remove('hidden');
         }
     },
+
 
     renderResidentialForm: (params, container) => {
         const areaValue = params.area || '';

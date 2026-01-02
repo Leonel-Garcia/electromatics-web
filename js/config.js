@@ -26,3 +26,27 @@ const API_BASE_URL = getApiUrl();
 window.API_BASE_URL = API_BASE_URL; // Asegurar visibilidad global
 console.log('🔌 API URL Configured:', API_BASE_URL); // Debug log
 
+/**
+ * Formatea un número al estilo venezolano: coma para decimales, punto para miles.
+ * @param {number} value - El número a formatear
+ * @param {number} decimals - Cantidad de decimales (por defecto 2)
+ * @returns {string} - El número formateado
+ */
+function formatNumber(value, decimals = 2) {
+    if (value === null || value === undefined || isNaN(value)) return '-';
+    
+    // Handle very large or very small numbers with exponential notation
+    if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.0001 && value !== 0)) {
+        return value.toExponential(4).replace('.', ',');
+    }
+    
+    // Use Venezuelan locale for standard numbers
+    return parseFloat(value).toLocaleString('es-VE', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimals
+    });
+}
+
+// Make it globally available
+window.formatNumber = formatNumber;
+
