@@ -20,11 +20,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const configType = document.getElementById('config_type');
     const freqControl = document.getElementById('freq_control');
     
-    const valR = document.getElementById('val-r');
-    const valL = document.getElementById('val-l');
-    const valC = document.getElementById('val-c');
-    const valV = document.getElementById('val-v');
-    const valF = document.getElementById('val-f');
+    // Number Inputs
+    const numR = document.getElementById('num_r');
+    const numL = document.getElementById('num_l');
+    const numC = document.getElementById('num_c');
+    const numV = document.getElementById('num_v');
+    const numF = document.getElementById('num_f');
 
     const metricW0 = document.getElementById('metric-w0');
     const metricAlpha = document.getElementById('metric-alpha');
@@ -138,68 +139,79 @@ document.addEventListener('DOMContentLoaded', function() {
         const isSeries = state.Config === 'Serie';
         
         if (isSeries) {
-            // Series RLC Circuit - Components in line
+            // Series RLC Circuit - Closed Loop
             circuitDiagram.innerHTML = `
                 <svg width="240" height="120" viewBox="0 0 240 120">
-                    <!-- Wires -->
-                    <line x1="20" y1="60" x2="60" y2="60" stroke="#fff" stroke-width="2"/>
-                    <line x1="100" y1="60" x2="140" y2="60" stroke="#fff" stroke-width="2"/>
-                    <line x1="180" y1="60" x2="220" y2="60" stroke="#fff" stroke-width="2"/>
+                    <!-- Top Wire -->
+                    <line x1="20" y1="30" x2="60" y2="30" stroke="#fff" stroke-width="2"/>
                     
-                    <!-- Source (Circle) -->
+                    <!-- Resistor (Top) -->
+                    <polyline points="60,30 65,20 75,40 85,20 95,40 100,30" fill="none" stroke="#FF5252" stroke-width="2"/>
+                    <text x="80" y="15" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
+                    
+                    <line x1="100" y1="30" x2="130" y2="30" stroke="#fff" stroke-width="2"/>
+
+                    <!-- Inductor (Top) -->
+                    <path d="M130,30 Q135,10 140,30 T150,30 T160,30 T170,30" fill="none" stroke="#FFC107" stroke-width="2"/>
+                    <text x="150" y="15" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
+                    
+                    <line x1="170" y1="30" x2="200" y2="30" stroke="#fff" stroke-width="2"/>
+
+                    <!-- Capacitor (Top Right to Down) -->
+                    <line x1="200" y1="30" x2="200" y2="45" stroke="#fff" stroke-width="2"/>
+                    <line x1="190" y1="45" x2="210" y2="45" stroke="#448aff" stroke-width="2"/>
+                    <line x1="190" y1="51" x2="210" y2="51" stroke="#448aff" stroke-width="2"/>
+                    <line x1="200" y1="51" x2="200" y2="90" stroke="#fff" stroke-width="2"/>
+                    <text x="220" y="50" fill="#448aff" font-size="12" text-anchor="middle">C</text>
+                    
+                    <!-- Source (Left vertical) -->
                     <circle cx="20" cy="60" r="15" stroke="#4CAF50" stroke-width="2" fill="none"/>
                     <text x="20" y="65" fill="#4CAF50" font-size="20" text-anchor="middle" font-weight="bold">~</text>
-                    <text x="20" y="95" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
+                    <line x1="20" y1="30" x2="20" y2="45" stroke="#fff" stroke-width="2"/>
+                    <line x1="20" y1="75" x2="20" y2="90" stroke="#fff" stroke-width="2"/>
+                    <text x="45" y="65" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
 
-                    <!-- Resistor (Zigzag) 60-100 -->
-                    <polyline points="60,60 65,50 75,70 85,50 95,70 100,60" fill="none" stroke="#FF5252" stroke-width="2"/>
-                    <text x="80" y="40" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
-
-                    <!-- Inductor (Coil) 140-180 -->
-                    <path d="M140,60 Q145,40 150,60 T160,60 T170,60 T180,60" fill="none" stroke="#FFC107" stroke-width="2"/>
-                    <text x="160" y="40" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
-
-                    <!-- Capacitor (Plates) 220 -->
-                    <line x1="220" y1="45" x2="220" y2="75" stroke="#448aff" stroke-width="2"/>
-                    <line x1="226" y1="45" x2="226" y2="75" stroke="#448aff" stroke-width="2"/>
-                    <text x="223" y="40" fill="#448aff" font-size="12" text-anchor="middle">C</text>
+                    <!-- Return Wire (Bottom) -->
+                    <line x1="20" y1="90" x2="200" y2="90" stroke="#fff" stroke-width="2"/>
                 </svg>
             `;
         } else {
-            // Parallel RLC Circuit - Components in parallel branches
+            // Parallel RLC Circuit - Closed Loop
             circuitDiagram.innerHTML = `
                 <svg width="240" height="140" viewBox="0 0 240 140">
-                    <!-- Source -->
+                    <!-- Source (Left) -->
                     <circle cx="20" cy="70" r="15" stroke="#4CAF50" stroke-width="2" fill="none"/>
                     <text x="20" y="75" fill="#4CAF50" font-size="20" text-anchor="middle" font-weight="bold">~</text>
-                    <text x="20" y="105" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
+                    <text x="45" y="75" fill="#aaa" font-size="10" text-anchor="middle">Vin</text>
+                    <line x1="20" y1="20" x2="20" y2="55" stroke="#fff" stroke-width="2"/>
+                    <line x1="20" y1="85" x2="20" y2="120" stroke="#fff" stroke-width="2"/>
                     
-                    <!-- Left vertical wire -->
-                    <line x1="35" y1="70" x2="60" y2="70" stroke="#fff" stroke-width="2"/>
-                    <line x1="60" y1="20" x2="60" y2="120" stroke="#fff" stroke-width="2"/>
+                    <!-- Top Rail -->
+                    <line x1="20" y1="20" x2="160" y2="20" stroke="#fff" stroke-width="2"/>
+
+                    <!-- Branch 1: Resistor -->
+                    <line x1="60" y1="20" x2="60" y2="30" stroke="#fff" stroke-width="2"/>
+                    <polyline points="60,30 50,35 70,45 50,55 70,65 60,70" fill="none" stroke="#FF5252" stroke-width="2"/>
+                    <line x1="60" y1="70" x2="60" y2="120" stroke="#fff" stroke-width="2"/>
+                    <text x="60" y="15" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
+
+                    <!-- Branch 2: Inductor -->
+                    <line x1="110" y1="20" x2="110" y2="30" stroke="#fff" stroke-width="2"/>
+                    <path d="M110,30 Q130,35 110,40 T110,50 T110,60 T110,70" fill="none" stroke="#FFC107" stroke-width="2" transform="rotate(90, 110, 50) translate(-20, 20)"/> 
+                    <!-- Simple coil vertical representation -->
+                    <path d="M110,30 C90,40 130,40 110,50 C90,60 130,60 110,70 C90,80 130,80 110,90" fill="none" stroke="#FFC107" stroke-width="2"/>
+                    <line x1="110" y1="90" x2="110" y2="120" stroke="#fff" stroke-width="2"/>
+                    <text x="110" y="15" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
+
+                    <!-- Branch 3: Capacitor -->
+                    <line x1="160" y1="20" x2="160" y2="65" stroke="#fff" stroke-width="2"/>
+                    <line x1="150" y1="65" x2="170" y2="65" stroke="#448aff" stroke-width="2"/>
+                    <line x1="150" y1="71" x2="170" y2="71" stroke="#448aff" stroke-width="2"/>
+                    <line x1="160" y1="71" x2="160" y2="120" stroke="#fff" stroke-width="2"/>
+                    <text x="160" y="15" fill="#448aff" font-size="12" text-anchor="middle">C</text>
                     
-                    <!-- Branch 1: Resistor (Top) -->
-                    <line x1="60" y1="30" x2="90" y2="30" stroke="#fff" stroke-width="2"/>
-                    <polyline points="90,30 95,20 105,40 115,20 125,40 130,30" fill="none" stroke="#FF5252" stroke-width="2"/>
-                    <line x1="130" y1="30" x2="160" y2="30" stroke="#fff" stroke-width="2"/>
-                    <text x="110" y="15" fill="#FF5252" font-size="12" text-anchor="middle">R</text>
-                    
-                    <!-- Branch 2: Inductor (Middle) -->
-                    <line x1="60" y1="70" x2="90" y2="70" stroke="#fff" stroke-width="2"/>
-                    <path d="M90,70 Q95,50 100,70 T110,70 T120,70 T130,70" fill="none" stroke="#FFC107" stroke-width="2"/>
-                    <line x1="130" y1="70" x2="160" y2="70" stroke="#fff" stroke-width="2"/>
-                    <text x="110" y="55" fill="#FFC107" font-size="12" text-anchor="middle">L</text>
-                    
-                    <!-- Branch 3: Capacitor (Bottom) -->
-                    <line x1="60" y1="110" x2="105" y2="110" stroke="#fff" stroke-width="2"/>
-                    <line x1="110" y1="95" x2="110" y2="125" stroke="#448aff" stroke-width="2"/>
-                    <line x1="116" y1="95" x2="116" y2="125" stroke="#448aff" stroke-width="2"/>
-                    <line x1="120" y1="110" x2="160" y2="110" stroke="#fff" stroke-width="2"/>
-                    <text x="113" y="90" fill="#448aff" font-size="12" text-anchor="middle">C</text>
-                    
-                    <!-- Right vertical wire -->
-                    <line x1="160" y1="20" x2="160" y2="120" stroke="#fff" stroke-width="2"/>
-                    <line x1="160" y1="70" x2="180" y2="70" stroke="#fff" stroke-width="2"/>
+                    <!-- Bottom Rail -->
+                    <line x1="20" y1="120" x2="160" y2="120" stroke="#fff" stroke-width="2"/>
                 </svg>
             `;
         }
@@ -275,7 +287,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Input Voltage
             let Vin = 0;
             if (isAC) {
-                Vin = V * Math.sin(2 * Math.PI * f * t);
+                // RMS logic: If user inputs 10V (RMS), Peak is 10 * sqrt(2)
+                const Vpeak = V * Math.sqrt(2); 
+                Vin = Vpeak * Math.sin(2 * Math.PI * f * t);
             } else {
                 Vin = t > 0 ? V : 0; // Step at t=0
             }
@@ -302,22 +316,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Listeners
-    function updateState() {
-        state.R = parseFloat(rSlider.value);
-        state.L = parseFloat(lSlider.value);
-        state.C = parseFloat(cSlider.value);
-        state.V = parseFloat(vSlider.value);
-        state.Freq = parseFloat(fSlider.value);
+    function updateState(source) { // source = 'slider' or 'input' or 'other'
+        // Read from sliders if source is slider or other, read from input if source is input
+        if (source === 'input') {
+            state.R = parseFloat(numR.value);
+            state.L = parseFloat(numL.value);
+            state.C = parseFloat(numC.value);
+            state.V = parseFloat(numV.value);
+            state.Freq = parseFloat(numF.value);
+
+            // Sync sliders
+            rSlider.value = state.R;
+            lSlider.value = state.L;
+            cSlider.value = state.C;
+            vSlider.value = state.V;
+            fSlider.value = state.Freq;
+        } else {
+            // Read from Sliders
+            state.R = parseFloat(rSlider.value);
+            state.L = parseFloat(lSlider.value);
+            state.C = parseFloat(cSlider.value);
+            state.V = parseFloat(vSlider.value);
+            state.Freq = parseFloat(fSlider.value);
+            
+            // Sync inputs
+            numR.value = state.R;
+            numL.value = state.L;
+            numC.value = state.C;
+            numV.value = state.V;
+            numF.value = state.Freq;
+        }
+
         state.Source = sourceType.value;
         state.Config = configType.value;
-
-        // Update UI Text (Venezuelan format)
-        const fmt = (n, d=1) => n.toLocaleString('es-VE', { minimumFractionDigits: 0, maximumFractionDigits: d });
-        valR.textContent = fmt(state.R);
-        valL.textContent = fmt(state.L);
-        valC.textContent = fmt(state.C);
-        valV.textContent = fmt(state.V);
-        valF.textContent = fmt(state.Freq);
 
         // Toggle Freq Slider
         if (state.Source === 'AC') {
@@ -331,10 +362,18 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateResponse();
     }
 
-    [rSlider, lSlider, cSlider, vSlider, fSlider].forEach(el => el.addEventListener('input', updateState));
-    sourceType.addEventListener('change', updateState);
-    configType.addEventListener('change', updateState);
+    // Attach Listeners
+    [rSlider, lSlider, cSlider, vSlider, fSlider].forEach(el => 
+        el.addEventListener('input', () => updateState('slider'))
+    );
+    
+    [numR, numL, numC, numV, numF].forEach(el => 
+        el.addEventListener('input', () => updateState('input'))
+    );
+
+    sourceType.addEventListener('change', () => updateState('other'));
+    configType.addEventListener('change', () => updateState('other'));
 
     // Initial
-    updateState();
+    updateState('slider');
 });

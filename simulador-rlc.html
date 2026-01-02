@@ -115,6 +115,18 @@
                 height: 350px;
             }
         }
+        
+        .manual-input {
+            width: 80px;
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -190,9 +202,11 @@
                 <div class="slider-group" id="freq_control" style="display: none;">
                     <div class="slider-label">
                         <span>Frecuencia (f) [Hz]</span>
-                        <span id="val-f" class="slider-value">60</span>
                     </div>
-                    <input type="range" id="param_f" min="1" max="200" step="1" value="60">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="param_f" min="1" max="1000" step="1" value="60">
+                        <input type="number" id="num_f" min="1" max="1000" value="60" class="manual-input">
+                    </div>
                 </div>
 
                  <h3 style="margin: 20px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Componentes</h3>
@@ -200,33 +214,41 @@
                 <div class="slider-group">
                     <div class="slider-label">
                         <span>Resistencia (R) [Ω]</span>
-                        <span id="val-r" class="slider-value">100</span>
                     </div>
-                    <input type="range" id="param_r" min="1" max="500" step="1" value="100">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="param_r" min="1" max="500" step="1" value="100">
+                        <input type="number" id="num_r" min="1" max="500" value="100" class="manual-input">
+                    </div>
                 </div>
 
                 <div class="slider-group">
                     <div class="slider-label">
                         <span>Inductancia (L) [H]</span>
-                        <span id="val-l" class="slider-value">1.0</span>
                     </div>
-                    <input type="range" id="param_l" min="0.1" max="5" step="0.1" value="1.0">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="param_l" min="0.1" max="5" step="0.1" value="1.0">
+                        <input type="number" id="num_l" min="0.1" max="5" step="0.1" value="1.0" class="manual-input">
+                    </div>
                 </div>
 
                 <div class="slider-group">
                     <div class="slider-label">
                         <span>Capacitancia (C) [μF]</span>
-                        <span id="val-c" class="slider-value">47</span>
                     </div>
-                    <input type="range" id="param_c" min="1" max="100" step="1" value="47">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="param_c" min="1" max="200" step="1" value="47">
+                        <input type="number" id="num_c" min="1" max="200" value="47" class="manual-input">
+                    </div>
                 </div>
 
                 <div class="slider-group">
                     <div class="slider-label">
-                        <span>Voltaje Pico (V)</span>
-                        <span id="val-v" class="slider-value">10</span>
+                        <span>Voltaje de Entrada (V)</span>
                     </div>
-                    <input type="range" id="param_v" min="1" max="24" step="1" value="10">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="param_v" min="1" max="24" step="1" value="10">
+                        <input type="number" id="num_v" min="1" max="24" value="10" class="manual-input">
+                    </div>
                 </div>
 
 
