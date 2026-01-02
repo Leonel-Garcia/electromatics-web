@@ -246,8 +246,8 @@
                         <span>Voltaje de Entrada (V)</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="range" id="param_v" min="1" max="24" step="1" value="10">
-                        <input type="number" id="num_v" min="1" max="24" value="10" class="manual-input">
+                        <input type="range" id="param_v" min="1" max="100" step="1" value="10">
+                        <input type="number" id="num_v" min="1" max="100" value="10" class="manual-input">
                     </div>
                 </div>
 
@@ -265,6 +265,10 @@
                 <div class="metric-card">
                     <span class="metric-title">Coef. Amortiguamiento (ζ)</span>
                     <span id="metric-zeta" class="metric-val" style="color: var(--electric-blue)">0.34</span>
+                </div>
+                 <div class="metric-card">
+                    <span class="metric-title">Desfasaje (φ)</span>
+                    <span id="metric-phase" class="metric-val" style="color: #ffffff">0.0°</span>
                 </div>
                  <div class="metric-card">
                     <span class="metric-title">Tipo de Respuesta</span>

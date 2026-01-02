@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const numF = document.getElementById('num_f');
 
     const metricW0 = document.getElementById('metric-w0');
+    const metricPhase = document.getElementById('metric-phase');
     const metricAlpha = document.getElementById('metric-alpha');
     const metricZeta = document.getElementById('metric-zeta');
     const metricType = document.getElementById('metric-type');
@@ -258,6 +259,42 @@ document.addEventListener('DOMContentLoaded', function() {
         metricType.textContent = typeText;
         metricType.style.color = color;
         rlcChart.data.datasets[1].borderColor = color; // Only voltage changes color based on damping
+
+        // Calculate and Display Phase Shift (Only relevant for AC)
+        if (isAC) {
+            const w = 2 * Math.PI * f;
+            let phiDegree = 0;
+            let nature = '';
+
+            if (isParallel) {
+                // Parallel: phi = -atan( R*(wC - 1/wL) )
+                // Admittance Angle theta_Y = atan( B / G ) = atan( (wC - 1/wL) * R )
+                // Phase (V relative to I) = -theta_Y
+                const Bc = w * C;
+                const Bl = 1 / (w * L);
+                const G = 1 / R;
+                const theta_rad = Math.atan((Bc - Bl) / G); // Current angle relative to Voltage
+                phiDegree = -theta_rad * (180 / Math.PI); // Voltage angle relative to Current
+            } else {
+                // Series: phi = atan( (XL - XC) / R )
+                const XL = w * L;
+                const XC = 1 / (w * C);
+                const theta_rad = Math.atan((XL - XC) / R);
+                phiDegree = theta_rad * (180 / Math.PI);
+            }
+
+            // Determine nature
+            if (phiDegree > 0.1) nature = ' (Inductivo)';
+            else if (phiDegree < -0.1) nature = ' (Capacitivo)';
+            else nature = ' (Resistivo)';
+
+            // Formatting
+            const fmtPhase = (n) => n.toLocaleString('es-VE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            metricPhase.textContent = fmtPhase(phiDegree) + '°' + nature;
+            metricPhase.parentNode.style.display = 'flex'; // Ensure visible
+        } else {
+            metricPhase.parentNode.style.display = 'none'; // Hide for DC
+        }
 
         // Numerical Simulation (Euler Integration)
         let i_curr = 0;
