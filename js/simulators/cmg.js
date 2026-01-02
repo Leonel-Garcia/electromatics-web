@@ -146,7 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     Chart.register(verticalLinePlugin);
 
-    // Calculate Speeds Function
+    // Calculate Speeds Function (Venezuelan format)
+    const fmtVE = (n, d=0) => n.toLocaleString('es-VE', { minimumFractionDigits: d, maximumFractionDigits: d });
+    
     function calculateSpeeds() {
         // Synchronous speed: Ns = 120 * f / P
         state.Ns = (120 * state.freq) / state.poles;
@@ -155,9 +157,9 @@ document.addEventListener('DOMContentLoaded', function() {
         state.Nr = state.Ns * (1 - state.slip / 100);
         
         // Update UI
-        speedSync.textContent = state.Ns.toFixed(0) + ' RPM';
-        speedRotor.textContent = state.Nr.toFixed(0) + ' RPM';
-        speedDiff.textContent = (state.Ns - state.Nr).toFixed(0) + ' RPM';
+        speedSync.textContent = fmtVE(state.Ns) + ' RPM';
+        speedRotor.textContent = fmtVE(state.Nr) + ' RPM';
+        speedDiff.textContent = fmtVE(state.Ns - state.Nr) + ' RPM';
     }
 
 
@@ -401,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     slipSlider.addEventListener('input', (e) => {
         state.slip = parseFloat(e.target.value);
-        valSlip.textContent = state.slip.toFixed(1) + '%';
+        valSlip.textContent = fmtVE(state.slip, 1) + '%';
         calculateSpeeds();
     });
 

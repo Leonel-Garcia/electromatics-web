@@ -428,8 +428,10 @@ document.addEventListener('DOMContentLoaded', function() {
             v_ln = v_sec_winding / Math.sqrt(3); 
         }
 
-        dispVLL.textContent = v_ll.toFixed(1) + ' V';
-        dispVLN.textContent = v_ln.toFixed(1) + ' V';
+        // Venezuelan format: comma for decimals
+        const fmt = (n) => n.toLocaleString('es-VE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        dispVLL.textContent = fmt(v_ll) + ' V';
+        dispVLN.textContent = fmt(v_ln) + ' V';
     }
 
     function draw() {

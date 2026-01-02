@@ -154,24 +154,25 @@ document.addEventListener('DOMContentLoaded', function() {
             // pf_new is still positive ratio, but physically leading
         }
 
-        // --- Updates ---
+        // --- Updates --- (Venezuelan format)
+        const fmt = (n, d=2) => n.toLocaleString('es-VE', { minimumFractionDigits: d, maximumFractionDigits: d });
 
         // Controls Text
         valP.textContent = P;
-        valFp.textContent = pf_old.toFixed(2);
+        valFp.textContent = fmt(pf_old);
         valQc.textContent = Q_cap;
 
         // Metrics Text
         const metricFp = document.getElementById('metric-fp-new');
-        metricFp.textContent = pf_new.toFixed(2) + (Q_new > 0.1 ? ' (Cap)' : '');
+        metricFp.textContent = fmt(pf_new) + (Q_new > 0.1 ? ' (Cap)' : '');
         metricFp.style.color = pf_new > 0.95 ? '#00E676' : (pf_new < 0.8 ? '#FF5252' : '#FFC107');
 
-        document.getElementById('metric-s-new').textContent = S_new.toFixed(1) + ' kVA';
+        document.getElementById('metric-s-new').textContent = fmt(S_new, 1) + ' kVA';
         
         // Reduction current estimation (Assuming constant Voltage)
         // I_reduction % = (S_old - S_new) / S_old * 100
         const reduction = ((S_old - S_new) / S_old) * 100;
-        document.getElementById('metric-reduction').textContent = Math.max(0, reduction).toFixed(1) + '%';
+        document.getElementById('metric-reduction').textContent = fmt(Math.max(0, reduction), 1) + '%';
 
 
         // Update Chart Data

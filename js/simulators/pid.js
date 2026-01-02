@@ -159,17 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const metricError = document.getElementById('metric-error');
     const metricOutput = document.getElementById('metric-output');
 
-    // Update State from Inputs
+    // Update State from Inputs (Venezuelan format)
+    const fmtVE = (n, d=2) => n.toLocaleString('es-VE', { minimumFractionDigits: d, maximumFractionDigits: d });
+    
     function updateParams() {
         state.kp = parseFloat(kpInput.value);
         state.ki = parseFloat(kiInput.value);
         state.kd = parseFloat(kdInput.value);
         state.setpoint = parseFloat(spInput.value);
 
-        valKp.textContent = state.kp.toFixed(2);
-        valKi.textContent = state.ki.toFixed(2);
-        valKd.textContent = state.kd.toFixed(2);
-        valSp.textContent = state.setpoint.toFixed(0);
+        valKp.textContent = fmtVE(state.kp);
+        valKi.textContent = fmtVE(state.ki);
+        valKd.textContent = fmtVE(state.kd);
+        valSp.textContent = fmtVE(state.setpoint, 0);
     }
 
     // Event Listeners
@@ -259,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             settledCounter++;
             // Consider settled after staying in band for 2 seconds (20 × 0.1s)
             if (settledCounter >= 20 && settlingTime === null) {
-                settlingTime = currentSimTime.toFixed(1);
+                settlingTime = fmtVE(currentSimTime, 1);
             }
         } else {
             settledCounter = 0;
@@ -287,9 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update metrics display
     function updateMetricsUI(error, output) {
-        // Update existing metrics
-        metricError.textContent = error.toFixed(2);
-        metricOutput.textContent = output.toFixed(2);
+        // Update existing metrics (Venezuelan format)
+        metricError.textContent = fmtVE(error);
+        metricOutput.textContent = fmtVE(output);
         
         // Update performance metrics if elements exist
         const metricOvershoot = document.getElementById('metric-overshoot');
@@ -298,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (metricOvershoot) {
             const overshoot = ((maxValue - state.setpoint) / state.setpoint) * 100;
-            metricOvershoot.textContent = overshoot > 0 ? `+${overshoot.toFixed(1)}%` : '0.0%';
+            metricOvershoot.textContent = overshoot > 0 ? `+${fmtVE(overshoot, 1)}%` : '0,0%';
         }
         
         if (metricSettling) {
@@ -306,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (metricSSE) {
-            metricSSE.textContent = Math.abs(error).toFixed(2);
+            metricSSE.textContent = fmtVE(Math.abs(error));
         }
     }
 

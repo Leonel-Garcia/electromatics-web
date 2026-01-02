@@ -115,7 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const w0 = 1 / Math.sqrt(L * C);
         const f0 = w0 / (2 * Math.PI);
         
-        resonanceFreq.textContent = f0.toFixed(2) + ' Hz';
+        // Venezuelan format: comma for decimals
+        const fmt = (n, d=2) => n.toLocaleString('es-VE', { minimumFractionDigits: d, maximumFractionDigits: d });
+        resonanceFreq.textContent = fmt(f0) + ' Hz';
         
         // Check if at resonance (AC mode only)
         if (state.Source === 'AC') {
@@ -227,10 +229,12 @@ document.addEventListener('DOMContentLoaded', function() {
             zeta = alpha / w0;
         }
 
-        // Metrics Display
-        metricW0.textContent = w0.toFixed(1) + ' rad/s' + (isAC ? ` (Resonancia: ${(w0/(2*Math.PI)).toFixed(1)} Hz)` : '');
-        metricAlpha.textContent = alpha.toFixed(1) + ' Np/s';
-        metricZeta.textContent = zeta.toFixed(3);
+        // Metrics Display (Venezuelan format)
+        const fmt1 = (n) => n.toLocaleString('es-VE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const fmt3 = (n) => n.toLocaleString('es-VE', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+        metricW0.textContent = fmt1(w0) + ' rad/s' + (isAC ? ` (Resonancia: ${fmt1(w0/(2*Math.PI))} Hz)` : '');
+        metricAlpha.textContent = fmt1(alpha) + ' Np/s';
+        metricZeta.textContent = fmt3(zeta);
         
         // Response Type Color
         let color = '#448aff'; // Blue default
