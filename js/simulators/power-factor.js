@@ -158,9 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const fmt = (n, d=2) => n.toLocaleString('es-VE', { minimumFractionDigits: d, maximumFractionDigits: d });
 
         // Controls Text
-        valP.textContent = P;
+        valP.textContent = fmt(P, 0);
         valFp.textContent = fmt(pf_old);
-        valQc.textContent = Q_cap;
+        valQc.textContent = fmt(Q_cap, 0);
 
         // Metrics Text
         const metricFp = document.getElementById('metric-fp-new');

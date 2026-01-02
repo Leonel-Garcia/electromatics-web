@@ -408,6 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initial calculations
+    valSlip.textContent = fmtVE(state.slip, 1) + '%';
     calculateSpeeds();
     
     // Start animation

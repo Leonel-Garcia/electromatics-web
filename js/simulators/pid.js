@@ -313,5 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Start Simulation
+    updateParams();
     requestAnimationFrame(simulate);
 });

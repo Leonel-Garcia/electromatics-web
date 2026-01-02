@@ -311,12 +311,13 @@ document.addEventListener('DOMContentLoaded', function() {
         state.Source = sourceType.value;
         state.Config = configType.value;
 
-        // Update UI Text
-        valR.textContent = state.R;
-        valL.textContent = state.L;
-        valC.textContent = state.C;
-        valV.textContent = state.V;
-        valF.textContent = state.Freq;
+        // Update UI Text (Venezuelan format)
+        const fmt = (n, d=1) => n.toLocaleString('es-VE', { minimumFractionDigits: 0, maximumFractionDigits: d });
+        valR.textContent = fmt(state.R);
+        valL.textContent = fmt(state.L);
+        valC.textContent = fmt(state.C);
+        valV.textContent = fmt(state.V);
+        valF.textContent = fmt(state.Freq);
 
         // Toggle Freq Slider
         if (state.Source === 'AC') {
