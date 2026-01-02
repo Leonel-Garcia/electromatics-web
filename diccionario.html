@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Diccionario de Ingeniería Eléctrica | Electromatics</title>
+    <meta name="description" content="Glosario técnico de ingeniería eléctrica. Definiciones precisas de términos como Ampacidad, Factor de Potencia, Armónicos, PLC, SCADA y más.">
+    <meta name="keywords" content="diccionario eléctrico, glosario ingeniería eléctrica, términos eléctricos, definiciones técnicas, vocabulario eléctrico, ampacidad, factor de potencia">
+    <meta name="author" content="Leonel García">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://electromatics.com.ve/diccionario.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://electromatics.com.ve/diccionario.html">
+    <meta property="og:title" content="Diccionario Técnico de Ingeniería Eléctrica">
+    <meta property="og:description" content="La referencia definitiva para términos de ingeniería eléctrica y automatización.">
+    <meta property="og:image" content="https://electromatics.com.ve/images/dictionary-share.jpg">
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+
+    <style>
+        .dict-hero {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #0f172a 100%);
+            padding: 60px 0 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .search-container {
+            max-width: 600px;
+            margin: 30px auto 0;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            border-radius: 30px;
+            border: 2px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--electric-blue);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 180, 216, 0.2);
+        }
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 20px;
+        }
+        .dict-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 40px 0;
+        }
+        .term-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .term-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--safety-orange);
+        }
+        .term-title {
+            color: var(--electric-blue);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+        .term-def {
+            color: var(--text-primary);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .term-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .category-tag {
+            background: rgba(0, 180, 216, 0.1);
+            color: var(--electric-blue);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 18px;
+            display: none;
+        }
+    </style>
+
+    <!-- Structured Data: DefinedTermSet -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "DefinedTermSet",
+      "name": "Diccionario de Ingeniería Eléctrica Electromatics",
+      "description": "Glosario de términos técnicos utilizados en ingeniería eléctrica, automatización y sistemas de potencia.",
+      "hasDefinedTerm": [
+        {
+          "@type": "DefinedTerm",
+          "termCode": "AMPACIDAD",
+          "name": "Ampacidad",
+          "description": "La corriente máxima, en amperios, que un conductor puede transportar continuamente bajo las condiciones de uso sin exceder su temperatura nominal."
+        },
+        {
+          "@type": "DefinedTerm",
+          "termCode": "FP",
+          "name": "Factor de Potencia",
+          "description": "La relación entre la potencia activa (kW) y la potencia aparente (kVA) en un circuito de corriente alterna. Indica la eficiencia con la que se utiliza la energía."
+        },
+        {
+             "@type": "DefinedTerm",
+             "termCode": "PLC",
+             "name": "PLC (Controlador Lógico Programable)",
+             "description": "Computadora digital industrial robusta diseñada para el control de procesos de fabricación, como líneas de montaje o dispositivos robóticos."
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+          <span>Electromatics.com.ve</span>
+        </a>
+        
+        <button class="mobile-nav-toggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="que-es-electromatics.html">Qué es</a>
+          <a href="para-quien-es.html">Para quién</a>
+          <a href="calculos-electricos.html">Cálculos</a>
+          <a href="normativa-electrica.html">Normativa</a>
+          <a href="simuladores.html">Simuladores</a>
+          <a href="electro-info.html">Info</a>
+          <a href="calculadora.html">App IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="dict-hero">
+        <div class="container">
+            <h1 style="font-size: 42px; color: #fff; margin-bottom: 15px;">Diccionario <span style="color: var(--safety-orange);">Técnico</span></h1>
+            <p style="font-size: 18px; color: var(--text-secondary);">Definiciones precisas y actualizadas de Ingeniería Eléctrica y Automatización.</p>
+            
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar término (ej. Armónicos, Relé, Voltaje)...">
+            </div>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <main class="container">
+        <div id="dictionaryGrid" class="dict-grid">
+            <!-- Terms will be populated by JS or static HTML -->
+            
+            <!-- A -->
+            <div class="term-card">
+                <h3 class="term-title">Ampacidad</h3>
+                <p class="term-def">Capacidad de conducción de corriente de un conductor eléctrico expresada en amperios. Es la corriente máxima que puede soportar continuamente sin exceder su temperatura límite de aislamiento.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Instalaciones</span>
+                    <span>CEN 310.15</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Armónicos</h3>
+                <p class="term-def">Componentes de una onda periódica cuya frecuencia es un múltiplo entero de la frecuencia fundamental. En sistemas eléctricos, causan distorsión de la forma de onda, calentamiento y pérdidas.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Calidad de Energía</span>
+                    <span>IEEE 519</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Arco Eléctrico</h3>
+                <p class="term-def">Descarga eléctrica continua de alta corriente que fluye a través de un espacio de aire entre conductores. Genera temperaturas extremas y es un riesgo grave de seguridad (Arc Flash).</p>
+                <div class="term-meta">
+                    <span class="category-tag">Seguridad</span>
+                    <span>NFPA 70E</span>
+                </div>
+            </div>
+
+            <!-- C -->
+            <div class="term-card">
+                <h3 class="term-title">Contactor</h3>
+                <p class="term-def">Interruptor controlado eléctricamente usado para conmutar un circuito de potencia. A diferencia de un relé, está diseñado para manejar altas corrientes directamente.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Control</span>
+                    <span>IEC 60947</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Cortocircuito</h3>
+                <p class="term-def">Conexión accidental de baja impedancia entre dos puntos de diferente potencial. Provoca un flujo de corriente excesivo que puede dañar equipos si no se despeja rápidamente.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Fallas</span>
+                </div>
+            </div>
+
+            <!-- D -->
+            <div class="term-card">
+                <h3 class="term-title">Demanda Máxima</h3>
+                <p class="term-def">La mayor carga promedio registrada durante un intervalo de tiempo específico (generalmente 15 min) en un periodo determinado (ej. un mes).</p>
+                <div class="term-meta">
+                    <span class="category-tag">Potencia</span>
+                </div>
+            </div>
+
+            <!-- E -->
+            <div class="term-card">
+                <h3 class="term-title">Eficiencia Energética</h3>
+                <p class="term-def">Relación entre la energía útil producida por un sistema y la energía total consumida. Mejorar la eficiencia implica realizar el mismo trabajo con menos energía.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Energía</span>
+                </div>
+            </div>
+
+            <!-- F -->
+            <div class="term-card">
+                <h3 class="term-title">Factor de Potencia</h3>
+                <p class="term-def">Medida de la eficiencia con la que se utiliza la energía eléctrica. Es el coseno del ángulo entre la corriente y el voltaje (FP = P/S). Un FP bajo indica desperdicio de energía.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Potencia</span>
+                    <span>ANSI C84.1</span>
+                </div>
+            </div>
+
+            <!-- G -->
+            <div class="term-card">
+                <h3 class="term-title">Generación Distribuida</h3>
+                <p class="term-def">Producción de energía eléctrica en el punto de consumo o cerca de él, usualmente mediante fuentes renovables pequeñas (paneles solares) o cogeneración, conectada a la red de distribución.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Smart Grid</span>
+                </div>
+            </div>
+
+             <!-- H -->
+             <div class="term-card">
+                <h3 class="term-title">HMI (Human-Machine Interface)</h3>
+                <p class="term-def">Interfaz Hombre-Máquina. Panel gráfico o software que permite a un operador interactuar con un controlador industrial (PLC) para monitorear y controlar procesos.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Automatización</span>
+                </div>
+            </div>
+
+            <!-- I -->
+            <div class="term-card">
+                <h3 class="term-title">Impedancia (Z)</h3>
+                <p class="term-def">Oposición total al flujo de corriente alterna en un circuito. Es la suma vectorial de la resistencia (R) y la reactancia (X). Se mide en Ohmios.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Teoría de Circuitos</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Interruptor Diferencial (GFCI)</h3>
+                <p class="term-def">Dispositivo de protección que desconecta el circuito al detectar una corriente de fuga a tierra, protegiendo a las personas contra electrocución.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Seguridad</span>
+                </div>
+            </div>
+
+            <!-- L -->
+            <div class="term-card">
+                <h3 class="term-title">Ley de Ohm</h3>
+                <p class="term-def">Principio fundamental que establece que la corriente (I) es directamente proporcional al voltaje (V) e inversamente proporcional a la resistencia (R): V = I × R.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Fundamentos</span>
+                </div>
+            </div>
+
+            <!-- M -->
+            <div class="term-card">
+                <h3 class="term-title">Motor de Inducción</h3>
+                <p class="term-def">Tipo de motor AC donde la corriente en el rotor se induce por el campo magnético del estator, sin necesidad de conexiones físicas (escobillas). Es el caballo de batalla de la industria.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Máquinas</span>
+                </div>
+            </div>
+
+            <!-- P -->
+            <div class="term-card">
+                <h3 class="term-title">PLC</h3>
+                <p class="term-def">Controlador Lógico Programable. Computadora industrial robusta utilizada para la automatización de procesos electromecánicos, tales como el control de maquinaria en líneas de montaje.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Automatización</span>
+                    <span>IEC 61131</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Puesta a Tierra</h3>
+                <p class="term-def">Conexión física intencional de un sistema eléctrico a la tierra para limitar voltajes transitorios y facilitar la operación de las protecciones en caso de falla.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Seguridad</span>
+                    <span>CEN 250</span>
+                </div>
+            </div>
+
+            <!-- R -->
+            <div class="term-card">
+                <h3 class="term-title">Red Inteligente (Smart Grid)</h3>
+                <p class="term-def">Red eléctrica que utiliza tecnologías digitales y de comunicación para detectar y reaccionar a cambios locales en el uso, mejorando la eficiencia y confiabilidad.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Tendencias</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Relé Térmico</h3>
+                <p class="term-def">Dispositivo de protección diseñado para desconectar un motor en caso de sobrecarga prolongada, basándose en el calentamiento generado por la corriente.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Protecciones</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Resonancia</h3>
+                <p class="term-def">Fenómeno en circuitos RLC donde las reactancias inductiva y capacitiva se cancelan (XL = XC), resultando en una impedancia puramente resistiva y máximas corrientes o voltajes.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Circuitos</span>
+                </div>
+            </div>
+
+            <!-- S -->
+            <div class="term-card">
+                <h3 class="term-title">SCADA</h3>
+                <p class="term-def">Supervisory Control And Data Acquisition. Sistema de software y hardware que permite supervisar y controlar procesos industriales a distancia y en tiempo real.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Control</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Sobrecarga</h3>
+                <p class="term-def">Condición de operación donde la corriente excede el valor nominal del equipo, pero no es un cortocircuito. Si persiste, causa sobrecalentamiento y daño al aislamiento.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Fallas</span>
+                </div>
+            </div>
+
+            <!-- T -->
+            <div class="term-card">
+                <h3 class="term-title">Transformador</h3>
+                <p class="term-def">Dispositivo estático que transfiere energía eléctrica entre dos o más circuitos a través de inducción electromagnética, usualmente cambiando los niveles de voltaje y corriente.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Máquinas</span>
+                </div>
+            </div>
+
+            <div class="term-card">
+                <h3 class="term-title">Transitorio</h3>
+                <p class="term-def">Respuesta temporal de un sistema eléctrico al pasar de un estado estable a otro, como al encender un motor o al ocurrir una descarga atmosférica.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Análisis</span>
+                </div>
+            </div>
+
+            <!-- V -->
+            <div class="term-card">
+                <h3 class="term-title">Variador de Frecuencia (VFD)</h3>
+                <p class="term-def">Dispositivo electrónico que controla la velocidad y torque de un motor AC variando la frecuencia y el voltaje de alimentación suministrados.</p>
+                <div class="term-meta">
+                    <span class="category-tag">Potencia</span>
+                </div>
+            </div>
+
+             <!-- V -->
+             <div class="term-card">
+                <h3 class="term-title">Voltaje (Tensión)</h3>
+                <p class="term-def">Diferencia de potencial eléctrico entre dos puntos. Es la fuerza que impulsa a los electrones a moverse a través de un conductor. Se mide en Voltios (V).</p>
+                <div class="term-meta">
+                    <span class="category-tag">Fundamentos</span>
+                </div>
+            </div>
+
+             <div class="no-results" id="noResults">
+                <i class="fa-solid fa-face-frown-open" style="font-size: 40px; margin-bottom: 20px; color: var(--electric-blue);"></i>
+                <p>No encontramos definiciones para ese término.</p>
+                <p>Intenta buscar sinónimos o escríbenos para agregarlo.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+          <div class="footer-content">
+            <div class="footer-info">
+              <h3>Electromatics.com.ve</h3>
+              <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+              <div style="margin-top: 20px">
+                <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;"
+                  ><i class="fa-brands fa-youtube"></i
+                ></a>
+                <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;"
+                  ><i class="fa-brands fa-whatsapp"></i
+                ></a>
+                <a href="https://tiktok.com/@electrum69" target="_blank" style="margin-right: 15px; font-size: 20px; color: #000000;"
+                  ><i class="fa-brands fa-tiktok"></i
+                ></a>
+                <a href="https://www.linkedin.com/in/leonel-garcía-0a1293b6" target="_blank" style="font-size: 20px; color: #0077b5;"
+                  ><i class="fa-brands fa-linkedin"></i
+                ></a>
+              </div>
+            </div>
+            <div class="footer-links">
+                <h4>Plataforma</h4>
+                <a href="calculadora.html">Calculadora IA</a>
+                <a href="normativa-electrica.html">Normativa 200-2009</a>
+                <a href="uso-responsable-ia.html">Uso Responsable IA</a>
+                <a href="diccionario.html">Diccionario Técnico</a>
+                <a href="formacion.html">Formación Técnica</a>
+            </div>
+            <div class="footer-links">
+                <h4>Empresa</h4>
+                <a href="que-es-electromatics.html">Qué es Electromatics</a>
+                <a href="para-quien-es.html">Para quién es</a>
+                <a href="calculos-electricos.html">Servicios de Cálculo</a>
+                <a href="contacto.html">Contacto</a>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p style="margin-bottom: 10px; color: var(--text-secondary); opacity: 0.8; font-size: 14px;">
+                Electromatics es una plataforma de apoyo al cálculo eléctrico. La responsabilidad técnica del uso de la información corresponde al usuario.
+            </p>
+            <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+          </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/simple-auth.js"></script>
+    <script src="js/ui.js?v=1.0"></script>
+    <script src="js/ai-chat.js?v=7.0"></script>
+    
+    <script>
+        // Simple Search Functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            const termCards = document.querySelectorAll('.term-card');
+            const noResults = document.getElementById('noResults');
+            const grid = document.getElementById('dictionaryGrid');
+
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                let hasResults = false;
+
+                termCards.forEach(card => {
+                    const title = card.querySelector('.term-title').textContent.toLowerCase();
+                    const def = card.querySelector('.term-def').textContent.toLowerCase();
+                    const tag = card.querySelector('.category-tag').textContent.toLowerCase();
+
+                    if (title.includes(query) || def.includes(query) || tag.includes(query)) {
+                        card.style.display = 'block';
+                        hasResults = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (hasResults) {
+                    noResults.style.display = 'none';
+                    grid.style.display = 'grid'; // Restore grid
+                } else {
+                    noResults.style.display = 'block';
+                    // We don't hide grid container, but all its children are hidden except noResults
+                }
+            });
+        });
+    </script>
+</body>
+</html>

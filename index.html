@@ -87,13 +87,13 @@
 
         <div class="desktop-nav">
           <a href="index.html" class="active">Inicio</a>
-          <a href="servicios.html">Servicios</a>
-          <a href="proyectos.html">Proyectos</a>
-          <a href="formacion.html">Formación</a>
-          <a href="museo.html">Museo</a>
+          <a href="que-es-electromatics.html">Qué es</a>
+          <a href="para-quien-es.html">Para quién</a>
+          <a href="calculos-electricos.html">Cálculos</a>
+          <a href="normativa-electrica.html">Normativa</a>
           <a href="simuladores.html">Simuladores</a>
-          <a href="electro-info.html">Electro Info</a>
-          <a href="calculadora.html">Plataforma IA</a>
+          <a href="electro-info.html">Info</a>
+          <a href="calculadora.html">App IA</a>
           <a
             href="#"
             id="login-btn"
@@ -107,9 +107,10 @@
 
     <!-- Contenido Principal -->
     <main>
+      <!-- BLOQUE HERO (Modificado) -->
       <section
         class="container"
-        style="text-align: center; padding: 60px 0 100px 0"
+        style="text-align: center; padding: 60px 0 60px 0"
       >
         <div class="hero-content">
           <div
@@ -118,7 +119,7 @@
               align-items: center;
               justify-content: center;
               gap: 12px;
-              margin-bottom: 15px;
+              margin-bottom: 25px;
             "
           >
             <img 
@@ -143,125 +144,109 @@
               >Potenciado por ElectrIA</span
             >
           </div>
-          <h1 style="font-size: 56px; margin-bottom: 20px">
-            Software de Ingeniería Eléctrica<br /><span
-              >con Inteligencia Artificial</span
-            >
+          
+          <h1 style="font-size: 48px; margin-bottom: 20px; line-height: 1.2;">
+            Electromatics: Software con IA para<br />
+            <span style="color: var(--electric-blue);">Cálculo y Validación Eléctrica</span>
           </h1>
+          
           <p
             style="
               font-size: 20px;
               max-width: 800px;
-              margin: 0 auto 40px auto;
-              color: var(--text-secondary);
+              margin: 0 auto 30px auto;
+              color: var(--text-primary);
+              font-weight: 500;
             "
           >
-            Descubre la plataforma líder en Venezuela para cálculos eléctricos residenciales e industriales. 
-            Garantiza el cumplimiento de la <strong>Norma Fondonorma 200-2009</strong> con asistencia de IA y reportes automáticos.
+            Plataforma web para ingenieros, estudiantes y operadores eléctricos.
+            <br>
+            Apoya cálculos, aprendizaje y generación de reportes alineados con la <strong>Norma Fondonorma 200-2009</strong>.
           </p>
-          <div style="display: flex; gap: 20px; justify-content: center">
-            <a href="calculadora.html" class="btn btn-primary"
-              ><i class="fa-solid fa-calculator" style="margin-right: 8px"></i>
-              Iniciar Cálculo</a
-            >
-            <a href="servicios.html" class="btn btn-secondary"
-              >Explorar Servicios</a
-            >
+
+          <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 40px;">
+             <a href="calculos-electricos.html" class="btn btn-primary">
+               Descubre qué hacemos
+             </a>
+             <a href="calculadora.html" class="btn btn-secondary">
+               <i class="fa-solid fa-calculator" style="margin-right: 8px"></i> Ir a la App
+             </a>
           </div>
         </div>
       </section>
 
-      <section class="container">
+      <!-- BLOQUE 1: QUÉ HACEMOS -->
+      <section class="container" style="margin-bottom: 80px;">
+        <div class="card" style="text-align: center; border-color: var(--electric-blue);">
+          <h2 style="color: var(--electric-blue); margin-bottom: 20px;">¿Qué hace Electromatics?</h2>
+          <p style="font-size: 18px; max-width: 900px; margin: 0 auto;">
+            Electromatics facilita cálculos eléctricos residenciales e industriales, apoyando la interpretación de normas y la generación de reportes técnicos confiables. 
+            Nuestra tecnología ayuda a reducir errores y optimizar el tiempo de ingeniería, siempre bajo la supervisión del profesional responsable.
+          </p>
+        </div>
+      </section>
+
+      <!-- BLOQUE 2: PÚBLICO OBJETIVO (Reemplaza grid anterior) -->
+      <section class="container" style="margin-bottom: 80px;">
+        <div class="section-title">
+            <h2>Para quién es Electromatics</h2>
+            <p>Diseñado específicamente para las necesidades del sector eléctrico.</p>
+        </div>
+        
         <div class="services-grid">
           <div class="service-card">
-            <i
-              class="fa-solid fa-house-signal"
-              style="
-                font-size: 32px;
-                color: var(--electric-blue);
-                margin-bottom: 20px;
-              "
-            ></i>
-            <h3>Cálculos Residenciales (Sec. 220)</h3>
-            <p>
-              Dimensionamiento automático de acometidas, tableros y protecciones
-              para viviendas unifamiliares y multifamiliares.
-            </p>
+            <i class="fa-solid fa-helmet-safety" style="font-size: 32px; color: var(--safety-orange); margin-bottom: 20px;"></i>
+            <h3>Ingenieros Electricistas</h3>
+            <p>Optimización de tiempo en cálculos complejos, soporte normativo inmediato y generación de reportes profesionales para entregar a clientes.</p>
           </div>
           <div class="service-card">
-            <i
-              class="fa-solid fa-industry"
-              style="
-                font-size: 32px;
-                color: var(--safety-orange);
-                margin-bottom: 20px;
-              "
-            ></i>
-            <h3>Motores Eléctricos (Sec. 430)</h3>
-            <p>
-              Cálculo preciso de conductores, protecciones de sobrecarga y
-              cortocircuito para motores trifásicos y monofásicos.
-            </p>
+            <i class="fa-solid fa-graduation-cap" style="font-size: 32px; color: var(--electric-blue); margin-bottom: 20px;"></i>
+            <h3>Estudiantes</h3>
+            <p>Aprendizaje guiado paso a paso. Comprensión práctica de los cálculos reales y preparación efectiva para el ejercicio profesional.</p>
           </div>
           <div class="service-card">
-            <img src="images/electria-avatar.png" alt="ElectrIA"
-              style="width: 64px; height: 64px; border-radius: 50%; margin-bottom: 20px; border: 2px solid #b388ff;">
-            <h3>Asistente ElectrIA</h3>
-            <p>
-              Consulte dudas sobre la norma Fondonorma 200-2009 en tiempo real
-              con nuestro asistente basado en IA.
-            </p>
+            <i class="fa-solid fa-bolt" style="font-size: 32px; color: var(--text-primary); margin-bottom: 20px;"></i>
+            <h3>Operadores Eléctricos</h3>
+            <p>Herramientas para la verificación rápida de parámetros, comprensión de resultados técnicos y reducción de errores operativos en campo.</p>
           </div>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="para-quien-es.html" class="btn btn-secondary">Ver detalles por perfil</a>
         </div>
       </section>
 
-      <section class="container" style="margin-top: 100px">
-        <div
-          class="cta-section card"
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 30px;
-            background: linear-gradient(135deg, var(--medium-bg-hex), #1a2733);
-          "
-        >
-          <div style="flex: 1; min-width: 300px">
-            <h2 style="margin-bottom: 15px">Reportes de Proyectos Eléctricos</h2>
-            <p>
-              Obtenga memorias descriptivas en PDF y tablas de cargas en Excel
-              listas para sus proyectos. Exclusivo para suscriptores.
-            </p>
-            <ul style="list-style: none; padding: 0; margin-top: 20px">
-              <li style="margin-bottom: 10px">
-                <i
-                  class="fa-solid fa-check"
-                  style="color: var(--safety-orange); margin-right: 10px"
-                ></i>
-                Exportación a PDF profesional
-              </li>
-              <li style="margin-bottom: 10px">
-                <i
-                  class="fa-solid fa-check"
-                  style="color: var(--safety-orange); margin-right: 10px"
-                ></i>
-                Tablas de Excel editables
-              </li>
-              <li>
-                <i
-                  class="fa-solid fa-check"
-                  style="color: var(--safety-orange); margin-right: 10px"
-                ></i>
-                Historial de proyectos en la nube
-              </li>
-            </ul>
-          </div>
-          <div>
-            <a href="#" id="subscribe-cta-btn" class="btn btn-orange">Suscribirse Ahora</a>
-          </div>
+      <!-- BLOQUE 3: USO RESPONSABLE IA -->
+      <section class="container" style="margin-bottom: 80px;">
+        <div class="cta-section card" 
+             style="background: linear-gradient(135deg, #1a2733, var(--medium-bg-hex)); border-left: 4px solid var(--safety-orange);">
+             
+             <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                <h2 style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fa-solid fa-brain" style="color: var(--safety-orange);"></i>
+                    Uso Responsable de la IA
+                </h2>
+                <p style="font-size: 18px; line-height: 1.8;">
+                    La inteligencia artificial en Electromatics funciona estrictamente como una <strong>herramienta de apoyo técnico</strong>.
+                    <br><br>
+                    La interpretación, validación y responsabilidad final de los cálculos <strong>siempre recaen en el usuario o profesional a cargo</strong>. 
+                    La IA no sustituye el criterio de ingeniería ni la certificación legal de un proyecto.
+                </p>
+                <a href="uso-responsable-ia.html" class="btn btn-secondary" style="margin-top: 20px;">Leer política de IA</a>
+             </div>
         </div>
       </section>
+
+      <!-- BLOQUE 4: LLAMADO A EXPLORAR -->
+      <section class="container" style="margin-bottom: 60px;">
+         <div style="text-align: center; padding: 40px; background: rgba(0, 229, 255, 0.05); border-radius: 12px; border: 1px solid rgba(0, 229, 255, 0.2);">
+             <h2 style="margin-bottom: 20px;">Potencia tu ingeniería hoy</h2>
+             <p style="margin-bottom: 30px;">Descubre cómo Electromatics puede mejorar tu flujo de trabajo y tu aprendizaje práctico.</p>
+             <a href="calculos-electricos.html" class="btn btn-primary" style="font-size: 18px; padding: 15px 40px;">
+                Explorar Capacidades
+             </a>
+         </div>
+      </section>
+
     </main>
 
     <!-- Footer -->
@@ -288,18 +273,24 @@
           </div>
           <div class="footer-links">
             <h4>Plataforma</h4>
-            <a href="calculadora.html">Calculadora 220/430</a>
+            <a href="calculadora.html">Calculadora IA</a>
+            <a href="normativa-electrica.html">Normativa 200-2009</a>
+            <a href="uso-responsable-ia.html">Uso Responsable IA</a>
             <a href="formacion.html">Formación Técnica</a>
             <a href="proyectos.html">Proyectos</a>
           </div>
           <div class="footer-links">
             <h4>Empresa</h4>
-            <a href="nosotros.html">Nosotros</a>
-            <a href="servicios.html">Servicios</a>
+            <a href="que-es-electromatics.html">Qué es Electromatics</a>
+            <a href="para-quien-es.html">Para quién es</a>
+            <a href="calculos-electricos.html">Servicios de Cálculo</a>
             <a href="contacto.html">Contacto</a>
           </div>
         </div>
         <div class="footer-bottom">
+          <p style="margin-bottom: 10px; color: var(--text-secondary); opacity: 0.8; font-size: 14px;">
+              Electromatics es una plataforma de apoyo al cálculo eléctrico. La responsabilidad técnica del uso de la información corresponde al usuario.
+          </p>
           <p>
             &copy; 2025 Electromatics.com.ve. Todos los derechos reservados.
           </p>
