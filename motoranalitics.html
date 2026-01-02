@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: Protección Esencial de Motores Eléctricos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .flowchart-item {
+            border: 2px solid #4a5568;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            background-color: #ffffff;
+            position: relative;
+        }
+        .flowchart-connector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 3rem;
+        }
+        .flowchart-connector::after {
+            content: '▼';
+            font-size: 2rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+          <span>Electromatics.com.ve</span>
+        </a>
+        
+        <button class="mobile-nav-toggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="que-es-electromatics.html">Qué es</a>
+          <a href="para-quien-es.html">Para quién</a>
+          <a href="calculos-electricos.html">Cálculos</a>
+          <a href="normativa-electrica.html">Normativa</a>
+          <a href="simuladores.html">Simuladores</a>
+          <a href="electro-info.html" class="active">Tecno-Info</a>
+          <a href="museo.html">Museo</a>
+          <a href="calculadora.html">App IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <section class="info-hero" style="background: linear-gradient(135deg, #2f435e 0%, #1a2a3a 100%); padding: 80px 0; border-bottom: 4px solid var(--electric-blue);">
+        <div class="container text-center">
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mb-4">Protección Esencial de Motores Eléctricos</h1>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">Una guía visual para entender las fallas comunes y aplicar la protección correcta según la normativa FONDONORMA 200:2009.</p>
+        </div>
+    </section>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="fallas" class="mb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="card">
+                    <h2 class="text-3xl font-bold text-[#d64359] mb-4">¿Por Qué Fallan los Motores?</h2>
+                    <p class="text-lg mb-4">
+                        Comprender la causa raíz de las fallas es el primer paso para una protección efectiva. Un estudio de la IEEE revela que la mayoría de los problemas tienen un origen mecánico o térmico, destacando la importancia crítica de una protección eléctrica adecuada para prevenir daños en los devanados.
+                    </p>
+                    <p class="text-gray-600">
+                        Una correcta monitorización y protección no solo salvan al motor, sino que garantizan la continuidad operativa de toda la planta.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 class="text-2xl font-bold text-center mb-4">Distribución de Fallas en Motores</h3>
+                    <div class="chart-container">
+                        <canvas id="failureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="asesinos-silenciosos" class="mb-16 text-center">
+            <h2 class="text-4xl font-black mb-2">Los Asesinos Silenciosos</h2>
+            <p class="text-xl text-gray-600 mb-8 max-w-4xl mx-auto">Dos de las fallas eléctricas más devastadoras son la sobrecarga y el desbalance de voltaje. Ambas generan un enemigo común: el calor excesivo, que destruye el aislamiento del motor.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-2xl font-bold text-[#d64359] mb-4">Sobrecarga: El Calor que Destruye</h3>
+                    <p class="text-6xl font-black text-[#ff6361]">50%</p>
+                    <p class="text-lg mt-2 mb-4">De reducción en la vida útil del motor por cada **10°C** que la temperatura de operación excede su límite de diseño.</p>
+                    <p class="text-gray-600">Una sobrecarga prolongada, aunque sea pequeña, cocina lentamente los devanados hasta provocar un fallo catastrófico.</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-2xl font-bold text-[#d64359] mb-4">Desbalance: El Efecto Multiplicador</h3>
+                    <p class="text-6xl font-black text-[#ff6361]">x10</p>
+                    <p class="text-lg mt-2 mb-4">Un pequeño desbalance de voltaje del 2% puede causar un desbalance de corriente hasta **10 veces mayor**, sobrecalentando una fase.</p>
+                    <p class="text-gray-600">Es una de las causas más comunes y difíciles de detectar de quema de motores.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="anatomia" class="mb-16">
+            <h2 class="text-4xl font-black text-center mb-8">Anatomía de la Protección (CEN Art. 430)</h2>
+            <div class="max-w-md mx-auto">
+                <div class="flowchart-item bg-[#2f435e] text-white">Alimentador Principal</div>
+                <div class="flowchart-connector"></div>
+                <div class="flowchart-item">Medio de Desconexión</div>
+                <div class="flowchart-connector"></div>
+                <div class="flowchart-item">Conductores del Circuito Ramal</div>
+                <div class="flowchart-connector"></div>
+                <div class="flowchart-item bg-[#d64359] text-white">Protección vs Cortocircuito<span class="block text-sm font-normal">(Rápida / Magnética)</span></div>
+                <div class="flowchart-connector"></div>
+                <div class="flowchart-item">Controlador (Contactor)</div>
+                <div class="flowchart-connector"></div>
+                <div class="flowchart-item bg-[#ff6361] text-white">Protección vs Sobrecarga<span class="block text-sm font-normal">(Lenta / Térmica)</span></div>
+                <div class="flowchart-connector"></div>
+                <div class="flowchart-item">Motor</div>
+            </div>
+            <p class="text-center mt-6 text-lg max-w-2xl mx-auto text-gray-700">El Código Eléctrico Nacional establece un orden y función claros para cada componente. Es crucial no confundir la protección contra cortocircuitos (protege el cable) con la protección contra sobrecargas (protege el motor).</p>
+        </section>
+        
+        <section id="nema" class="mb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="card order-2 md:order-1">
+                     <h3 class="text-2xl font-bold text-center mb-4">Comparativa de Par de Arranque NEMA</h3>
+                    <div class="chart-container">
+                        <canvas id="nemaChart"></canvas>
+                    </div>
+                </div>
+                <div class="card order-1 md:order-2">
+                    <h2 class="text-3xl font-bold text-[#d64359] mb-4">Eligiendo el Campeón Adecuado</h2>
+                    <p class="text-lg mb-4">
+                        No todos los motores tienen la misma fuerza al arrancar. La clasificación de diseño NEMA nos indica el comportamiento del par motor, permitiendo seleccionar el motor correcto para cada tipo de carga.
+                    </p>
+                    <ul class="list-disc list-inside text-left space-y-2">
+                        <li><strong class="text-[#2f435e]">Diseño B:</strong> El estándar para uso general como bombas y ventiladores.</li>
+                        <li><strong class="text-[#d64359]">Diseño C:</strong> Para cargas pesadas que necesitan un gran empuje inicial, como cintas transportadoras cargadas.</li>
+                        <li><strong class="text-[#ff6361]">Diseño D:</strong> El "Hulk" de los motores, para cargas de alto impacto como prensas y grúas.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="calculo" class="mb-16 text-center">
+            <h2 class="text-4xl font-black mb-2">El Manual de Cálculo del CEN</h2>
+            <p class="text-xl text-gray-600 mb-8 max-w-4xl mx-auto">Aplicando la FONDONORMA 200:2009 a un caso práctico: Motor de 25 HP, 460V.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card">
+                    <h3 class="text-2xl font-bold mb-4">1. Conductores</h3>
+                    <p class="text-sm text-gray-500">Tabla 430.250 -> 34A</p>
+                    <p class="text-4xl font-bold my-2">34A x 1.25 = <span class="text-[#2f435e]">42.5A</span></p>
+                    <p class="text-xl font-semibold text-gray-800">Selección:</p>
+                    <p class="text-5xl font-black text-[#2f435e]">AWG #8</p>
+                    <p class="text-gray-600 mt-2">(Tabla 310.15(B)(16))</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-2xl font-bold mb-4">2. Prot. Sobrecarga</h3>
+                    <p class="text-sm text-gray-500">FLA de Placa -> 32.2A</p>
+                    <p class="text-4xl font-bold my-2">32.2A x 1.25 = <span class="text-[#d64359]">40.25A</span></p>
+                    <p class="text-xl font-semibold text-gray-800">Ajuste Máximo:</p>
+                    <p class="text-5xl font-black text-[#d64359]">40.25 A</p>
+                    <p class="text-gray-600 mt-2">(Art. 430.32)</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-2xl font-bold mb-4">3. Prot. Cortocircuito</h3>
+                     <p class="text-sm text-gray-500">Tabla 430.250 -> 34A</p>
+                    <p class="text-4xl font-bold my-2">34A x 2.50 = <span class="text-[#ff6361]">85A</span></p>
+                    <p class="text-xl font-semibold text-gray-800">Interruptor:</p>
+                    <p class="text-5xl font-black text-[#ff6361]">90 A</p>
+                    <p class="text-gray-600 mt-2">(Tabla 430.52)</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+          <div class="footer-content">
+            <div class="footer-info">
+              <h3>Electromatics.com.ve</h3>
+              <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+              <div style="margin-top: 20px">
+                <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;"
+                  ><i class="fa-brands fa-youtube"></i
+                ></a>
+                <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;"
+                  ><i class="fa-brands fa-whatsapp"></i
+                ></a>
+                <a href="https://tiktok.com/@electrum69" target="_blank" style="margin-right: 15px; font-size: 20px; color: #000000;"
+                  ><i class="fa-brands fa-tiktok"></i
+                ></a>
+              </div>
+            </div>
+            <div class="footer-links">
+              <h4>Enlaces Rápidos</h4>
+              <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="simuladores.html">Simuladores</a></li>
+                <li><a href="electro-info.html">Tecno-Info</a></li>
+                <li><a href="contacto.html">Contacto</a></li>
+              </ul>
+            </div>
+            <div class="footer-contact">
+              <h4>Contacto</h4>
+              <p><i class="fa-solid fa-envelope"></i> info@electromatics.com.ve</p>
+              <p><i class="fa-solid fa-location-dot"></i> Venezuela</p>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2025 Electromatics. Todos los derechos reservados. Diseñado por Leonel García</p>
+          </div>
+        </div>
+      </footer>
+
+      <!-- Auth Modal placeholders... -->
+      <div id="auth-modal-container"></div>
+      <script src="js/auth.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const tooltipCallback = {
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    title: function(tooltipItems) {
+                        const item = tooltipItems[0];
+                        let label = item.chart.data.labels[item.dataIndex];
+                        if (Array.isArray(label)) {
+                            return label.join(' ');
+                        } else {
+                            return label;
+                        }
+                    }
+                }
+            },
+            legend: {
+                labels: {
+                    font: {
+                        size: 14,
+                        family: 'Inter'
+                    }
+                }
+            }
+        },
+        maintainAspectRatio: false,
+        responsive: true
+    };
+    
+    function wrapLabel(label, maxWidth = 16) {
+        if (label.length <= maxWidth) {
+            return label;
+        }
+        const words = label.split(' ');
+        const lines = [];
+        let currentLine = '';
+        words.forEach(word => {
+            if ((currentLine + ' ' + word).trim().length > maxWidth) {
+                lines.push(currentLine.trim());
+                currentLine = word;
+            } else {
+                currentLine = (currentLine + ' ' + word).trim();
+            }
+        });
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        return lines;
+    }
+
+    const failureCtx = document.getElementById('failureChart');
+    if (failureCtx) {
+        new Chart(failureCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    wrapLabel('Fallas en Rodamientos'),
+                    wrapLabel('Fallas en Devanado Estatórico'),
+                    wrapLabel('Fallas en Rotor'),
+                    wrapLabel('Otras / Misceláneas')
+                ],
+                datasets: [{
+                    label: 'Causas de Falla',
+                    data: [41, 37, 10, 12],
+                    backgroundColor: [
+                        '#2f435e',
+                        '#665191',
+                        '#d64359',
+                        '#ffa600'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 4
+                }]
+            },
+            options: tooltipCallback
+        });
+    }
+
+    const nemaCtx = document.getElementById('nemaChart');
+    if (nemaCtx) {
+        new Chart(nemaCtx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    wrapLabel('Diseño B (Uso General)'), 
+                    wrapLabel('Diseño C (Alto Par)'), 
+                    wrapLabel('Diseño D (Muy Alto Par)')
+                ],
+                datasets: [{
+                    label: 'Par de Arranque Relativo (%)',
+                    data: [150, 225, 275],
+                    backgroundColor: [
+                        '#2f435e',
+                        '#d64359',
+                        '#ff6361'
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                ...tooltipCallback,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '% del Par Nominal'
+                        }
+                    }
+                },
+                plugins: {
+                    ...tooltipCallback.plugins,
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>
