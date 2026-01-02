@@ -182,28 +182,29 @@ const unitData = {
 
 
 const siPrefixes = [
-    { prefix: "Yotta", symbol: "Y", factor: "10²⁴", example: "1 YW = 1,000,000,000,000,000,000,000,000 W" },
-    { prefix: "Zetta", symbol: "Z", factor: "10²¹", example: "1 ZV = 1,000,000,000,000,000,000,000 V" },
-    { prefix: "Exa", symbol: "E", factor: "10¹⁸", example: "1 EJ = 1,000,000,000,000,000,000 J" },
-    { prefix: "Peta", symbol: "P", factor: "10¹⁵", example: "1 PΩ = 1,000,000,000,000,000 Ω" },
-    { prefix: "Tera", symbol: "T", factor: "10¹²", example: "1 TW = 1,000,000,000,000 W" },
-    { prefix: "Giga", symbol: "G", factor: "10⁹", example: "1 GHz = 1,000,000,000 Hz" },
-    { prefix: "Mega", symbol: "M", factor: "10⁶", example: "1 MW = 1,000,000 W" },
-    { prefix: "Kilo", symbol: "k", factor: "10³", example: "1 kV = 1,000 V" },
+    { prefix: "Yotta", symbol: "Y", factor: "10²⁴", example: "1 YW = 1.000.000.000.000.000.000.000.000 W" },
+    { prefix: "Zetta", symbol: "Z", factor: "10²¹", example: "1 ZV = 1.000.000.000.000.000.000.000 V" },
+    { prefix: "Exa", symbol: "E", factor: "10¹⁸", example: "1 EJ = 1.000.000.000.000.000.000 J" },
+    { prefix: "Peta", symbol: "P", factor: "10¹⁵", example: "1 PΩ = 1.000.000.000.000.000 Ω" },
+    { prefix: "Tera", symbol: "T", factor: "10¹²", example: "1 TW = 1.000.000.000.000 W" },
+    { prefix: "Giga", symbol: "G", factor: "10⁹", example: "1 GHz = 1.000.000.000 Hz" },
+    { prefix: "Mega", symbol: "M", factor: "10⁶", example: "1 MW = 1.000.000 W" },
+    { prefix: "Kilo", symbol: "k", factor: "10³", example: "1 kV = 1.000 V" },
     { prefix: "Hecto", symbol: "h", factor: "10²", example: "1 hPa = 100 Pa" },
     { prefix: "Deca", symbol: "da", factor: "10¹", example: "1 dam = 10 m" },
     { prefix: "(base)", symbol: "-", factor: "10⁰", example: "1 m, 1 V, 1 W" },
-    { prefix: "Deci", symbol: "d", factor: "10⁻¹", example: "1 dm = 0.1 m" },
-    { prefix: "Centi", symbol: "c", factor: "10⁻²", example: "1 cm = 0.01 m" },
-    { prefix: "Milli", symbol: "m", factor: "10⁻³", example: "1 mA = 0.001 A" },
-    { prefix: "Micro", symbol: "µ", factor: "10⁻⁶", example: "1 µF = 0.000001 F" },
-    { prefix: "Nano", symbol: "n", factor: "10⁻⁹", example: "1 ns = 0.000000001 s" },
-    { prefix: "Pico", symbol: "p", factor: "10⁻¹²", example: "1 pF = 0.000000000001 F" },
-    { prefix: "Femto", symbol: "f", factor: "10⁻¹⁵", example: "1 fA = 0.000000000000001 A" },
+    { prefix: "Deci", symbol: "d", factor: "10⁻¹", example: "1 dm = 0,1 m" },
+    { prefix: "Centi", symbol: "c", factor: "10⁻²", example: "1 cm = 0,01 m" },
+    { prefix: "Milli", symbol: "m", factor: "10⁻³", example: "1 mA = 0,001 A" },
+    { prefix: "Micro", symbol: "µ", factor: "10⁻⁶", example: "1 µF = 0,000001 F" },
+    { prefix: "Nano", symbol: "n", factor: "10⁻⁹", example: "1 ns = 0,000000001 s" },
+    { prefix: "Pico", symbol: "p", factor: "10⁻¹²", example: "1 pF = 0,000000000001 F" },
+    { prefix: "Femto", symbol: "f", factor: "10⁻¹⁵", example: "1 fA = 0,000000000000001 A" },
     { prefix: "Atto", symbol: "a", factor: "10⁻¹⁸", example: "1 aJ = 10⁻¹⁸ J" },
     { prefix: "Zepto", symbol: "z", factor: "10⁻²¹", example: "1 zC = 10⁻²¹ C" },
     { prefix: "Yocto", symbol: "y", factor: "10⁻²⁴", example: "1 yg = 10⁻²⁴ g" }
 ];
+
 
 let currentCategory = 'area';
 
