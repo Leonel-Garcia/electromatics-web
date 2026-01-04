@@ -81,12 +81,187 @@
           </div>
       </div>
       
-      <div class="card" style="margin-top: 60px; margin-bottom: 60px; text-align: center; background: rgba(255, 109, 0, 0.05); border-color: var(--safety-orange);">
-          <h3>Importante</h3>
+      <div class="card" style="margin-top: 40px; margin-bottom: 60px; text-align: center; background: rgba(255, 109, 0, 0.05); border-color: var(--safety-orange);">
+          <h3 style="color: var(--safety-orange);"><i class="fa-solid fa-circle-exclamation"></i> Importante</h3>
           <p>
               Electromatics no sustituye la lectura oficial del documento de la Norma Fondonorma. Recomendamos a todos los usuarios contar con una copia oficial de la norma para consulta profunda y verificación legal.
           </p>
       </div>
+
+      <!-- SECCIÓN: MARCO LEGAL VENEZOLANO -->
+      <section id="marco-legal" style="margin-top: 80px; border-top: 1px solid var(--border-color); padding-top: 60px;">
+          <h2 style="text-align: center; font-size: 32px; margin-bottom: 10px;">Marco Legal Eléctrico Nacional</h2>
+          <p style="text-align: center; color: var(--text-secondary); margin-bottom: 50px;">Fundamentos jurídicos que rigen el sistema y el servicio eléctrico en Venezuela.</p>
+
+          <style>
+              .legal-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                  gap: 30px;
+                  margin-bottom: 60px;
+              }
+              .legal-card {
+                  background: var(--bg-card);
+                  border: 1px solid var(--border-color);
+                  border-radius: 12px;
+                  padding: 30px;
+                  transition: all 0.3s ease;
+                  display: flex;
+                  flex-direction: column;
+                  position: relative;
+                  overflow: hidden;
+              }
+              .legal-card:hover {
+                  border-color: var(--electric-blue);
+                  transform: translateY(-5px);
+                  box-shadow: 0 10px 30px rgba(0, 122, 255, 0.1);
+              }
+              .legal-card i.main-icon {
+                  font-size: 40px;
+                  color: var(--electric-blue);
+                  margin-bottom: 20px;
+              }
+              .legal-card h3 {
+                  font-size: 20px;
+                  margin-bottom: 15px;
+                  color: white;
+              }
+              .legal-card p {
+                  font-size: 15px;
+                  line-height: 1.6;
+                  color: var(--text-secondary);
+                  margin-bottom: 20px;
+                  flex-grow: 1;
+              }
+              .legal-card .gaceta {
+                  font-size: 12px;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  color: var(--safety-orange);
+                  font-weight: 700;
+                  margin-bottom: 10px;
+                  display: block;
+              }
+              .btn-legal {
+                  background: rgba(0, 122, 255, 0.1);
+                  color: var(--electric-blue);
+                  border: 1px solid var(--electric-blue);
+                  padding: 10px 20px;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-weight: 600;
+                  transition: all 0.2s ease;
+                  text-align: center;
+                  width: 100%;
+              }
+              .btn-legal:hover {
+                  background: var(--electric-blue);
+                  color: white;
+              }
+              /* Estilos para el resumen interactivo */
+              .ia-analysis {
+                  display: none;
+                  margin-top: 20px;
+                  padding: 20px;
+                  background: rgba(0, 0, 0, 0.3);
+                  border-radius: 8px;
+                  border-left: 3px solid var(--safety-orange);
+                  font-size: 14px;
+                  animation: fadeIn 0.4s ease;
+              }
+              .ia-analysis.active {
+                  display: block;
+              }
+              .ia-analysis ul {
+                  margin: 0;
+                  padding-left: 15px;
+              }
+              .ia-analysis li {
+                  margin-bottom: 10px;
+                  color: #e1e8ed;
+              }
+              @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(10px); }
+                  to { opacity: 1; transform: translateY(0); }
+              }
+          </style>
+
+          <div class="legal-grid">
+              <!-- LOSSE -->
+              <div class="legal-card">
+                  <span class="gaceta">Gaceta Nº 39.573 (2010)</span>
+                  <i class="fa-solid fa-scale-balanced main-icon"></i>
+                  <h3>Ley Orgánica del Sistema y Servicio Eléctrico</h3>
+                  <p>Define la organización del sector, estableciendo el dominio del Estado y los derechos de los usuarios a un servicio continuo y eficiente.</p>
+                  <button class="btn-legal" onclick="toggleAnalysis('losse-analysis')">Ver Análisis ElectrIA</button>
+                  
+                  <div id="losse-analysis" class="ia-analysis">
+                      <strong>Puntos Clave para Profesionales:</strong>
+                      <ul>
+                          <li><strong>Reserva del Estado:</strong> Centraliza el despacho, transmisión y distribución nacional.</li>
+                          <li><strong>Derechos del Usuario:</strong> El Art. 35 garantiza la continuidad y calidad del servicio.</li>
+                          <li><strong>Corresponsabilidad:</strong> Obliga a la protección de activos eléctricos por parte de la comunidad.</li>
+                          <li><strong>Régimen Sancionatorio:</strong> Define multas graves por alteraciones no autorizadas al sistema.</li>
+                      </ul>
+                  </div>
+              </div>
+
+              <!-- LUREE -->
+              <div class="legal-card">
+                  <span class="gaceta">Gaceta Nº 39.823 (2011)</span>
+                  <i class="fa-solid fa-leaf main-icon" style="color: #4CAF50;"></i>
+                  <h3>Ley de Uso Racional y Eficiente de la Energía</h3>
+                  <p>Promueve la preservación de recursos naturales a través del control del consumo y la normalización de equipos eléctricos.</p>
+                  <button class="btn-legal" onclick="toggleAnalysis('luree-analysis')">Ver Análisis ElectrIA</button>
+
+                  <div id="luree-analysis" class="ia-analysis">
+                      <strong>Análisis Técnico:</strong>
+                      <ul>
+                          <li><strong>Gestión de Carga:</strong> Obliga a grandes usuarios a presentar planes de reducción de demanda.</li>
+                          <li><strong>Etiquetado:</strong> Regula el SEER/EER en equipos de refrigeración y climatización.</li>
+                          <li><strong>Alumbrado:</strong> Restricciones en luminarias de baja eficiencia (incandescentes).</li>
+                          <li><strong>Fuentes Renovables:</strong> Impulsa la integración de generación distribuida solar/eólica.</li>
+                      </ul>
+                  </div>
+              </div>
+
+              <!-- NORMAS CALIDAD -->
+              <div class="legal-card" style="border-color: rgba(255, 152, 0, 0.3);">
+                  <span class="gaceta">Resolución 235 (2004)</span>
+                  <i class="fa-solid fa-wave-square main-icon" style="color: var(--safety-orange);"></i>
+                  <h3>Normas de Calidad del Servicio de Distribución</h3>
+                  <p>Establece los parámetros técnicos que el prestador del servicio debe cumplir en términos de voltaje y frecuencia.</p>
+                  <button class="btn-legal" onclick="toggleAnalysis('calidad-analysis')">Ver Análisis ElectrIA</button>
+
+                  <div id="calidad-analysis" class="ia-analysis">
+                      <strong>Parámetros Técnicos:</strong>
+                      <ul>
+                          <li><strong>Margen de Voltaje:</strong> Establece desviaciones permitidas (típicamente ±5-10% según nivel).</li>
+                          <li><strong>Frecuencia:</strong> Mantenimiento estricto de los 60 Hz nominales.</li>
+                          <li><strong>Perturbaciones:</strong> Límites para armónicos (THD) y fluctuaciones de tensión (Flicker).</li>
+                          <li><strong>Compensación:</strong> Mecanismos de reclamo por daños en equipos debido a fallas en el suministro.</li>
+                      </ul>
+                  </div>
+              </div>
+          </div>
+
+          <script>
+              function toggleAnalysis(id) {
+                  const el = document.getElementById(id);
+                  const isActive = el.classList.contains('active');
+                  
+                  // Cerrar otros abiertos si se desea (opcional)
+                  document.querySelectorAll('.ia-analysis').forEach(analysis => {
+                      analysis.classList.remove('active');
+                  });
+
+                  if (!isActive) {
+                      el.classList.add('active');
+                      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }
+              }
+          </script>
+      </section>
 
     </main>
 
