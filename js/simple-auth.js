@@ -23,11 +23,14 @@ window.hasActiveSession = () => {
                   sessionStorage.getItem('access_token') || 
                   document.cookie.includes('access_token');
     
+    // El seguro de bucle (insurance) solo debe permitir el bypass si es MUY reciente (evitar bypass accidental)
     const insurance = localStorage.getItem('auth_loop_insurance') || 
                       sessionStorage.getItem('auth_loop_insurance');
-    const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
+    const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000); // 2 minutos
     
-    return !!(token || isInsured);
+    // IMPORTANTE: Un token presente es la señal más fuerte. 
+    // Si no hay token, el seguro solo debe actuar como parche temporal de UI, no como bypass de seguridad total.
+    return !!(token || (isInsured && isMobile())); 
 };
 
 const SafeStorage = {
@@ -246,10 +249,11 @@ const SimpleAuth = {
 
     // Verificar si el usuario puede estar en la página actual
     checkGuard: async () => {
-        // --- AUTORIDAD ABSOLUTA (v8.0) ---
-        // Si tenemos sesión activa (vía token o seguro), pasamos instantáneamente.
-        if (window.hasActiveSession() || document.body.classList.contains('is-authenticated')) {
-            console.log('🛡️ Auth Guard: Bypass activated (Session found)');
+        // --- AUTORIDAD ABSOLUTA (v8.1) ---
+        // Si tenemos sesión activa real (token presente), dejamos pasar.
+        const token = SafeStorage.getItem('access_token');
+        if (token) {
+            console.log('🛡️ Auth Guard: Direct access granted (Token found)');
             SimpleAuth.state.isLoggedIn = true;
             SimpleAuth.state.isRestricted = false;
             document.body.classList.add('is-authenticated');
@@ -283,17 +287,18 @@ const SimpleAuth = {
         
         console.log('🛡️ Auth Guard checking path:', cleanPage);
 
-        // Whitelist de páginas públicas (soporta con y sin .html)
+        // Whitelist de páginas públicas (Páginas de información y aterrizaje)
         const publicPages = [
-            'index.html', 
-            '', 
-            '/',
+            'index.html', '', '/',
+            'que-es-electromatics.html', 'que-es-electromatics',
+            'para-quien-es.html', 'para-quien-es',
+            'nosotros.html', 'nosotros',
             'servicios.html', 'servicios',
             'proyectos.html', 'proyectos',
-            'nosotros.html', 'nosotros',
             'contacto.html', 'contacto',
             'museo.html', 'museo',
-            'admin.html', 'admin'
+            'uso-responsable-ia.html', 'uso-responsable-ia',
+            'faq.html', 'faq'
         ];
 
         const isProtected = !publicPages.includes(cleanPage);
