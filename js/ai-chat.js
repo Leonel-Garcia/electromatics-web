@@ -104,14 +104,14 @@ const ElectrIA = {
 
         // Event Listeners
         const toggle = document.getElementById('chat-toggle');
-        const window = document.getElementById('chat-window');
+        const chatWindow = document.getElementById('chat-window');
         const input = document.getElementById('chat-input');
         const send = document.getElementById('chat-send');
         const messages = document.getElementById('chat-messages');
 
         toggle.addEventListener('click', () => {
-            window.classList.toggle('open');
-            if (window.classList.contains('open')) input.focus();
+            chatWindow.classList.toggle('open');
+            if (chatWindow.classList.contains('open')) input.focus();
         });
 
         const sendMessage = async () => {
@@ -147,7 +147,27 @@ const ElectrIA = {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
+
+        // Expose public API
+        window.ChatWidget = {
+            open: () => {
+                chatWindow.classList.add('open');
+                input.focus();
+            },
+            close: () => {
+                chatWindow.classList.remove('open');
+            },
+            sendMessage: (message) => {
+                input.value = message;
+                sendMessage();
+            }
+        };
     }
+};
+
+// Rename local 'window' variable to avoid confusion with global 'window'
+const setupChat = () => {
+    // We already have the logic inside ElectrIA.init
 };
 
 document.addEventListener('DOMContentLoaded', ElectrIA.init);
