@@ -23,14 +23,8 @@ const SimulatorAuth = {
         }
 
         // --- ESCUDO DE PERSISTENCIA (v5.0) ---
-        if (typeof SafeStorage !== 'undefined') {
-            const insurance = SafeStorage.getItem('auth_loop_insurance');
-            const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000); // 2 minutos
-            if (isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
-                console.log('🛡️ SimulatorAuth: Shield active, granting instant access');
-                return true;
-            }
-        }
+        // Removido bypass por seguro en v8.3 para forzar validación de token.
+        // El seguro solo debe usarse en SimpleAuth para suavizar la transición de UI.
 
         // 1. Esperar a que SimpleAuth termine de cargar
         if (window.SimpleAuth) {
@@ -53,11 +47,7 @@ const SimulatorAuth = {
             ? SafeStorage.getItem('access_token') 
             : localStorage.getItem('access_token');
             
-        const cachedUser = (typeof SafeStorage !== 'undefined')
-            ? SafeStorage.getJSON('user_data')
-            : null;
-            
-        return !!(token && (cachedUser || isInsured));
+        return !!token;
     },
 
     /**

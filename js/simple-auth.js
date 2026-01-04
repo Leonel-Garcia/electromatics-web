@@ -23,14 +23,10 @@ window.hasActiveSession = () => {
                   sessionStorage.getItem('access_token') || 
                   document.cookie.includes('access_token');
     
-    // El seguro de bucle (insurance) solo debe permitir el bypass si es MUY reciente (evitar bypass accidental)
-    const insurance = localStorage.getItem('auth_loop_insurance') || 
-                      sessionStorage.getItem('auth_loop_insurance');
-    const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000); // 2 minutos
-    
-    // IMPORTANTE: Un token presente es la señal más fuerte. 
-    // Si no hay token, el seguro solo debe actuar como parche temporal de UI, no como bypass de seguridad total.
-    return !!(token || (isInsured && isMobile())); 
+    // --- SEGURIDAD ESTRICTA (v8.3) ---
+    // Solo un token real cuenta como sesión activa para el Guard.
+    // El 'insurance' (seguro) queda relegado a parches de UI internos.
+    return !!token; 
 };
 
 const SafeStorage = {
@@ -261,31 +257,42 @@ const SimpleAuth = {
         }
 
         // --- ESCUDO DE PERSISTENCIA MÓVIL (Nuclear Shield) ---
+        // IMPORTANTE (v8.2): El seguro NO debe permitir el bypass total de checkGuard.
+        // Solo sirve para evitar el refresco agresivo de la UI, pero el guard DEBE seguir su curso
+        // a menos que queramos silenciar el modal en cargas ultrarrápidas de sesión válida.
+        // Lo desactivamos como bypass directo para forzar la validación de ruta.
         const insurance = SafeStorage.getItem('auth_loop_insurance');
         const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
 
         if (isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
-            console.log('🛡️ Auth Guard: Shield is active, suppress any prompt.');
-            document.body.classList.add('is-authenticated');
-            SimpleAuth.state.isLoggedIn = true;
-            SimpleAuth.state.isRestricted = false;
-            SimpleAuth.updateUI(); 
-            return;
+            console.log('🛡️ Auth Guard: Shield is active (UI-only bypass skipped)');
+            // Solo marcamos como logueado si ya hay evidencia previa, pero NO retornamos
+            // permitimos que el flujo llegue a la validación de 'isProtected'.
         }
 
-        // Solo aplicamos retrasos si NO hay sesión y es móvil, para evitar falsos positivos
+        // Solo aplicamos retrasos si NO hay sesión y es móvil, para evitar falsos positivos de red
         if (isMobile() && !SimpleAuth.state.isLoggedIn) {
             console.log('📱 Mobile Shield: Verification delay...');
             await new Promise(resolve => setTimeout(resolve, 800));
-            if (window.hasActiveSession()) return;
+            // No retornamos aquí prematuramente para obligar a pasar por la protección
         }
 
         // Normalizar URL: quitar parámetros de búsqueda y fragmentos
         const path = window.location.pathname;
-        const pageName = path.split("/").pop() || "index.html";
+        
+        // --- NORMALIZACIÓN DE RUTA MEJORADA (v8.2) ---
+        // 1. Quitar slash final si existe (ej: /simuladores/ -> /simuladores)
+        let normalizedPath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
+        
+        // 2. Obtener el nombre del archivo o segmento final
+        // Si normalizedPath es "/" o vacío, tratamos como index.html
+        let pageName = normalizedPath.split("/").pop();
+        if (!pageName || pageName === "") pageName = "index.html";
+        
+        // 3. Quitar query params y fragmentos (redundancia)
         const cleanPage = pageName.split('?')[0].split('#')[0];
         
-        console.log('🛡️ Auth Guard checking path:', cleanPage);
+        console.log('🛡️ Auth Guard checking path:', cleanPage, '(Original path:', path, ')');
 
         // Whitelist de páginas públicas (Páginas de información y aterrizaje)
         const publicPages = [
@@ -613,6 +620,10 @@ const SimpleAuth = {
         SafeStorage.removeItem('auth_token');
         SafeStorage.removeItem('user_data');
         SafeStorage.removeItem('auth_loop_insurance');
+        
+        // Borrar cookie de seguro también
+        document.cookie = "auth_sync_insurance=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        
         // Mantener isInitialized y isLoading pero limpiar autenticación
         SimpleAuth.state.isLoggedIn = false;
         SimpleAuth.state.isPremium = false;
