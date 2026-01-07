@@ -967,6 +967,78 @@ const SimpleAuth = {
         });
     },
 
+    // --- PROTECCIÓN DE NAVEGACIÓN (v9.0) ---
+    handleProtectedClick: (e) => {
+        if (!SimpleAuth.state.isLoggedIn) {
+            e.preventDefault();
+            console.warn('🚫 Navigation Guard: Access restricted. Opening modal.');
+            
+            // Cerrar menú móvil si está abierto (Interoperabilidad con ui.js)
+            const desktopNav = document.querySelector('.desktop-nav');
+            if (desktopNav && desktopNav.classList.contains('active')) {
+                desktopNav.classList.remove('active');
+                const icon = document.querySelector('.mobile-nav-toggle i');
+                if (icon) {
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                }
+            }
+
+            // Forzar modo restringido especialmente en móviles para estas secciones
+            if (isMobile()) {
+                SimpleAuth.state.isRestricted = true;
+                const modal = document.getElementById('auth-modal');
+                if (modal) modal.classList.add('restricted');
+                
+                const closeBtn = document.getElementById('close-auth');
+                if (closeBtn) closeBtn.style.display = 'none';
+                
+                const restrictedFooter = document.getElementById('auth-restricted-footer');
+                if (restrictedFooter) restrictedFooter.style.display = 'block';
+            }
+
+            window.openAuthModal('login');
+        }
+    },
+
+    setupNavigationGuards: () => {
+        // Lista de páginas que requieren registro obligatorio
+        const protectedPages = [
+            'normativa-electrica.html',
+            'simuladores.html',
+            'formacion.html',
+            'electro-info.html',
+            'calculadora.html',
+            'simuladores-rlc.html',
+            'simulador-tablero.html',
+            'motoranalitics.html',
+            'curso-ia.html'
+        ];
+
+        // Seleccionar enlaces en navegación principal, footer y botones de acción
+        const selectors = '.desktop-nav a, .footer-links a, .hero-content a.btn, .services-grid a, .cta-section a';
+        const navLinks = document.querySelectorAll(selectors);
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (!href || href === '#' || href.startsWith('http') || href.startsWith('mailto') || href.startsWith('tel')) return;
+
+            // Extraer nombre de página para comparar
+            const pageName = href.split('/').pop().split('?')[0].split('#')[0];
+            const isProtected = protectedPages.some(page => pageName === page || pageName === page.replace('.html', ''));
+            
+            if (isProtected) {
+                // Limpiar listener previo (evitar fugas de memoria/doble trigger)
+                link.removeEventListener('click', SimpleAuth.handleProtectedClick);
+                
+                // Si NO está logueado, interceptar el clic
+                if (!SimpleAuth.state.isLoggedIn) {
+                    link.addEventListener('click', SimpleAuth.handleProtectedClick);
+                }
+            }
+        });
+    },
+
     updateUI: () => {
         const loginBtn = document.getElementById('login-btn');
         const modal = document.getElementById('auth-modal');
@@ -1017,6 +1089,9 @@ const SimpleAuth = {
                 };
             }
         }
+
+        // --- ACTIVAR GUARDIAS DE NAVEGACIÓN ---
+        SimpleAuth.setupNavigationGuards();
     }
 };
 
