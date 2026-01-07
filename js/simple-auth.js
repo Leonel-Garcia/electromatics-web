@@ -163,12 +163,13 @@ SafeStorage.init();
 
 const SimpleAuth = {
     state: {
-        isLoggedIn: false,
+        isLoggedIn: !!SafeStorage.getItem('access_token'), // Sincronización inmediata v9.3
         isPremium: false,
-        user: null,
-        token: null,
-        isLoading: true, // Estado de carga inicial
-        isInitialized: false // Evitar doble inicialización
+        user: SafeStorage.getJSON('user_data'), // Restauración inmediata
+        token: SafeStorage.getItem('access_token'),
+        isLoading: true,
+        isInitialized: false,
+        pendingRedirect: SafeStorage.getItem('pending_auth_redirect') // Recuperar si existe
     },
 
     // Inicializar
@@ -877,13 +878,20 @@ const SimpleAuth = {
                 SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0015); // ~2 minutos
 
                 // Notificar éxito
-                SimpleAuth.showMessage('login-form-container', '¡Sesión Iniciada! Refrescando...', 'success');
+                SimpleAuth.showMessage('login-form-container', '¡Sesión Iniciada! Redirigiendo...', 'success');
                 
-                // Reload demorado para persistencia física en móviles
-                const delay = isMobile() ? 1500 : 800;
+                // 3. DETERMINAR DESTINO (v9.3)
+                const pending = SafeStorage.getItem('pending_auth_redirect');
+                let targetUrl = pending || window.location.pathname;
+                
+                // Limpiar redirección pendiente
+                SafeStorage.removeItem('pending_auth_redirect');
+
+                // Asegurar parámetros de limpieza
+                targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'auth_upd=' + Date.now();
+
+                const delay = isMobile() ? 1200 : 600;
                 setTimeout(() => {
-                    // Force refresh bypass cache using replace for cleaner mobile navigation
-                    const targetUrl = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 'auth_upd=' + Date.now();
                     window.location.replace(targetUrl);
                 }, delay); 
             } else {
@@ -930,11 +938,15 @@ const SimpleAuth = {
                 SafeStorage.setItem('auth_loop_insurance', now);
                 SafeStorage.setCookie('auth_sync_insurance', 'true', 0.0015);
                 
-                SimpleAuth.showMessage('register-form-container', '¡Cuenta Creada! Refrescando...', 'success');
+                SimpleAuth.showMessage('register-form-container', '¡Cuenta Creada! Redirigiendo...', 'success');
                 
-                const delay = isMobile() ? 1500 : 800;
+                const pending = SafeStorage.getItem('pending_auth_redirect');
+                let targetUrl = pending || window.location.pathname;
+                SafeStorage.removeItem('pending_auth_redirect');
+                targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'auth_reg=' + Date.now();
+
+                const delay = isMobile() ? 1200 : 600;
                 setTimeout(() => {
-                    const targetUrl = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 'auth_reg=' + Date.now();
                     window.location.replace(targetUrl);
                 }, delay);
             } else {
@@ -977,16 +989,20 @@ const SimpleAuth = {
         });
     },
 
-    // --- PROTECCIÓN DE NAVEGACIÓN (v9.2) ---
+    // --- PROTECCIÓN DE NAVEGACIÓN (v9.3) ---
     handleProtectedClick: (e) => {
-        // Doble verificación: Estado interno y Almacenamiento físico
+        const target = e.currentTarget.href;
         const hasToken = !!SafeStorage.getItem('access_token');
         const isLoggedIn = SimpleAuth.state.isLoggedIn || hasToken;
         
         if (!isLoggedIn) {
             e.preventDefault();
-            console.warn('🚫 Navigation Guard: Access restricted (No session). Opening modal.');
-            SimpleAuth.state.isLoggedIn = false; // Asegurar consistencia
+            console.warn('🚫 Navigation Guard: Access restricted. Target:', target);
+            
+            // Guardar destino para después del login
+            SafeStorage.setItem('pending_auth_redirect', target);
+            
+            SimpleAuth.state.isLoggedIn = false;
             
             // Cerrar menú móvil si está abierto (Interoperabilidad con ui.js)
             const desktopNav = document.querySelector('.desktop-nav');
