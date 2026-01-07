@@ -178,12 +178,18 @@ const SimpleAuth = {
 
         console.log('🚀 SimpleAuth: Initializing [v7.0 - CSS Shield]...');
         
-        // REINICIO DE ESTADO CRÍTICO
-        SimpleAuth.state.isLoading = true;
-        SimpleAuth.state.isRestricted = false;
-
-        // Asegurar que el body refleje el estado detectado por SafeStorage
-        if (SafeStorage.getItem('access_token')) {
+        // --- RECUPERACIÓN ULTRA-AGRESIVA (v9.2) ---
+        // Extraer token de CUALQUIER sitio inmediatamente antes de cualquier delay
+        const initialToken = SafeStorage.getItem('access_token');
+        if (initialToken) {
+            SimpleAuth.state.isLoggedIn = true;
+            SimpleAuth.state.token = initialToken;
+            document.body.classList.add('is-authenticated');
+            console.log('💎 SimpleAuth: Instant session recovery active.');
+        }
+        
+        // Asegurar que el body refleje el estado
+        if (SimpleAuth.state.isLoggedIn) {
             document.body.classList.add('is-authenticated');
         }
         
@@ -210,17 +216,16 @@ const SimpleAuth = {
             // 3. Primer intento de actualización UI
             SimpleAuth.updateUI();
 
-            // 4. Retraso de asentamiento solo para carga de sesión en móviles
-            if (isMobile()) {
+            // 4. Retraso de asentamiento solo para carga de sesión en móviles (SI NO HAY TOKEN)
+            if (isMobile() && !SimpleAuth.state.isLoggedIn) {
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
             
             // SEGURO DE PERSISTENCIA (Bypass inmediato usando el wrapper seguro)
             const insurance = SafeStorage.getItem('auth_loop_insurance');
-            // Seguro ampliado a 2 minutos para estabilidad en redes móviles
             const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000); 
             
-            if (SafeStorage.getItem('access_token') || isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
+            if (SimpleAuth.state.isLoggedIn || isInsured || SafeStorage.getCookie('auth_sync_insurance')) {
                 console.log('🎫 SimpleAuth: Shield Active (Insured or Token)');
                 SimpleAuth.state.isLoggedIn = true;
                 SimpleAuth.state.isRestricted = false;
@@ -877,8 +882,9 @@ const SimpleAuth = {
                 // Reload demorado para persistencia física en móviles
                 const delay = isMobile() ? 1500 : 800;
                 setTimeout(() => {
-                    // Force refresh bypass cache
-                    window.location.href = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 'auth_upd=' + Date.now();
+                    // Force refresh bypass cache using replace for cleaner mobile navigation
+                    const targetUrl = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 'auth_upd=' + Date.now();
+                    window.location.replace(targetUrl);
                 }, delay); 
             } else {
                 SimpleAuth.showMessage('login-form-container', result.message, 'error');
@@ -928,7 +934,8 @@ const SimpleAuth = {
                 
                 const delay = isMobile() ? 1500 : 800;
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 'auth_reg=' + Date.now();
+                    const targetUrl = window.location.pathname + (window.location.search || '') + (window.location.search ? '&' : '?') + 'auth_reg=' + Date.now();
+                    window.location.replace(targetUrl);
                 }, delay);
             } else {
                 SimpleAuth.showMessage('register-form-container', result.message, 'error');
@@ -970,16 +977,16 @@ const SimpleAuth = {
         });
     },
 
-    // --- PROTECCIÓN DE NAVEGACIÓN (v9.1) ---
+    // --- PROTECCIÓN DE NAVEGACIÓN (v9.2) ---
     handleProtectedClick: (e) => {
+        // Doble verificación: Estado interno y Almacenamiento físico
         const hasToken = !!SafeStorage.getItem('access_token');
+        const isLoggedIn = SimpleAuth.state.isLoggedIn || hasToken;
         
-        if (!SimpleAuth.state.isLoggedIn || !hasToken) {
+        if (!isLoggedIn) {
             e.preventDefault();
-            console.warn('🚫 Navigation Guard: Access restricted (No Token). Opening modal.');
-            
-            // Forzar actualización de estado si por alguna razón perdimos el token
-            if (!hasToken) SimpleAuth.state.isLoggedIn = false;
+            console.warn('🚫 Navigation Guard: Access restricted (No session). Opening modal.');
+            SimpleAuth.state.isLoggedIn = false; // Asegurar consistencia
             
             // Cerrar menú móvil si está abierto (Interoperabilidad con ui.js)
             const desktopNav = document.querySelector('.desktop-nav');
@@ -1041,7 +1048,9 @@ const SimpleAuth = {
                 
                 // Interceptar si NO hay sesión confirmada o falta el token físico
                 const hasToken = !!SafeStorage.getItem('access_token');
-                if (!SimpleAuth.state.isLoggedIn || !hasToken) {
+                const isLoggedIn = SimpleAuth.state.isLoggedIn || hasToken;
+                
+                if (!isLoggedIn) {
                     link.addEventListener('click', SimpleAuth.handleProtectedClick);
                 }
             }
