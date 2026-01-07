@@ -771,12 +771,15 @@ const SimpleAuth = {
         const subscribeBtn = document.getElementById('subscribe-btn');
 
         window.openAuthModal = (tab = 'login') => {
-            // BLOQUEO ABSOLUTO: Si estamos logueados o asegurados, el panel TIENE PROHIBIDO abrirse
+            // BLOQUEO ABSOLUTO (Mejorado v9.1): Solo bloqueamos si hay un TOKEN real.
+            // El seguro (insurance) solo sirve para no MOSTRAR el modal automáticamente, 
+            // pero si se solicita explícitamente o el Guard lo requiere, permitimos apertura si falta el token.
+            const hasToken = !!SafeStorage.getItem('access_token');
             const insurance = SafeStorage.getItem('auth_loop_insurance');
             const isInsured = insurance && (Date.now() - parseInt(insurance) < 120000);
 
-            if ((SimpleAuth.state.isLoggedIn || isInsured) && !SimpleAuth.state.isRestricted) {
-                console.log('🚫 openAuthModal: Blocked - session active or insured.');
+            if (SimpleAuth.state.isLoggedIn && hasToken && !SimpleAuth.state.isRestricted) {
+                console.log('🚫 openAuthModal: Blocked - session confirmed with token.');
                 return;
             }
 
@@ -967,11 +970,16 @@ const SimpleAuth = {
         });
     },
 
-    // --- PROTECCIÓN DE NAVEGACIÓN (v9.0) ---
+    // --- PROTECCIÓN DE NAVEGACIÓN (v9.1) ---
     handleProtectedClick: (e) => {
-        if (!SimpleAuth.state.isLoggedIn) {
+        const hasToken = !!SafeStorage.getItem('access_token');
+        
+        if (!SimpleAuth.state.isLoggedIn || !hasToken) {
             e.preventDefault();
-            console.warn('🚫 Navigation Guard: Access restricted. Opening modal.');
+            console.warn('🚫 Navigation Guard: Access restricted (No Token). Opening modal.');
+            
+            // Forzar actualización de estado si por alguna razón perdimos el token
+            if (!hasToken) SimpleAuth.state.isLoggedIn = false;
             
             // Cerrar menú móvil si está abierto (Interoperabilidad con ui.js)
             const desktopNav = document.querySelector('.desktop-nav');
@@ -1028,11 +1036,12 @@ const SimpleAuth = {
             const isProtected = protectedPages.some(page => pageName === page || pageName === page.replace('.html', ''));
             
             if (isProtected) {
-                // Limpiar listener previo (evitar fugas de memoria/doble trigger)
+                // Limpiar listener previo
                 link.removeEventListener('click', SimpleAuth.handleProtectedClick);
                 
-                // Si NO está logueado, interceptar el clic
-                if (!SimpleAuth.state.isLoggedIn) {
+                // Interceptar si NO hay sesión confirmada o falta el token físico
+                const hasToken = !!SafeStorage.getItem('access_token');
+                if (!SimpleAuth.state.isLoggedIn || !hasToken) {
                     link.addEventListener('click', SimpleAuth.handleProtectedClick);
                 }
             }
