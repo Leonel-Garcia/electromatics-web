@@ -1614,7 +1614,8 @@ class TimerRelay extends Component {
             timeElapsed: 0, 
             done: false, 
             active: false,
-            setting: 5000 // 5 seconds
+            setting: 5000, // 5 seconds
+            mode: 'TON' // 'TON' (On-Delay) or 'TOF' (Off-Delay)
         };
     }
     
@@ -1639,14 +1640,32 @@ class TimerRelay extends Component {
         }
         
         // Hand (Animated) - Always draw over
-        if (this.state.active) {
+        if (this.state.active || this.state.timeElapsed > 0) {
             const angle = -Math.PI/2 + (this.state.timeElapsed / this.state.setting) * (2*Math.PI);
-            ctx.strokeStyle = '#ef4444';
+            ctx.strokeStyle = this.state.mode === 'TOF' ? '#3b82f6' : '#ef4444';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(this.x + 30, this.y + 30);
             ctx.lineTo(this.x + 30 + 15 * Math.cos(angle), this.y + 30 + 15 * Math.sin(angle));
             ctx.stroke();
+        }
+        
+        // Mode indicator (TON/TOF)
+        ctx.fillStyle = this.state.mode === 'TOF' ? '#3b82f6' : '#fbbf24';
+        ctx.font = 'bold 9px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.state.mode, this.x + 30, this.y + 70);
+        
+        // Done indicator LED
+        ctx.fillStyle = this.state.done ? '#22c55e' : '#475569';
+        ctx.beginPath();
+        ctx.arc(this.x + 30, this.y + 85, 5, 0, Math.PI * 2);
+        ctx.fill();
+        if (this.state.done) {
+            ctx.shadowColor = '#22c55e';
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
         }
 
         this.drawTerminals(ctx);
@@ -2540,11 +2559,27 @@ function setupEventListeners() {
         if (timerControls) {
             if (component instanceof TimerRelay || component.type === 'timer') {
                 timerControls.style.display = 'block';
+                
+                // Time setting
                 const inputTimer = document.getElementById('input-timer-sec');
                 inputTimer.value = component.state.setting / 1000;
                 inputTimer.onchange = (e) => {
                     component.state.setting = parseFloat(e.target.value) * 1000;
                 };
+                
+                // Mode selector (TON/TOF)
+                const selectMode = document.getElementById('select-timer-mode');
+                if (selectMode) {
+                    selectMode.value = component.state.mode || 'TON';
+                    selectMode.onchange = (e) => {
+                        component.state.mode = e.target.value;
+                        // Reset timer state when changing mode
+                        component.state.timeElapsed = 0;
+                        component.state.done = false;
+                        component.state.active = false;
+                        draw();
+                    };
+                }
             } else {
                 timerControls.style.display = 'none';
             }
@@ -3608,7 +3643,7 @@ function solveCircuit() {
             }
         });
 
-        // BOBINAS DE TEMPORIZADORES (TimerRelay)
+        // BOBINAS DE TEMPORIZADORES (TimerRelay) - TON y TOF
         components.filter(c => c instanceof TimerRelay).forEach(t => {
             const hasA1 = nodes[`${t.id}_A1`];
             const hasA2 = nodes[`${t.id}_A2`];
@@ -3618,24 +3653,55 @@ function solveCircuit() {
                 if (p1 !== p2) energized = true;
             }
             
-            if (energized) {
-                if (!t.state.active) {
-                     t.state.active = true;
-                     t.state.timeElapsed = 0; // Reset on fresh energization? Or keep counting? Usually reset on drop.
-                }
-                if (!t.state.done) {
-                    t.state.timeElapsed += 16; // approx 16ms per frame
-                    if (t.state.timeElapsed >= t.state.setting) {
-                        t.state.done = true;
+            if (t.state.mode === 'TON') {
+                // TON (On-Delay): Cuenta mientras está energizado, activa salida al completar
+                if (energized) {
+                    if (!t.state.active) {
+                         t.state.active = true;
+                         t.state.timeElapsed = 0;
+                    }
+                    if (!t.state.done) {
+                        t.state.timeElapsed += 16; // approx 16ms per frame
+                        if (t.state.timeElapsed >= t.state.setting) {
+                            t.state.done = true;
+                            circuitChanged = true;
+                        }
+                    }
+                } else {
+                    // Desenergizado -> Reset todo
+                    if (t.state.active || t.state.done || t.state.timeElapsed > 0) {
+                        t.state.active = false;
+                        t.state.done = false;
+                        t.state.timeElapsed = 0;
                         circuitChanged = true;
                     }
                 }
             } else {
-                if (t.state.active || t.state.done || t.state.timeElapsed > 0) {
-                    t.state.active = false;
-                    t.state.done = false;
+                // TOF (Off-Delay): Salida activa inmediatamente al energizar, 
+                // cuenta al desenergizar, desactiva al completar
+                if (energized) {
+                    // Energizado -> Salida ON inmediatamente, reset timer
+                    if (!t.state.done) {
+                        t.state.done = true;
+                        circuitChanged = true;
+                    }
+                    t.state.active = true;
                     t.state.timeElapsed = 0;
-                    circuitChanged = true;
+                } else {
+                    // Desenergizado
+                    if (t.state.active) {
+                        // Acabamos de desenergizar, empezar a contar
+                        t.state.active = false;
+                    }
+                    if (t.state.done) {
+                        // Contando hacia el apagado
+                        t.state.timeElapsed += 16;
+                        if (t.state.timeElapsed >= t.state.setting) {
+                            t.state.done = false;
+                            t.state.timeElapsed = 0;
+                            circuitChanged = true;
+                        }
+                    }
                 }
             }
         });
