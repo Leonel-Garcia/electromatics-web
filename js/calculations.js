@@ -148,6 +148,9 @@ const Calculations = {
     },
 
     utils: {
+        // Standard Breaker Sizes (NEC 240.6)
+        breakerSizes: [15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 600, 800],
+
         getWireSize: (amps) => {
             // Tabla 310.16 FONDONORMA 200:2009
             // Ampacidades para conductores de cobre aislados (0-2000V, max 3 conductores, 30°C ambiente)
@@ -226,18 +229,19 @@ const Calculations = {
             console.log(`[WIRE SELECT] Corriente: ${amps}A → Cable: ${wire.size} (${wire.amps}A)`);
             return wire.size;
         },
+        // Returns next higher standard size (Round UP) - For Branch Circuits (Exception 1)
         getNextBreakerSize: (amps) => {
-            const sizes = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200];
-            return sizes.find(s => s >= amps) || '>200';
+            const size = Calculations.utils.breakerSizes.find(s => s >= amps);
+            return size || '>800';
         },
+        // Returns standard size not exceeding value (Round DOWN) - For Feeders (430.62)
         getStandardBreaker: (amps) => {
-            const sizes = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400];
-            let size = sizes[0];
-            for (let s of sizes) {
-                if (s <= amps) size = s;
-                else break;
-            }
-            return size;
+             let size = Calculations.utils.breakerSizes[0];
+             for (let s of Calculations.utils.breakerSizes) {
+                 if (s <= amps) size = s;
+                 else break;
+             }
+             return size;
         }
     },
 
@@ -335,7 +339,7 @@ const Calculations = {
                 overloadProtection: parseFloat(overload.toFixed(2)),
                 relayRange: relayRange,
                 contactorAmps: contactorAmps,
-                breakerSize: Calculations.utils.getStandardBreaker(breakerMax),
+                breakerSize: Calculations.utils.getNextBreakerSize(breakerMax),
                 references: {
                     conductor: 'Sec. 430.22',
                     ampacity: 'Tab. 310.16',
