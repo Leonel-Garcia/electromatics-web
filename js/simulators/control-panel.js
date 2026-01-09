@@ -3171,7 +3171,12 @@ function onMouseMove(e) {
 }
 
 function onMouseUp(e) {
-    // Soltar Boton
+    // Soltar Boton - Liberar TODOS los pulsadores que estén presionados
+    components.filter(c => c instanceof PushButton && c.state.pressed).forEach(btn => {
+        btn.state.pressed = false;
+    });
+    
+    // También liberar si estaba en dragItem (para compatibilidad)
     if (dragItem && dragItem.comp instanceof PushButton) {
         dragItem.comp.state.pressed = false;
     }
