@@ -149,6 +149,7 @@ const AIDispatcher = {
         // Initial motor params
         const hpValue = params.hp || '';
         const voltValue = params.voltage || '208';
+        const sfValue = params.sf || ''; // Service Factor default empty (placeholder 1.15)
         
         const html = `
             <div class="ai-message-bubble">
@@ -165,6 +166,10 @@ const AIDispatcher = {
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label>Potencia (HP)</label>
                                 <input type="number" class="motor-hp" value="${hpValue}" placeholder="Ej. 10">
+                            </div>
+                           <div class="form-group" style="margin-bottom: 0;">
+                                <label>F. Servicio</label>
+                                <input type="number" class="motor-sf" value="${sfValue}" placeholder="1.15" step="0.01" min="1.0">
                             </div>
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label>Voltaje (V)</label>
@@ -244,6 +249,10 @@ const AIDispatcher = {
                     <input type="number" class="motor-hp" placeholder="Ej. 5">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
+                    <label>F. Servicio</label>
+                    <input type="number" class="motor-sf" placeholder="1.15" step="0.01" min="1.0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
                     <label>Voltaje (V)</label>
                     <select class="motor-volt">
                         <option value="208">208 V</option>
@@ -276,14 +285,16 @@ const AIDispatcher = {
             const hp = parseFloat(item.querySelector('.motor-hp').value);
             const volt = parseFloat(item.querySelector('.motor-volt').value);
             const phase = parseFloat(item.querySelector('.motor-phase').value);
+            const sfInput = item.querySelector('.motor-sf').value;
+            const sf = sfInput ? parseFloat(sfInput) : 1.0;
 
             if (!hp) return;
-
-            const res = Calculations.motors.calculateMotor(hp, volt, phase);
+            
+            const res = Calculations.motors.calculateMotor(hp, volt, phase, 'induction', sf);
             motorResults.push(res);
             
             // Store inputs for report generation
-            motorInputs.push({ hp, volt, phase });
+            motorInputs.push({ hp, volt, phase, sf });
 
             // Render Branch Result (using Venezuelan format)
             const fmt = window.formatNumber || ((n) => n);

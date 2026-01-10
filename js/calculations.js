@@ -247,7 +247,7 @@ const Calculations = {
 
     // Section 430: Motors
     motors: {
-        calculateMotor: (hp, voltage, phase, type = 'induction') => {
+        calculateMotor: (hp, voltage, phase, type = 'induction', serviceFactor = 1.0) => {
             // TABLA 430.248 - Motores Monofásicos AC (Full-Load Current Amperes)
             // TABLA 430.250 - Motores Trifásicos AC (Full-Load Current Amperes)
             // Valores según FONDONORMA 200:2009 / NEC
@@ -329,8 +329,10 @@ const Calculations = {
             // Short Circuit (Breaker): Inverse Time Breaker -> 250% of FLC (Table 430.52)
             const breakerMax = flc * 2.5;
             
-            // Contactor: Min Capacity >= FLC (AC-3)
-            const contactorAmps = Math.ceil(flc);
+            // Contactor: Min Capacity >= FLC * ServiceFactor (AC-3)
+            // User requested that Contactor calculate based on SF for safety
+            const sf = serviceFactor || 1.0;
+            const contactorAmps = Math.ceil(flc * sf);
 
             return {
                 flc: parseFloat(flc.toFixed(2)),
