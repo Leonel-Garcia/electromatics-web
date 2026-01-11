@@ -27,7 +27,11 @@ const Grounding = {
         };
 
         try {
-            console.log("Grounding Init Started");
+            console.log("Grounding Init Started v2");
+            // Visual check that JS is running
+            const badge = document.getElementById('compliance-badge');
+            if(badge) badge.innerHTML = '<i class="fa fa-spinner fa-spin"></i> JS CARGADO';
+
             Grounding.setupListeners();
             Grounding.setupModal();
             Grounding.calculate(); // Priority: Calc first
@@ -84,6 +88,11 @@ const Grounding = {
         const sectionSurface = document.getElementById('section-surface');
         const gridDetails = document.getElementById('section-grid-details');
         
+        if (!sectionSafety || !sectionSurface || !gridDetails) {
+            console.warn("UI Elements missing for visibility update"); 
+            return;
+        }
+
         // 1. Safety Voltages & Surface Layer (Only needed for IEEE 80 Substations)
         if (app === 'substation') {
             sectionSafety.classList.remove('hidden-section');
@@ -194,7 +203,10 @@ const Grounding = {
         try {
             // 0. Get System Params
             const sysIfEl = document.getElementById('sys-if');
-            if(!sysIfEl) return; // Guard if DOM not ready
+            if(!sysIfEl) {
+                alert("CRITICAL ERROR: Input 'sys-if' not found in DOM.");
+                return; 
+            }
 
             const if_ka = parseFloat(sysIfEl.value) || 10;
             const tf_sec = parseFloat(document.getElementById('sys-tf').value) || 0.5;
@@ -347,6 +359,7 @@ const Grounding = {
         
         } catch (e) {
             console.error("Calculation Error:", e);
+            alert("Calculation Logic Error: " + e.message); // Explicit ALERT to User
         }
     },
 
