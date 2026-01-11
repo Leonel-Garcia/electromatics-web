@@ -176,190 +176,163 @@ const Grounding = {
 
     // --- MAIN CALCULATION CONTROLLER ---
     calculate: () => {
-        // 0. Get System Params
-        const if_ka = parseFloat(document.getElementById('sys-if').value) || 10;
-        const tf_sec = parseFloat(document.getElementById('sys-tf').value) || 0.5;
-        
-        document.getElementById('lbl-icc').textContent = if_ka;
-        document.getElementById('lbl-time').textContent = tf_sec;
+        try {
+            // 0. Get System Params
+            const sysIfEl = document.getElementById('sys-if');
+            if(!sysIfEl) return; // Guard if DOM not ready
 
-        // 1. Get Soil Parameters
-        const field_spacing = parseFloat(document.getElementById('wenner-a').value) || 3;
-        const field_R = parseFloat(document.getElementById('wenner-r').value) || 2;
-        
-        const rho = Grounding.calculateWennerRho(field_spacing, field_R);
-        document.getElementById('res-rho').textContent = rho.toFixed(2);
-
-        // 2. Get Design Parameters
-        const rod_L = parseFloat(document.getElementById('rod-len').value) || 2.44; // 8ft
-        const rod_dia_inch = parseFloat(document.getElementById('rod-dia').value) || 0.625; // 5/8inch
-        const rod_dia_m = rod_dia_inch * 0.0254;
-        
-        const grid_area = parseFloat(document.getElementById('grid-area').value) || 100;
-        const grid_conductor_len = parseFloat(document.getElementById('grid-len').value) || 120;
-        const grid_depth = parseFloat(document.getElementById('grid-depth').value) || 0.5;
-
-        // 3. Calculate Resistances
-        const r_rod = Grounding.calculateRodResistance(rho, rod_L, rod_dia_m);
-        const r_grid = Grounding.calculateGridResistance(rho, grid_area, grid_conductor_len, grid_depth);
-
-        // 3b. Calculate Conductor
-        const min_area_mm2 = Grounding.calculateConductorSize(if_ka, tf_sec);
-        const awg = Grounding.getAWG(min_area_mm2);
-
-        // --- IEEE 80 SAFETY CALCULATIONS (NEW) ---
-        // Inputs
-        const surf_rho = parseFloat(document.getElementById('surf-rho').value) || 2500;
-        const surf_h = parseFloat(document.getElementById('surf-h').value) || 0.15;
-        const D = parseFloat(document.getElementById('grid-spacing').value) || 5;
-        const n = parseFloat(document.getElementById('grid-n').value) || 6;
-        
-        // 1. Reflection Factor (K) & Derating Factor (Cs)
-        // K = (rho - rho_s) / (rho + rho_s)
-        const K = (rho - surf_rho) / (rho + surf_rho);
-        // Cs = 1 - (0.09 * (1 - rho/surf_rho)) / (2*hs + 0.09) -- Simplified Eq 27 IEEE 80 2000
-        // Precise Series Limit: Cs = 1 - 2*SUM ... 
-        // We use the approximate formula (IEEE 80 Eq 27):
-        const Cs = 1 - (0.09 * (1 - rho/surf_rho)) / (2 * surf_h + 0.09);
-
-        // 2. Tolerable Voltages (70kg body)
-        // E_touch = (1000 + 1.5 * Cs * surf_rho) * 0.157 / sqrt(ts)
-        const E_touch_max = (1000 + 1.5 * Cs * surf_rho) * 0.157 / Math.sqrt(tf_sec);
-        // E_step = (1000 + 6 * Cs * surf_rho) * 0.157 / sqrt(ts)
-        const E_step_max = (1000 + 6 * Cs * surf_rho) * 0.157 / Math.sqrt(tf_sec);
-
-        // 3. Geometric Factors (Km, Ki, Ks)
-        // Simplified Logic assuming square grid with rods
-        // d = conductor diameter
-        const d = (parseFloat(document.getElementById('rod-dia').value) || 0.625) * 0.0254; // Use rod dia as proxy for conductor dia for now or assume 4/0 avg (0.0134m)
-        // Actually grid connector is usually smaller than rod. Let's assume 4/0 AWG = 0.528 inch = 0.0134 m for grid conductor
-        const grid_d = 0.0134; 
-        
-        // Km (Mesh Factor) - Eq 81 Simplified
-        // Km = (1/2*PI) * [ ln(D^2/16*h*d) + (D + 8h)/4d ... ] -> Very complex
-        // Simplified Approx: Km = (1/2*PI) * ln( D^2 / (16 * h * d) ) 
-        const Km = (1 / (2 * Math.PI)) * Math.log( (D * D) / (16 * grid_depth * grid_d) );
-
-        // Ki (Irregularity Factor) - Eq 89
-        // Ki = 0.644 + 0.148 * n
-        const Ki = 0.644 + 0.148 * n;
-
-        // Ks (Step Factor) - Eq 94 Simplified
-        // Ks = (1/PI) * ( 1/(2*h) + 1/(D+h) + (1/D)*(1 - 0.5^(n-2)) )
-        const Ks = (1 / Math.PI) * ( (1 / (2 * grid_depth)) + (1 / (D + grid_depth)) + (1/D) * (1 - Math.pow(0.5, n - 2)) );
-
-        // 4. Actual Voltages (Em, Es)
-        // Grid Current Ig. Maximun future fault current flowing into grid.
-        // For sizing, assume conservative Ig = If * Df (Decrement factor) * Sf (Split factor).
-        // Let's assume Ig = If_kA (Worst case, 100% to ground)
-        const Ig = if_ka * 1000; 
-        const L_total = grid_conductor_len; // Total Length
-
-        // Em = (rho * Km * Ki * Ig) / L_total (Eq 80, 81 approx)
-        // NOTE: Standard divides by L_effective usually (LM), but for simplified check L_total is proxy.
-        const E_mesh_calc = (rho * Km * Ki * Ig) / L_total;
-        
-        // Es = (rho * Ks * Ki * Ig) / L_total
-        const E_step_calc = (rho * Ks * Ki * Ig) / L_total;
-
-        // --- UPDATE SAFETY UI ---
-        document.getElementById('val-touch-calc').textContent = E_mesh_calc.toFixed(1) + " V";
-        document.getElementById('val-touch-max').textContent = E_touch_max.toFixed(1) + " V";
-        document.getElementById('val-step-calc').textContent = E_step_calc.toFixed(1) + " V";
-        document.getElementById('val-step-max').textContent = E_step_max.toFixed(1) + " V";
-
-        // Logic Colors
-        const touchPass = E_mesh_calc < E_touch_max;
-        const stepPass = E_step_calc < E_step_max;
-
-        document.getElementById('status-touch').innerHTML = touchPass 
-            ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
-            : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
-
-        document.getElementById('status-step').innerHTML = stepPass 
-            ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
-            : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
-
-        document.getElementById('res-rod').textContent = r_rod.toFixed(2);
-        document.getElementById('res-grid').textContent = r_grid.toFixed(2);
-        
-        document.getElementById('res-conductor').textContent = min_area_mm2.toFixed(2) + " mm²";
-        document.getElementById('res-conductor-awg').textContent = "Recomendado: " + awg;
-
-
-        // 5. Compliance Check & Main Display
-        const limit = Grounding.limits[Grounding.currentApp];
-        
-        // Determine which R is relevant for this application
-        let relevantR = r_grid;
-        let labelR = "MALLA";
-        let targetText = `${limit} Ω`;
-        let refText = "IEEE Std 80";
-        
-        let isOverallPass = false;
-
-        const safetyPanel = document.getElementById('section-safety'); // Ensure correct ID
-
-        if (Grounding.currentApp === 'substation') {
-            relevantR = r_grid;
-            labelR = "MALLA SUBESTACIÓN";
-            targetText = "< 1.0 Ω (Típico)";
+            const if_ka = parseFloat(sysIfEl.value) || 10;
+            const tf_sec = parseFloat(document.getElementById('sys-tf').value) || 0.5;
             
-            // IEEE 80 Compliance: Safety Voltages are Primary
-            isOverallPass = touchPass && stepPass;
-            if(!isOverallPass) {
-                // If fail voltages, fail overall even if Resistance is low
+            document.getElementById('lbl-icc').textContent = if_ka;
+            document.getElementById('lbl-time').textContent = tf_sec;
+
+            // 1. Get Soil Parameters
+            const field_spacing = parseFloat(document.getElementById('wenner-a').value) || 3;
+            const field_R = parseFloat(document.getElementById('wenner-r').value) || 2;
+            
+            const rho = Grounding.calculateWennerRho(field_spacing, field_R);
+            const resRhoEl = document.getElementById('res-rho');
+            if(resRhoEl) resRhoEl.textContent = rho.toFixed(2);
+
+            // 2. Get Design Parameters
+            const rod_L = parseFloat(document.getElementById('rod-len').value) || 2.44; 
+            const rod_dia_inch = parseFloat(document.getElementById('rod-dia').value) || 0.625; 
+            const rod_dia_m = rod_dia_inch * 0.0254;
+            
+            const grid_area = parseFloat(document.getElementById('grid-area').value) || 100;
+            const grid_conductor_len = parseFloat(document.getElementById('grid-len').value) || 120;
+            const grid_depth = parseFloat(document.getElementById('grid-depth').value) || 0.5;
+
+            // 3. Calculate Resistances
+            const r_rod = Grounding.calculateRodResistance(rho, rod_L, rod_dia_m);
+            const r_grid = Grounding.calculateGridResistance(rho, grid_area, grid_conductor_len, grid_depth);
+
+            // 3b. Calculate Conductor
+            const min_area_mm2 = Grounding.calculateConductorSize(if_ka, tf_sec);
+            const awg = Grounding.getAWG(min_area_mm2);
+
+            // --- IEEE 80 SAFETY CALCULATIONS (NEW) ---
+            // Inputs
+            const surf_rho = parseFloat(document.getElementById('surf-rho').value) || 2500;
+            const surf_h = parseFloat(document.getElementById('surf-h').value) || 0.15;
+            const D = parseFloat(document.getElementById('grid-spacing').value) || 5;
+            const n = parseFloat(document.getElementById('grid-n').value) || 6;
+            
+            // 1. Reflection Factor (K) & Derating Factor (Cs)
+            const K = (rho - surf_rho) / (rho + surf_rho);
+            const Cs = 1 - (0.09 * (1 - rho/surf_rho)) / (2 * surf_h + 0.09);
+
+            // 2. Tolerable Voltages (70kg body)
+            const E_touch_max = (1000 + 1.5 * Cs * surf_rho) * 0.157 / Math.sqrt(tf_sec);
+            const E_step_max = (1000 + 6 * Cs * surf_rho) * 0.157 / Math.sqrt(tf_sec);
+
+            // 3. Geometric Factors
+            const grid_d = 0.0134; 
+            const Km = (1 / (2 * Math.PI)) * Math.log( (D * D) / (16 * grid_depth * grid_d) );
+            const Ki = 0.644 + 0.148 * n;
+            const Ks = (1 / Math.PI) * ( (1 / (2 * grid_depth)) + (1 / (D + grid_depth)) + (1/D) * (1 - Math.pow(0.5, n - 2)) );
+
+            // 4. Actual Voltages (Em, Es)
+            const Ig = if_ka * 1000; 
+            const L_total = grid_conductor_len; // Total Length
+
+            const E_mesh_calc = (rho * Km * Ki * Ig) / L_total;
+            const E_step_calc = (rho * Ks * Ki * Ig) / L_total;
+
+            // --- UPDATE SAFETY UI ---
+            const elTouchCalc = document.getElementById('val-touch-calc');
+            const elTouchMax = document.getElementById('val-touch-max');
+            const elStepCalc = document.getElementById('val-step-calc');
+            const elStepMax = document.getElementById('val-step-max');
+            const elStatusTouch = document.getElementById('status-touch');
+            const elStatusStep = document.getElementById('status-step');
+
+            if(elTouchCalc) elTouchCalc.textContent = !isNaN(E_mesh_calc) ? E_mesh_calc.toFixed(1) + " V" : "-";
+            if(elTouchMax) elTouchMax.textContent = !isNaN(E_touch_max) ? E_touch_max.toFixed(1) + " V" : "-";
+            if(elStepCalc) elStepCalc.textContent = !isNaN(E_step_calc) ? E_step_calc.toFixed(1) + " V" : "-";
+            if(elStepMax) elStepMax.textContent = !isNaN(E_step_max) ? E_step_max.toFixed(1) + " V" : "-";
+
+            // Logic Colors
+            const touchPass = E_mesh_calc < E_touch_max;
+            const stepPass = E_step_calc < E_step_max;
+
+            if(elStatusTouch) {
+                elStatusTouch.innerHTML = touchPass 
+                ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
+                : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
+            }
+
+            if(elStatusStep) {
+                elStatusStep.innerHTML = stepPass 
+                ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
+                : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
+            }
+
+            document.getElementById('res-rod').textContent = r_rod.toFixed(2);
+            document.getElementById('res-grid').textContent = r_grid.toFixed(2);
+            
+            document.getElementById('res-conductor').textContent = min_area_mm2.toFixed(2) + " mm²";
+            document.getElementById('res-conductor-awg').textContent = "Recomendado: " + awg;
+
+            // 5. Compliance Check & Main Display
+            const limit = Grounding.limits[Grounding.currentApp];
+            
+            let relevantR = r_grid;
+            let labelR = "MALLA";
+            let targetText = `${limit} Ω`;
+            let refText = "IEEE Std 80";
+            let isOverallPass = false;
+
+            if (Grounding.currentApp === 'substation') {
+                relevantR = r_grid;
+                labelR = "MALLA SUBESTACIÓN";
+                targetText = "< 1.0 Ω (Típico)";
+                isOverallPass = touchPass && stepPass; // Primary criteria
+            } else if (Grounding.currentApp === 'building') {
+                relevantR = r_rod;
+                labelR = "ELECTRODO PRINCIPAL";
+                targetText = "< 25.0 Ω";
+                refText = "CEN / NEC 250.56";
+                isOverallPass = relevantR <= limit;
+            } else if (Grounding.currentApp === 'industrial') {
+                relevantR = Math.min(r_rod, r_grid); 
+                labelR = "SISTEMA COMBINADO";
+                targetText = "< 5.0 Ω";
+                refText = "Práctica Industrial";
+                isOverallPass = relevantR <= limit;
+            } else { // Tank
+                relevantR = r_grid; 
+                labelR = "LAZO ESTÁTICO";
+                targetText = "< 10.0 Ω";
+                refText = "API RP 2003";
+                isOverallPass = relevantR <= limit;
             }
             
-        } else if (Grounding.currentApp === 'building') {
-            relevantR = r_rod;
-            labelR = "ELECTRODO PRINCIPAL";
-            targetText = "< 25.0 Ω";
-            refText = "CEN / NEC 250.56";
+            document.getElementById('res-main').textContent = !isNaN(relevantR) ? relevantR.toFixed(2) : "0.00";
+            document.getElementById('res-label').textContent = labelR;
+            document.getElementById('target-resistance').textContent = targetText;
+            document.getElementById('standard-ref').textContent = refText;
             
-            isOverallPass = relevantR <= limit;
-
-        } else if (Grounding.currentApp === 'industrial') {
-            relevantR = Math.min(r_rod, r_grid); 
-            labelR = "SISTEMA COMBINADO";
-            targetText = "< 5.0 Ω";
-            refText = "Práctica Industrial";
-            
-            isOverallPass = relevantR <= limit;
-            
-        } else {
-             // Tank / Oil
-            relevantR = r_grid; 
-            labelR = "LAZO ESTÁTICO";
-            targetText = "< 10.0 Ω";
-            refText = "API RP 2003";
-
-            isOverallPass = relevantR <= limit;
-        }
-        
-        // Update Main Status Display
-        document.getElementById('res-main').textContent = relevantR.toFixed(2);
-        document.getElementById('res-label').textContent = labelR;
-        document.getElementById('target-resistance').textContent = targetText;
-        document.getElementById('standard-ref').textContent = refText;
-        
-        const badge = document.getElementById('compliance-badge');
-        if (isOverallPass) {
-            badge.className = 'compliance-badge compliance-pass';
-            badge.innerHTML = '<i class="fa-solid fa-check"></i> CUMPLE NORMA';
-            // If Substation and pass, ensure resistance is also reasonable?
-        } else {
-            badge.className = 'compliance-badge compliance-fail';
-            
-            if (Grounding.currentApp === 'substation' && (!touchPass || !stepPass)) {
-                 badge.innerHTML = '<i class="fa-solid fa-skull-crossbones"></i> FALLA SEGURIDAD';
+            const badge = document.getElementById('compliance-badge');
+            if (isOverallPass) {
+                badge.className = 'compliance-badge compliance-pass';
+                badge.innerHTML = '<i class="fa-solid fa-check"></i> CUMPLE NORMA';
             } else {
-                 badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> NO CUMPLE';
+                badge.className = 'compliance-badge compliance-fail';
+                if (Grounding.currentApp === 'substation' && (!touchPass || !stepPass)) {
+                    badge.innerHTML = '<i class="fa-solid fa-skull-crossbones"></i> FALLA SEGURIDAD';
+                } else {
+                    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> NO CUMPLE';
+                }
             }
-        }
+            
+            // 6. Update Chart
+            Grounding.updateChart(rho);
         
-        // 6. Update Chart
-        Grounding.updateChart(rho);
+        } catch (e) {
+            console.error("Calculation Error:", e);
+        }
     },
 
     // --- VISUALIZATION ---
