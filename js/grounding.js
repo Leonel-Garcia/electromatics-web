@@ -280,7 +280,6 @@ const Grounding = {
             ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
             : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
 
-        const awg = Grounding.getAWG(min_area_mm2);
         document.getElementById('res-rod').textContent = r_rod.toFixed(2);
         document.getElementById('res-grid').textContent = r_grid.toFixed(2);
         
