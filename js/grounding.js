@@ -208,7 +208,80 @@ const Grounding = {
         const min_area_mm2 = Grounding.calculateConductorSize(if_ka, tf_sec);
         const awg = Grounding.getAWG(min_area_mm2);
 
-        // 4. Update UI Results
+        // --- IEEE 80 SAFETY CALCULATIONS (NEW) ---
+        // Inputs
+        const surf_rho = parseFloat(document.getElementById('surf-rho').value) || 2500;
+        const surf_h = parseFloat(document.getElementById('surf-h').value) || 0.15;
+        const D = parseFloat(document.getElementById('grid-spacing').value) || 5;
+        const n = parseFloat(document.getElementById('grid-n').value) || 6;
+        
+        // 1. Reflection Factor (K) & Derating Factor (Cs)
+        // K = (rho - rho_s) / (rho + rho_s)
+        const K = (rho - surf_rho) / (rho + surf_rho);
+        // Cs = 1 - (0.09 * (1 - rho/surf_rho)) / (2*hs + 0.09) -- Simplified Eq 27 IEEE 80 2000
+        // Precise Series Limit: Cs = 1 - 2*SUM ... 
+        // We use the approximate formula (IEEE 80 Eq 27):
+        const Cs = 1 - (0.09 * (1 - rho/surf_rho)) / (2 * surf_h + 0.09);
+
+        // 2. Tolerable Voltages (70kg body)
+        // E_touch = (1000 + 1.5 * Cs * surf_rho) * 0.157 / sqrt(ts)
+        const E_touch_max = (1000 + 1.5 * Cs * surf_rho) * 0.157 / Math.sqrt(tf_sec);
+        // E_step = (1000 + 6 * Cs * surf_rho) * 0.157 / sqrt(ts)
+        const E_step_max = (1000 + 6 * Cs * surf_rho) * 0.157 / Math.sqrt(tf_sec);
+
+        // 3. Geometric Factors (Km, Ki, Ks)
+        // Simplified Logic assuming square grid with rods
+        // d = conductor diameter
+        const d = (parseFloat(document.getElementById('rod-dia').value) || 0.625) * 0.0254; // Use rod dia as proxy for conductor dia for now or assume 4/0 avg (0.0134m)
+        // Actually grid connector is usually smaller than rod. Let's assume 4/0 AWG = 0.528 inch = 0.0134 m for grid conductor
+        const grid_d = 0.0134; 
+        
+        // Km (Mesh Factor) - Eq 81 Simplified
+        // Km = (1/2*PI) * [ ln(D^2/16*h*d) + (D + 8h)/4d ... ] -> Very complex
+        // Simplified Approx: Km = (1/2*PI) * ln( D^2 / (16 * h * d) ) 
+        const Km = (1 / (2 * Math.PI)) * Math.log( (D * D) / (16 * grid_depth * grid_d) );
+
+        // Ki (Irregularity Factor) - Eq 89
+        // Ki = 0.644 + 0.148 * n
+        const Ki = 0.644 + 0.148 * n;
+
+        // Ks (Step Factor) - Eq 94 Simplified
+        // Ks = (1/PI) * ( 1/(2*h) + 1/(D+h) + (1/D)*(1 - 0.5^(n-2)) )
+        const Ks = (1 / Math.PI) * ( (1 / (2 * grid_depth)) + (1 / (D + grid_depth)) + (1/D) * (1 - Math.pow(0.5, n - 2)) );
+
+        // 4. Actual Voltages (Em, Es)
+        // Grid Current Ig. Maximun future fault current flowing into grid.
+        // For sizing, assume conservative Ig = If * Df (Decrement factor) * Sf (Split factor).
+        // Let's assume Ig = If_kA (Worst case, 100% to ground)
+        const Ig = if_ka * 1000; 
+        const L_total = grid_conductor_len; // Total Length
+
+        // Em = (rho * Km * Ki * Ig) / L_total (Eq 80, 81 approx)
+        // NOTE: Standard divides by L_effective usually (LM), but for simplified check L_total is proxy.
+        const E_mesh_calc = (rho * Km * Ki * Ig) / L_total;
+        
+        // Es = (rho * Ks * Ki * Ig) / L_total
+        const E_step_calc = (rho * Ks * Ki * Ig) / L_total;
+
+        // --- UPDATE SAFETY UI ---
+        document.getElementById('val-touch-calc').textContent = E_mesh_calc.toFixed(1) + " V";
+        document.getElementById('val-touch-max').textContent = E_touch_max.toFixed(1) + " V";
+        document.getElementById('val-step-calc').textContent = E_step_calc.toFixed(1) + " V";
+        document.getElementById('val-step-max').textContent = E_step_max.toFixed(1) + " V";
+
+        // Logic Colors
+        const touchPass = E_mesh_calc < E_touch_max;
+        const stepPass = E_step_calc < E_step_max;
+
+        document.getElementById('status-touch').innerHTML = touchPass 
+            ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
+            : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
+
+        document.getElementById('status-step').innerHTML = stepPass 
+            ? '<span style="color:var(--success-green)"><i class="fa fa-check"></i> OK</span>' 
+            : '<span style="color:var(--error-red)"><i class="fa fa-times"></i> PELIGRO</span>';
+
+        const awg = Grounding.getAWG(min_area_mm2);
         document.getElementById('res-rod').textContent = r_rod.toFixed(2);
         document.getElementById('res-grid').textContent = r_grid.toFixed(2);
         
@@ -222,13 +295,37 @@ const Grounding = {
         // Determine which R is relevant for this application
         let relevantR = r_grid; // Default to grid (Substation)
         let labelR = "Resistencia Malla";
-        
-        if (Grounding.currentApp === 'building') {
+        let isOverallPass = false;
+
+        const safetyPanel = document.getElementById('safety-panel');
+
+        if (Grounding.currentApp === 'substation') {
+            relevantR = r_grid;
+            labelR = "Resistencia Malla";
+            safetyPanel.style.display = 'block';
+            
+            // For substations, Passing depends on Safety Voltages (Primary) AND Resistance (Secondary rec.)
+            // IEEE 80 says: If Em < Etouch and Es < Estep, design is SAFE. Resistance is just metric.
+            isOverallPass = touchPass && stepPass;
+            
+        } else if (Grounding.currentApp === 'building') {
             relevantR = r_rod;
             labelR = "Resistencia Varilla";
+            safetyPanel.style.display = 'none';
+            isOverallPass = relevantR <= limit;
+
         } else if (Grounding.currentApp === 'industrial') {
-            relevantR = Math.min(r_rod, r_grid); // Usually combination
+            relevantR = Math.min(r_rod, r_grid); 
             labelR = "R. Combinada (Est.)";
+            safetyPanel.style.display = 'none'; // Optional: could show strict warning
+            isOverallPass = relevantR <= limit;
+            
+        } else {
+             // Tank / Oil
+            relevantR = r_grid; // Usually static ground rings
+            labelR = "Resistencia Anillo";
+            safetyPanel.style.display = 'none';
+            isOverallPass = relevantR <= limit;
         }
         
         // Update Main Display
@@ -236,7 +333,7 @@ const Grounding = {
         document.getElementById('res-label').textContent = labelR;
         
         const badge = document.getElementById('compliance-badge');
-        if (relevantR <= limit) {
+        if (isOverallPass) {
             badge.className = 'compliance-badge compliance-pass';
             badge.innerHTML = '<i class="fa-solid fa-check"></i> CUMPLE NORMA';
         } else {
@@ -397,10 +494,24 @@ const Grounding = {
         doc.text("3. RESULTADOS DE CÁLCULO", 14, doc.lastAutoTable.finalY + 15);
 
         const resultsTables = [
-            ["Sección de Conductor (IEEE 80)", `${condMm2} (${condAWG})`, "Onderdonk Ec. 37"],
-            ["Resistencia Varilla (Dwight)", `${rodR} Ohms`, "IEEE 142 / CEN"],
-            ["Resistencia Malla (Sverak)", `${gridR} Ohms`, "IEEE 80 Ec. Simplified"]
+            ["Sección de Conductor", `${condMm2} (${condAWG})`, "IEEE 80 Ec. 37"],
+            ["Resistencia Malla (Rg)", `${gridR} Ohms`, "IEEE 80 Ec. Simplified"],
+            ["Resistencia Varilla (Rd)", `${rodR} Ohms`, "IEEE 142 (Dwight)"],
         ];
+
+        // Capture Safety Values from UI
+        const calcTouch = document.getElementById('val-touch-calc').textContent;
+        const maxTouch = document.getElementById('val-touch-max').textContent;
+        const calcStep = document.getElementById('val-step-calc').textContent;
+        const maxStep = document.getElementById('val-step-max').textContent;
+
+        if(Grounding.currentApp === 'substation') {
+            resultsTables.push(
+                ["--- CRITERIO SEGURIDAD ---", "", ""],
+                ["Voltaje Contacto (Malla)", `${calcTouch} (Máx: ${maxTouch})`, "IEEE 80 Safe Value"],
+                ["Voltaje de Paso", `${calcStep} (Máx: ${maxStep})`, "IEEE 80 Safe Value"]
+            );
+        }
 
         doc.autoTable({
             startY: doc.lastAutoTable.finalY + 20,
