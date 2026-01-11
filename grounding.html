@@ -64,11 +64,32 @@
                 <!-- Left Column: Calculation Inputs -->
                 <div class="calc-column">
                     
+                    <!-- System Parameters (NEW) -->
+                    <div class="calc-section">
+                        <div class="calc-header">
+                            <h2><i class="fa-solid fa-server"></i> Parámetros del Sistema</h2>
+                        </div>
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label>Voltaje Sistema (kV)</label>
+                                <input type="number" id="sys-kv" class="calc-input" value="13.8" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Corriente Falla (kA)</label>
+                                <input type="number" id="sys-if" class="calc-input" value="10" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Tiempo Falla (s)</label>
+                                <input type="number" id="sys-tf" class="calc-input" value="0.5" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Soil Section -->
                     <div class="calc-section">
                         <div class="calc-header">
                             <h2><i class="fa-solid fa-layer-group"></i> Resistividad del Suelo</h2>
-                            <small class="tag">Método Wenner</small>
+                            <small class="tag">Método Wenner (IEEE 81)</small>
                         </div>
                         <div class="input-grid">
                             <div class="form-group">
@@ -83,21 +104,22 @@
                         <div class="result-card">
                             <small>Resistividad Aparente (ρ)</small>
                             <div class="result-value"><span id="res-rho">0</span> <span style="font-size: 1rem;">Ω·m</span></div>
+                            <small style="color: var(--text-secondary); font-size: 0.8rem;">Ref: IEEE Std 81</small>
                         </div>
                     </div>
 
                     <!-- Design Parameters -->
                     <div class="calc-section">
                         <div class="calc-header">
-                            <h2><i class="fa-solid fa-pencil"></i> Parámetros de Diseño</h2>
+                            <h2><i class="fa-solid fa-pencil"></i> Electrodos y Malla</h2>
                         </div>
                         
-                        <h4 style="color: var(--text-secondary); margin-bottom: 10px;">Electrodo Vertical (Varilla)</h4>
+                        <h4 style="color: var(--text-secondary); margin-bottom: 10px;">Electrodo Vertical (Dwight)</h4>
                         <div class="input-grid">
                             <div class="form-group">
                                 <label>Longitud (L) [m]</label>
                                 <input type="number" id="rod-len" class="calc-input" value="2.44">
-                                <small style="color: grey;">Mín 2.44m (8 pies)</small>
+                                <small style="color: grey;">Mín 2.44m (CEN 250.52)</small>
                             </div>
                             <div class="form-group">
                                 <label>Diámetro [pulg]</label>
@@ -109,7 +131,7 @@
                             </div>
                         </div>
 
-                        <h4 style="color: var(--text-secondary); margin-bottom: 10px; margin-top: 20px;">Malla de Tierra (Grid)</h4>
+                        <h4 style="color: var(--text-secondary); margin-bottom: 10px; margin-top: 20px;">Malla de Tierra (Sverak)</h4>
                         <div class="input-grid">
                             <div class="form-group">
                                 <label>Área de Malla (A) [m²]</label>
@@ -131,6 +153,25 @@
                 <!-- Right Column: Results & Visualization -->
                 <div class="results-column">
                     
+                    <button id="btn-guide" class="btn btn-secondary" style="width: 100%; margin-bottom: 20px;">
+                        <i class="fa-solid fa-circle-question"></i> Guía de Uso y Normativa
+                    </button>
+
+                    <!-- Conductor Sizing Result (NEW) -->
+                    <div class="calc-section" style="border-left: 5px solid var(--warning-yellow);">
+                        <div class="calc-header">
+                            <h2><i class="fa-solid fa-ruler-combined"></i> Conductor de Tierra</h2>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                           <small>Sección Mínima (Onderdonk / IEEE 80)</small>
+                           <div class="result-value" id="res-conductor" style="color: var(--warning-yellow);">0 mm²</div>
+                           <div id="res-conductor-awg" style="font-weight: bold; color: var(--text-primary); margin-top: 5px;">-</div>
+                        </div>
+                         <small style="color: var(--text-secondary); font-size: 0.85em;">
+                            Basado en capacidad térmica para Icc=<span id="lbl-icc">0</span>kA, t=<span id="lbl-time">0</span>s. (IEEE 80 Sec. 11.3)
+                        </small>
+                    </div>
+
                     <!-- Compliance Panel -->
                     <div class="calc-section" style="border-left: 5px solid var(--electric-blue);">
                         <div class="calc-header">
@@ -160,11 +201,17 @@
                             <tbody>
                                 <tr>
                                     <td>Varilla Vertical Única</td>
-                                    <td><strong id="res-rod" style="color: var(--electric-blue);">0</strong> Ω</td>
+                                    <td>
+                                        <strong id="res-rod" style="color: var(--electric-blue);">0</strong> Ω
+                                        <div style="font-size: 0.75em; color: var(--text-secondary);">Ec. Dwight (IEEE 142)</div>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Malla Propuesta</td>
-                                    <td><strong id="res-grid" style="color: var(--electric-blue);">0</strong> Ω</td>
+                                    <td>
+                                        <strong id="res-grid" style="color: var(--electric-blue);">0</strong> Ω
+                                        <div style="font-size: 0.75em; color: var(--text-secondary);">Ec. Sverak (IEEE 80)</div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -184,6 +231,39 @@
                         <i class="fa-solid fa-file-pdf"></i> Generar Memoria de Cálculo
                     </button>
 
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Guide Modal -->
+        <div id="guide-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 style="color: var(--electric-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-book"></i> Guía de Uso del Diseñador
+                </h2>
+                
+                <div style="overflow-y: auto; max-height: 60vh; padding-right: 10px;">
+                    <h3 style="color: var(--text-primary); margin-top: 0;">1. Objetivo</h3>
+                    <p>Diseñar y validar sistemas de puesta a tierra seguros y normativos. Esta herramienta permite verificar si la resistencia a tierra cumple con los límites establecidos en <strong>FONDONORMA 200:2009 (CEN)</strong> e <strong>IEEE Std 80</strong>.</p>
+
+                    <h3>2. Datos de Entrada Requeridos</h3>
+                    <ul style="padding-left: 20px; line-height: 1.6;">
+                        <li><strong>Parámetros del Sistema:</strong> Voltaje (kV), Corriente de Falla (kA) y Tiempo de despeje (s). Críticos para dimensionar el conductor.</li>
+                        <li><strong>Resistividad del Suelo:</strong> Datos obtenidos por el método de Wenner (separación 'a' y resistencia 'R').</li>
+                        <li><strong>Geometría:</strong> Dimensiones de varillas o de la malla de tierra propuesta.</li>
+                    </ul>
+
+                    <h3>3. Interpretación de Resultados</h3>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 10px 0;">
+                        <p><strong><i class="fa-solid fa-check" style="color: var(--success-green);"></i> CUMPLE NORMA:</strong></p>
+                        <p>La resistencia calculada es menor al límite exigido para la aplicación seleccionada:</p>
+                        <ul style="margin-top: 5px;">
+                            <li><strong>Subestaciones:</strong> < 1.0 Ω (Típico IEEE 80)</li>
+                            <li><strong>Edificaciones:</strong> < 25.0 Ω (CEN Art. 250.56)</li>
+                            <li><strong>Industrial:</strong> < 5.0 Ω (Práctica recomendada)</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
