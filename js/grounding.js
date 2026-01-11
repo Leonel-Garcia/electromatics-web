@@ -33,7 +33,7 @@ const Grounding = {
                 
                 // Update State
                 Grounding.currentApp = e.currentTarget.dataset.type;
-                Grounding.updateLimitsDisplay();
+                Grounding.updateUIParams();
                 Grounding.calculate();
             });
         });
@@ -43,6 +43,9 @@ const Grounding = {
         inputs.forEach(input => {
             input.addEventListener('input', Grounding.calculate);
         });
+        
+        // Initial UI Setup
+        Grounding.updateUIParams();
     },
 
     setupModal: () => {
@@ -50,48 +53,44 @@ const Grounding = {
         const btn = document.getElementById('btn-guide');
         const span = document.getElementsByClassName('close-modal')[0];
 
-        btn.onclick = () => modal.style.display = "block";
-        span.onclick = () => modal.style.display = "none";
+        if(btn) btn.onclick = () => modal.style.display = "block";
+        if(span) span.onclick = () => modal.style.display = "none";
         window.onclick = (event) => {
             if (event.target == modal) {
                 modal.style.display = "none";
             }
         }
     },
+    
+    // UI VISIBILITY LOGIC (Refactored)
+    updateUIParams: () => {
+        const app = Grounding.currentApp;
+        const sectionSafety = document.getElementById('section-safety');
+        const sectionSurface = document.getElementById('section-surface');
+        const gridDetails = document.getElementById('section-grid-details');
+        
+        // 1. Safety Voltages & Surface Layer (Only needed for IEEE 80 Substations)
+        if (app === 'substation') {
+            sectionSafety.classList.remove('hidden-section');
+            sectionSurface.classList.remove('hidden-section');
+            gridDetails.classList.remove('hidden-section'); // Complex grid needed
+        } else {
+            sectionSafety.classList.add('hidden-section');
+            sectionSurface.classList.add('hidden-section');
+            
+            // For simple buildings, simplified grid input? check logic
+            // For now, industrial might use grid, but building mostly use rods.
+            if (app === 'building') {
+                gridDetails.classList.add('hidden-section'); 
+            } else {
+                gridDetails.classList.remove('hidden-section'); // Industrial uses grid
+            }
+        }
+    },
 
     updateLimitsDisplay: () => {
-        const limit = Grounding.limits[Grounding.currentApp];
-        const targetEl = document.getElementById('target-resistance');
-        const refEl = document.getElementById('standard-ref');
-        
-        let contextText = "";
-        let refText = "";
-
-        switch(Grounding.currentApp) {
-            case 'substation':
-                contextText = `Malla (< ${limit} Ω)`;
-                refText = "IEEE Std 80 (Típico)";
-                break;
-            case 'building':
-                contextText = `Electrodo (< ${limit} Ω)`;
-                refText = "Fondonorma 200 (Art. 250.56)";
-                break;
-            case 'industrial':
-                contextText = `Sistema (< ${limit} Ω)`;
-                refText = "Prática Industrial Rec.";
-                break;
-            case 'tank':
-            case 'oil_facility':
-                contextText = `Estática (< ${limit} Ω)`;
-                refText = "API RP 2003";
-                break;
-            default:
-                contextText = `< ${limit} Ω`;
-                refText = "Norma General";
-        }
-
-        targetEl.textContent = contextText;
-        refEl.textContent = refText;
+        // Logic moved to Calculate or maintained separately?
+        // Let's keep limits object updated, but UI text is now handled in calculate loop mostly.
     },
 
     // --- PHYSICS & MATH CORE ---
@@ -293,52 +292,71 @@ const Grounding = {
         const limit = Grounding.limits[Grounding.currentApp];
         
         // Determine which R is relevant for this application
-        let relevantR = r_grid; // Default to grid (Substation)
-        let labelR = "Resistencia Malla";
+        let relevantR = r_grid;
+        let labelR = "MALLA";
+        let targetText = `${limit} Ω`;
+        let refText = "IEEE Std 80";
+        
         let isOverallPass = false;
 
-        const safetyPanel = document.getElementById('safety-panel');
+        const safetyPanel = document.getElementById('section-safety'); // Ensure correct ID
 
         if (Grounding.currentApp === 'substation') {
             relevantR = r_grid;
-            labelR = "Resistencia Malla";
-            safetyPanel.style.display = 'block';
+            labelR = "MALLA SUBESTACIÓN";
+            targetText = "< 1.0 Ω (Típico)";
             
-            // For substations, Passing depends on Safety Voltages (Primary) AND Resistance (Secondary rec.)
-            // IEEE 80 says: If Em < Etouch and Es < Estep, design is SAFE. Resistance is just metric.
+            // IEEE 80 Compliance: Safety Voltages are Primary
             isOverallPass = touchPass && stepPass;
+            if(!isOverallPass) {
+                // If fail voltages, fail overall even if Resistance is low
+            }
             
         } else if (Grounding.currentApp === 'building') {
             relevantR = r_rod;
-            labelR = "Resistencia Varilla";
-            safetyPanel.style.display = 'none';
+            labelR = "ELECTRODO PRINCIPAL";
+            targetText = "< 25.0 Ω";
+            refText = "CEN / NEC 250.56";
+            
             isOverallPass = relevantR <= limit;
 
         } else if (Grounding.currentApp === 'industrial') {
             relevantR = Math.min(r_rod, r_grid); 
-            labelR = "R. Combinada (Est.)";
-            safetyPanel.style.display = 'none'; // Optional: could show strict warning
+            labelR = "SISTEMA COMBINADO";
+            targetText = "< 5.0 Ω";
+            refText = "Práctica Industrial";
+            
             isOverallPass = relevantR <= limit;
             
         } else {
              // Tank / Oil
-            relevantR = r_grid; // Usually static ground rings
-            labelR = "Resistencia Anillo";
-            safetyPanel.style.display = 'none';
+            relevantR = r_grid; 
+            labelR = "LAZO ESTÁTICO";
+            targetText = "< 10.0 Ω";
+            refText = "API RP 2003";
+
             isOverallPass = relevantR <= limit;
         }
         
-        // Update Main Display
+        // Update Main Status Display
         document.getElementById('res-main').textContent = relevantR.toFixed(2);
         document.getElementById('res-label').textContent = labelR;
+        document.getElementById('target-resistance').textContent = targetText;
+        document.getElementById('standard-ref').textContent = refText;
         
         const badge = document.getElementById('compliance-badge');
         if (isOverallPass) {
             badge.className = 'compliance-badge compliance-pass';
             badge.innerHTML = '<i class="fa-solid fa-check"></i> CUMPLE NORMA';
+            // If Substation and pass, ensure resistance is also reasonable?
         } else {
             badge.className = 'compliance-badge compliance-fail';
-            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> NO CUMPLE';
+            
+            if (Grounding.currentApp === 'substation' && (!touchPass || !stepPass)) {
+                 badge.innerHTML = '<i class="fa-solid fa-skull-crossbones"></i> FALLA SEGURIDAD';
+            } else {
+                 badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> NO CUMPLE';
+            }
         }
         
         // 6. Update Chart
