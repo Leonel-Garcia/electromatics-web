@@ -17,10 +17,25 @@ const Grounding = {
     },
 
     init: () => {
-        Grounding.setupListeners();
-        Grounding.setupModal();
-        Grounding.renderCharts();
-        Grounding.calculate(); // Initial default run
+        // Global Error Handler for Mobile/Local Debugging
+        window.onerror = function(msg, url, line) {
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = "position:fixed;top:0;left:0;width:100%;background:red;color:white;padding:10px;z-index:9999;font-size:12px;";
+            errDiv.innerHTML = `<strong>JS ERROR:</strong> ${msg} at line ${line}`;
+            document.body.appendChild(errDiv);
+            return false;
+        };
+
+        try {
+            console.log("Grounding Init Started");
+            Grounding.setupListeners();
+            Grounding.setupModal();
+            Grounding.calculate(); // Priority: Calc first
+            Grounding.renderCharts();
+        } catch (e) {
+            console.error("Init Error:", e);
+            alert("Error iniciando calculadora: " + e.message);
+        }
     },
 
     setupListeners: () => {
