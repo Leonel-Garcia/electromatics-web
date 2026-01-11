@@ -365,6 +365,12 @@ const Grounding = {
     // --- VISUALIZATION ---
     chart: null,
     renderCharts: () => {
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded (Offline mode). Charts disabled.');
+            document.getElementById('resistivityChart').parentElement.style.display = 'none';
+            return;
+        }
+
         const ctx = document.getElementById('resistivityChart').getContext('2d');
         Grounding.chart = new Chart(ctx, {
             type: 'line',
