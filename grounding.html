@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseñador de Puesta a Tierra | Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/grounding.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics" style="height: 32px; margin-right: 10px;">
+                <span>Electromatics</span>
+            </a>
+            <div class="desktop-nav">
+                <a href="index.html">Inicio</a>
+                <a href="calculos-electricos.html" class="active">Cálculos</a>
+                <a href="simuladores.html">Simuladores</a>
+                <a href="normativa-electrica.html">Normativa</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container" style="margin-top: 40px;">
+        <div class="grounding-dashboard">
+            <h1 style="margin-bottom: 10px; color: var(--electric-blue);">
+                <i class="fa-solid fa-earth-americas"></i> Diseñador de Puesta a Tierra
+            </h1>
+            <p style="margin-bottom: 30px; color: var(--text-secondary);">
+                Herramienta profesional de cálculo y validación según FONDONORMA 200:2009 y IEEE Std 80.
+            </p>
+
+            <!-- Application Selector -->
+            <div class="app-grid">
+                <div class="app-card active" data-type="substation">
+                    <i class="fa-solid fa-bolt"></i>
+                    <h3>Subestación</h3>
+                    <p>Mallas IEEE 80 (< 1 Ω)</p>
+                </div>
+                <div class="app-card" data-type="building">
+                    <i class="fa-solid fa-building"></i>
+                    <h3>Edificio</h3>
+                    <p>Fondonorma 250.56 (< 25 Ω)</p>
+                </div>
+                <div class="app-card" data-type="industrial">
+                    <i class="fa-solid fa-industry"></i>
+                    <h3>Industrial</h3>
+                    <p>Bta. Tensión (< 5 Ω)</p>
+                </div>
+                <div class="app-card" data-type="tank">
+                    <i class="fa-solid fa-oil-well"></i>
+                    <h3>Tanques / Oil</h3>
+                    <p>API RP 2003 (< 10 Ω)</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                
+                <!-- Left Column: Calculation Inputs -->
+                <div class="calc-column">
+                    
+                    <!-- Soil Section -->
+                    <div class="calc-section">
+                        <div class="calc-header">
+                            <h2><i class="fa-solid fa-layer-group"></i> Resistividad del Suelo</h2>
+                            <small class="tag">Método Wenner</small>
+                        </div>
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label>Separación Electrodos (a) [m]</label>
+                                <input type="number" id="wenner-a" class="calc-input" value="3" step="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia Leída (R) [Ω]</label>
+                                <input type="number" id="wenner-r" class="calc-input" value="2" step="0.1">
+                            </div>
+                        </div>
+                        <div class="result-card">
+                            <small>Resistividad Aparente (ρ)</small>
+                            <div class="result-value"><span id="res-rho">0</span> <span style="font-size: 1rem;">Ω·m</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Design Parameters -->
+                    <div class="calc-section">
+                        <div class="calc-header">
+                            <h2><i class="fa-solid fa-pencil"></i> Parámetros de Diseño</h2>
+                        </div>
+                        
+                        <h4 style="color: var(--text-secondary); margin-bottom: 10px;">Electrodo Vertical (Varilla)</h4>
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label>Longitud (L) [m]</label>
+                                <input type="number" id="rod-len" class="calc-input" value="2.44">
+                                <small style="color: grey;">Mín 2.44m (8 pies)</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Diámetro [pulg]</label>
+                                <select id="rod-dia" class="calc-input">
+                                    <option value="0.5">1/2"</option>
+                                    <option value="0.625" selected>5/8"</option>
+                                    <option value="0.75">3/4"</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h4 style="color: var(--text-secondary); margin-bottom: 10px; margin-top: 20px;">Malla de Tierra (Grid)</h4>
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label>Área de Malla (A) [m²]</label>
+                                <input type="number" id="grid-area" class="calc-input" value="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitud Conductor (Lt) [m]</label>
+                                <input type="number" id="grid-len" class="calc-input" value="120">
+                            </div>
+                            <div class="form-group">
+                                <label>Profundidad (h) [m]</label>
+                                <input type="number" id="grid-depth" class="calc-input" value="0.5" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Results & Visualization -->
+                <div class="results-column">
+                    
+                    <!-- Compliance Panel -->
+                    <div class="calc-section" style="border-left: 5px solid var(--electric-blue);">
+                        <div class="calc-header">
+                            <h2><i class="fa-solid fa-clipboard-check"></i> Conformidad</h2>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                            <div>
+                                <small>Resistencia Objetivo</small>
+                                <div id="target-resistance" style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">25 Ω</div>
+                                <small id="standard-ref" style="color: var(--text-secondary);">Norma Fondonorma</small>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="compliance-badge" class="compliance-badge compliance-pass">
+                                    <i class="fa-solid fa-check"></i> CUMPLE NORMA
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="grounding-table">
+                            <thead>
+                                <tr>
+                                    <th>Configuración</th>
+                                    <th>Resistencia (R)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Varilla Vertical Única</td>
+                                    <td><strong id="res-rod" style="color: var(--electric-blue);">0</strong> Ω</td>
+                                </tr>
+                                <tr>
+                                    <td>Malla Propuesta</td>
+                                    <td><strong id="res-grid" style="color: var(--electric-blue);">0</strong> Ω</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Visualization -->
+                    <div class="calc-section">
+                        <div class="calc-header">
+                            <h2><i class="fa-solid fa-chart-area"></i> Perfil de Resistividad</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="resistivityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="Grounding.generatePDF()">
+                        <i class="fa-solid fa-file-pdf"></i> Generar Memoria de Cálculo
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/grounding.js"></script>
+</body>
+</html>
