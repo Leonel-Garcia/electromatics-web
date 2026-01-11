@@ -413,19 +413,26 @@ const Grounding = {
 
     generatePDF: () => {
         try {
+            // Helper to safely get value
+            const getVal = (id, defaultVal = "") => {
+                const el = document.getElementById(id);
+                return el ? el.value : defaultVal;
+            };
+
             // Collect Project Data
             const project = {
-                name: document.getElementById('proj-name').value || "Sin Nombre",
-                loc: document.getElementById('proj-loc').value || "No especificada",
-                client: document.getElementById('proj-client').value || "No especificado",
-                date: document.getElementById('proj-date').value || new Date().toLocaleDateString()
+                name: getVal('proj-name', "Proyecto Sin Nombre"),
+                loc: getVal('proj-loc', "Ubicación No Especificada"),
+                client: getVal('proj-client', "N/A"), // Not in HTML currently
+                date: getVal('proj-date', new Date().toLocaleDateString()) // Not in HTML currently
             };
 
             // Collect Technical Data
-            const sysKv = document.getElementById('sys-kv').value;
-            const sysIf = document.getElementById('sys-if').value;
-            const sysTf = document.getElementById('sys-tf').value;
-            const wennerA = document.getElementById('wenner-a').value;
+            const sysKv = getVal('sys-kv', "13.8");
+            const sysIf = getVal('sys-if', "10");
+            const sysTf = getVal('sys-tf', "0.5");
+            const wennerA = getVal('wenner-a', "3");
+
             const rho = document.getElementById('res-rho').textContent;
             
             const rodR = document.getElementById('res-rod').textContent;
