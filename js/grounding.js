@@ -61,14 +61,37 @@ const Grounding = {
 
     updateLimitsDisplay: () => {
         const limit = Grounding.limits[Grounding.currentApp];
-        document.getElementById('target-resistance').textContent = `${limit} Ω`;
+        const targetEl = document.getElementById('target-resistance');
+        const refEl = document.getElementById('standard-ref');
         
-        let label = "Norma Predeterminada";
-        if(Grounding.currentApp === 'building') label = "Fondonorma 200 (Art. 250.56)";
-        if(Grounding.currentApp === 'substation') label = "IEEE 80 (Típico HV)";
-        if(Grounding.currentApp === 'tank') label = "API RP 2003 (Estática)";
-        
-        document.getElementById('standard-ref').textContent = label;
+        let contextText = "";
+        let refText = "";
+
+        switch(Grounding.currentApp) {
+            case 'substation':
+                contextText = `Malla (< ${limit} Ω)`;
+                refText = "IEEE Std 80 (Típico)";
+                break;
+            case 'building':
+                contextText = `Electrodo (< ${limit} Ω)`;
+                refText = "Fondonorma 200 (Art. 250.56)";
+                break;
+            case 'industrial':
+                contextText = `Sistema (< ${limit} Ω)`;
+                refText = "Prática Industrial Rec.";
+                break;
+            case 'tank':
+            case 'oil_facility':
+                contextText = `Estática (< ${limit} Ω)`;
+                refText = "API RP 2003";
+                break;
+            default:
+                contextText = `< ${limit} Ω`;
+                refText = "Norma General";
+        }
+
+        targetEl.textContent = contextText;
+        refEl.textContent = refText;
     },
 
     // --- PHYSICS & MATH CORE ---
