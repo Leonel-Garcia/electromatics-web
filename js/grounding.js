@@ -193,9 +193,24 @@ const Grounding = {
         document.getElementById('res-conductor-awg').textContent = "Recomendado: " + awg;
 
 
-        // 5. Compliance Check
+        // 5. Compliance Check & Main Display
         const limit = Grounding.limits[Grounding.currentApp];
-        const relevantR = (Grounding.currentApp === 'building') ? r_rod : r_grid; // Simplified logic selection
+        
+        // Determine which R is relevant for this application
+        let relevantR = r_grid; // Default to grid (Substation)
+        let labelR = "Resistencia Malla";
+        
+        if (Grounding.currentApp === 'building') {
+            relevantR = r_rod;
+            labelR = "Resistencia Varilla";
+        } else if (Grounding.currentApp === 'industrial') {
+            relevantR = Math.min(r_rod, r_grid); // Usually combination
+            labelR = "R. Combinada (Est.)";
+        }
+        
+        // Update Main Display
+        document.getElementById('res-main').textContent = relevantR.toFixed(2);
+        document.getElementById('res-label').textContent = labelR;
         
         const badge = document.getElementById('compliance-badge');
         if (relevantR <= limit) {
@@ -269,7 +284,132 @@ const Grounding = {
     },
 
     generatePDF: () => {
-        alert("Generando informe certificado por la Norma... (Proximamente)");
+        // Collect Project Data
+        const project = {
+            name: document.getElementById('proj-name').value || "Sin Nombre",
+            loc: document.getElementById('proj-loc').value || "No especificada",
+            client: document.getElementById('proj-client').value || "No especificado",
+            date: document.getElementById('proj-date').value || new Date().toLocaleDateString()
+        };
+
+        // Collect Technical Data
+        const sysKv = document.getElementById('sys-kv').value;
+        const sysIf = document.getElementById('sys-if').value;
+        const sysTf = document.getElementById('sys-tf').value;
+        const wennerA = document.getElementById('wenner-a').value;
+        const rho = document.getElementById('res-rho').textContent;
+        const rodR = document.getElementById('res-rod').textContent;
+        const gridR = document.getElementById('res-grid').textContent;
+        const condMm2 = document.getElementById('res-conductor').textContent;
+        const condAWG = document.getElementById('res-conductor-awg').textContent.replace("Recomendado: ", "");
+        const targetR = document.getElementById('target-resistance').textContent;
+        
+        const isCompliant = document.getElementById('compliance-badge').classList.contains('compliance-pass');
+        const statusText = isCompliant ? "CUMPLE NORMATIVA" : "NO CUMPLE";
+
+        // Init jsPDF
+        if (!window.jspdf) {
+            alert("Librería de PDF no cargada. Verifique su conexión.");
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // --- HEADER ---
+        doc.setFillColor(15, 23, 42); // Dark Blue Theme
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("ElectrIA Grounding", 14, 20); // Logo text
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 229, 255); // Cyan brand color
+        doc.text("Reporte Técnico de Diseño de Puesta a Tierra", 14, 28);
+        doc.text("Conforme a FONDONORMA 200:2009 / IEEE Std 80", 14, 33);
+
+        // --- PROJECT DETAILS ---
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("1. DATOS DEL PROYECTO", 14, 50);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        const projData = [
+            [`Proyecto: ${project.name}`, `Cliente: ${project.client}`],
+            [`Ubicación: ${project.loc}`, `Fecha: ${project.date}`]
+        ];
+        
+        doc.autoTable({
+            startY: 55,
+            body: projData,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 80 } }
+        });
+
+        // --- DESIGN PARAMETERS ---
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("2. PARÁMETROS DEL SISTEMA Y SUELO", 14, doc.lastAutoTable.finalY + 15);
+        
+        const paramsData = [
+            ["Voltaje de Sistema", `${sysKv} kV`, "Resistividad Suelo (Wenner)"],
+            ["Corriente de Falla (Icc)", `${sysIf} kA`, `Separación (a): ${wennerA} m`],
+            ["Tiempo de Despeje (tc)", `${sysTf} s`, `Resistividad (Rho): ${rho} Ohm-m`]
+        ];
+
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Parámetro Sistema', 'Valor', 'Parámetro Suelo']],
+            body: paramsData,
+            theme: 'grid',
+            headStyles: { fillColor: [15, 23, 42], textColor: [0, 229, 255] }
+        });
+
+        // --- CALCULATION RESULTS ---
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text("3. RESULTADOS DE CÁLCULO", 14, doc.lastAutoTable.finalY + 15);
+
+        const resultsTables = [
+            ["Sección de Conductor (IEEE 80)", `${condMm2} (${condAWG})`, "Onderdonk Ec. 37"],
+            ["Resistencia Varilla (Dwight)", `${rodR} Ohms`, "IEEE 142 / CEN"],
+            ["Resistencia Malla (Sverak)", `${gridR} Ohms`, "IEEE 80 Ec. Simplified"]
+        ];
+
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Componente', 'Resultado', 'Referencia']],
+            body: resultsTables,
+            theme: 'striped',
+            headStyles: { fillColor: [15, 23, 42] }
+        });
+
+        // --- COMPLIANCE SUMMARY ---
+        const finalY = doc.lastAutoTable.finalY + 20;
+        
+        doc.setFillColor(isCompliant ? 220 : 255, isCompliant ? 252 : 235, isCompliant ? 231 : 235); // Light Green or Redish
+        doc.rect(14, finalY, 182, 25, 'F');
+        
+        doc.setFontSize(14);
+        doc.setTextColor(isCompliant ? 0 : 200, isCompliant ? 100 : 0, 0);
+        doc.setFont("helvetica", "bold");
+        doc.text(`ESTADO: ${statusText}`, 20, finalY + 10);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(80, 80, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Valor Objetivo Calculado: < ${targetR}`, 20, finalY + 18);
+        doc.text(`Aplicación: ${Grounding.currentApp.toUpperCase()}`, 100, finalY + 18);
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text("Generado por ElectrIA Web Platform. Este documento es un reporte técnico auxiliar.", 14, 280);
+        
+        doc.save(`Memoria_PuestaTerra_${project.name.replace(/\s+/g, '_')}.pdf`);
     }
 };
 

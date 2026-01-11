@@ -35,6 +35,31 @@
                 Herramienta profesional de cálculo y validación según FONDONORMA 200:2009 y IEEE Std 80.
             </p>
 
+            <!-- HEADER: Project Details (New) -->
+            <div class="calc-section" style="margin-bottom: 20px;">
+                <div class="calc-header">
+                    <h2><i class="fa-solid fa-folder-open"></i> Datos del Proyecto</h2>
+                </div>
+                <div class="input-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="form-group">
+                        <label>Nombre del Proyecto</label>
+                        <input type="text" id="proj-name" class="calc-input" placeholder="Ej. Subestación Principal">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación / Sitio</label>
+                        <input type="text" id="proj-loc" class="calc-input" placeholder="Ej. Zona Industrial I">
+                    </div>
+                    <div class="form-group">
+                        <label>Cliente / Empresa</label>
+                        <input type="text" id="proj-client" class="calc-input" placeholder="Ej. Corpoelec">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="proj-date" class="calc-input">
+                    </div>
+                </div>
+            </div>
+
             <!-- Application Selector -->
             <div class="app-grid">
                 <div class="app-card active" data-type="substation">
@@ -178,39 +203,48 @@
                             <h2><i class="fa-solid fa-clipboard-check"></i> Conformidad</h2>
                         </div>
                         
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <!-- MAIN RESULT DISPLAY (NEW) -->
+                        <div style="text-align: center; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                            <small id="res-label" style="text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);">Resistencia Calculada</small>
+                            <div style="font-size: 3rem; font-weight: bold; color: var(--electric-blue); margin: 5px 0;">
+                                <span id="res-main">0.00</span> Ω
+                            </div>
+                            <div id="compliance-badge" class="compliance-badge compliance-pass">
+                                <i class="fa-solid fa-check"></i> CUMPLE NORMA
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
                             <div>
-                                <small>Resistencia Objetivo</small>
-                                <div id="target-resistance" style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">25 Ω</div>
-                                <small id="standard-ref" style="color: var(--text-secondary);">Norma Fondonorma</small>
+                                <small>Límite Normativo</small>
+                                <div id="target-resistance" style="font-size: 1.2rem; font-weight: bold; color: var(--text-primary);">25 Ω</div>
                             </div>
                             <div style="text-align: right;">
-                                <div id="compliance-badge" class="compliance-badge compliance-pass">
-                                    <i class="fa-solid fa-check"></i> CUMPLE NORMA
-                                </div>
+                                <small>Norma Referencia</small>
+                                <div id="standard-ref" style="font-size: 0.9rem; color: var(--text-secondary);">Fondonorma 250</div>
                             </div>
                         </div>
 
                         <table class="grounding-table">
                             <thead>
                                 <tr>
-                                    <th>Configuración</th>
-                                    <th>Resistencia (R)</th>
+                                    <th>Detalles de Cálculo</th>
+                                    <th>Valor (R)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Varilla Vertical Única</td>
+                                    <td>Varilla (Dwight)</td>
                                     <td>
-                                        <strong id="res-rod" style="color: var(--electric-blue);">0</strong> Ω
-                                        <div style="font-size: 0.75em; color: var(--text-secondary);">Ec. Dwight (IEEE 142)</div>
+                                        <strong id="res-rod" style="color: var(--text-primary);">0</strong> Ω
+                                        <div style="font-size: 0.75em; color: var(--text-secondary);">IEEE 142</div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Malla Propuesta</td>
+                                    <td>Malla (Sverak)</td>
                                     <td>
-                                        <strong id="res-grid" style="color: var(--electric-blue);">0</strong> Ω
-                                        <div style="font-size: 0.75em; color: var(--text-secondary);">Ec. Sverak (IEEE 80)</div>
+                                        <strong id="res-grid" style="color: var(--text-primary);">0</strong> Ω
+                                        <div style="font-size: 0.75em; color: var(--text-secondary);">IEEE 80</div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -270,5 +304,8 @@
     </main>
 
     <script src="js/grounding.js"></script>
+    <!-- jsPDF Libraries for Reporting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>
