@@ -211,8 +211,10 @@ const Grounding = {
             const if_ka = parseFloat(sysIfEl.value) || 10;
             const tf_sec = parseFloat(document.getElementById('sys-tf').value) || 0.5;
             
-            document.getElementById('lbl-icc').textContent = if_ka;
-            document.getElementById('lbl-time').textContent = tf_sec;
+            const lblIcc = document.getElementById('lbl-icc');
+            const lblTime = document.getElementById('lbl-time');
+            if(lblIcc) lblIcc.textContent = if_ka;
+            if(lblTime) lblTime.textContent = tf_sec;
 
             // 1. Get Soil Parameters
             const field_spacing = parseFloat(document.getElementById('wenner-a').value) || 3;
