@@ -124,7 +124,7 @@
                             </div>
                             <div class="form-group">
                                 <label>I. Falla (kA)</label>
-                                <input type="number" id="sys-if" class="calc-input" value="10" step="1">
+                                <input type="number" id="sys-if" class="calc-input" value="3" step="1">
                             </div>
                             <div class="form-group">
                                 <label>Tiempo (s)</label>
@@ -200,21 +200,21 @@
                             <div class="input-grid">
                                 <div class="form-group">
                                     <label>Área (m²)</label>
-                                    <input type="number" id="grid-area" class="calc-input" value="100">
+                                    <input type="number" id="grid-area" class="calc-input" value="400">
                                 </div>
                                 <div class="form-group">
                                     <label>L. Conductor (m)</label>
-                                    <input type="number" id="grid-len" class="calc-input" value="120">
+                                    <input type="number" id="grid-len" class="calc-input" value="500">
                                 </div>
                             </div>
                             <div class="input-grid">
                                 <div class="form-group">
                                     <label>Espaciamiento D (m)</label>
-                                    <input type="number" id="grid-spacing" class="calc-input" value="5">
+                                    <input type="number" id="grid-spacing" class="calc-input" value="2.5">
                                 </div>
                                 <div class="form-group">
                                     <label>Conductores (n)</label>
-                                    <input type="number" id="grid-n" class="calc-input" value="6">
+                                    <input type="number" id="grid-n" class="calc-input" value="10">
                                 </div>
                                 <div class="form-group">
                                     <label>Profundidad (m)</label>
@@ -248,7 +248,8 @@
                     <!-- Safety Voltages (HIDDEN for Buildings) -->
                     <div id="section-safety" class="calc-section" style="border-left: 5px solid var(--warning-yellow);">
                         <div class="calc-header">
-                            <h2 style="font-size: 1.1rem;"><i class="fa-solid fa-person-falling-burst"></i> Voltajes de Seguridad (70kg)</h2>
+                            <h2 style="font-size: 1.1rem;"><i class="fa-solid fa-person-falling-burst"></i> Voltajes de Seguridad</h2>
+                            <small class="tag" title="Peso del cuerpo humano según IEEE 80 para cálculo de corriente fibrilación">Persona 70kg</small>
                         </div>
                         <table class="grounding-table">
                             <thead>
