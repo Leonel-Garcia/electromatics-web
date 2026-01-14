@@ -32,11 +32,23 @@ const apuPDF = {
         // 4. Apply specific Print Styling to the clone
         clone.style.width = '21.59cm'; // Letter Width
         clone.style.maxWidth = '21.59cm';
-        clone.style.padding = '20px'; // Moderate padding for PDF
+        clone.style.padding = '10mm'; // Standard print padding
+        clone.style.minHeight = 'auto'; // Allow shrinking
+        clone.style.height = 'auto';
+        clone.style.fontSize = '10px'; // Slightly smaller font to insure fit
         clone.style.border = 'none';
         clone.style.boxShadow = 'none';
         clone.style.margin = '0 auto';
         clone.style.background = 'white';
+        
+        // Compact rows for PDF
+        clone.querySelectorAll('td, th').forEach(cell => {
+             cell.style.padding = '2px';
+             cell.style.fontSize = '10px';
+        });
+        
+        // Hide empty space or specific spacers if any
+        // ...
 
         // 5. Append to body temporarily (hidden from view but visible to renderer)
         // We use a wrapper to ensure layout context
