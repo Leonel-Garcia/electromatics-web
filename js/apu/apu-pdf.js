@@ -18,9 +18,11 @@ const apuPDF = {
             const span = document.createElement('span');
             span.innerText = input.value;
             span.style.fontWeight = 'bold'; // Keep values bold
-            span.style.display = 'block';
-            span.style.width = '100%';
-            span.style.textAlign = input.style.textAlign || 'left';
+            // Use inline-block to prevent line breaks (fixing percentage fields)
+            span.style.display = 'inline-block';
+            span.style.width = 'auto';
+            // We can inherit alignment from parent or just let inline flow handle it
+            // span.style.textAlign = input.style.textAlign || 'left';
             
             // Replace input with span
             input.parentNode.replaceChild(span, input);
@@ -30,38 +32,51 @@ const apuPDF = {
         clone.querySelectorAll('.fa-xmark, .btn-add-row, .controls-overlay').forEach(el => el.remove());
         
         // 4. Apply specific Print Styling to the clone
-        clone.style.width = '21.59cm'; // Letter Width
-        clone.style.maxWidth = '21.59cm';
-        clone.style.padding = '10mm'; // Standard print padding
-        clone.style.minHeight = 'auto'; // Allow shrinking
+        // Calculate strict printable width: 21.59cm (Letter) - 4cm (margins) = 17.59cm.
+        // User requested reducing further by 1cm -> 16.5cm.
+        const printWidth = '16.5cm';
+        
+        clone.style.width = printWidth; 
+        clone.style.maxWidth = printWidth;
+        clone.style.padding = '0'; 
+        clone.style.minHeight = 'auto'; 
         clone.style.height = 'auto';
-        clone.style.fontSize = '10px'; // Slightly smaller font to insure fit
+        clone.style.fontSize = '9px'; // Reduced font size
         clone.style.border = 'none';
         clone.style.boxShadow = 'none';
-        clone.style.margin = '0 auto';
+        clone.style.margin = '0'; 
         clone.style.background = 'white';
+        // Enforce word wrapping
+        clone.style.whiteSpace = 'normal'; 
         
-        // Compact rows for PDF
+        // Compact rows and ensure tables respect width
+        clone.querySelectorAll('table').forEach(table => {
+            table.style.width = '100%';
+            table.style.tableLayout = 'fixed'; // CRITICAL: Prevents columns from expanding beyond width
+        });
+
         clone.querySelectorAll('td, th').forEach(cell => {
-             cell.style.padding = '2px';
-             cell.style.fontSize = '10px';
+             cell.style.padding = '1px'; // Tight padding
+             cell.style.fontSize = '9px'; // Reduced font size
+             cell.style.wordWrap = 'break-word'; 
+             cell.style.wordBreak = 'break-word'; // Stronger wrap
+             cell.style.overflow = 'hidden'; 
         });
         
-        // Hide empty space or specific spacers if any
         // ...
 
-        // 5. Append to body temporarily (hidden from view but visible to renderer)
-        // We use a wrapper to ensure layout context
+        // 5. Append to body temporarily
         const wrapper = document.createElement('div');
         wrapper.style.position = 'absolute';
         wrapper.style.left = '-9999px';
         wrapper.style.top = '0';
+        wrapper.style.width = printWidth; // Ensure wrapper constrains the clone
         wrapper.appendChild(clone);
         document.body.appendChild(wrapper);
 
         // 6. Generate PDF
         const opt = {
-            margin:       [10, 10, 10, 10], // mm
+            margin:       [10, 20, 10, 20], // mm - Increased side margins to 20mm (2cm) as requested
             filename:     'APU_Reporte_Profesional.pdf',
             image:        { type: 'jpeg', quality: 1.0 }, // Max quality
             html2canvas:  { scale: 2, useCORS: true, scrollX:0, scrollY:0 }, // High Res
