@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Análisis de Precios Unitarios (APU) | Electromatics</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script> <!-- SheetJS for Excel -->
+
+    <style>
+        :root {
+            --paper-border: #000;
+            --paper-bg: #fff;
+            --header-bg: #f8f9fa;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: #000;
+            font-family: 'Arial', sans-serif; /* Standard for report feel */
+            font-size: 12px;
+        }
+
+        /* Layout Container */
+        .apu-layout {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        .paper-sheet {
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 40px;
+            /* Letter Size Approx */
+            width: 21.59cm; 
+            min-height: 27.94cm;
+            margin: 0 auto;
+        }
+
+        /* Sidebar Controls */
+        .controls-sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        
+        /* ... rest of styles ... */
+
+
+        .apu-section-header {
+            font-weight: bold;
+            border-bottom: 2px solid black;
+            margin-top: 15px;
+            background: #eee;
+            padding: 2px 5px;
+        }
+
+        /* STRICT TABLE STYLING */
+        table.apu-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        table.apu-grid th, table.apu-grid td {
+            border: 1px solid black;
+            padding: 4px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        table.apu-grid th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        table.apu-grid td.align-left { text-align: left; }
+        table.apu-grid td.align-right { text-align: right; }
+
+        /* INPUTS INLINE */
+        input.sheet-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            text-align: inherit;
+            padding: 0;
+            margin: 0;
+        }
+        input.sheet-input:focus {
+            outline: 2px solid blue;
+            background: #eef;
+        }
+
+        /* SUMMARY SECTION at bottom used in Venezuelan formats */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 150px 150px;
+            gap: 0;
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+        
+        .summary-row {
+            display: contents;
+        }
+        
+        .summary-label {
+            padding: 4px;
+            border-right: 1px solid black;
+            border-bottom: 1px solid black;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .summary-value {
+             padding: 4px;
+             border-right: 1px solid black;
+             border-bottom: 1px solid black;
+             text-align: right;
+        }
+
+        /* Buttons */
+        .btn-add-row {
+            background: none;
+            border: 1px dashed #999;
+            width: 100%;
+            cursor: pointer;
+            padding: 5px;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+        .btn-add-row:hover {
+            background: #eee;
+            color: black;
+        }
+
+        @media print {
+            body { background: white; margin: 0; }
+            .paper-sheet { margin: 0; border: none; box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
+            .controls-overlay { display: none; }
+            .controls-sidebar { display: none; } /* Hide sidebar */
+            .btn-add-row { display: none; }
+            
+            nav, header { display: none; } /* Hide site nav */
+        }
+
+        /* Clean PDF Output styles */
+        .printing-mode .fa-xmark, 
+        .printing-mode .btn-add-row {
+            display: none !important;
+        }
+        .printing-mode input {
+            border: none !important;
+            background: transparent !important;
+        }
+    </style>
+</head>
+<body>
+    
+</head>
+<body>
+    
+    <div class="apu-layout">
+        <!-- Main Content (Paper Sheet) -->
+        <div class="paper-sheet" id="apu-sheet">
+            
+            <div style="text-align: right; margin-bottom: 10px;">
+                Fecha: <span id="current-date">Jan 2026</span>
+            </div>
+    
+            <div class="header-title">ANÁLISIS DE PRECIOS UNITARIOS</div>
+    
+            <!-- Project Header Box -->
+            <table class="apu-grid">
+                <tr>
+                    <td class="align-left" style="width: 15%; font-weight:bold;">Obra:</td>
+                    <td class="align-left"><input type="text" class="sheet-input" value="Proyecto Eléctrico Residencial" placeholder="Nombre de la Obra"></td>
+                    <td style="width: 15%; border-left: 2px solid black;"><b>Partida Nº</b></td>
+                    <td style="width: 10%"><input type="text" class="sheet-input" value="1" style="text-align:center"></td>
+                </tr>
+                <tr>
+                    <td class="align-left" style="font-weight:bold;">Descripción:</td>
+                    <td class="align-left" colspan="3">
+                        <input type="text" id="partida-desc" class="sheet-input" placeholder="Escriba aquí para autocompletar..." style="font-weight:bold; font-size: 1.1em;">
+                        <div id="smart-suggestions" style="position:absolute; background:white; border:1px solid #ccc; z-index:10; width:600px; display:none;"></div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Codes / Unit / Qty / Yield -->
+            <table class="apu-grid">
+                <tr>
+                    <th style="width: 30%">Código COVENIN</th>
+                    <th style="width: 15%">Unidad</th>
+                    <th style="width: 15%">Cantidad</th>
+                    <th style="width: 40%">Rendimiento</th>
+                </tr>
+                <tr>
+                    <td><input type="text" class="sheet-input" style="text-align:center" value="E.1234"></td>
+                    <td><input type="text" id="partida-unidad" class="sheet-input" style="text-align:center" value="pza"></td>
+                    <td><input type="number" id="partida-cantidad" class="sheet-input" style="text-align:center" value="1.00"></td>
+                    <td>
+                         <input type="number" id="partida-rendimiento" class="sheet-input" style="text-align:center; width: 60px; display:inline;" value="1"> 
+                         <span id="unit-per-day">und/día</span>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- 1. MATERIALS -->
+            <div class="apu-section-header">1. MATERIALES</div>
+            <table class="apu-grid" id="table-materials">
+                <thead>
+                    <tr>
+                        <th style="width: 45%">Descripción</th>
+                        <th style="width: 10%">Unidad</th>
+                        <th style="width: 10%">Cantidad</th>
+                        <th style="width: 10%">% Desp.</th>
+                        <th style="width: 12%">Costo</th>
+                        <th style="width: 13%">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+            <button class="btn-add-row" onclick="apuUI.addMaterialRow()">+ Agregar Material</button>
+            <div style="text-align:right; padding-right: 5px; font-weight: bold; margin-bottom: 20px;">
+                Total Materiales: <span id="total-materials">0.00</span>
+                <div style="font-size: 0.9em; font-weight: normal;">Unitario de Materiales: <span id="unit-materials">0.00</span></div>
+            </div>
+
+
+            <!-- 2. EQUIPMENT -->
+            <div class="apu-section-header">2. EQUIPOS</div>
+            <table class="apu-grid" id="table-equipment">
+                <thead>
+                    <tr>
+                        <th style="width: 45%">Descripción</th>
+                        <th style="width: 10%">Cantidad</th>
+                        <th style="width: 15%">Costo (Valor)</th>
+                        <th style="width: 15%">Dep. o Alq.</th>
+                        <th style="width: 15%">Total</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button class="btn-add-row" onclick="apuUI.addEquipmentRow()">+ Agregar Equipo</button>
+            <div style="text-align:right; padding-right: 5px; font-weight: bold; margin-bottom: 20px;">
+                Total Equipos: <span id="total-equipment">0.00</span>
+                <div style="font-size: 0.9em; font-weight: normal;">Unitario de Equipos: <span id="unit-equipment">0.00</span></div>
+            </div>
+
+            <!-- 3. LABOR -->
+            <div class="apu-section-header">3. MANO DE OBRA</div>
+            <table class="apu-grid" id="table-labor">
+                <thead>
+                    <tr>
+                        <th style="width: 50%">Descripción</th>
+                        <th style="width: 15%">Cantidad</th>
+                        <th style="width: 15%">Salario Jornal</th>
+                        <th style="width: 20%">Total</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button class="btn-add-row" onclick="apuUI.addLaborRow()">+ Agregar Personal</button>
+            
+            <!-- Detailed Labor Summary -->
+            <div style="display: flex; justify-content: flex-end;">
+                <div style="width: 100%; max-width: 400px; text-align: right;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 2px;">Total Mano de Obra:</td>
+                            <td style="width: 100px; text-align: right; font-weight: bold;"><span id="total-labor-base">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px; border-bottom: 1px solid #ccc;">
+                                <span id="label-fcas">% Prestaciones Sociales</span>:
+                                <input type="number" id="fcas-percent" value="250" style="width:40px; text-align:center; border:1px solid #ccc;">%
+                            </td>
+                            <td style="border-bottom: 1px solid #ccc; text-align: right;"><span id="val-fcas">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px; border-bottom: 1px solid #ccc;">
+                                <span id="label-bono">Bono de Alimentación (Total)</span>:
+                            </td>
+                            <td style="border-bottom: 1px solid #ccc; text-align: right;"><span id="val-bono">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px; font-weight: bold;">Total Mano de Obra Diario:</td>
+                            <td style="text-align: right; font-weight: bold; border-top: 1px solid black;"><span id="total-labor-day">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px;">Unitario mano de Obra:</td>
+                            <td style="text-align: right; font-weight: bold;"><span id="unit-labor">0.00</span></td>
+                        </tr>
+                    </table>
+                    
+                    <div style="margin-top: 20px; border-top: 2px solid black;">
+                        <table style="width: 100%;">
+                            <tr>
+                                <td style="text-align:right; padding:5px; font-weight:bold;">Costo Directo por Unidad:</td>
+                                <td style="text-align:right; width:100px; font-weight:bold;"><span id="cost-direct">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:right; padding:2px;">
+                                    % Administración: <input type="number" id="admin-percent" value="15" style="width:40px; border:1px solid #ccc;">%
+                                </td>
+                                <td style="text-align:right;"><span id="val-admin">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:right; padding:2px; font-style:italic;">Sub-total A + Costo Directo:</td>
+                                <td style="text-align:right; font-style:italic;"><span id="sub-admin">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:right; padding:2px;">
+                                    % Utilidad: <input type="number" id="util-percent" value="10" style="width:40px; border:1px solid #ccc;">%
+                                </td>
+                                <td style="text-align:right;"><span id="val-util">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:right; padding:2px; font-style:italic;">Sub-total U + A + Costo Directo:</td>
+                                <td style="text-align:right; font-style:italic;"><span id="sub-util">0.00</span></td>
+                            </tr>
+                            <tr style="border: 2px solid black; background: #e9ecef;">
+                                <td style="text-align:right; padding: 10px; font-weight:bold; font-size: 1.2em;">PRECIO UNITARIO (<span class="currency-symbol">$</span>):</td>
+                                <td style="text-align:right; padding: 10px; font-weight:bold; font-size: 1.2em;"><span id="final-price">0.00</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+    
+        </div>
+        
+        <!-- Controls Sidebar -->
+        <div class="controls-sidebar">
+            <h4><i class="fa-solid fa-gear"></i> Configuración</h4>
+            
+            <div style="margin-bottom: 10px;">
+                <label style="display:block; font-weight:bold; font-size:11px;">Moneda</label>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="apuUI.setCurrency('USD')" class="btn-sm" style="flex:1">USD ($)</button>
+                    <button onclick="apuUI.setCurrency('BS')" class="btn-sm" style="flex:1">Bs (VES)</button>
+                </div>
+            </div>
+    
+            <div style="margin-bottom: 10px;">
+                <label style="display:block; font-weight:bold; font-size:11px;">Tasa de Cambio (Bs/$)</label>
+                <input type="number" id="exchange-rate" value="50.00" class="form-control" style="width:100%">
+            </div>
+    
+            <div style="margin-bottom: 10px;">
+                <label style="display:block; font-weight:bold; font-size:11px;">Sector Laboral</label>
+                <select id="labor-sector" class="form-control" style="width:100%" onchange="apuUI.setSector(this.value)">
+                    <option value="construction">Construcción</option>
+                    <option value="oil">Petrolero</option>
+                </select>
+            </div>
+    
+            <button onclick="apuPDF.exportToPDF()" style="width:100%; background:#d32f2f; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 14px; margin-bottom: 10px;">
+                <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+            </button>
+
+            <button onclick="apuExcel.exportToExcel()" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 14px;">
+                <i class="fa-solid fa-file-excel"></i> Descargar Excel
+            </button>
+            
+            <hr>
+            <small style="color:#666; display:block; line-height: 1.4;">
+                <i class="fa-solid fa-robot"></i> 
+                <b>Tip ElectrIA:</b> Escribe "Tubería", "Cable" o "Tomacorriente" en la casilla de Descripción para autocompletar.
+            </small>
+        </div>
+    </div>
+
+
+    <style>
+        /* ... existing styles ... */
+        
+        /* Print/PDF Specifics */
+        .printing-mode .fa-xmark {
+            display: none !important; /* Hide delete buttons in PDF */
+        }
+        .printing-mode .btn-add-row {
+            display: none !important;
+        }
+        .printing-mode .sheet-input {
+            border: none; /* Ensure no borders on inputs if any */
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="apu-layout">
+        <!-- ... content ... -->
+        
+        <!-- Controls Sidebar -->
+        <div class="controls-sidebar">
+            <!-- ... -->
+            
+            <button onclick="apuPDF.exportToPDF()" style="width:100%; background:#dc3545; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 14px; margin-bottom: 10px;">
+                <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+            </button>
+
+            <button onclick="apuExcel.exportToExcel()" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 14px;">
+                <i class="fa-solid fa-file-excel"></i> Descargar Excel
+            </button>
+            
+            <!-- ... -->
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="js/apu/apu-data.js"></script>
+    <script src="js/apu/apu-core.js"></script>
+    <script src="js/apu/apu-smart.js"></script>
+    <script src="js/apu/apu-excel.js"></script>
+    <script src="js/apu/apu-pdf.js"></script>
+    <script src="js/apu/apu-ui.js"></script>
+</body>
+</html>
