@@ -59,12 +59,24 @@ const ElectrIA = {
                 throw new Error(`API Error ${response.status}: ${errorMessage}`);
             }
 
-            const data = await response.json();
-            if (!data.candidates || data.candidates.length === 0) {
-                 throw new Error("No candidates returned from API");
+            // Handle Streaming Response (Backend yields raw text chunks)
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let result = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                result += decoder.decode(value, { stream: true });
             }
-            const botResponse = data.candidates[0].content.parts[0].text;
-            return botResponse;
+            // Flush stream
+            result += decoder.decode();
+
+            if (!result) {
+                 throw new Error("No content returned from API");
+            }
+            
+            return result;
 
         } catch (error) {
             console.error("Error calling Gemini API:", error);

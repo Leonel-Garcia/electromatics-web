@@ -701,13 +701,24 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
                 if (response.status === 429) {
                     throw new Error('Has excedido el límite de consultas de la IA (Error 429). Por favor espera un minuto e intenta de nuevo.');
                 }
-                const errData = await response.json();
+                const errData = await response.json().catch(() => ({}));
                 const errMsg = errData.error?.message || response.statusText;
                 throw new Error(`API error (${response.status}): ${errMsg}`);
             }
 
-            const data = await response.json();
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            // Handle Streaming Response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                fullText += decoder.decode(value, { stream: true });
+            }
+            fullText += decoder.decode();
+
+            return fullText || '';
             
         } catch (error) {
             console.error("Proxy Error:", error);
