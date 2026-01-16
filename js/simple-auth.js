@@ -642,6 +642,7 @@ const SimpleAuth = {
 
     // Registrar usuario (POST /register)
     register: async (name, email, password) => {
+        console.log(`📡 Intentando registrar a ${email} en ${API_URL}...`);
         try {
             const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',
@@ -655,17 +656,24 @@ const SimpleAuth = {
                 })
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                // Auto-login después de registro
+                console.log('✅ Registro exitoso, iniciando sesión automática...');
                 return await SimpleAuth.login(email, password);
             } else {
-                const data = await response.json();
-                return { success: false, message: data.detail || 'Error al registrar' };
+                console.error('❌ Error del servidor:', data);
+                return { 
+                    success: false, 
+                    message: data.detail || 'Error en el servidor. Posible problema de base de datos.' 
+                };
             }
-            return { success: false, message: 'Error de conexión. Verifica tu red.' };
         } catch (error) {
-            console.error(`Register Error trying to fetch ${API_URL}/register:`, error);
-            return { success: false, message: `Error de conexión: ${error.message}` };
+            console.error(`🌐 Error de red o conexión:`, error);
+            return { 
+                success: false, 
+                message: `No se pudo conectar con el servidor. Verifica que el backend esté en línea.` 
+            };
         }
     },
 
