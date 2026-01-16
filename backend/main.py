@@ -12,6 +12,11 @@ import os
 import pydantic
 import migrations
 import json
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Run migrations (Add missing columns if any)
 migrations.run_migrations(database.engine)
@@ -57,6 +62,7 @@ async def cors_middleware(request: Request, call_next):
 
 @app.post("/register", response_model=schemas.User)
 def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    logger.info(f"Attempting to register user: {user.email}")
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
