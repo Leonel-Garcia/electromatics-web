@@ -913,6 +913,7 @@ const SimpleAuth = {
         // Register form
         if (registerForm) registerForm.onsubmit = async (e) => {
             e.preventDefault();
+            console.log('📝 Formulario de registro detectado y enviado.');
             const submitBtn = registerForm.querySelector('button[type="submit"]');
             const name = document.getElementById('reg-name').value;
             const email = document.getElementById('reg-email').value;
@@ -921,6 +922,7 @@ const SimpleAuth = {
             submitBtn.disabled = true;
             submitBtn.textContent = "Creando cuenta...";
 
+            console.log(`📤 Enviando datos de registro para: ${email}`);
             const result = await SimpleAuth.register(name, email, pass);
             
             submitBtn.disabled = false;
