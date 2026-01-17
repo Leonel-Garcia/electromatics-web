@@ -1056,7 +1056,9 @@ const SimpleAuth = {
             'simuladores-rlc.html',
             'simulador-tablero.html',
             'motoranalitics.html',
-            'curso-ia.html'
+            'curso-ia.html',
+            'apu.html',
+            'apu'
         ];
 
         // Seleccionar enlaces en navegación principal, footer y botones de acción
