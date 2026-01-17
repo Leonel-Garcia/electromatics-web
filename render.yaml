@@ -10,9 +10,6 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: electromatics-db
-          property: connectionString
     autoDeploy: true
 
   # 2. Start the Frontend Website (Static HTML/JS)
