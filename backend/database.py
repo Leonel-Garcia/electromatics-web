@@ -15,15 +15,15 @@ if DATABASE_URL:
     # Connection Pool settings
     engine_args = {
         "poolclass": QueuePool,
-        "pool_size": 2,
-        "max_overflow": 5,
-        "pool_timeout": 30,
-        "pool_recycle": 600,
+        "pool_size": 1,        # Minimal for testing
+        "max_overflow": 0,
+        "pool_timeout": 60,    # 1 minute timeout
+        "pool_recycle": 300,
+        "connect_args": {
+            "sslmode": "require",
+            "connect_timeout": 30
+        }
     }
-    
-    # Use simple SSL for Supabase (Direct IP or Host)
-    if "supabase" in DATABASE_URL or "15.228." in DATABASE_URL:
-        engine_args["connect_args"] = {"sslmode": "require", "connect_timeout": 5}
     
     engine = create_engine(DATABASE_URL, **engine_args)
 else:
