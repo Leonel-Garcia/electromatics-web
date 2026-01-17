@@ -404,116 +404,73 @@ def heartbeat(visit_id: int, db: Session = Depends(database.get_db)):
 @app.post("/generate-content")
 async def generate_content_proxy(request: Request):
     """
-    Secure proxy for AI API calls with Streaming Response to avoid 10s Vercel timeout.
+    Secure proxy for AI API calls.
     Prioritizes DeepSeek -> fallback to Gemini.
     """
     try:
         body = await request.json()
         
-        # Generator function for streaming
-        async def stream_generator():
-            # 1. Try DeepSeek first (User Preference)
-            deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-09180722007046cd8ac3cc7007f4dcd8"
-            
-            if deepseek_key:
-                try:
-                    # Extract text from Gemini-format payload
-                    user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
-                    
-                    deepseek_url = "https://api.deepseek.com/chat/completions"
-                    deepseek_payload = {
-                        "model": "deepseek-chat",
-                        "messages": [
-                            {"role": "system", "content": "You are ElectrIA, an expert electrical engineering assistant. Always output valid JSON when requested."},
-                            {"role": "user", "content": user_prompt}
-                        ],
-                        "temperature": 0.7,
-                        "stream": True  # Enable streaming for DeepSeek
-                    }
-                    
-                    # Use requests with stream=True
-                    with requests.post(
-                        deepseek_url,
-                        json=deepseek_payload,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {deepseek_key}"
-                        },
-                        timeout=60,
-                        stream=True
-                    ) as response:
-                        if response.status_code == 200:
-                            # Stream the chunks
-                            for chunk in response.iter_lines():
-                                if chunk:
-                                    decoded_chunk = chunk.decode('utf-8')
-                                    # DeepSeek sends "data: {...}"
-                                    if decoded_chunk.startswith("data: "):
-                                        json_str = decoded_chunk[6:] # Removing "data: "
-                                        if json_str != "[DONE]":
-                                            try:
-                                                data = json.loads(json_str)
-                                                if "choices" in data:
-                                                    delta = data['choices'][0]['delta']
-                                                    if "content" in delta:
-                                                        content_text = delta['content']
-                                                        # Emulate Gemini format for frontend
-                                                        # Sending raw text is easier, but frontend expects JSON? 
-                                                        # If frontend expects full JSON at end, streaming breaks it unless frontend is updated.
-                                                        # BUT, the goal is to keep connection alive. 
-                                                        # We can send Server-Sent Events (SSE) or just chunks.
-                                                        # If we assume legacy frontend expects one JSON blob:
-                                                        # We can't easily stream to a standard fetch(). 
-                                                        # WE MUST update frontend if we really want to see stream.
-                                                        # HOWEVER, to just beat the timeout, we can send spaces or keep-alive? No.
-                                                        # We will yield chunks in valid Gemini JSON structure? No, that's invalid JSON.
-                                                        
-                                                        # ASSUMPTION: The frontend is standard fetch await response.json().
-                                                        # Converting to stream breaks the frontend. 
-                                                        # FIX: We must update frontend to handle stream OR we cannot fix the 10s timeout properly without background jobs.
-                                                        # WAIT. Implementation plan says "Implement StreamingResponse... (requires frontend changes)"
-                                                        # I should implement it here as a stream, and I should likely update the frontend too.
-                                                        # For now, let's yield the raw text chunks assuming we will update frontend to read stream.
-                                                        yield content_text
-                                            except:
-                                                pass
-                            return # End after successful stream
-                        else:
-                            print(f"DeepSeek Error {response.status_code}: {response.text}")
-                            # Fallthrough to Gemini
-                except Exception as e:
-                    print(f"DeepSeek Exception: {str(e)}")
-            
-            # 2. Fallback to Gemini (Non-streaming implementation as backup or needs stream too)
-            # For simplicity, if DeepSeek fails, we do standard Gemini call (risk of timeout)
-            # Or implement Gemini streaming too.
-            api_key = os.getenv("GEMINI_API_KEY")
-            if not api_key:
-                yield "Error: No API Keys available"
-                return
+        # 1. Try DeepSeek first (User Preference)
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-09180722007046cd8ac3cc7007f4dcd8"
+        
+        if deepseek_key:
+            try:
+                # Extract text from Gemini-format payload
+                user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
+                
+                deepseek_url = "https://api.deepseek.com/chat/completions"
+                deepseek_payload = {
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": "You are ElectrIA, an expert electrical engineering assistant. Always output valid JSON when requested."},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": 0.7
+                }
+                
+                response = requests.post(
+                    deepseek_url,
+                    json=deepseek_payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {deepseek_key}"
+                    },
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    content_text = data['choices'][0]['message']['content']
+                    # Return in a format the frontend (expecting Gemini or simple text) can handle
+                    # If the frontend expects raw text, we return it. If it expects Gemini JSON, we emulate it.
+                    # Based on previous logic, let's return a JSON with the text.
+                    return JSONResponse(content={"text": content_text})
+                else:
+                    logger.error(f"DeepSeek Error {response.status_code}: {response.text}")
+            except Exception as e:
+                logger.error(f"DeepSeek Exception: {str(e)}")
+        
+        # 2. Fallback to Gemini
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="No API Keys available")
 
-            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
-            google_response = requests.post(
-                url, 
-                json=body,
-                headers={"Content-Type": "application/json"}
-            )
-            if google_response.status_code == 200:
-                 # Yield the full response content as one chunk (simulating stream end)
-                 # We need to extract the text to match the raw text stream of DeepSeek
-                 data = google_response.json()
-                 try:
-                     text = data['candidates'][0]['content']['parts'][0]['text']
-                     yield text
-                 except:
-                     yield "Error parsing Gemini response"
-            else:
-                yield f"Error from Gemini: {google_response.text}"
-
-        return StreamingResponse(stream_generator(), media_type="text/plain")
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={api_key}"
+        google_response = requests.post(
+            url, 
+            json=body,
+            headers={"Content-Type": "application/json"},
+            timeout=60
+        )
+        
+        if google_response.status_code == 200:
+            return JSONResponse(content=google_response.json())
+        else:
+            logger.error(f"Gemini Error: {google_response.text}")
+            return JSONResponse(status_code=google_response.status_code, content=google_response.json())
 
     except Exception as e:
-        print(f"Proxy Error: {str(e)}")
+        logger.error(f"Proxy Error: {str(e)}")
         return JSONResponse(status_code=500, content={"detail": str(e)})
 
 @app.get("/")

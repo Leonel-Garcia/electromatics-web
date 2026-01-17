@@ -23,6 +23,7 @@ if DATABASE_URL:
         DATABASE_URL = urlunparse(url_parts)
 
     # 3. Configurar el motor para USA Region
+    print("🗄️ DATABASE: Connecting to PostgreSQL (Persistent)")
     engine = create_engine(
         DATABASE_URL,
         pool_size=3,
@@ -36,6 +37,7 @@ if DATABASE_URL:
         }
     )
 else:
+    print("⚠️ DATABASE: Using SQLite (NON-PERSISTENT - DATA WILL BE LOST)")
     DATABASE_URL = "sqlite:///./sql_app.db"
     engine = create_engine(
         DATABASE_URL, connect_args={"check_same_thread": False}
