@@ -18,17 +18,24 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Run migrations and create tables safely
-try:
-    logger.info("Starting database initialization...")
-    migrations.run_migrations(database.engine)
-    models.Base.metadata.create_all(bind=database.engine)
-    logger.info("Database initialization successful.")
-except Exception as e:
-    logger.error(f"❌ DATABASE INIT FAILED: {str(e)}")
-    logger.error("The app will attempt to run anyway, but DB calls may fail.")
-
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    # Run migrations and create tables safely in background
+    try:
+        logger.info("🚀 Starting database initialization in background...")
+        # Obfuscated URL for logging
+        db_url_clean = str(database.engine.url).split("@")[-1] if "@" in str(database.engine.url) else "local"
+        logger.info(f"📡 Target DB Host: {db_url_clean}")
+        
+        migrations.run_migrations(database.engine)
+        models.Base.metadata.create_all(bind=database.engine)
+        logger.info("✅ Database initialization successful.")
+    except Exception as e:
+        logger.error(f"❌ DATABASE INIT FAILED: {str(e)}")
+        logger.error("The app is running but DB calls might fail.")
+
 
 # CORS Configuration - Allow frontend origins
 # Manual CORS Middleware - Brute Force
