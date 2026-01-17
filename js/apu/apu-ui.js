@@ -90,7 +90,10 @@ const apuUI = {
         const tbody = document.querySelector('#table-materials tbody');
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="align-left"><input type="text" class="sheet-input mat-desc" value="${data ? data.desc : ''}" placeholder="Material..."></td>
+            <td class="align-left">
+                <input type="text" class="sheet-input mat-desc" value="${data ? data.desc : ''}" placeholder="Material...">
+                <div class="mat-suggestions" style="position:absolute; background:white; border:1px solid #ccc; display:none; z-index:100; font-size: 0.8em; max-width: 200px;"></div>
+            </td>
             <td><input type="text" class="sheet-input mat-unit" value="${data ? data.unit : 'und'}" style="text-align:center"></td>
             <td><input type="number" class="sheet-input mat-qty" value="${data ? data.qty : '1.00'}" style="text-align:center"></td>
             <td><input type="number" class="sheet-input mat-waste" value="${data && data.waste ? data.waste : '0'}" style="text-align:center"></td>
@@ -98,6 +101,34 @@ const apuUI = {
             <td class="align-right"><span class="row-total">0.00</span></td>
             <td><i class="fa-solid fa-xmark" style="cursor:pointer; color:red;" onclick="this.closest('tr').remove(); apuUI.updateCalculation()"></i></td>
         `;
+
+        const input = tr.querySelector('.mat-desc');
+        const suggBox = tr.querySelector('.mat-suggestions');
+        
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            if (val.length < 2) { suggBox.style.display = 'none'; return; }
+            const matches = APU_DATA.materials.filter(m => m.desc.toLowerCase().includes(val)).slice(0, 5);
+            if (matches.length > 0) {
+                suggBox.innerHTML = matches.map(m => `<div style="padding:4px; cursor:pointer;" class="sugg-item" data-price="${m.price}" data-unit="${m.unit}">${m.desc}</div>`).join('');
+                suggBox.style.display = 'block';
+                suggBox.querySelectorAll('.sugg-item').forEach(item => {
+                    item.onclick = () => {
+                        input.value = item.innerText;
+                        tr.querySelector('.mat-unit').value = item.dataset.unit;
+                        tr.querySelector('.mat-price').value = item.dataset.price;
+                        suggBox.style.display = 'none';
+                        this.updateCalculation();
+                    };
+                });
+            } else {
+                suggBox.style.display = 'none';
+            }
+        });
+
+        // Hide suggestions on blur (delayed to allow click)
+        input.addEventListener('blur', () => setTimeout(() => suggBox.style.display = 'none', 200));
+
         tbody.appendChild(tr);
     },
 
@@ -105,15 +136,45 @@ const apuUI = {
         const tbody = document.querySelector('#table-equipment tbody');
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="align-left"><input type="text" class="sheet-input eq-desc" value="${data ? data.desc : ''}" placeholder="Equipo..."></td>
+            <td class="align-left">
+                <input type="text" class="sheet-input eq-desc" value="${data ? data.desc : ''}" placeholder="Equipo...">
+                <div class="eq-suggestions" style="position:absolute; background:white; border:1px solid #ccc; display:none; z-index:100; font-size: 0.8em; max-width: 200px;"></div>
+            </td>
             <td><input type="number" class="sheet-input eq-qty" value="${data ? data.qty : '1.00'}" style="text-align:center"></td>
             <td><input type="number" class="sheet-input eq-val" value="${data ? data.price : '0.00'}" style="text-align:right"></td>
-            <td><input type="number" class="sheet-input eq-fac" value="${data && data.factor ? data.factor : '0.001'}" style="text-align:center"></td> <!-- Default Dep Factor -->
+            <td><input type="number" class="sheet-input eq-fac" value="${data && data.factor ? data.factor : '0.001'}" style="text-align:center"></td>
             <td class="align-right"><span class="row-total">0.00</span></td>
             <td><i class="fa-solid fa-xmark" style="cursor:pointer; color:red;" onclick="this.closest('tr').remove(); apuUI.updateCalculation()"></i></td>
         `;
+
+        const input = tr.querySelector('.eq-desc');
+        const suggBox = tr.querySelector('.eq-suggestions');
+        
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            if (val.length < 2) { suggBox.style.display = 'none'; return; }
+            const matches = APU_DATA.equipment.filter(eq => eq.desc.toLowerCase().includes(val)).slice(0, 5);
+            if (matches.length > 0) {
+                suggBox.innerHTML = matches.map(eq => `<div style="padding:4px; cursor:pointer;" class="sugg-item" data-rate="${eq.rate}">${eq.desc}</div>`).join('');
+                suggBox.style.display = 'block';
+                suggBox.querySelectorAll('.sugg-item').forEach(item => {
+                    item.onclick = () => {
+                        input.value = item.innerText;
+                        tr.querySelector('.eq-val').value = item.dataset.rate;
+                        suggBox.style.display = 'none';
+                        this.updateCalculation();
+                    };
+                });
+            } else {
+                suggBox.style.display = 'none';
+            }
+        });
+
+        input.addEventListener('blur', () => setTimeout(() => suggBox.style.display = 'none', 200));
+
         tbody.appendChild(tr);
     },
+
 
     addLaborRow(data = null) {
         const tbody = document.querySelector('#table-labor tbody');
