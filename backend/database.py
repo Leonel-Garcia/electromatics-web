@@ -28,7 +28,7 @@ if DATABASE_URL:
         print("   This URL only works inside Render's network and often expires.")
         print("   For persistence, please change it to your SUPABASE URL in the Render Dashboard.")
     
-    print(f"🗄️ DATABASE: Connecting to PostgreSQL")
+    print(f"DATABASE: Connecting to PostgreSQL")
     engine = create_engine(
         DATABASE_URL,
         pool_size=3,
