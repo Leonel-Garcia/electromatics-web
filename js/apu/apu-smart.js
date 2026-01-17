@@ -4,153 +4,187 @@
  */
 
 const APU_TEMPLATES = [
+    // --- CONDUITS (E511 / E512) ---
     {
-        code: 'E541.111.111',
-        keywords: ['tomacorriente', 'enchufe', 'salida 110v', 'e541'],
-        description: 'Suministro e Inst. de Salida de Tomacorriente Doble con Tubería EMT 1/2" (E541)',
-        unit: 'pto',
-        yield: 8.00, // 8 pts/day
+        code: 'E511.111.011',
+        keywords: ['tuberia emt 1/2', 'emt 1/2', 'conduit 1/2'],
+        description: 'Instalación de Tubería EMT 1/2" con accesorios y soportes (E511)',
+        unit: 'm',
+        yield: 50.00, 
         materials: [
-            { desc: 'Tubería EMT 1/2" (3.05m)', unit: 'pza', qty: 0.30, price: 4.50, waste: 5 },
-            { desc: 'Conector EMT 1/2"', unit: 'pza', qty: 2.00, price: 0.80, waste: 0 },
-            { desc: 'Cajetín Metálico 2"x4" (E531)', unit: 'pza', qty: 1.00, price: 1.10, waste: 0 },
-            { desc: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 12.00, price: 0.65, waste: 5 },
-            { desc: 'Tomacorriente Doble 120V', unit: 'pza', qty: 1.00, price: 3.50, waste: 0 }
+            { desc: 'Tubería EMT 1/2" (3.05m)', unit: 'pza', qty: 0.33, price: 4.50, waste: 5 },
+            { desc: 'Unión EMT 1/2"', unit: 'pza', qty: 0.34, price: 0.60, waste: 0 },
+            { desc: 'Abrazadera EMT 1/2"', unit: 'pza', qty: 0.67, price: 0.25, waste: 2 },
+            { desc: 'Ramplug y Tornillo', unit: 'pza', qty: 0.70, price: 0.15, waste: 10 }
+        ],
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
+    },
+    {
+        code: 'E511.111.012',
+        keywords: ['tuberia emt 3/4', 'emt 3/4', 'conduit 3/4'],
+        description: 'Instalación de Tubería EMT 3/4" con accesorios y soportes (E511)',
+        unit: 'm',
+        yield: 45.00, 
+        materials: [
+            { desc: 'Tubería EMT 3/4" (3.05m)', unit: 'pza', qty: 0.33, price: 6.20, waste: 5 },
+            { desc: 'Unión EMT 3/4"', unit: 'pza', qty: 0.34, price: 0.90, waste: 0 },
+            { desc: 'Abrazadera EMT 3/4"', unit: 'pza', qty: 0.67, price: 0.30, waste: 2 },
+            { desc: 'Ramplug y Tornillo', unit: 'pza', qty: 0.70, price: 0.15, waste: 10 }
+        ],
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
+    },
+
+    // --- CABLING (E521) ---
+    {
+        code: 'E521.111.001',
+        keywords: ['cable 12', 'conductor 12', 'thhn 12'],
+        description: 'Cableado de Conductor Cu THHN #12 AWG en Tubería (E521)',
+        unit: 'm',
+        yield: 180.00,
+        materials: [{ desc: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 1.00, price: 0.65, waste: 5 }],
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 2.00 }]
+    },
+    {
+        code: 'E521.111.100',
+        keywords: ['cable 4/0', 'thhn 4/0', 'alimentador'],
+        description: 'Tendido de Cable Cu THHN 4/0 AWG para Alimentadores (E521)',
+        unit: 'm',
+        yield: 80.00,
+        materials: [
+            { desc: 'Cable Cu THHN 4/0 AWG', unit: 'm', qty: 1.00, price: 16.80, waste: 3 },
+            { desc: 'Lubricante para Cable (CGE)', unit: 'kg', qty: 0.02, price: 15.00, waste: 0 }
         ],
         equipment: [
-            { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }
+            { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 },
+            { desc: 'Doblador de Tubo Hidráulico', qty: 1.00, price: 20.00, factor: 0.20 }
         ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
+        labor: [{ role: 'Capataz', count: 0.20 }, { role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 3.00 }]
+    },
+
+    // --- POINTS (E541) ---
+    {
+        code: 'E541.111.111',
+        keywords: ['salida tomacorriente', 'punto toma', '110v'],
+        description: 'Suministro e Inst. de Salida de Tomacorriente Doble 120V con Tubería EMT 1/2" (E541)',
+        unit: 'pto',
+        yield: 8.00,
+        materials: [
+            { desc: 'Tubería EMT 1/2" (3.05m)', unit: 'pza', qty: 0.40, price: 4.50, waste: 5 },
+            { desc: 'Conector EMT 1/2"', unit: 'pza', qty: 2.00, price: 0.80, waste: 0 },
+            { desc: 'Cajetín Metálico 2"x4" (E531)', unit: 'pza', qty: 1.00, price: 1.10, waste: 0 },
+            { desc: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 12.00, price: 0.65, waste: 8 },
+            { desc: 'Tomacorriente Doble 120V', unit: 'pza', qty: 1.00, price: 3.50, waste: 0 }
+        ],
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
     },
     {
         code: 'E541.111.101',
-        keywords: ['luz', 'lampara', 'iluminacion', 'alumbrado', 'e541'],
-        description: 'Suministro e Inst. de Salida para Alumbrado en Techo/Pared con Tubería EMT 1/2" (E541)',
+        keywords: ['salida luz', 'punto iluminacion', 'punto lampara'],
+        description: 'Suministro e Inst. de Salida para Alumbrado con Tubería EMT 1/2" e Interruptor (E541)',
         unit: 'pto',
         yield: 10.00,
         materials: [
-            { desc: 'Tubería EMT 1/2" (3.05m)', unit: 'pza', qty: 0.30, price: 4.50, waste: 5 },
+            { desc: 'Tubería EMT 1/2" (3.05m)', unit: 'pza', qty: 0.40, price: 4.50, waste: 5 },
             { desc: 'Cajetín Octogonal Metálico', unit: 'pza', qty: 1.00, price: 1.40, waste: 0 },
-            { desc: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 10.00, price: 0.65, waste: 5 },
+            { desc: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 10.00, price: 0.65, waste: 8 },
             { desc: 'Interruptor Sencillo 120V', unit: 'pza', qty: 1.00, price: 2.50, waste: 0 }
         ],
         equipment: [
             { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 },
             { desc: 'Andamio Tubular (Cuerpo completo)', qty: 1.00, price: 2.50, factor: 1.0 }
         ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
     },
-    {
-        code: 'E511.111.011',
-        keywords: ['tuberia 3/4', 'emt 3/4', 'ducto', 'e511'],
-        description: 'Instalación de Tubería EMT 3/4" incluyendo accesorios y soportes (E511)',
-        unit: 'm',
-        yield: 45.00, 
-        materials: [
-            { desc: 'Tubería EMT 3/4" (3.05m)', unit: 'pza', qty: 0.34, price: 6.20, waste: 5 },
-            { desc: 'Abrazadera EMT 3/4"', unit: 'pza', qty: 1.00, price: 0.30, waste: 2 },
-            { desc: 'Conector EMT 3/4"', unit: 'pza', qty: 0.20, price: 1.20, waste: 0 }
-        ],
-        equipment: [
-            { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }
-        ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
-    },
+
+    // --- BOXES (E531) ---
     {
         code: 'E531.111.001',
-        keywords: ['caja de paso', 'caja metalica', 'e531'],
-        description: 'Suministro e Inst. de Caja de Paso Metálica 10x10cm (E531)',
+        keywords: ['caja de paso 10x10', 'caja metalica'],
+        description: 'Instalación de Caja de Paso Metálica 10x10cm (E531)',
         unit: 'pza',
-        yield: 12.00,
+        yield: 15.00,
         materials: [
             { desc: 'Caja de Paso 10x10cm (E531)', unit: 'pza', qty: 1.00, price: 4.50, waste: 0 },
-            { desc: 'Ramplug y Tornillo', unit: 'pza', qty: 4.00, price: 0.15, waste: 10 }
-        ],
-        equipment: [
-            { desc: 'Taladro Percutor / Rotomartillo', qty: 1.00, price: 15.00, factor: 0.05 }
-        ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
-    },
-    {
-        code: 'E521.111.001',
-        keywords: ['cable 12', 'conductor 12', 'thhn 12', 'e521'],
-        description: 'Tendido de Conductor Cu THHN calibre 12 AWG (E521)',
-        unit: 'm',
-        yield: 180.00,
-        materials: [
-            { desc: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 1.00, price: 0.65, waste: 5 }
-        ],
-        equipment: [
-            { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }
-        ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
-    },
-    {
-        code: 'E551.111.001',
-        keywords: ['tablero', 'centro carga', 'e551'],
-        description: 'Instalación de Tablero Eléctrico Monofásico de 8 a 12 Circuitos (E551)',
-        unit: 'pza',
-        yield: 3.00,
-        materials: [
-            { desc: 'Tablero 8-12 Ctos Monofásico Embutir', unit: 'pza', qty: 1.00, price: 45.00, waste: 0 },
             { desc: 'Ramplug y Tornillo', unit: 'pza', qty: 4.00, price: 0.15, waste: 0 }
         ],
-        equipment: [
-            { desc: 'Taladro Percutor / Rotomartillo', qty: 1.00, price: 15.00, factor: 0.10 }
+        equipment: [{ desc: 'Taladro Percutor / Rotomartillo', qty: 1.00, price: 15.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 0.50 }]
+    },
+
+    // --- PANELS & BREAKERS (E551 / E561) ---
+    {
+        code: 'E551.111.001',
+        keywords: ['tablero 12 ctos', 'embutir'],
+        description: 'Instalación de Tablero Eléctrico Monofásico de 12 Circuitos Embutido (E551)',
+        unit: 'pza',
+        yield: 4.00,
+        materials: [
+            { desc: 'Tablero 8-12 Ctos Monofásico Embutir', unit: 'pza', qty: 1.00, price: 45.00, waste: 0 },
+            { desc: 'Terminales de Ojo/Presión', unit: 'pza', qty: 4.00, price: 0.45, waste: 0 }
         ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
+    },
+    {
+        code: 'E551.112.003',
+        keywords: ['tablero 42 ctos', 'trifasico'],
+        description: 'Instalación de Tablero Eléctrico Trifásico de 42 Circuitos Superficie (E551)',
+        unit: 'pza',
+        yield: 1.00,
+        materials: [
+            { desc: 'Tablero 42 Ctos Trifásico NEMA 1', unit: 'pza', qty: 1.00, price: 280.00, waste: 0 },
+            { desc: 'Terminales Bornes Alta Potencia', unit: 'pza', qty: 4.00, price: 5.50, waste: 0 }
+        ],
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Capataz', count: 0.20 }, { role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
     },
     {
         code: 'E561.111.001',
-        keywords: ['breaker', 'interruptor termomagnetico', 'e561'],
-        description: 'Suministro e Inst. de Interruptor Termomagnético 1P 15A/20A (E561)',
+        keywords: ['breaker 1p', 'termomagnetico 1p'],
+        description: 'Suministro e Inst. de Interruptor Termomagnético 1P (E561)',
         unit: 'pza',
-        yield: 24.00,
-        materials: [
-            { desc: 'Breaker 1P 15A/20A Enchufable', unit: 'pza', qty: 1.00, price: 4.50, waste: 0 }
-        ],
-        equipment: [
-            { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }
-        ],
-        labor: [
-            { role: 'Electricista', count: 1.00 }
-        ]
+        yield: 30.00,
+        materials: [{ desc: 'Breaker 1P 15A/20A Enchufable', unit: 'pza', qty: 1.00, price: 4.50, waste: 0 }],
+        equipment: [{ desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 }],
+        labor: [{ role: 'Electricista', count: 1.00 }]
     },
+
+    // --- LIGHTING (E371 / E571) ---
     {
         code: 'E371.111.101',
-        keywords: ['led', 'panel led', 'luminaria', 'e371'],
-        description: 'Suministro e Inst. de Luminaria LED Panel 60x60 40W (E371)',
+        keywords: ['luminaria led 60x60', 'panel led'],
+        description: 'Instalación de Luminaria LED Panel 60x60 Embutida en Techo (E371)',
         unit: 'pza',
-        yield: 6.00,
+        yield: 8.00,
         materials: [
             { desc: 'Luminaria LED Panel 60x60 40W', unit: 'pza', qty: 1.00, price: 25.00, waste: 0 },
             { desc: 'Conector EMT 1/2"', unit: 'pza', qty: 1.00, price: 0.80, waste: 0 }
         ],
-        equipment: [
-            { desc: 'Andamio Tubular (Cuerpo completo)', qty: 1.00, price: 2.50, factor: 1.0 }
+        equipment: [{ desc: 'Andamio Tubular (Cuerpo completo)', qty: 1.00, price: 2.50, factor: 1.00 }],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
+    },
+
+    // --- GROUNDING (E581) ---
+    {
+        code: 'E581.111.101',
+        keywords: ['barra tierra', 'copperweld', 'electrodo'],
+        description: 'Hincado de Electrodo de Tierra (Barra Copperweld 5/8" x 2.4m) (E581)',
+        unit: 'pza',
+        yield: 4.00,
+        materials: [
+            { desc: 'Barra Tierra Copperweld 5/8" x 2.4m', unit: 'pza', qty: 1.00, price: 18.00, waste: 0 },
+            { desc: 'Conector de Bronce para Barra', unit: 'pza', qty: 1.00, price: 2.50, waste: 0 },
+            { desc: 'Compuesto Intensificador de Tierra', unit: 'saco', qty: 0.50, price: 12.00, waste: 0 }
         ],
-        labor: [
-            { role: 'Electricista', count: 1.00 },
-            { role: 'Ayudante', count: 1.00 }
-        ]
+        equipment: [
+            { desc: 'Herramientas Menores (% M.O.)', qty: 1.00, price: 50.00, factor: 0.05 },
+            { desc: 'Martillo de Mecate / Mandarria', qty: 1.00, price: 10.00, factor: 0.50 }
+        ],
+        labor: [{ role: 'Electricista', count: 1.00 }, { role: 'Ayudante', count: 1.00 }]
     }
 ];
 
