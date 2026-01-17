@@ -1,31 +1,20 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
-
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Production (Supabase/PostgreSQL or Render/PostgreSQL)
+    # Production (Supabase/PostgreSQL)
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
-    # Connection Pool settings
-    engine_args = {
-        "poolclass": QueuePool,
-        "pool_size": 1,        # Minimal for testing
-        "max_overflow": 0,
-        "pool_timeout": 60,    # 1 minute timeout
-        "pool_recycle": 300,
-        "connect_args": {
-            "sslmode": "require",
-            "connect_timeout": 30
-        }
-    }
-    
-    engine = create_engine(DATABASE_URL, **engine_args)
+    # Let Supabase handle the pooling via the URL parameters
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True
+    )
 else:
     # Local development (SQLite)
     DATABASE_URL = "sqlite:///./sql_app.db"
