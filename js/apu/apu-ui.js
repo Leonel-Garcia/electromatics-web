@@ -285,6 +285,11 @@ const apuUI = {
         document.getElementById('sub-util').innerText = ((model.DirectCost + model.AdminAmount + model.UtilityAmount) * mult).toFixed(2);
         
         document.getElementById('final-price').innerText = (model.TotalUnitCost * mult).toFixed(2);
+
+        // Sync to Project Model if it exists
+        if (window.apuProject) {
+            window.apuProject.syncActivePartida();
+        }
     },
     
     // Call from smart JS

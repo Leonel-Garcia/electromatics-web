@@ -27,12 +27,84 @@
         /* Layout Container */
         .apu-layout {
             display: grid;
-            grid-template-columns: 1fr 280px;
+            grid-template-columns: 320px 1fr; /* Swapped for more standard dashboard feel */
             gap: 20px;
-            max-width: 1300px;
+            max-width: 1500px;
             margin: 0 auto;
+            padding: 20px;
             align-items: start;
         }
+
+        .project-dashboard {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .view-toggle {
+            display: flex;
+            background: #eee;
+            border-radius: 6px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .view-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        .view-btn.active {
+            background: var(--electric-blue, #007bff);
+            color: white;
+        }
+
+        .import-zone {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .import-zone:hover {
+            border-color: var(--safety-orange, #ff9800);
+            background: #fff9f0;
+        }
+
+        .partida-list {
+            margin-top: 20px;
+        }
+        .partida-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .partida-item:hover { background: #f0f7ff; }
+        .partida-item.active { border-left: 4px solid var(--electric-blue); background: #eef5ff; }
+
+        .master-budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .master-budget-table th, .master-budget-table td {
+            padding: 12px;
+            border: 1px solid #eee;
+            text-align: left;
+        }
+        .master-budget-table th { background: #f8f9fa; font-weight: bold; }
 
         .paper-sheet {
             background: white;
@@ -183,8 +255,97 @@
 <body>
     
     <div class="apu-layout">
-        <!-- Main Content (Paper Sheet) -->
-        <div class="paper-sheet" id="apu-sheet">
+        <!-- Sidebar: Project & Settings -->
+        <div class="controls-sidebar">
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="apuProject.switchView('project')">Presupuesto</button>
+                <button class="view-btn" onclick="apuProject.switchView('detail')">Detalle APU</button>
+            </div>
+
+            <div id="project-overview-sidebar">
+                <h4 style="margin:0 0 10px 0;"><i class="fa-solid fa-briefcase"></i> Mi Proyecto</h4>
+                <input type="text" id="project-name" class="sheet-input" style="border-bottom:1px solid #ccc; font-weight:bold; margin-bottom:15px;" value="Nuevo Presupuesto Eléctrico">
+                
+                <div class="import-zone" onclick="document.getElementById('pdf-upload').click()">
+                    <i class="fa-solid fa-file-pdf" style="font-size: 24px; color: #d32f2f;"></i><br>
+                    <b>Importar Presupuesto con IA</b>
+                    <p style="font-size:10px; margin:5px 0;">Sube tu PDF para extraer partidas</p>
+                    <input type="file" id="pdf-upload" style="display:none" accept=".pdf">
+                </div>
+
+                <div class="partida-list" id="sidebar-partida-list">
+                    <!-- Partidas extracted by IA appear here -->
+                </div>
+
+                <button class="btn-add-row" style="margin-top:10px" onclick="apuProject.addEmptyPartida()">+ Añadir Partida Manual</button>
+            </div>
+
+            <hr>
+            <h4><i class="fa-solid fa-gear"></i> Configuración Global</h4>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-weight:bold; font-size:11px;">Moneda del Proyecto</label>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="apuUI.setCurrency('USD')" class="btn-sm" style="flex:1">USD ($)</button>
+                    <button onclick="apuUI.setCurrency('BS')" class="btn-sm" style="flex:1">Bs (VES)</button>
+                </div>
+            </div>
+    
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-weight:bold; font-size:11px;">Tasa BCV (Bs/$)</label>
+                <input type="number" id="exchange-rate" value="50.00" class="form-control" style="width:100%">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-weight:bold; font-size:11px;">FCAS Global (%)</label>
+                <input type="number" id="global-fcas" value="250" class="form-control" style="width:100%" oninput="apuProject.updateGlobalParams()">
+            </div>
+
+            <button onclick="apuProject.exportMasterPDF()" class="btn-primary" style="width:100%; padding:12px; margin-bottom:10px;">
+                <i class="fa-solid fa-file-pdf"></i> PDF Presupuesto Completo
+            </button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content-view" style="width: 100%;">
+            <!-- 1. PROJECT VIEW (Default) -->
+            <div id="view-project" class="project-view">
+                <div class="card" style="margin-bottom: 20px; padding: 30px; border-top: 4px solid var(--electric-blue);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                        <div>
+                            <h1 id="display-project-name" style="margin:0">Nuevo Presupuesto Eléctrico</h1>
+                            <p id="display-project-date" style="color:#666; margin:5px 0 0 0">Generado: 17 Ene 2026</p>
+                        </div>
+                        <div style="text-align:right">
+                            <h2 id="project-total" style="color:var(--electric-blue); margin:0">$ 0.00</h2>
+                            <small>Monto Total del Contrato</small>
+                        </div>
+                    </div>
+
+                    <table class="master-budget-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Item</th>
+                                <th style="width: 120px;">Código</th>
+                                <th>Descripción de la Partida</th>
+                                <th style="width: 60px; text-align:center;">Und</th>
+                                <th style="width: 100px; text-align:center;">Cant</th>
+                                <th style="width: 120px; text-align:right;">Precio U.</th>
+                                <th style="width: 150px; text-align:right;">Total</th>
+                                <th style="width: 80px; text-align:center;">APU</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-budget-body">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. APU DETAIL VIEW (Hidden initially) -->
+            <div id="view-detail" class="detail-view" style="display:none;">
+                <div class="paper-sheet" id="apu-sheet">
+                    <!-- (Existing APU content moved here) -->
             
             <div style="text-align: right; margin-bottom: 10px;">
                 Fecha: <span id="current-date">Jan 2026</span>
@@ -352,47 +513,8 @@
                     </div>
                 </div>
             </div>
-    
-        </div>
-        
-        <!-- Controls Sidebar -->
-        <div class="controls-sidebar">
-            <h4><i class="fa-solid fa-gear"></i> Configuración</h4>
-            
-            <div style="margin-bottom: 10px;">
-                <label style="display:block; font-weight:bold; font-size:11px;">Moneda</label>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="apuUI.setCurrency('USD')" class="btn-sm" style="flex:1">USD ($)</button>
-                    <button onclick="apuUI.setCurrency('BS')" class="btn-sm" style="flex:1">Bs (VES)</button>
                 </div>
             </div>
-    
-            <div style="margin-bottom: 10px;">
-                <label style="display:block; font-weight:bold; font-size:11px;">Tasa de Cambio (Bs/$)</label>
-                <input type="number" id="exchange-rate" value="50.00" class="form-control" style="width:100%">
-            </div>
-    
-            <div style="margin-bottom: 10px;">
-                <label style="display:block; font-weight:bold; font-size:11px;">Sector Laboral</label>
-                <select id="labor-sector" class="form-control" style="width:100%" onchange="apuUI.setSector(this.value)">
-                    <option value="construction">Construcción</option>
-                    <option value="oil">Petrolero</option>
-                </select>
-            </div>
-    
-            <button onclick="apuPDF.exportToPDF()" style="width:100%; background:#d32f2f; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 14px; margin-bottom: 10px;">
-                <i class="fa-solid fa-file-pdf"></i> Descargar PDF
-            </button>
-
-            <button onclick="apuExcel.exportToExcel()" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 14px;">
-                <i class="fa-solid fa-file-excel"></i> Descargar Excel
-            </button>
-            
-            <hr>
-            <small style="color:#666; display:block; line-height: 1.4;">
-                <i class="fa-solid fa-robot"></i> 
-                <b>Tip ElectrIA:</b> Escribe "Tubería", "Cable" o "Tomacorriente" en la casilla de Descripción para autocompletar.
-            </small>
         </div>
     </div>
 
@@ -431,6 +553,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="js/apu/apu-data.js"></script>
     <script src="js/apu/apu-core.js"></script>
+    <script src="js/apu/apu-project.js"></script> <!-- New file for project management -->
     <script src="js/apu/apu-smart.js"></script>
     <script src="js/apu/apu-excel.js"></script>
     <script src="js/apu/apu-pdf.js"></script>
