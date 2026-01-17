@@ -10,10 +10,18 @@ if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
-    # Let Supabase handle the pooling via the URL parameters
+    # Configure the engine to be compatible with Supabase Pooler (Transaction Mode)
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True
+        pool_size=1,            # Smallest pool for Free Tier
+        max_overflow=0,         # Do not create more than pool_size
+        pool_timeout=30,
+        pool_recycle=300,
+        pool_pre_ping=True,     # Check connectivity before each query
+        connect_args={
+            "sslmode": "require",
+            "connect_timeout": 10
+        }
     )
 else:
     # Local development (SQLite)
@@ -23,14 +31,9 @@ else:
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
 def get_db():
-    """
-    Dependency that provides a database session.
-    Ensures proper connection cleanup.
-    """
     db = SessionLocal()
     try:
         yield db
