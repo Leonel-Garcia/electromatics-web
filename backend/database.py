@@ -17,8 +17,9 @@ if DATABASE_URL:
     url_parts = list(urlparse.urlparse(DATABASE_URL))
     query = dict(urlparse.parse_qsl(url_parts[4]))
     
-    # Extraer prepare_threshold si existe para evitar error en psycopg2
-    prep_threshold = query.pop('prepare_threshold', None)
+    # Extraer prepare_threshold si existe para evitar error en psycopg2/SQLAlchemy
+    # Lo quitamos tanto de la URL como de los argumentos internos para máxima compatibilidad
+    query.pop('prepare_threshold', None)
     
     url_parts[4] = urlencode(query)
     DATABASE_URL = urlunparse(url_parts)
@@ -27,9 +28,7 @@ if DATABASE_URL:
         "sslmode": "require",
         "connect_timeout": 30
     }
-    
-    if prep_threshold is not None:
-        connect_args["prepare_threshold"] = int(prep_threshold)
+    # No añadimos prep_threshold a connect_args ya que psycopg2 no lo soporta en el DSN o argumentos de conexión directos de esta forma
 
     # 3. Configurar el motor para USA Region
     if "dpg-" in DATABASE_URL:
