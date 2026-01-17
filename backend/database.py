@@ -10,7 +10,26 @@ if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
-    # 2. El motor SQLAlchemy gestionará los parámetros directamente
+    # 2. Extraer parámetros especiales antes de crear el motor
+    import urllib.parse as urlparse
+    from urllib.parse import urlencode, urlunparse
+    
+    url_parts = list(urlparse.urlparse(DATABASE_URL))
+    query = dict(urlparse.parse_qsl(url_parts[4]))
+    
+    # Extraer prepare_threshold si existe para evitar error en psycopg2
+    prep_threshold = query.pop('prepare_threshold', None)
+    
+    url_parts[4] = urlencode(query)
+    DATABASE_URL = urlunparse(url_parts)
+    
+    connect_args = {
+        "sslmode": "require",
+        "connect_timeout": 30
+    }
+    
+    if prep_threshold is not None:
+        connect_args["prepare_threshold"] = int(prep_threshold)
 
     # 3. Configurar el motor para USA Region
     if "dpg-" in DATABASE_URL:
@@ -26,10 +45,7 @@ if DATABASE_URL:
         pool_timeout=30,
         pool_recycle=1800,
         pool_pre_ping=True,
-        connect_args={
-            "sslmode": "require",
-            "connect_timeout": 30
-        }
+        connect_args=connect_args
     )
 else:
     print("⚠️ DATABASE: Using SQLite (NON-PERSISTENT - DATA WILL BE LOST)")
