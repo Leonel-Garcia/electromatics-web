@@ -24,8 +24,17 @@ if DATABASE_URL:
     url_parts[4] = urlencode(query)
     DATABASE_URL = urlunparse(url_parts)
     
+    # Determinar sslmode basado en el host
+    # heroweb.top no soporta SSL, otros servidores (Supabase, Render) sí lo requieren
+    if "heroweb" in DATABASE_URL.lower():
+        ssl_mode = "disable"
+        print("DATABASE: SSL disabled (heroweb.top does not support SSL)")
+    else:
+        ssl_mode = "require"
+        print("DATABASE: SSL enabled")
+    
     connect_args = {
-        "sslmode": "require",
+        "sslmode": ssl_mode,
         "connect_timeout": 30
     }
     # No añadimos prep_threshold a connect_args ya que psycopg2 no lo soporta en el DSN o argumentos de conexión directos de esta forma
