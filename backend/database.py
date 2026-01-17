@@ -9,28 +9,21 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
     # Production (Supabase/PostgreSQL or Render/PostgreSQL)
-    # 1. Fix 'postgres://' for SQLAlchemy
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
-    # 2. Add sslmode=require if it's Supabase and not already there
-    if "supabase" in DATABASE_URL and "sslmode" not in DATABASE_URL:
-        if "?" in DATABASE_URL:
-            DATABASE_URL += "&sslmode=require"
-        else:
-            DATABASE_URL += "?sslmode=require"
-    
+    # Connection Pool settings
     engine_args = {
         "poolclass": QueuePool,
-        "pool_size": 2,        # Reduced for Free Tier compatibility
+        "pool_size": 2,
         "max_overflow": 5,
         "pool_timeout": 30,
-        "pool_recycle": 600,  # More frequent recycle for dynamic IPs
+        "pool_recycle": 600,
     }
     
-    # 3. Connect args (redundancy)
-    if "supabase" in DATABASE_URL:
-        engine_args["connect_args"] = {"sslmode": "require", "connect_timeout": 10}
+    # Use simple SSL for Supabase (Direct IP or Host)
+    if "supabase" in DATABASE_URL or "15.228." in DATABASE_URL:
+        engine_args["connect_args"] = {"sslmode": "require", "connect_timeout": 5}
     
     engine = create_engine(DATABASE_URL, **engine_args)
 else:
