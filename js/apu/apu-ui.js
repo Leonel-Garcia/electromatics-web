@@ -289,17 +289,25 @@ const apuUI = {
     
     // Call from smart JS
     loadTemplate(template) {
-        document.querySelector('#table-materials tbody').innerHTML = '';
-        document.querySelector('#table-equipment tbody').innerHTML = '';
-        document.querySelector('#table-labor tbody').innerHTML = '';
+        console.log("Loading template into UI...", template.code);
+        const matTbody = document.querySelector('#table-materials tbody');
+        const eqTbody = document.querySelector('#table-equipment tbody');
+        const labTbody = document.querySelector('#table-labor tbody');
+
+        if(matTbody) matTbody.innerHTML = '';
+        if(eqTbody) eqTbody.innerHTML = '';
+        if(labTbody) labTbody.innerHTML = '';
         
-        template.materials.forEach(m => this.addMaterialRow(m));
-        template.equipment.forEach(e => this.addEquipmentRow(e)); // Ensure template has factor
-        template.labor.forEach(l => this.addLaborRow(l));
+        if (template.materials) template.materials.forEach(m => this.addMaterialRow(m));
+        if (template.equipment) template.equipment.forEach(e => this.addEquipmentRow(e)); 
+        if (template.labor) template.labor.forEach(l => this.addLaborRow(l));
         
         this.updateCalculation();
+        console.log("Template loaded successfully");
     }
 };
+
+window.apuUI = apuUI;
 
 document.addEventListener('DOMContentLoaded', () => {
     apuUI.init();

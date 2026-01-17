@@ -188,6 +188,9 @@ const APU_TEMPLATES = [
     }
 ];
 
+// Make templates global
+window.APU_TEMPLATES = APU_TEMPLATES;
+
 class APUSmart {
     constructor() {
         this.inputElement = document.getElementById('partida-desc');
@@ -207,7 +210,8 @@ class APUSmart {
 
         const matches = APU_TEMPLATES.filter(t => 
             t.keywords.some(k => value.includes(k)) || 
-            t.description.toLowerCase().includes(value)
+            t.description.toLowerCase().includes(value) ||
+            t.code.toLowerCase().includes(value)
         );
 
         this.renderSuggestions(matches);
@@ -222,15 +226,20 @@ class APUSmart {
         this.suggestionsBox.innerHTML = '';
         matches.forEach(match => {
             const div = document.createElement('div');
-            div.style.padding = '8px';
+            div.className = 'suggestion-item';
+            div.style.padding = '10px';
             div.style.cursor = 'pointer';
             div.style.borderBottom = '1px solid #eee';
-            div.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles" style="color: gold;"></i> <b>${match.code}</b> - ${match.description} (Rend: ${match.yield})`;
+            div.style.background = 'white';
+            div.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles" style="color: gold;"></i> <b>${match.code}</b> - ${match.description} <br><small style="color:#666">Rend: ${match.yield} ${match.unit}/dia</small>`;
             
-            div.onmouseover = () => { div.style.background = '#f0f0f0'; };
+            div.onmouseover = () => { div.style.background = '#f8f9fa'; };
             div.onmouseout = () => { div.style.background = 'white'; };
             
-            div.onclick = () => this.applyTemplate(match);
+            div.onclick = () => {
+                console.log("Template selected:", match.code);
+                this.applyTemplate(match);
+            };
             this.suggestionsBox.appendChild(div);
         });
 
@@ -238,23 +247,34 @@ class APUSmart {
     }
 
     applyTemplate(template) {
-        document.getElementById('partida-desc').value = template.description;
-        document.getElementById('partida-unidad').value = template.unit;
-        document.getElementById('partida-rendimiento').value = template.yield;
-        
-        const codeInput = document.getElementById('partida-codigo');
-        if (codeInput && template.code) {
-            codeInput.value = template.code;
-        }
-        
-        if (window.apuUI) {
-            window.apuUI.loadTemplate(template);
-        }
+        try {
+            if(document.getElementById('partida-desc')) document.getElementById('partida-desc').value = template.description;
+            if(document.getElementById('partida-unidad')) document.getElementById('partida-unidad').value = template.unit;
+            if(document.getElementById('partida-rendimiento')) document.getElementById('partida-rendimiento').value = template.yield;
+            
+            const codeInput = document.getElementById('partida-codigo');
+            if (codeInput && template.code) {
+                codeInput.value = template.code;
+            }
+            
+            if (window.apuUI) {
+                window.apuUI.loadTemplate(template);
+            } else if (typeof apuUI !== 'undefined') {
+                apuUI.loadTemplate(template);
+            } else {
+                console.error("apuUI not found!");
+            }
 
-        this.suggestionsBox.style.display = 'none';
+            this.suggestionsBox.style.display = 'none';
+        } catch (e) {
+            console.error("Error applying template:", e);
+        }
     }
 }
 
+window.APUSmart = APUSmart;
+
 document.addEventListener('DOMContentLoaded', () => {
     window.apuSmart = new APUSmart();
+    console.log("APUSmart initialized");
 });

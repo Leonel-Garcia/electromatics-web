@@ -108,9 +108,12 @@ const APU_DATA = {
 
 };
 
+window.APU_DATA = APU_DATA;
+
 // Current Configuration
-const APU_CONFIG = {
+var APU_CONFIG = {
     currentSector: 'construction', // or 'oil'
     currency: 'USD',
     exchangeRate: 50.0 // Default Bs/$
 };
+window.APU_CONFIG = APU_CONFIG;
