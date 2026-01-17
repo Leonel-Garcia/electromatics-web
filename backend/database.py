@@ -10,17 +10,7 @@ if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
-    # 2. AUTO-CORRECCIÓN: Eliminar parámetros que Psycopg2 no entiende (como prepare_threshold)
-    # Esto soluciona problemas de memoria caché en Render
-    if "prepare_threshold" in DATABASE_URL:
-        import urllib.parse as urlparse
-        from urllib.parse import urlencode, urlunparse
-        
-        url_parts = list(urlparse.urlparse(DATABASE_URL))
-        query = dict(urlparse.parse_qsl(url_parts[4]))
-        query.pop('prepare_threshold', None)  # Borrar el culpable
-        url_parts[4] = urlencode(query)
-        DATABASE_URL = urlunparse(url_parts)
+    # 2. El motor SQLAlchemy gestionará los parámetros directamente
 
     # 3. Configurar el motor para USA Region
     if "dpg-" in DATABASE_URL:
