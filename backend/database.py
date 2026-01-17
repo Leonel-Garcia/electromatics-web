@@ -9,17 +9,21 @@ if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
-    # Engine optimized for Supabase Pooler (Session Mode - Port 5432)
+    # Engine configured for Supabase Transaction Pooler (Port 6543)
     engine = create_engine(
         DATABASE_URL,
-        pool_size=5,             # Allow up to 5 concurrent connections
-        max_overflow=10,         # Allow temporary spikes
+        pool_size=3,              # Small pool for better stability
+        max_overflow=0,
         pool_timeout=30,
-        pool_recycle=1800,       # Keep connections alive for 30 min
-        pool_pre_ping=True,      # Vital: Checks if connection is alive before using it
+        pool_recycle=1800,
+        pool_pre_ping=True,
+        # IMPORTANT: Disable statement caching for Supavisor compatibility
+        execution_options={
+            "isolation_level": "AUTOCOMMIT"
+        },
         connect_args={
             "sslmode": "require",
-            "connect_timeout": 15
+            "connect_timeout": 20
         }
     )
 else:
