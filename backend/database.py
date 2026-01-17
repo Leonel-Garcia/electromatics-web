@@ -23,7 +23,12 @@ if DATABASE_URL:
         DATABASE_URL = urlunparse(url_parts)
 
     # 3. Configurar el motor para USA Region
-    print("🗄️ DATABASE: Connecting to PostgreSQL (Persistent)")
+    if "dpg-" in DATABASE_URL:
+        print("❌ CRITICAL WARNING: You are using a Render INTERNAL URL ('dpg-...').")
+        print("   This URL only works inside Render's network and often expires.")
+        print("   For persistence, please change it to your SUPABASE URL in the Render Dashboard.")
+    
+    print(f"🗄️ DATABASE: Connecting to PostgreSQL")
     engine = create_engine(
         DATABASE_URL,
         pool_size=3,
