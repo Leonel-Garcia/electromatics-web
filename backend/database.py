@@ -25,7 +25,7 @@ if DATABASE_URL:
     DATABASE_URL = urlunparse(url_parts)
     
     # Determinar sslmode basado en el host
-    # heroweb.top no soporta SSL, otros servidores (Supabase, Render) sí lo requieren
+    # heroweb.top no soporta SSL, otros servidores PostgreSQL pueden requerirlo
     if "heroweb" in DATABASE_URL.lower():
         ssl_mode = "disable"
         print("DATABASE: SSL disabled (heroweb.top does not support SSL)")
@@ -37,14 +37,8 @@ if DATABASE_URL:
         "sslmode": ssl_mode,
         "connect_timeout": 30
     }
-    # No añadimos prep_threshold a connect_args ya que psycopg2 no lo soporta en el DSN o argumentos de conexión directos de esta forma
+    # No añadimos prep_threshold a connect_args ya que psycopg2 no lo soporta
 
-    # 3. Configurar el motor para USA Region
-    if "dpg-" in DATABASE_URL:
-        print("❌ CRITICAL WARNING: You are using a Render INTERNAL URL ('dpg-...').")
-        print("   This URL only works inside Render's network and often expires.")
-        print("   For persistence, please change it to your SUPABASE URL in the Render Dashboard.")
-    
     print(f"DATABASE: Connecting to PostgreSQL")
     engine = create_engine(
         DATABASE_URL,
