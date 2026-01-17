@@ -10,7 +10,6 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        sync: false # Tell Render to use dashboard value
     autoDeploy: true
 
   # 2. Start the Frontend Website (Static HTML/JS)

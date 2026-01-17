@@ -18,10 +18,15 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Run migrations (Add missing columns if any)
-migrations.run_migrations(database.engine)
-
-models.Base.metadata.create_all(bind=database.engine)
+# Run migrations and create tables safely
+try:
+    logger.info("Starting database initialization...")
+    migrations.run_migrations(database.engine)
+    models.Base.metadata.create_all(bind=database.engine)
+    logger.info("Database initialization successful.")
+except Exception as e:
+    logger.error(f"❌ DATABASE INIT FAILED: {str(e)}")
+    logger.error("The app will attempt to run anyway, but DB calls may fail.")
 
 app = FastAPI()
 
