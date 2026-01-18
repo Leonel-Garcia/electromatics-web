@@ -228,7 +228,7 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
         }
     }
 
-@app.get("/admin/users")
+@app.get("/admin/users", response_model=schemas.UsersList)
 def get_all_users(
     skip: int = 0, 
     limit: int = 20, 

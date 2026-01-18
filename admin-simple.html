@@ -197,7 +197,7 @@
                         ${user.isAdmin ? '<span class="badge admin">Admin</span> ' : ''}
                         ${user.isPremium ? '<span class="badge premium">Premium</span>' : ''}
                     </td>
-                    <td>${new Date(user.createdAt).toLocaleDateString('es-VE')}</td>
+                    <td>${user.created_at ? new Date(user.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
                 </tr>
             `).join('');
         }

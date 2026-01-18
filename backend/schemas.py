@@ -50,3 +50,9 @@ class VisitCreate(BaseModel):
 
 class VisitHeartbeat(BaseModel):
     visit_id: int
+
+class UsersList(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    users: list[User]
