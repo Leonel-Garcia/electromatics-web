@@ -206,118 +206,99 @@ class APUProject {
     }
 
     async exportMasterPDF() {
-        if (!window.html2pdf) return;
-        
-        // Save current UI context
-        const savedIndex = this.activePartidaIndex;
-        const savedView = document.getElementById('view-project').style.display === 'none' ? 'detail' : 'project';
-        const savedState = window.apuUI ? apuUI.getState() : null;
-
-        const mainContainer = document.createElement('div');
-        mainContainer.style.background = 'white';
-        mainContainer.style.fontFamily = "'Times New Roman', Times, serif";
-        // Width for Letter: 215.9mm. Using px equivalent (approx 816px at 96dpi) 
-        // but html2pdf handles mm accurately if we set width in style.
-        mainContainer.style.width = '215.9mm'; 
-
-        // 1. PAGES: ALL APPROVED APUS FIRST
-        let apuCount = 0;
-        for (const p of this.partidas) {
-            if (p.apuData) {
-                const apuPage = document.createElement('div');
-                // Avoid blank first page: Apply break only if not the first page
-                if (apuCount > 0) {
-                    apuPage.style.pageBreakBefore = 'always';
-                }
-                
-                apuPage.style.padding = '15mm'; // Slightly smaller margin to fit content
-                apuPage.style.boxSizing = 'border-box';
-                apuPage.style.width = '215.9mm';
-                
-                // Temporarily load into UI to get rendered state
-                apuUI.loadState(p.apuData);
-                const apuSheet = document.getElementById('apu-sheet');
-                const clone = apuPDF.getCleanClone(apuSheet);
-                
-                apuPage.appendChild(clone);
-                mainContainer.appendChild(apuPage);
-                apuCount++;
-            }
-        }
-
-        // 2. PAGE: BUDGET SUMMARY (PRESUPUESTO GENERAL) AT THE END
-        const summaryPage = document.createElement('div');
-        // Always break before summary if we have APUs, or if it's the only page (count=0) it won't matter
-        if (apuCount > 0) {
-             summaryPage.style.pageBreakBefore = 'always';
-        }
-        summaryPage.style.padding = '15mm';
-        summaryPage.style.boxSizing = 'border-box';
-        summaryPage.style.width = '215.9mm';
-        
-        const summaryHeader = document.createElement('div');
-        summaryHeader.innerHTML = `
-            <div style="text-align:center; margin-bottom: 30pt;">
-                <h1 style="font-size: 24pt; margin-bottom: 10pt; font-weight:bold;">PRESUPUESTO GENERAL</h1>
-                <h2 style="font-size: 18pt; color: #000;">${this.name}</h2>
-                <div style="width: 100%; border-top: 2.5pt solid #000; margin: 20pt 0;"></div>
-            </div>
-        `;
-        
-        const masterTable = document.querySelector('.master-budget-table').cloneNode(true);
-        masterTable.style.width = '100%';
-        masterTable.style.borderCollapse = 'collapse';
-        masterTable.style.fontSize = '12pt';
-        masterTable.querySelectorAll('th, td').forEach(cell => {
-            cell.style.border = '1.5pt solid #000';
-            cell.style.padding = '8pt';
-            cell.style.color = '#000';
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'letter'
         });
-        
-        masterTable.querySelectorAll('tr').forEach(tr => {
-            tr.style.pageBreakInside = 'avoid';
-        });
-        masterTable.querySelectorAll('th:last-child, td:last-child').forEach(el => el.remove());
 
-        const summaryFooter = document.createElement('div');
-        summaryFooter.style.marginTop = '40pt';
-        summaryFooter.style.textAlign = 'right';
-        summaryFooter.innerHTML = `
-            <h3 style="font-size: 18pt; font-weight:bold;">TOTAL DEL PRESUPUESTO: <span style="border-bottom: 4pt double #000; padding: 0 10pt;">${document.getElementById('project-total').innerText}</span></h3>
-        `;
-
-        summaryPage.appendChild(summaryHeader);
-        summaryPage.appendChild(masterTable);
-        summaryPage.appendChild(summaryFooter);
-        mainContainer.appendChild(summaryPage);
-
-        // 3. EXPORT SETTINGS (MAX FIDELITY & NO INTERNAL MARGINS)
-        const opt = {
-            margin:       0, // We control margins with padding in the elements
-            filename:     `${this.name.replace(/ /g, '_')}_Completo.pdf`,
-            image:        { type: 'jpeg', quality: 1.0 }, 
-            html2canvas:  { scale: 3, useCORS: true, letterRendering: true, width: 816 }, // Force 816px which corresponds to Letter 
-            jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' },
-            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
+        // 1. Overlay for UX
         const overlay = document.createElement('div');
         overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:20000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family: 'Times New Roman', serif;";
         overlay.innerHTML = `
-            <i class="fa-solid fa-file-circle-check fa-spin fa-5x" style="margin-bottom:20px; color:#4CAF50;"></i>
-            <h2 style="font-size:24pt;">Generando Reporte de Ingeniería</h2>
-            <p style="font-size:14pt;">Ajustando Dimensiones Carta (215.9mm)...</p>
+            <i class="fa-solid fa-layer-group fa-spin fa-5x" style="margin-bottom:20px; color:#4CAF50;"></i>
+            <h2 style="font-size:24pt;">Compilando Proyecto Eléctrico</h2>
+            <p style="font-size:14pt;">Generando Análisis y Presupuesto Vectorial...</p>
         `;
         document.body.appendChild(overlay);
 
         try {
-            await html2pdf().set(opt).from(mainContainer).save();
+            // 2. PAGES: ALL APPROVED APUS
+            let apuCount = 0;
+            for (const p of this.partidas) {
+                if (p.apuData) {
+                    if (apuCount > 0) doc.addPage();
+                    apuPDF.drawFullAPUPage(doc, p.apuData);
+                    apuCount++;
+                }
+            }
+
+            // 3. PAGE: BUDGET SUMMARY (PRESUPUESTO GENERAL)
+            if (apuCount > 0) doc.addPage();
+            
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const contentWidth = pageWidth - (margin * 2);
+            let y = margin;
+
+            doc.setFont("times", "bold");
+            doc.setFontSize(18);
+            doc.text("PRESUPUESTO GENERAL", pageWidth / 2, y + 10, { align: "center" });
+            
+            doc.setFontSize(14);
+            doc.text(this.name, pageWidth / 2, y + 18, { align: "center" });
+            
+            doc.setLineWidth(1);
+            doc.line(margin, y + 25, margin + contentWidth, y + 25);
+
+            y += 35;
+
+            const summaryRows = this.partidas.map(p => [
+                p.item,
+                p.code,
+                p.description,
+                p.unit,
+                p.qty,
+                apuPDF.formatCurrency(p.unitPrice),
+                apuPDF.formatCurrency(p.qty * p.unitPrice)
+            ]);
+
+            doc.autoTable({
+                startY: y,
+                head: [['Item', 'Código', 'Descripción', 'Und', 'Cant', 'Precio U.', 'Total']],
+                body: summaryRows,
+                margin: { left: margin },
+                styles: { font: "times", fontSize: 10, cellPadding: 3, lineColor: [0,0,0], lineWidth: 0.1 },
+                headStyles: { fillColor: [22, 31, 41], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+                columnStyles: {
+                    0: { cellWidth: 15, halign: 'center' },
+                    1: { cellWidth: 25, halign: 'center' },
+                    2: { cellWidth: 'auto' },
+                    3: { cellWidth: 15, halign: 'center' },
+                    4: { cellWidth: 15, halign: 'center' },
+                    5: { cellWidth: 25, halign: 'right' },
+                    6: { cellWidth: 30, halign: 'right' }
+                },
+                theme: 'grid'
+            });
+
+            const finalY = doc.lastAutoTable.finalY;
+            const grandTotal = document.getElementById('project-total').innerText;
+
+            doc.setFontSize(12);
+            doc.setFont("times", "bold");
+            doc.text(`TOTAL DEL PRESUPUESTO:`, pageWidth - margin - 60, finalY + 15, { align: "right" });
+            doc.text(grandTotal, pageWidth - margin, finalY + 15, { align: "right" });
+
+            // 4. SAVE
+            doc.save(`${this.name.replace(/ /g, '_')}_Completo.pdf`);
+
+        } catch (error) {
+            console.error("Master PDF Export Error:", error);
+            alert("Error generando el PDF completo. Revise la consola.");
         } finally {
             document.body.removeChild(overlay);
-            // Restore UI
-            if (savedState) apuUI.loadState(savedState);
-            this.switchView(savedView);
-            this.activePartidaIndex = savedIndex;
         }
     }
 
