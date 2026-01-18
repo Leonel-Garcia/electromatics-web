@@ -250,11 +250,36 @@
     </style>
 </head>
 <body>
-    
-</head>
-<body>
-    
-    <div class="apu-layout">
+    <!-- Header y Navegación -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        
+        <!-- Mobile Nav Toggle -->
+        <button class="mobile-nav-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="que-es-electromatics.html">Qué es</a>
+          <a href="para-quien-es.html">Para quién</a>
+          <a href="calculos-electricos.html">Cálculos</a>
+          <a href="normativa-electrica.html">Normativa</a>
+          <a href="simuladores.html">Simuladores</a>
+          <a href="formacion.html">Formación</a>
+          <a href="electro-info.html">Tecno-Info</a>
+          <a href="apu.html" class="active">Presupuestos</a>
+          <a href="calculadora.html">App IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <div class="apu-layout" style="margin-top: 30px;">
         <!-- Sidebar: Project & Settings -->
         <div class="controls-sidebar">
             <div class="view-toggle">
@@ -281,6 +306,10 @@
             </div>
 
             <hr>
+            <a href="index.html" style="display:block; margin-bottom: 20px; color: #666; text-decoration: none; font-size: 13px;">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Inicio
+            </a>
+            
             <h4><i class="fa-solid fa-gear"></i> Configuración Global</h4>
             
             <div style="margin-bottom: 15px;">
@@ -515,37 +544,6 @@
             </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-
-    <style>
-        /* ... existing styles ... */
-        
-        /* Print/PDF Specifics */
-        .printing-mode .fa-xmark {
-            display: none !important; /* Hide delete buttons in PDF */
-        }
-        .printing-mode .btn-add-row {
-            display: none !important;
-        }
-        .printing-mode .sheet-input {
-            border: none; /* Ensure no borders on inputs if any */
-        }
-    </style>
-</head>
-<body>
-    
-    <div class="apu-layout">
-        <!-- ... content ... -->
-        
-        <!-- Controls Sidebar -->
-        <div class="controls-sidebar">
-            <!-- ... -->
-            
-
-            
-            <!-- ... -->
         </div>
     </div>
 
