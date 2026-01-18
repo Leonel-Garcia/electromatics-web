@@ -11,10 +11,10 @@ const apuPDF = {
         const clone = source.cloneNode(true);
         clone.id = 'apu-pdf-render-' + Math.random().toString(36).substr(2, 9);
         
-        // 1. GLOBAL STYLING (Engineering Standard)
+        // 1. GLOBAL STYLING (Strict Engineering Standard)
         const fontStack = "'Times New Roman', Times, serif";
         clone.style.fontFamily = fontStack;
-        clone.style.fontSize = '12pt';
+        clone.style.fontSize = '11pt'; // Reduced from 12pt
         clone.style.color = '#000';
         clone.style.background = '#fff';
         clone.style.padding = '0';
@@ -28,35 +28,35 @@ const apuPDF = {
             span.innerText = input.value || '';
             span.style.fontWeight = 'bold';
             span.style.fontFamily = fontStack;
-            span.style.fontSize = '12pt';
+            span.style.fontSize = '11pt';
             input.parentNode.replaceChild(span, input);
         });
 
         // 3. REMOVE INTERACTIVE ELEMENTS
         clone.querySelectorAll('.fa-xmark, .btn-add-row, .controls-overlay, .mat-suggestions, .eq-suggestions, .smart-suggestions').forEach(el => el.remove());
         
-        // 4. TABLE STYLING (Sharp Lines & Perfect Alignment)
+        // 4. TABLE STYLING (Compact & Sharp)
         clone.querySelectorAll('table').forEach(table => {
             table.style.width = '100%';
             table.style.borderCollapse = 'collapse';
-            table.style.marginBottom = '10pt';
+            table.style.marginBottom = '5pt'; // Tighten vertical space
             table.style.tableLayout = 'fixed';
-            table.style.border = '1.5pt solid #000'; // Thicker outer border
+            table.style.border = '1.5pt solid #000'; 
         });
 
         clone.querySelectorAll('th').forEach(th => {
             th.style.border = '1pt solid #000';
-            th.style.padding = '4pt';
+            th.style.padding = '2pt'; // Tightened padding
             th.style.backgroundColor = '#f2f2f2';
-            th.style.fontSize = '11pt';
+            th.style.fontSize = '10pt'; 
             th.style.textTransform = 'uppercase';
             th.style.fontFamily = fontStack;
         });
 
         clone.querySelectorAll('td').forEach(td => {
-            td.style.border = '0.5pt solid #000'; // Thin but sharp inner lines
-            td.style.padding = '4pt';
-            td.style.fontSize = '11pt';
+            td.style.border = '0.5pt solid #000'; 
+            td.style.padding = '2pt'; // Tightened padding
+            td.style.fontSize = '10pt';
             td.style.fontFamily = fontStack;
             td.style.wordWrap = 'break-word';
         });
@@ -69,21 +69,21 @@ const apuPDF = {
         // 5. HEADER & TITLES
         const headerTitle = clone.querySelector('.header-title');
         if (headerTitle) {
-            headerTitle.style.fontSize = '16pt';
+            headerTitle.style.fontSize = '14pt';
             headerTitle.style.fontWeight = 'bold';
             headerTitle.style.textAlign = 'center';
-            headerTitle.style.marginBottom = '15pt';
+            headerTitle.style.marginBottom = '10pt';
             headerTitle.style.textDecoration = 'underline';
         }
 
         const sectionHeaders = clone.querySelectorAll('.apu-section-header');
         sectionHeaders.forEach(sh => {
-            sh.style.fontSize = '13pt';
+            sh.style.fontSize = '11pt';
             sh.style.fontWeight = 'bold';
             sh.style.backgroundColor = '#000';
             sh.style.color = '#fff';
-            sh.style.padding = '4pt';
-            sh.style.marginTop = '10pt';
+            sh.style.padding = '2pt';
+            sh.style.marginTop = '6pt';
         });
 
         return clone;
