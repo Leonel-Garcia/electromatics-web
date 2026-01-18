@@ -80,7 +80,10 @@ const ElectrIA = {
 
         } catch (error) {
             console.error("Error calling Gemini API:", error);
-            return `Error técnico: ${error.message}. Por favor intenta más tarde.`;
+            if (error.message.includes('429') || error.message.includes('503')) {
+                return "⚠️ ElectrIA está experimentando alto tráfico en este momento. Por favor espera unos segundos e intenta nuevamente.";
+            }
+            return `Lo siento, hubo un error técnico. Intenta reformular tu pregunta.`;
         }
     },
 
