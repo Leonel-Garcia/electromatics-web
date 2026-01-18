@@ -224,37 +224,66 @@ class APUProject {
         mainContainer.style.background = 'white';
         mainContainer.style.fontFamily = "'Times New Roman', Times, serif";
 
-        // 1. PAGE: BUDGET SUMMARY
+        // 1. PAGES: ALL APPROVED APUS FIRST
+        let apuCount = 0;
+        for (const p of this.partidas) {
+            if (p.apuData) {
+                const apuPage = document.createElement('div');
+                // Page break before every APU
+                apuPage.style.pageBreakBefore = 'always';
+                apuPage.style.padding = '20mm';
+                apuPage.style.width = '216mm'; // Letter width minus some buffer if needed
+                
+                // Temporarily load into UI to get rendered state
+                apuUI.loadState(p.apuData);
+                const apuSheet = document.getElementById('apu-sheet');
+                const clone = apuPDF.getCleanClone(apuSheet);
+                
+                apuPage.appendChild(clone);
+                mainContainer.appendChild(apuPage);
+                apuCount++;
+            }
+        }
+
+        // 2. PAGE: BUDGET SUMMARY (PRESUPUESTO GENERAL) AT THE END
         const summaryPage = document.createElement('div');
+        // Always break before summary as well
+        summaryPage.style.pageBreakBefore = 'always';
         summaryPage.style.padding = '20mm';
-        summaryPage.style.minHeight = '279mm'; // Letter Height approx
+        summaryPage.style.width = '216mm';
         
         const summaryHeader = document.createElement('div');
         summaryHeader.innerHTML = `
             <div style="text-align:center; margin-bottom: 30pt;">
-                <h1 style="font-size: 24pt; margin-bottom: 10pt;">PRESUPUESTO GENERAL</h1>
-                <h2 style="font-size: 18pt; color: #333;">${this.name}</h2>
-                <div style="width: 100%; border-top: 2pt solid #000; margin: 20pt 0;"></div>
+                <h1 style="font-size: 24pt; margin-bottom: 10pt; font-weight:bold;">PRESUPUESTO GENERAL</h1>
+                <h2 style="font-size: 18pt; color: #000;">${this.name}</h2>
+                <div style="width: 100%; border-top: 2.5pt solid #000; margin: 20pt 0;"></div>
             </div>
         `;
         
         const masterTable = document.querySelector('.master-budget-table').cloneNode(true);
-        // Style summary table for PDF
         masterTable.style.width = '100%';
         masterTable.style.borderCollapse = 'collapse';
         masterTable.style.fontSize = '12pt';
         masterTable.querySelectorAll('th, td').forEach(cell => {
-            cell.style.border = '1pt solid #000';
-            cell.style.padding = '8pt';
+            cell.style.border = '1.5pt solid #000'; // High definition lines
+            cell.style.padding = '10pt';
+            cell.style.color = '#000';
         });
+        
+        // Prevent rows from breaking halfway
+        masterTable.querySelectorAll('tr').forEach(tr => {
+            tr.style.pageBreakInside = 'avoid';
+        });
+
         // Remove "APU" action column
         masterTable.querySelectorAll('th:last-child, td:last-child').forEach(el => el.remove());
 
         const summaryFooter = document.createElement('div');
-        summaryFooter.style.marginTop = '30pt';
+        summaryFooter.style.marginTop = '40pt';
         summaryFooter.style.textAlign = 'right';
         summaryFooter.innerHTML = `
-            <h3 style="font-size: 16pt;">TOTAL GENERAL: <span style="border-bottom: 3pt double #000;">${document.getElementById('project-total').innerText}</span></h3>
+            <h3 style="font-size: 18pt; font-weight:bold;">TOTAL DEL PRESUPUESTO: <span style="border-bottom: 4pt double #000; padding: 0 10pt;">${document.getElementById('project-total').innerText}</span></h3>
         `;
 
         summaryPage.appendChild(summaryHeader);
@@ -262,37 +291,23 @@ class APUProject {
         summaryPage.appendChild(summaryFooter);
         mainContainer.appendChild(summaryPage);
 
-        // 2. PAGES: ALL APPROVED APUS
-        for (const p of this.partidas) {
-            if (p.apuData) {
-                // Add Page Break
-                const pageBreak = document.createElement('div');
-                pageBreak.style.pageBreakBefore = 'always';
-                pageBreak.style.padding = '20mm';
-                pageBreak.style.minHeight = '279mm';
-
-                // Temporarily load into UI to get rendered state
-                apuUI.loadState(p.apuData);
-                const apuSheet = document.getElementById('apu-sheet');
-                const clone = apuPDF.getCleanClone(apuSheet);
-                
-                pageBreak.appendChild(clone);
-                mainContainer.appendChild(pageBreak);
-            }
-        }
-
-        // 3. EXPORT SETTINGS
+        // 3. EXPORT SETTINGS (MAX FIDELITY)
         const opt = {
-            margin:       [0, 0, 0, 0], // We handle padding inside the elements
+            margin:       0,
             filename:     `${this.name.replace(/ /g, '_')}_Completo.pdf`,
             image:        { type: 'jpeg', quality: 1.0 }, 
             html2canvas:  { scale: 3, useCORS: true, letterRendering: true }, 
-            jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
         const overlay = document.createElement('div');
-        overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family: sans-serif;";
-        overlay.innerHTML = `<i class="fa-solid fa-file-pdf fa-spin fa-4x" style="margin-bottom:15px;"></i><h2>Generando Reporte de Ingeniería...</h2><p>Procesando páginas independientes con alta fidelidad.</p>`;
+        overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:20000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family: 'Times New Roman', serif;";
+        overlay.innerHTML = `
+            <i class="fa-solid fa-file-circle-check fa-spin fa-5x" style="margin-bottom:20px; color:#4CAF50;"></i>
+            <h2 style="font-size:24pt;">Generando Reporte de Ingeniería</h2>
+            <p style="font-size:14pt;">Organizando ${apuCount} Análisis y Presupuesto General...</p>
+        `;
         document.body.appendChild(overlay);
 
         try {
