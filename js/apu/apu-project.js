@@ -80,18 +80,11 @@ class APUProject {
             this.renderMasterTable();
             this.renderSidebar();
             
-            // 4. Sequence Logic
-            const nextItemNumber = this.partidas.length + 1;
+            alert(`Partida ${partida.code} aprobada y exportada! Presupuesto actualizado.`);
             
-            this.addEmptyPartida();
-            this.activePartidaIndex = this.partidas.length - 1; 
-            
-            if (window.apuUI) {
-                apuUI.clearForm();
-                document.getElementById('apu-partida-no').value = nextItemNumber;
-            }
-            
-            alert(`Partida ${partida.code} aprobada! Presupuesto actualizado.`);
+            // Return to master list to pick the next extracted partida
+            this.switchView('project');
+            this.activePartidaIndex = null;
         } else {
             alert("Error: No se ha podido obtener el costo unitario.");
         }
