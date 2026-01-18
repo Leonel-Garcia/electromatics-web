@@ -302,7 +302,7 @@ def export_users_csv(
             user.id,
             user.email,
             user.full_name,
-            user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '',
+            (user.created_at - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M') if user.created_at else '',
             'Sí' if user.is_premium else 'No',
             'Sí' if user.email_verified else 'No',
             'Sí' if user.is_admin else 'No'

@@ -206,7 +206,16 @@
                                 ${user.is_admin ? '<span class="badge admin">Admin</span> ' : ''}
                                 ${user.is_premium ? '<span class="badge premium">Premium</span>' : ''}
                             </td>
-                            <td>${user.created_at ? new Date(user.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
+                            <td>${(() => {
+                                if (!user.created_at) return 'N/A';
+                                const dateStr = (typeof user.created_at === 'string' && !user.created_at.includes('Z') && !user.created_at.includes('+')) 
+                                    ? user.created_at.replace(' ', 'T') + 'Z' 
+                                    : user.created_at;
+                                const d = new Date(dateStr);
+                                return !isNaN(d.getTime()) 
+                                    ? d.toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' }) 
+                                    : 'N/A';
+                            })()}</td>
                         </tr>
                     `).join('');
                 } else {

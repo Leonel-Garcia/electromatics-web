@@ -434,14 +434,20 @@
                     } else {
                         data.users.forEach(user => {
                             const tr = document.createElement('tr');
-                            const rawDate = user.created_at || user.createdAt;
                             let regDate = 'No disponible';
                             if (rawDate) {
-                                const d = new Date(rawDate);
+                                // Asegurar que el navegador entienda que la fecha viene en UTC (Z)
+                                const dateStr = (typeof rawDate === 'string' && !rawDate.includes('Z') && !rawDate.includes('+')) 
+                                    ? rawDate.replace(' ', 'T') + 'Z' 
+                                    : rawDate;
+                                    
+                                const d = new Date(dateStr);
                                 if (!isNaN(d.getTime())) {
+                                    // Forzar visualización en horario de Venezuela
                                     regDate = d.toLocaleString('es-VE', { 
                                         day: '2-digit', month: '2-digit', year: 'numeric', 
-                                        hour: '2-digit', minute: '2-digit' 
+                                        hour: '2-digit', minute: '2-digit',
+                                        timeZone: 'America/Caracas'
                                     });
                                 }
                             }
