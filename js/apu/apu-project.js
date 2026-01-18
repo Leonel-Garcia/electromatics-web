@@ -32,18 +32,56 @@ class APUProject {
         const projectView = document.getElementById('view-project');
         const detailView = document.getElementById('view-detail');
         const btns = document.querySelectorAll('.view-btn');
+        const overviewSidebar = document.getElementById('project-overview-sidebar');
+        const actionsSidebar = document.getElementById('partida-actions-sidebar');
 
         if(view === 'project') {
-            projectView.style.display = 'block';
-            detailView.style.display = 'none';
+            if(projectView) projectView.style.display = 'block';
+            if(detailView) detailView.style.display = 'none';
+            if(overviewSidebar) overviewSidebar.style.display = 'block';
+            if(actionsSidebar) actionsSidebar.style.display = 'none';
             btns[0].classList.add('active');
             btns[1].classList.remove('active');
             this.renderMasterTable();
         } else {
-            projectView.style.display = 'none';
-            detailView.style.display = 'block';
+            if(projectView) projectView.style.display = 'none';
+            if(detailView) detailView.style.display = 'block';
+            if(overviewSidebar) overviewSidebar.style.display = 'none';
+            if(actionsSidebar) actionsSidebar.style.display = 'block';
             btns[1].classList.add('active');
             btns[0].classList.remove('active');
+        }
+    }
+
+    /**
+     * Formal Approval: Pushes the calculated APU unit price to the Master Budget.
+     */
+    approveAndAssign() {
+        if (this.activePartidaIndex === null) {
+            alert("No hay una partida seleccionada para aprobar.");
+            return;
+        }
+        
+        const partida = this.partidas[this.activePartidaIndex];
+        
+        // Final sync of metadata
+        partida.description = document.getElementById('partida-desc').value;
+        partida.code = document.getElementById('partida-codigo').value;
+        partida.unit = document.getElementById('partida-unidad').value;
+        partida.qty = parseFloat(document.getElementById('partida-cantidad').value) || 0;
+
+        // Formal assignment of calculated price
+        if (window.apuSystem && window.apuSystem.TotalUnitCost) {
+            partida.unitPrice = window.apuSystem.TotalUnitCost;
+            
+            this.renderMasterTable();
+            this.renderSidebar();
+            this.switchView('project'); // Return to master plan
+            
+            // Notification
+            alert(`Partida ${partida.code} aprobada! El precio unitario de $${partida.unitPrice.toFixed(2)} se ha asignado al presupuesto.`);
+        } else {
+            alert("Error: No se ha podido obtener el costo unitario del cálculo APU.");
         }
     }
 
@@ -87,7 +125,8 @@ class APUProject {
         }
     }
 
-    // This should be called by apuUI.updateCalculation
+    // This is called by apuUI.updateCalculation
+    // Only Syncs metadata (Draft mode)
     syncActivePartida() {
         if (this.activePartidaIndex === null) return;
         
@@ -97,12 +136,9 @@ class APUProject {
         partida.unit = document.getElementById('partida-unidad').value;
         partida.qty = parseFloat(document.getElementById('partida-cantidad').value) || 0;
         
-        if (window.apuSystem) {
-             partida.unitPrice = window.apuSystem.TotalUnitCost;
-             // We could save a snapshot of the model here
-        }
+        // We DON'T update unitPrice here automatically anymore.
+        // It requires the "Approve" button for official budget inclusion.
         
-        this.renderMasterTable();
         this.renderSidebar();
     }
 

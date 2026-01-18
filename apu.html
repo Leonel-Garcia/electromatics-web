@@ -303,6 +303,20 @@
                 <button class="btn-add-row" style="margin-top:10px" onclick="apuProject.addEmptyPartida()">+ Añadir Partida Manual</button>
             </div>
 
+            <!-- Partida Actions (Shown only when editing a partida) -->
+            <div id="partida-actions-sidebar" style="display:none; background: #fff3e0; border: 1px solid #ffe0b2; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin:0 0 10px 0; color: #e65100;"><i class="fa-solid fa-check-double"></i> Control de Partida</h4>
+                <p style="font-size: 11px; margin-bottom: 15px;">Calcula el APU y presiona el botón para asignar el precio al presupuesto general.</p>
+                
+                <button onclick="apuProject.approveAndAssign()" class="btn-orange" style="width:100%; padding:12px; font-weight:bold; margin-bottom:10px;">
+                    <i class="fa-solid fa-file-import"></i> APROBAR Y ASIGNAR
+                </button>
+                
+                <button onclick="apuProject.switchView('project')" class="btn-secondary" style="width:100%; padding:8px; font-size:12px; background: white;">
+                    <i class="fa-solid fa-rotate-left"></i> Descartar / Volver
+                </button>
+            </div>
+
             <hr>
             
             <h4><i class="fa-solid fa-gear"></i> Configuración Global</h4>
