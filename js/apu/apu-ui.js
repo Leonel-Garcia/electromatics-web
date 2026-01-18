@@ -227,14 +227,14 @@ const apuUI = {
             const rowTotalEl = tr.querySelector('.row-total');
             if (rowTotalEl) {
                 const numericRowTotal = isNaN(rowTotal) ? 0 : rowTotal;
-                rowTotalEl.innerText = (numericRowTotal * mult).toFixed(2);
+                rowTotalEl.innerText = (numericRowTotal * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             }
         });
         
         const totalMatEl = document.getElementById('total-materials');
         const unitMatEl = document.getElementById('unit-materials');
-        if (totalMatEl) totalMatEl.innerText = (model.MaterialCostTotal * mult).toFixed(2);
-        if (unitMatEl) unitMatEl.innerText = (model.MaterialCostUnit * mult).toFixed(2);
+        if (totalMatEl) totalMatEl.innerText = (model.MaterialCostTotal * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        if (unitMatEl) unitMatEl.innerText = (model.MaterialCostUnit * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         // 3. EQUIPMENT
         model.equipment = [];
@@ -250,14 +250,14 @@ const apuUI = {
             const rowTotalEl = tr.querySelector('.row-total');
             if (rowTotalEl) {
                 const numericRowTotal = isNaN(rowTotal) ? 0 : rowTotal;
-                rowTotalEl.innerText = (numericRowTotal * mult).toFixed(2);
+                rowTotalEl.innerText = (numericRowTotal * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             }
         });
         
         const totalEqEl = document.getElementById('total-equipment');
         const unitEqEl = document.getElementById('unit-equipment');
-        if (totalEqEl) totalEqEl.innerText = (model.EquipmentCostTotal * mult).toFixed(2);
-        if (unitEqEl) unitEqEl.innerText = (model.EquipmentCostUnit * mult).toFixed(2);
+        if (totalEqEl) totalEqEl.innerText = (model.EquipmentCostTotal * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        if (unitEqEl) unitEqEl.innerText = (model.EquipmentCostUnit * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         // 4. LABOR
         model.labor = [];
@@ -272,7 +272,7 @@ const apuUI = {
             const rowTotalEl = tr.querySelector('.row-total');
             if (rowTotalEl) {
                 const numericRowTotal = isNaN(rowTotal) ? 0 : rowTotal;
-                rowTotalEl.innerText = (numericRowTotal * mult).toFixed(2);
+                rowTotalEl.innerText = (numericRowTotal * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             }
         });
 
@@ -290,7 +290,7 @@ const apuUI = {
             const el = document.getElementById(id);
             if(el) {
                 const numericVal = isNaN(val) ? 0 : val;
-                el.innerText = (numericVal * mult).toFixed(2);
+                el.innerText = (numericVal * mult).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             }
         };
 

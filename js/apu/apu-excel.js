@@ -39,13 +39,13 @@ const apuExcel = {
                     m.quantity, 
                     m.wastePercent + '%', 
                     m.price, 
-                    m.Total.toFixed(2)
+                    m.Total.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})
                 ]);
             });
         }
         // Material Footers
-        wsData.push(["", "", "", "", "Total Materiales:", model.MaterialCostTotal.toFixed(2)]);
-        wsData.push(["", "", "", "", "Unitario Materiales:", model.MaterialCostUnit.toFixed(2)]);
+        wsData.push(["", "", "", "", "Total Materiales:", model.MaterialCostTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "", "", "", "Unitario Materiales:", model.MaterialCostUnit.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
         wsData.push([""]);
 
         // --- 3. EQUIPMENT ---
@@ -58,12 +58,12 @@ const apuExcel = {
                     e.quantity, 
                     e.price, 
                     e.factor, 
-                    e.Total.toFixed(2)
+                    e.Total.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})
                 ]);
             });
         }
-        wsData.push(["", "", "", "Total Equipos:", model.EquipmentCostTotal.toFixed(2)]);
-        wsData.push(["", "", "", "Unitario Equipos:", model.EquipmentCostUnit.toFixed(2)]);
+        wsData.push(["", "", "", "Total Equipos:", model.EquipmentCostTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "", "", "Unitario Equipos:", model.EquipmentCostUnit.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
         wsData.push([""]);
 
         // --- 4. LABOR ---
@@ -75,29 +75,29 @@ const apuExcel = {
                     l.description, 
                     l.quantity, 
                     l.price, 
-                    l.TotalDaily.toFixed(2)
+                    l.TotalDaily.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})
                 ]);
             });
         }
         // Labor Detailed Summary
-        wsData.push(["", "", "Total Mano de Obra (Base):", model.LaborBaseDaily.toFixed(2)]);
-        wsData.push(["", "", `% Prestaciones (${model.fcasPercent}%):`, model.FCASAmount.toFixed(2)]);
-        wsData.push(["", "", "Bono Alimentación:", model.FoodBonusTotal.toFixed(2)]);
-        wsData.push(["", "", "Total Diario M.O.:", model.LaborDailyTotal.toFixed(2)]);
-        wsData.push(["", "", "Unitario M.O.:", model.LaborCostUnit.toFixed(2)]);
+        wsData.push(["", "", "Total Mano de Obra (Base):", model.LaborBaseDaily.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "", `% Prestaciones (${model.fcasPercent}%):`, model.FCASAmount.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "", "Bono Alimentación:", model.FoodBonusTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "", "Total Diario M.O.:", model.LaborDailyTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "", "Unitario M.O.:", model.LaborCostUnit.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
         wsData.push([""]);
 
         // --- 5. GLOBAL SUMMARY ---
         wsData.push(["RESUMEN DE COSTOS"]);
-        wsData.push(["", "Costo Directo:", model.DirectCost.toFixed(2)]);
-        wsData.push(["", `% Admin (${model.adminPercent}%):`, model.AdminAmount.toFixed(2)]);
-        wsData.push(["", "Sub-Total A:", (model.DirectCost + model.AdminAmount).toFixed(2)]);
-        wsData.push(["", `% Utilidad (${model.utilityPercent}%):`, model.UtilityAmount.toFixed(2)]);
-        wsData.push(["", "Sub-Total U:", (model.DirectCost + model.AdminAmount + model.UtilityAmount).toFixed(2)]);
+        wsData.push(["", "Costo Directo:", model.DirectCost.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", `% Admin (${model.adminPercent}%):`, model.AdminAmount.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "Sub-Total A:", (model.DirectCost + model.AdminAmount).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", `% Utilidad (${model.utilityPercent}%):`, model.UtilityAmount.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
+        wsData.push(["", "Sub-Total U:", (model.DirectCost + model.AdminAmount + model.UtilityAmount).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
         wsData.push([""]);
         
         // Final Price
-        wsData.push(["", "PRECIO UNITARIO:", model.TotalUnitCost.toFixed(2)]);
+        wsData.push(["", "PRECIO UNITARIO:", model.TotalUnitCost.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})]);
 
         // Create Worksheet
         const ws = XLSX.utils.aoa_to_sheet(wsData);

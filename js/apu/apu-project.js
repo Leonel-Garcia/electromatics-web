@@ -154,15 +154,15 @@ class APUProject {
                 <td>${p.description}</td>
                 <td style="text-align:center">${p.unit}</td>
                 <td style="text-align:center">${p.qty}</td>
-                <td style="text-align:right">$ ${p.unitPrice.toFixed(2)}</td>
-                <td style="text-align:right"><b>$ ${total.toFixed(2)}</b></td>
+                <td style="text-align:right">$ ${p.unitPrice.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="text-align:right"><b>$ ${total.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b></td>
                 <td style="text-align:center">
                     <button class="btn-sm" onclick="apuProject.editPartida(${index})"><i class="fa-solid fa-pen-to-square"></i> APU</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-        document.getElementById('project-total').innerText = `$ ${grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        document.getElementById('project-total').innerText = `$ ${grandTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
 
     renderSidebar() {

@@ -297,7 +297,7 @@ const apuPDF = {
     },
 
     formatCurrency(val) {
-        return (val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return (val || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     },
 
     /**
