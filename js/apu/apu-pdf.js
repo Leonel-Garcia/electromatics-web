@@ -61,6 +61,11 @@ const apuPDF = {
             td.style.wordWrap = 'break-word';
         });
 
+        // 4b. PREVENT ROW BREAKS
+        clone.querySelectorAll('tr').forEach(tr => {
+            tr.style.pageBreakInside = 'avoid';
+        });
+
         // 5. HEADER & TITLES
         const headerTitle = clone.querySelector('.header-title');
         if (headerTitle) {

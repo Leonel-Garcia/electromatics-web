@@ -216,16 +216,23 @@ class APUProject {
         const mainContainer = document.createElement('div');
         mainContainer.style.background = 'white';
         mainContainer.style.fontFamily = "'Times New Roman', Times, serif";
+        // Width for Letter: 215.9mm. Using px equivalent (approx 816px at 96dpi) 
+        // but html2pdf handles mm accurately if we set width in style.
+        mainContainer.style.width = '215.9mm'; 
 
         // 1. PAGES: ALL APPROVED APUS FIRST
         let apuCount = 0;
         for (const p of this.partidas) {
             if (p.apuData) {
                 const apuPage = document.createElement('div');
-                // Page break before every APU
-                apuPage.style.pageBreakBefore = 'always';
-                apuPage.style.padding = '20mm';
-                apuPage.style.width = '216mm'; // Letter width minus some buffer if needed
+                // Avoid blank first page: Apply break only if not the first page
+                if (apuCount > 0) {
+                    apuPage.style.pageBreakBefore = 'always';
+                }
+                
+                apuPage.style.padding = '15mm'; // Slightly smaller margin to fit content
+                apuPage.style.boxSizing = 'border-box';
+                apuPage.style.width = '215.9mm';
                 
                 // Temporarily load into UI to get rendered state
                 apuUI.loadState(p.apuData);
@@ -240,10 +247,13 @@ class APUProject {
 
         // 2. PAGE: BUDGET SUMMARY (PRESUPUESTO GENERAL) AT THE END
         const summaryPage = document.createElement('div');
-        // Always break before summary as well
-        summaryPage.style.pageBreakBefore = 'always';
-        summaryPage.style.padding = '20mm';
-        summaryPage.style.width = '216mm';
+        // Always break before summary if we have APUs, or if it's the only page (count=0) it won't matter
+        if (apuCount > 0) {
+             summaryPage.style.pageBreakBefore = 'always';
+        }
+        summaryPage.style.padding = '15mm';
+        summaryPage.style.boxSizing = 'border-box';
+        summaryPage.style.width = '215.9mm';
         
         const summaryHeader = document.createElement('div');
         summaryHeader.innerHTML = `
@@ -259,17 +269,14 @@ class APUProject {
         masterTable.style.borderCollapse = 'collapse';
         masterTable.style.fontSize = '12pt';
         masterTable.querySelectorAll('th, td').forEach(cell => {
-            cell.style.border = '1.5pt solid #000'; // High definition lines
-            cell.style.padding = '10pt';
+            cell.style.border = '1.5pt solid #000';
+            cell.style.padding = '8pt';
             cell.style.color = '#000';
         });
         
-        // Prevent rows from breaking halfway
         masterTable.querySelectorAll('tr').forEach(tr => {
             tr.style.pageBreakInside = 'avoid';
         });
-
-        // Remove "APU" action column
         masterTable.querySelectorAll('th:last-child, td:last-child').forEach(el => el.remove());
 
         const summaryFooter = document.createElement('div');
@@ -284,12 +291,12 @@ class APUProject {
         summaryPage.appendChild(summaryFooter);
         mainContainer.appendChild(summaryPage);
 
-        // 3. EXPORT SETTINGS (MAX FIDELITY)
+        // 3. EXPORT SETTINGS (MAX FIDELITY & NO INTERNAL MARGINS)
         const opt = {
-            margin:       0,
+            margin:       0, // We control margins with padding in the elements
             filename:     `${this.name.replace(/ /g, '_')}_Completo.pdf`,
             image:        { type: 'jpeg', quality: 1.0 }, 
-            html2canvas:  { scale: 3, useCORS: true, letterRendering: true }, 
+            html2canvas:  { scale: 3, useCORS: true, letterRendering: true, width: 816 }, // Force 816px which corresponds to Letter 
             jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' },
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
@@ -299,7 +306,7 @@ class APUProject {
         overlay.innerHTML = `
             <i class="fa-solid fa-file-circle-check fa-spin fa-5x" style="margin-bottom:20px; color:#4CAF50;"></i>
             <h2 style="font-size:24pt;">Generando Reporte de Ingeniería</h2>
-            <p style="font-size:14pt;">Organizando ${apuCount} Análisis y Presupuesto General...</p>
+            <p style="font-size:14pt;">Ajustando Dimensiones Carta (215.9mm)...</p>
         `;
         document.body.appendChild(overlay);
 
