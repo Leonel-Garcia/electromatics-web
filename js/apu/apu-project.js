@@ -222,54 +222,77 @@ class APUProject {
 
         const mainContainer = document.createElement('div');
         mainContainer.style.background = 'white';
-        mainContainer.style.padding = '10mm';
+        mainContainer.style.fontFamily = "'Times New Roman', Times, serif";
 
         // 1. PAGE: BUDGET SUMMARY
-        const summaryTable = document.querySelector('.master-budget-table').cloneNode(true);
-        // Clean summary: remove "APU" edit buttons column
-        summaryTable.querySelectorAll('th:last-child, td:last-child').forEach(el => el.remove());
+        const summaryPage = document.createElement('div');
+        summaryPage.style.padding = '20mm';
+        summaryPage.style.minHeight = '279mm'; // Letter Height approx
         
         const summaryHeader = document.createElement('div');
         summaryHeader.innerHTML = `
-            <h1 style="text-align:center; color:#0056b3;">PRESUPUESTO GENERAL</h1>
-            <h2 style="text-align:center;">${this.name}</h2>
-            <p style="text-align:right;">Total: ${document.getElementById('project-total').innerText}</p>
-            <hr style="margin:20px 0;">
+            <div style="text-align:center; margin-bottom: 30pt;">
+                <h1 style="font-size: 24pt; margin-bottom: 10pt;">PRESUPUESTO GENERAL</h1>
+                <h2 style="font-size: 18pt; color: #333;">${this.name}</h2>
+                <div style="width: 100%; border-top: 2pt solid #000; margin: 20pt 0;"></div>
+            </div>
         `;
         
-        const summaryPage = document.createElement('div');
+        const masterTable = document.querySelector('.master-budget-table').cloneNode(true);
+        // Style summary table for PDF
+        masterTable.style.width = '100%';
+        masterTable.style.borderCollapse = 'collapse';
+        masterTable.style.fontSize = '12pt';
+        masterTable.querySelectorAll('th, td').forEach(cell => {
+            cell.style.border = '1pt solid #000';
+            cell.style.padding = '8pt';
+        });
+        // Remove "APU" action column
+        masterTable.querySelectorAll('th:last-child, td:last-child').forEach(el => el.remove());
+
+        const summaryFooter = document.createElement('div');
+        summaryFooter.style.marginTop = '30pt';
+        summaryFooter.style.textAlign = 'right';
+        summaryFooter.innerHTML = `
+            <h3 style="font-size: 16pt;">TOTAL GENERAL: <span style="border-bottom: 3pt double #000;">${document.getElementById('project-total').innerText}</span></h3>
+        `;
+
         summaryPage.appendChild(summaryHeader);
-        summaryPage.appendChild(summaryTable);
+        summaryPage.appendChild(masterTable);
+        summaryPage.appendChild(summaryFooter);
         mainContainer.appendChild(summaryPage);
 
         // 2. PAGES: ALL APPROVED APUS
         for (const p of this.partidas) {
             if (p.apuData) {
+                // Add Page Break
                 const pageBreak = document.createElement('div');
                 pageBreak.style.pageBreakBefore = 'always';
-                mainContainer.appendChild(pageBreak);
+                pageBreak.style.padding = '20mm';
+                pageBreak.style.minHeight = '279mm';
 
                 // Temporarily load into UI to get rendered state
                 apuUI.loadState(p.apuData);
                 const apuSheet = document.getElementById('apu-sheet');
                 const clone = apuPDF.getCleanClone(apuSheet);
-                mainContainer.appendChild(clone);
+                
+                pageBreak.appendChild(clone);
+                mainContainer.appendChild(pageBreak);
             }
         }
 
-        // 3. EXPORT
+        // 3. EXPORT SETTINGS
         const opt = {
-            margin:       [10, 10, 10, 10], 
+            margin:       [0, 0, 0, 0], // We handle padding inside the elements
             filename:     `${this.name.replace(/ /g, '_')}_Completo.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 }, 
-            html2canvas:  { scale: 2 }, 
+            image:        { type: 'jpeg', quality: 1.0 }, 
+            html2canvas:  { scale: 3, useCORS: true, letterRendering: true }, 
             jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
         };
 
-        // Visible feedback
         const overlay = document.createElement('div');
-        overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:20000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column;";
-        overlay.innerHTML = `<i class="fa-solid fa-spinner fa-spin fa-3x"></i><br><h2>Generando Presupuesto Completo...</h2><p>Esto puede tardar unos segundos.</p>`;
+        overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family: sans-serif;";
+        overlay.innerHTML = `<i class="fa-solid fa-file-pdf fa-spin fa-4x" style="margin-bottom:15px;"></i><h2>Generando Reporte de Ingeniería...</h2><p>Procesando páginas independientes con alta fidelidad.</p>`;
         document.body.appendChild(overlay);
 
         try {
