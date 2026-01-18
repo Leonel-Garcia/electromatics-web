@@ -33,24 +33,22 @@ class APUProject {
         const detailView = document.getElementById('view-detail');
         const btns = document.querySelectorAll('.view-btn');
         const overviewSidebar = document.getElementById('project-overview-sidebar');
-        const actionsSidebar = document.getElementById('partida-actions-sidebar');
 
         if(view === 'project') {
             if(projectView) projectView.style.display = 'block';
             if(detailView) detailView.style.display = 'none';
-            if(overviewSidebar) overviewSidebar.style.display = 'block';
-            if(actionsSidebar) actionsSidebar.style.display = 'none';
             btns[0].classList.add('active');
             btns[1].classList.remove('active');
             this.renderMasterTable();
         } else {
             if(projectView) projectView.style.display = 'none';
             if(detailView) detailView.style.display = 'block';
-            if(overviewSidebar) overviewSidebar.style.display = 'none';
-            if(actionsSidebar) actionsSidebar.style.display = 'block';
             btns[1].classList.add('active');
             btns[0].classList.remove('active');
         }
+
+        // Keep sidebar visible as requested
+        if(overviewSidebar) overviewSidebar.style.display = 'block';
     }
 
     /**
