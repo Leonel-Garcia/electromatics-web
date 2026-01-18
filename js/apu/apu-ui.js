@@ -178,17 +178,19 @@ const apuUI = {
 
     addLaborRow(data = null) {
         const tbody = document.querySelector('#table-labor tbody');
+        if (!tbody) return;
         const tr = document.createElement('tr');
-        // Try to get rate if not provided
+        
         let rate = data ? data.rate : 0;
         if (!rate && data && data.role) {
-             const sector = document.getElementById('labor-sector').value;
-             rate = APU_DATA.laborRates[sector][data.role] || 0;
+             const sectorEl = document.getElementById('labor-sector');
+             const sector = sectorEl ? sectorEl.value : 'construction';
+             rate = (APU_DATA.laborRates[sector] && APU_DATA.laborRates[sector][data.role]) || 0;
         }
 
         tr.innerHTML = `
             <td class="align-left"><input type="text" class="sheet-input lab-role" value="${data ? data.role : ''}" placeholder="Cargo..."></td>
-            <td><input type="number" class="sheet-input lab-qty" value="${data ? data.count : '1.00'}" style="text-align:center"></td>
+            <td><input type="number" class="sheet-input lab-qty" value="${data ? (data.count || data.qty) : '1.00'}" style="text-align:center"></td>
             <td><input type="number" class="sheet-input lab-rate" value="${rate}" style="text-align:right"></td>
             <td class="align-right"><span class="row-total">0.00</span></td>
             <td><i class="fa-solid fa-xmark" style="cursor:pointer; color:red;" onclick="this.closest('tr').remove(); apuUI.updateCalculation()"></i></td>
@@ -199,12 +201,16 @@ const apuUI = {
     // --- CALC ---
     updateCalculation() {
         const model = window.apuSystem;
-        const exchangeRate = parseFloat(document.getElementById('exchange-rate').value) || 1;
+        if (!model) return;
+
+        const exchangeInput = document.getElementById('exchange-rate');
+        const exchangeRate = exchangeInput ? (parseFloat(exchangeInput.value) || 1) : 1;
         const isBs = this.currentCurrency === 'BS';
         const mult = isBs ? exchangeRate : 1;
 
         // 1. HEADER
-        model.yield = parseFloat(document.getElementById('partida-rendimiento').value) || 1;
+        const yieldInput = document.getElementById('partida-rendimiento');
+        model.yield = yieldInput ? (parseFloat(yieldInput.value) || 1) : 1;
         
         // 2. MATERIALS
         model.materials = [];
@@ -215,25 +221,17 @@ const apuUI = {
             const waste = parseFloat(tr.querySelector('.mat-waste').value) || 0;
             const priceVal = parseFloat(tr.querySelector('.mat-price').value) || 0;
             
-            // Logic: Price in UI is assumed USD (Base). 
-            // If User enters in BS mode, we convert back to USD for model? 
-            // OR model holds "Displayed Currency". 
-            // Let's assume Model holds USD. UI converts on display? No, inputs are editable values.
-            // Simplified: Inputs are "Base Currency" (USD most likely). Conversion is visual only?
-            // "Price" in input: User types what they want. If they switch currency, inputs should update?
-            // Complex. Let's assume INPUTS ARE ALWAYS USD for stability, display converts final.
-            // OR: Inputs are raw. 
-            // Let's stick to: INPUTS ARE USD. Toggle only affects SUMMARY.
-            
             model.addMaterial(desc, unit, qty, priceVal, waste);
             
-            // Update Row Total
-            // Cost Model: Qty * Price * (1 + Waste%)
             const rowTotal = qty * priceVal * (1 + waste/100);
-            tr.querySelector('.row-total').innerText = (rowTotal * mult).toFixed(2);
+            const rowTotalEl = tr.querySelector('.row-total');
+            if (rowTotalEl) rowTotalEl.innerText = (rowTotal * mult).toFixed(2);
         });
-        document.getElementById('total-materials').innerText = (model.MaterialCostTotal * mult).toFixed(2);
-        document.getElementById('unit-materials').innerText = (model.MaterialCostUnit * mult).toFixed(2);
+        
+        const totalMatEl = document.getElementById('total-materials');
+        const unitMatEl = document.getElementById('unit-materials');
+        if (totalMatEl) totalMatEl.innerText = (model.MaterialCostTotal * mult).toFixed(2);
+        if (unitMatEl) unitMatEl.innerText = (model.MaterialCostUnit * mult).toFixed(2);
 
         // 3. EQUIPMENT
         model.equipment = [];
@@ -246,10 +244,14 @@ const apuUI = {
             model.addEquipment(desc, qty, val, fac);
             
             const rowTotal = qty * val * fac;
-            tr.querySelector('.row-total').innerText = (rowTotal * mult).toFixed(2);
+            const rowTotalEl = tr.querySelector('.row-total');
+            if (rowTotalEl) rowTotalEl.innerText = (rowTotal * mult).toFixed(2);
         });
-        document.getElementById('total-equipment').innerText = (model.EquipmentCostTotal * mult).toFixed(2);
-        document.getElementById('unit-equipment').innerText = (model.EquipmentCostUnit * mult).toFixed(2);
+        
+        const totalEqEl = document.getElementById('total-equipment');
+        const unitEqEl = document.getElementById('unit-equipment');
+        if (totalEqEl) totalEqEl.innerText = (model.EquipmentCostTotal * mult).toFixed(2);
+        if (unitEqEl) unitEqEl.innerText = (model.EquipmentCostUnit * mult).toFixed(2);
 
         // 4. LABOR
         model.labor = [];
@@ -261,30 +263,38 @@ const apuUI = {
             model.addLabor(role, qty, rate);
             
             const rowTotal = qty * rate;
-            tr.querySelector('.row-total').innerText = (rowTotal * mult).toFixed(2);
+            const rowTotalEl = tr.querySelector('.row-total');
+            if (rowTotalEl) rowTotalEl.innerText = (rowTotal * mult).toFixed(2);
         });
 
         // 5. SUMMARY
-        model.fcasPercent = parseFloat(document.getElementById('fcas-percent').value) || 0;
-        model.adminPercent = parseFloat(document.getElementById('admin-percent').value) || 0;
-        model.utilityPercent = parseFloat(document.getElementById('util-percent').value) || 0;
-        // Bono is usually fixed in USD.
-        // Let's assume internal constant for now. 40$
+        const fcasIn = document.getElementById('fcas-percent');
+        const adminIn = document.getElementById('admin-percent');
+        const utilIn = document.getElementById('util-percent');
         
-        // Fill Summary Table
-        document.getElementById('total-labor-base').innerText = (model.LaborBaseDaily * mult).toFixed(2);
-        document.getElementById('val-fcas').innerText = (model.FCASAmount * mult).toFixed(2);
-        document.getElementById('val-bono').innerText = (model.FoodBonusTotal * mult).toFixed(2);
-        document.getElementById('total-labor-day').innerText = (model.LaborDailyTotal * mult).toFixed(2);
-        document.getElementById('unit-labor').innerText = (model.LaborCostUnit * mult).toFixed(2);
+        model.fcasPercent = fcasIn ? (parseFloat(fcasIn.value) || 0) : 0;
+        model.adminPercent = adminIn ? (parseFloat(adminIn.value) || 0) : 0;
+        model.utilityPercent = utilIn ? (parseFloat(utilIn.value) || 0) : 0;
         
-        document.getElementById('cost-direct').innerText = (model.DirectCost * mult).toFixed(2);
-        document.getElementById('val-admin').innerText = (model.AdminAmount * mult).toFixed(2);
-        document.getElementById('sub-admin').innerText = ((model.DirectCost + model.AdminAmount) * mult).toFixed(2);
-        document.getElementById('val-util').innerText = (model.UtilityAmount * mult).toFixed(2);
-        document.getElementById('sub-util').innerText = ((model.DirectCost + model.AdminAmount + model.UtilityAmount) * mult).toFixed(2);
+        // Fill Summary Elements safely
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if(el) el.innerText = (val * mult).toFixed(2);
+        };
+
+        setVal('total-labor-base', model.LaborBaseDaily);
+        setVal('val-fcas', model.FCASAmount);
+        setVal('val-bono', model.FoodBonusTotal);
+        setVal('total-labor-day', model.LaborDailyTotal);
+        setVal('unit-labor', model.LaborCostUnit);
         
-        document.getElementById('final-price').innerText = (model.TotalUnitCost * mult).toFixed(2);
+        setVal('cost-direct', model.DirectCost);
+        setVal('val-admin', model.AdminAmount);
+        setVal('sub-admin', (model.DirectCost + model.AdminAmount));
+        setVal('val-util', model.UtilityAmount);
+        setVal('sub-util', (model.DirectCost + model.AdminAmount + model.UtilityAmount));
+        
+        setVal('final-price', model.TotalUnitCost);
 
         // Sync to Project Model if it exists
         if (window.apuProject) {
