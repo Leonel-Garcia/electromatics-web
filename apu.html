@@ -17,11 +17,13 @@
             --header-bg: #f8f9fa;
         }
 
-        body {
+        /* Wrapper for the light-grey paper area to avoid body conflicts */
+        .apu-container {
             background-color: #e9ecef;
             color: #000;
-            font-family: 'Arial', sans-serif; /* Standard for report feel */
+            font-family: 'Arial', sans-serif;
             font-size: 12px;
+            min-height: 100vh;
         }
 
         /* Layout Container */
@@ -250,6 +252,13 @@
     </style>
 </head>
 <body>
+    <!-- Floating Home Button (Emergency Fallback) -->
+    <div style="position: fixed; top: 15px; left: 15px; z-index: 10001;">
+        <a href="index.html" class="btn btn-orange" style="display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 50px;">
+            <i class="fa-solid fa-house"></i> MENÚ PRINCIPAL
+        </a>
+    </div>
+
     <!-- Header y Navegación -->
     <header class="main-header" style="position: sticky; top: 0; z-index: 9999; background: #161f29 !important;">
       <nav class="container">
@@ -273,7 +282,8 @@
       </nav>
     </header>
 
-    <div class="apu-layout" style="margin-top: 30px;">
+    <div class="apu-container">
+    <div class="apu-layout" style="padding-top: 50px;">
         <!-- Sidebar: Project & Settings -->
         <div class="controls-sidebar">
             <div class="view-toggle">
@@ -300,8 +310,8 @@
             </div>
 
             <hr>
-            <a href="index.html" class="btn btn-secondary" style="display:block; margin-bottom: 25px; font-size: 14px; text-align: center; border: 1px solid #ccc; background: #f8f9fa; color: #333 !important;">
-                <i class="fa-solid fa-house"></i> Volver al Inicio
+            <a href="index.html" class="btn btn-orange" style="display:block; margin-bottom: 25px; font-size: 14px; text-align: center; color: white !important; text-decoration: none;">
+                <i class="fa-solid fa-house"></i> VOLVER AL INICIO
             </a>
             
             <h4><i class="fa-solid fa-gear"></i> Configuración Global</h4>
@@ -536,10 +546,9 @@
                     </div>
                 </div>
             </div>
-                </div>
-            </div>
         </div>
     </div>
+</div>
 
     <!-- SCRIPTS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
