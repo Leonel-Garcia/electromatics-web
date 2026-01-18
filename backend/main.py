@@ -215,6 +215,10 @@ def read_admin_stats(current_user: models.User = Depends(auth.get_current_user),
     # Format Top Pages
     top_pages_list = [{"path": p.path, "views": p.count} for p in top_pages]
 
+    # Log registration dates for debugging
+    if recent_users:
+        logger.info(f"Sample user date: {recent_users[0].created_at}")
+
     return {
         "total_users": total_users,
         "premium_users": premium_users,

@@ -69,6 +69,15 @@ def run_migrations(engine):
                     conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
                 except Exception as e:
                     logger.error(f"Failed to add created_at: {e}")
+            
+            # Ensure no NULL created_at
+            try:
+                # Use COALESCE or simple UPDATE depending on DB support, 
+                # but plain UPDATE where NULL is safe for both SQLite and Postgres
+                conn.execute(text("UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL"))
+                logger.info("Migrating: Populated NULL created_at values.")
+            except Exception as e:
+                logger.error(f"Failed to populate created_at: {e}")
                 
             logger.info("Migrations check completed.")
             

@@ -50,7 +50,7 @@ if DATABASE_URL:
         connect_args=connect_args
     )
 else:
-    print("⚠️ DATABASE: Using SQLite (NON-PERSISTENT - DATA WILL BE LOST)")
+    print("DATABASE: Using SQLite (NON-PERSISTENT - DATA WILL BE LOST)")
     DATABASE_URL = "sqlite:///./sql_app.db"
     engine = create_engine(
         DATABASE_URL, connect_args={"check_same_thread": False}
