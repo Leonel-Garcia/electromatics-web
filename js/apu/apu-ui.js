@@ -334,6 +334,95 @@ const apuUI = {
         this.addLaborRow();
 
         this.updateCalculation();
+    },
+
+    getState() {
+        // Collect all row data for saving/cloning
+        const state = {
+            metadata: {
+                description: document.getElementById('partida-desc').value,
+                code: document.getElementById('partida-codigo').value,
+                unit: document.getElementById('partida-unidad').value,
+                qty: document.getElementById('partida-cantidad').value,
+                yield: document.getElementById('partida-rendimiento').value,
+                obra: document.getElementById('apu-obra').value,
+                partidaNo: document.getElementById('apu-partida-no').value
+            },
+            materials: [],
+            equipment: [],
+            labor: [],
+            params: {
+                fcas: document.getElementById('fcas-percent').value,
+                admin: document.getElementById('admin-percent').value,
+                util: document.getElementById('util-percent').value
+            }
+        };
+
+        document.querySelectorAll('#table-materials tbody tr').forEach(tr => {
+            state.materials.push({
+                desc: tr.querySelector('.mat-desc').value,
+                unit: tr.querySelector('.mat-unit').value,
+                qty: tr.querySelector('.mat-qty').value,
+                waste: tr.querySelector('.mat-waste').value,
+                price: tr.querySelector('.mat-price').value
+            });
+        });
+
+        document.querySelectorAll('#table-equipment tbody tr').forEach(tr => {
+            state.equipment.push({
+                desc: tr.querySelector('.eq-desc').value,
+                qty: tr.querySelector('.eq-qty').value,
+                val: tr.querySelector('.eq-val').value,
+                fac: tr.querySelector('.eq-fac').value
+            });
+        });
+
+        document.querySelectorAll('#table-labor tbody tr').forEach(tr => {
+            state.labor.push({
+                role: tr.querySelector('.lab-role').value,
+                count: tr.querySelector('.lab-qty').value,
+                rate: tr.querySelector('.lab-rate').value
+            });
+        });
+
+        return state;
+    },
+
+    loadState(state) {
+        if (!state) return;
+
+        // Load Metadata
+        if (state.metadata) {
+            document.getElementById('partida-desc').value = state.metadata.description || '';
+            document.getElementById('partida-codigo').value = state.metadata.code || '';
+            document.getElementById('partida-unidad').value = state.metadata.unit || 'und';
+            document.getElementById('partida-cantidad').value = state.metadata.qty || '1.00';
+            document.getElementById('partida-rendimiento').value = state.metadata.yield || '1.00';
+            document.getElementById('apu-obra').value = state.metadata.obra || '';
+            document.getElementById('apu-partida-no').value = state.metadata.partidaNo || '1';
+        }
+
+        // Load Tables
+        const matTbody = document.querySelector('#table-materials tbody');
+        const eqTbody = document.querySelector('#table-equipment tbody');
+        const labTbody = document.querySelector('#table-labor tbody');
+
+        if(matTbody) matTbody.innerHTML = '';
+        if(eqTbody) eqTbody.innerHTML = '';
+        if(labTbody) labTbody.innerHTML = '';
+
+        if (state.materials) state.materials.forEach(m => this.addMaterialRow(m));
+        if (state.equipment) state.equipment.forEach(e => this.addEquipmentRow(e));
+        if (state.labor) state.labor.forEach(l => this.addLaborRow(l));
+
+        // Load Params
+        if (state.params) {
+            document.getElementById('fcas-percent').value = state.params.fcas || 250;
+            document.getElementById('admin-percent').value = state.params.admin || 15;
+            document.getElementById('util-percent').value = state.params.util || 10;
+        }
+
+        this.updateCalculation();
     }
 };
 

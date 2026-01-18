@@ -4,91 +4,86 @@
  */
 
 const apuPDF = {
-    exportToPDF() {
-        const source = document.getElementById('apu-sheet');
-        
+    /**
+     * Creates a report-ready clone of an element
+     */
+    getCleanClone(source) {
         // 1. Create a deep clone to manipulate without affecting the UI
         const clone = source.cloneNode(true);
-        clone.id = 'apu-pdf-render';
+        clone.id = 'apu-pdf-render-' + Math.random().toString(36).substr(2, 9);
         
         // 2. TRANSFORM INPUTS TO TEXT
-        // This is crucial for the "Professional Report" look vs "Screenshot of Form"
         const inputs = clone.querySelectorAll('input, select');
         inputs.forEach(input => {
             const span = document.createElement('span');
             span.innerText = input.value;
-            span.style.fontWeight = 'bold'; // Keep values bold
-            // Use inline-block to prevent line breaks (fixing percentage fields)
+            span.style.fontWeight = 'bold';
             span.style.display = 'inline-block';
             span.style.width = 'auto';
-            // We can inherit alignment from parent or just let inline flow handle it
-            // span.style.textAlign = input.style.textAlign || 'left';
-            
-            // Replace input with span
             input.parentNode.replaceChild(span, input);
         });
 
         // 3. Remove Interactive Elements
         clone.querySelectorAll('.fa-xmark, .btn-add-row, .controls-overlay').forEach(el => el.remove());
         
-        // 4. Apply specific Print Styling to the clone
-        // Calculate strict printable width: 21.59cm (Letter) - 4cm (margins) = 17.59cm.
-        // User requested reducing further by 1cm -> 16.5cm.
+        // 4. Apply Print Styling
         const printWidth = '16.5cm';
-        
         clone.style.width = printWidth; 
         clone.style.maxWidth = printWidth;
-        clone.style.padding = '0'; 
+        clone.style.padding = '10px'; 
         clone.style.minHeight = 'auto'; 
         clone.style.height = 'auto';
-        clone.style.fontSize = '9px'; // Reduced font size
-        clone.style.border = 'none';
+        clone.style.fontSize = '9px'; 
+        clone.style.border = '1px solid #eee';
         clone.style.boxShadow = 'none';
-        clone.style.margin = '0'; 
+        clone.style.margin = '10px auto'; 
         clone.style.background = 'white';
-        // Enforce word wrapping
         clone.style.whiteSpace = 'normal'; 
         
-        // Compact rows and ensure tables respect width
         clone.querySelectorAll('table').forEach(table => {
             table.style.width = '100%';
-            table.style.tableLayout = 'fixed'; // CRITICAL: Prevents columns from expanding beyond width
+            table.style.tableLayout = 'fixed';
+            table.style.borderCollapse = 'collapse';
         });
 
         clone.querySelectorAll('td, th').forEach(cell => {
-             cell.style.padding = '1px'; // Tight padding
-             cell.style.fontSize = '9px'; // Reduced font size
+             cell.style.padding = '2px';
+             cell.style.fontSize = '9px';
              cell.style.wordWrap = 'break-word'; 
-             cell.style.wordBreak = 'break-word'; // Stronger wrap
+             cell.style.wordBreak = 'break-word';
              cell.style.overflow = 'hidden'; 
+             cell.style.border = '1px solid #000';
         });
-        
-        // ...
 
-        // 5. Append to body temporarily
+        return clone;
+    },
+
+    exportToPDF() {
+        const source = document.getElementById('apu-sheet');
+        const clone = this.getCleanClone(source);
+        
+        // Append to body temporarily
         const wrapper = document.createElement('div');
         wrapper.style.position = 'absolute';
         wrapper.style.left = '-9999px';
         wrapper.style.top = '0';
-        wrapper.style.width = printWidth; // Ensure wrapper constrains the clone
+        wrapper.style.width = '210mm'; 
         wrapper.appendChild(clone);
         document.body.appendChild(wrapper);
 
-        // 6. Generate PDF
         const partidaNo = document.getElementById('apu-partida-no').value || '0';
         const partidaDesc = document.getElementById('partida-desc').value || 'Analisis';
         const cleanDesc = partidaDesc.replace(/[^a-z0-pA-Z0-9]/gi, '_').substring(0, 30);
         
         const opt = {
-            margin:       [10, 20, 10, 20], 
+            margin:       [10, 10, 10, 10], 
             filename:     `APU_Partida_${partidaNo}_${cleanDesc}.pdf`,
             image:        { type: 'jpeg', quality: 1.0 }, 
-            html2canvas:  { scale: 2, useCORS: true, scrollX:0, scrollY:0 }, 
+            html2canvas:  { scale: 2, useCORS: true }, 
             jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
         };
 
         html2pdf().set(opt).from(clone).save().then(() => {
-            // Cleanup
             document.body.removeChild(wrapper);
         });
     }
