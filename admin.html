@@ -434,6 +434,7 @@
                     } else {
                         data.users.forEach(user => {
                             const tr = document.createElement('tr');
+                            const rawDate = user.created_at || user.createdAt;
                             let regDate = 'No disponible';
                             if (rawDate) {
                                 // Asegurar que el navegador entienda que la fecha viene en UTC (Z)
