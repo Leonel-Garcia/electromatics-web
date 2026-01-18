@@ -225,7 +225,10 @@ const apuUI = {
             
             const rowTotal = qty * priceVal * (1 + waste/100);
             const rowTotalEl = tr.querySelector('.row-total');
-            if (rowTotalEl) rowTotalEl.innerText = (rowTotal * mult).toFixed(2);
+            if (rowTotalEl) {
+                const numericRowTotal = isNaN(rowTotal) ? 0 : rowTotal;
+                rowTotalEl.innerText = (numericRowTotal * mult).toFixed(2);
+            }
         });
         
         const totalMatEl = document.getElementById('total-materials');
@@ -245,7 +248,10 @@ const apuUI = {
             
             const rowTotal = qty * val * fac;
             const rowTotalEl = tr.querySelector('.row-total');
-            if (rowTotalEl) rowTotalEl.innerText = (rowTotal * mult).toFixed(2);
+            if (rowTotalEl) {
+                const numericRowTotal = isNaN(rowTotal) ? 0 : rowTotal;
+                rowTotalEl.innerText = (numericRowTotal * mult).toFixed(2);
+            }
         });
         
         const totalEqEl = document.getElementById('total-equipment');
@@ -264,7 +270,10 @@ const apuUI = {
             
             const rowTotal = qty * rate;
             const rowTotalEl = tr.querySelector('.row-total');
-            if (rowTotalEl) rowTotalEl.innerText = (rowTotal * mult).toFixed(2);
+            if (rowTotalEl) {
+                const numericRowTotal = isNaN(rowTotal) ? 0 : rowTotal;
+                rowTotalEl.innerText = (numericRowTotal * mult).toFixed(2);
+            }
         });
 
         // 5. SUMMARY
@@ -279,7 +288,10 @@ const apuUI = {
         // Fill Summary Elements safely
         const setVal = (id, val) => {
             const el = document.getElementById(id);
-            if(el) el.innerText = (val * mult).toFixed(2);
+            if(el) {
+                const numericVal = isNaN(val) ? 0 : val;
+                el.innerText = (numericVal * mult).toFixed(2);
+            }
         };
 
         setVal('total-labor-base', model.LaborBaseDaily);
