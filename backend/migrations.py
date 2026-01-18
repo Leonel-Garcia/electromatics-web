@@ -61,6 +61,14 @@ def run_migrations(engine):
                     conn.execute(text("ALTER TABLE users ADD COLUMN verification_token_expires TIMESTAMP"))
                 except Exception as e:
                     logger.error(f"Failed to add verification_token_expires: {e}")
+
+            # 6. created_at
+            if "created_at" not in columns:
+                try:
+                    logger.info("Migrating: Adding created_at column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
+                except Exception as e:
+                    logger.error(f"Failed to add created_at: {e}")
                 
             logger.info("Migrations check completed.")
             

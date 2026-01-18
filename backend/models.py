@@ -15,6 +15,7 @@ class User(Base):
     email_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True)
     verification_token_expires = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 class PageVisit(Base):
     __tablename__ = "page_visits"
