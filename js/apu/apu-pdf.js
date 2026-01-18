@@ -75,11 +75,15 @@ const apuPDF = {
         document.body.appendChild(wrapper);
 
         // 6. Generate PDF
+        const partidaNo = document.getElementById('apu-partida-no').value || '0';
+        const partidaDesc = document.getElementById('partida-desc').value || 'Analisis';
+        const cleanDesc = partidaDesc.replace(/[^a-z0-pA-Z0-9]/gi, '_').substring(0, 30);
+        
         const opt = {
-            margin:       [10, 20, 10, 20], // mm - Increased side margins to 20mm (2cm) as requested
-            filename:     'APU_Reporte_Profesional.pdf',
-            image:        { type: 'jpeg', quality: 1.0 }, // Max quality
-            html2canvas:  { scale: 2, useCORS: true, scrollX:0, scrollY:0 }, // High Res
+            margin:       [10, 20, 10, 20], 
+            filename:     `APU_Partida_${partidaNo}_${cleanDesc}.pdf`,
+            image:        { type: 'jpeg', quality: 1.0 }, 
+            html2canvas:  { scale: 2, useCORS: true, scrollX:0, scrollY:0 }, 
             jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
         };
 

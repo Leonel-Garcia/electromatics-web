@@ -309,6 +309,31 @@ const apuUI = {
         
         this.updateCalculation();
         console.log("Template loaded successfully");
+    },
+
+    clearForm() {
+        console.log("Clearing APU Form...");
+        const matTbody = document.querySelector('#table-materials tbody');
+        const eqTbody = document.querySelector('#table-equipment tbody');
+        const labTbody = document.querySelector('#table-labor tbody');
+
+        if(matTbody) matTbody.innerHTML = '';
+        if(eqTbody) eqTbody.innerHTML = '';
+        if(labTbody) labTbody.innerHTML = '';
+
+        // Reset metadata
+        document.getElementById('partida-desc').value = '';
+        document.getElementById('partida-codigo').value = '';
+        document.getElementById('partida-unidad').value = 'und';
+        document.getElementById('partida-cantidad').value = '1.00';
+        document.getElementById('yield').value = '1.00';
+
+        // Add default empty rows
+        this.addMaterialRow();
+        this.addEquipmentRow();
+        this.addLaborRow();
+
+        this.updateCalculation();
     }
 };
 

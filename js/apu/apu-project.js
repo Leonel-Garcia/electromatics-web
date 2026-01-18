@@ -72,12 +72,34 @@ class APUProject {
         if (window.apuSystem && window.apuSystem.TotalUnitCost) {
             partida.unitPrice = window.apuSystem.TotalUnitCost;
             
+            // 1. Export current APU to PDF (Internal Save)
+            if (window.apuPDF) {
+                apuPDF.exportToPDF();
+            }
+
+            // 2. Refresh the Master Budget data
             this.renderMasterTable();
             this.renderSidebar();
-            this.switchView('project'); // Return to master plan
             
-            // Notification
-            alert(`Partida ${partida.code} aprobada! El precio unitario de $${partida.unitPrice.toFixed(2)} se ha asignado al presupuesto.`);
+            // 3. Prepare for NEXT Partida
+            const currentNum = parseInt(document.getElementById('apu-partida-no').value) || 0;
+            const nextNum = currentNum + 1;
+            
+            console.log("Preparing next partida...", nextNum);
+
+            // Create new empty partida in the project list
+            this.addEmptyPartida();
+            this.activePartidaIndex = this.partidas.length - 1; // Make the new one active
+            
+            // 4. Reset UI Form
+            if (window.apuUI) {
+                apuUI.clearForm();
+                document.getElementById('apu-partida-no').value = nextNum;
+            }
+            
+            alert(`Partida ${partida.code} aprobada y exportada! Formulario listo para la Partida Nº ${nextNum}.`);
+            
+            // Stay in Detail view (UI is already there, but now cleared)
         } else {
             alert("Error: No se ha podido obtener el costo unitario del cálculo APU.");
         }
@@ -109,6 +131,7 @@ class APUProject {
             document.getElementById('partida-codigo').value = partida.code;
             document.getElementById('partida-unidad').value = partida.unit;
             document.getElementById('partida-cantidad').value = partida.qty;
+            document.getElementById('apu-partida-no').value = partida.item;
             
             // If we have a model saved, load it
             // Trigger template search to fill tables if empty
