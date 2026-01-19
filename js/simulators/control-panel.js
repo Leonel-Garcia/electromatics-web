@@ -21,7 +21,7 @@ let assets = window.assets;
 let components = window.components;
 let wires = window.wires;
 let isSimulating = window.isSimulating;
-let scale = window.scale;
+let currentScale = window.scale; // Zoom level tracking
 let selectedWire = window.selectedWire;
 let selectedComponent = null; // New state
 let currentWireColor = window.currentWireColor;
@@ -242,7 +242,7 @@ class Component {
         const cy = this.y + this.height / 2;
         const rad = (this.rotation * Math.PI) / 180;
 
-        // Relative to center
+        // Position relative to center
         const rx = (this.x + t.x) - cx;
         const ry = (this.y + t.y) - cy;
 
@@ -289,22 +289,35 @@ class Component {
         };
     }
     draw(ctx) {
-        // 1. Imagen
+        ctx.save();
+        // Aplicar rotación sobre el centro del componente
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        
+        const drawX = -this.width / 2;
+        const drawY = -this.height / 2;
+
         if (assets[this.type]) {
-            // Sombra para dar profundidad
             ctx.shadowColor = 'rgba(0,0,0,0.3)';
-            ctx.shadowBlur = 15;
-            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 15 * currentScale;
+            ctx.drawImage(assets[this.type], drawX, drawY, this.width, this.height);
             ctx.shadowBlur = 0;
         } else {
-            // Fallback
-            ctx.fillStyle = '#cbd5e1';
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            ctx.fillStyle = '#0f172a';
-            ctx.fillText(this.type, this.x+10, this.y+20);
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(drawX, drawY, this.width, this.height);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(drawX, drawY, this.width, this.height);
+            
+            // Fallback text if no asset
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.type, 0, 5);
         }
-
-        // 2. Terminales
+        ctx.restore();
+        
+        // Terminales se dibujan fuera del save/restore para usar sus posiciones absolutas
         this.drawTerminals(ctx);
     }
 
@@ -2160,9 +2173,7 @@ function getEventPos(e) {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     
-    // Scale: Relación entre Pixeles del Buffer (width) y Pixeles CSS (rect.width)
-    // Cuando width=100%, es 1:1. Cuando width=2400, rect.width puede ser 2400 o menos si CSS lo restringe.
-    // Nosotros quitamos CSS width, así que rect.width debería ser igual a canvas.width (zoom físico).
+    // domScale: Relación entre Pixeles Internos (buffer) y Pixeles Pantalla (CSS)
     const domScaleX = canvas.width / rect.width;
     const domScaleY = canvas.height / rect.height;
 
@@ -2171,8 +2182,8 @@ function getEventPos(e) {
     
     // Logical Scale (Zoom del dibujo ctx.scale)
     return {
-        x: rawX / scale,
-        y: rawY / scale
+        x: rawX / currentScale,
+        y: rawY / currentScale
     };
 }
 
@@ -2255,11 +2266,13 @@ function setupEventListeners() {
     const btnZoomIn = document.getElementById('btn-zoom-in');
     const btnZoomOut = document.getElementById('btn-zoom-out');
     if(btnZoomIn) btnZoomIn.addEventListener('click', () => { 
-        scale = Math.min(scale + 0.1, 2.0); 
+        currentScale = Math.min(currentScale + 0.1, 2.0); 
+        window.scale = currentScale;
         resizeCanvas(); 
     });
     if(btnZoomOut) btnZoomOut.addEventListener('click', () => { 
-        scale = Math.max(scale - 0.1, 0.5); 
+        currentScale = Math.max(currentScale - 0.1, 0.5); 
+        window.scale = currentScale;
         resizeCanvas(); 
     });
 
@@ -3922,7 +3935,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     ctx.save();
-    ctx.scale(scale, scale);
+    ctx.scale(currentScale, currentScale);
 
     // 0. Grid
     drawGrid(ctx);
@@ -3997,28 +4010,43 @@ function draw() {
                       ctx.beginPath();
                       ctx.strokeStyle = phaseEnergized ? '#fcd34d' : '#000000';
                       if (phaseEnergized) {
-                          ctx.shadowBlur = 8;
+                          ctx.shadowBlur = 8 * currentScale;
                           ctx.shadowColor = '#fbbf24';
                       } else { ctx.shadowBlur = 0; }
 
-                      // Dibujar la polilínea desplazada perpendicularmente
-                      for (let j = 0; j < path.length - 1; j++) {
-                          const pA = path[j];
-                          const pB = path[j+1];
+                      // Dibujar la polilínea desplazada correctamente para evitar huecos en las esquinas
+                      for (let j = 0; j < path.length; j++) {
+                          const pPrev = path[j-1];
+                          const pCurr = path[j];
+                          const pNext = path[j+1];
                           
-                          // Vector dirección
-                          const dx = pB.x - pA.x;
-                          const dy = pB.y - pA.y;
-                          const len = Math.sqrt(dx*dx + dy*dy);
+                          let ox = 0, oy = 0;
                           
-                          if (len > 0) {
-                              // Normal perpendicular (rotación 90 deg)
-                              const nx = -dy / len;
-                              const ny = dx / len;
+                          if (!pPrev) { // Punto inicial
+                              const dx = pNext.x - pCurr.x, dy = pNext.y - pCurr.y;
+                              const len = Math.sqrt(dx*dx + dy*dy);
+                              if (len > 0) { ox = -dy/len * offset; oy = dx/len * offset; }
+                          } else if (!pNext) { // Punto final
+                              const dx = pCurr.x - pPrev.x, dy = pCurr.y - pPrev.y;
+                              const len = Math.sqrt(dx*dx + dy*dy);
+                              if (len > 0) { ox = -dy/len * offset; oy = dx/len * offset; }
+                          } else { // Junta (Bisectriz)
+                              const dx1 = pCurr.x - pPrev.x, dy1 = pCurr.y - pPrev.y;
+                              const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+                              const n1x = -dy1/len1, n1y = dx1/len1;
+
+                              const dx2 = pNext.x - pCurr.x, dy2 = pNext.y - pCurr.y;
+                              const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+                              const n2x = -dy2/len2, n2y = dx2/len2;
                               
-                              if (j === 0) ctx.moveTo(pA.x + nx * offset, pA.y + ny * offset);
-                              ctx.lineTo(pB.x + nx * offset, pB.y + ny * offset);
+                              const cosTheta = n1x*n2x + n1y*n2y;
+                              const factor = offset / (1 + cosTheta);
+                              ox = (n1x + n2x) * factor;
+                              oy = (n1y + n2y) * factor;
                           }
+                          
+                          if (j === 0) ctx.moveTo(pCurr.x + ox, pCurr.y + oy);
+                          else ctx.lineTo(pCurr.x + ox, pCurr.y + oy);
                       }
                       ctx.stroke();
                   });
@@ -4143,7 +4171,7 @@ function drawGrid(ctx) {
     const step = 20;
     
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1 / currentScale; // Mantener rejilla fina incluso al hacer zoom
     ctx.beginPath();
     
     // Vertical
@@ -4168,8 +4196,8 @@ function resizeCanvas() {
     if (parent) {
         // Área lógica base 2400x1600. Escalamos el canvas físicamente según el zoom
         // para que siempre haya espacio para los elementos lógicos y el scroll funcione
-        canvas.width = Math.max(parent.clientWidth, 2400 * scale);
-        canvas.height = Math.max(parent.clientHeight || 600, 1600 * scale); 
+        canvas.width = Math.max(parent.clientWidth, 2400 * currentScale);
+        canvas.height = Math.max(parent.clientHeight || 600, 1600 * currentScale); 
         draw(); 
     }
 }
