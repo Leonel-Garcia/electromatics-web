@@ -409,41 +409,56 @@ def heartbeat(visit_id: int, db: Session = Depends(database.get_db)):
 async def generate_content_proxy(request: Request):
     """
     Secure proxy for AI API calls.
-    Prioritizes DeepSeek -> fallback to Gemini.
+    Prioritizes Gemini -> fallback to DeepSeek.
     """
     try:
         body = await request.json()
+        errors_log = []  # Track all errors for debugging
         
-        # 1. Try Gemini first (Now primary provider)
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
+        # 1. Try Gemini first (Primary provider)
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        if gemini_key:
+            logger.info("🤖 Attempting Gemini API...")
+            
             # Attempt 1.1: Gemini 2.0 Flash
             try:
-                url_v2 = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={api_key}"
+                url_v2 = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={gemini_key}"
                 google_response = requests.post(url_v2, json=body, headers={"Content-Type": "application/json"}, timeout=60)
                 
                 if google_response.status_code == 200:
+                    logger.info("✅ Gemini 2.0 Flash responded successfully")
                     return JSONResponse(content=google_response.json())
-                    
-                logger.warning(f"Gemini 2.0 Flash failed ({google_response.status_code}), trying 1.5 Flash...")
+                else:
+                    error_msg = f"Gemini 2.0 Flash: {google_response.status_code} - {google_response.text[:200]}"
+                    errors_log.append(error_msg)
+                    logger.warning(f"⚠️ {error_msg}")
             except Exception as e:
-                logger.error(f"Gemini 2.0 Error: {e}")
+                errors_log.append(f"Gemini 2.0 Exception: {str(e)}")
+                logger.error(f"❌ Gemini 2.0 Error: {e}")
 
             # Attempt 1.2: Gemini 1.5 Flash (Fallback)
             try:
-                url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
                 google_response = requests.post(url_v15, json=body, headers={"Content-Type": "application/json"}, timeout=60)
                 
                 if google_response.status_code == 200:
+                    logger.info("✅ Gemini 1.5 Flash responded successfully")
                     return JSONResponse(content=google_response.json())
                 else:
-                    logger.error(f"Gemini 1.5 Flash Error: {google_response.text}")
+                    error_msg = f"Gemini 1.5 Flash: {google_response.status_code} - {google_response.text[:200]}"
+                    errors_log.append(error_msg)
+                    logger.warning(f"⚠️ {error_msg}")
             except Exception as e:
-                logger.error(f"Gemini 1.5 Error: {e}")
+                errors_log.append(f"Gemini 1.5 Exception: {str(e)}")
+                logger.error(f"❌ Gemini 1.5 Error: {e}")
+        else:
+            errors_log.append("GEMINI_API_KEY not configured")
+            logger.warning("⚠️ GEMINI_API_KEY environment variable not set")
 
-        # 2. Try DeepSeek as fallback (secondary provider)
-        deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-8424f217791b4ceeb2301450be3523de"
+        # 2. Try DeepSeek as fallback (Secondary provider)
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         if deepseek_key:
+            logger.info("🤖 Attempting DeepSeek API as fallback...")
             try:
                 # Extract text from Gemini-format payload
                 user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
@@ -469,19 +484,58 @@ async def generate_content_proxy(request: Request):
                 )
                 
                 if response.status_code == 200:
+                    logger.info("✅ DeepSeek responded successfully")
                     data = response.json()
                     content_text = data['choices'][0]['message']['content']
                     return JSONResponse(content={"text": content_text})
                 else:
-                    logger.error(f"DeepSeek Error {response.status_code}: {response.text}")
+                    error_msg = f"DeepSeek: {response.status_code} - {response.text[:200]}"
+                    errors_log.append(error_msg)
+                    logger.error(f"❌ {error_msg}")
             except Exception as e:
-                logger.error(f"DeepSeek Exception: {str(e)}")
+                errors_log.append(f"DeepSeek Exception: {str(e)}")
+                logger.error(f"❌ DeepSeek Exception: {str(e)}")
+        else:
+            errors_log.append("DEEPSEEK_API_KEY not configured")
+            logger.warning("⚠️ DEEPSEEK_API_KEY environment variable not set")
 
-        raise HTTPException(status_code=500, detail="No AI Models (Gemini/DeepSeek) were available or primary keys failed.")
+        # All providers failed
+        error_summary = " | ".join(errors_log) if errors_log else "Unknown error"
+        logger.error(f"🚫 All AI providers failed: {error_summary}")
+        raise HTTPException(
+            status_code=503, 
+            detail=f"ElectrIA no disponible temporalmente. Todos los proveedores de IA fallaron. Intenta de nuevo en unos segundos."
+        )
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
-        logger.error(f"Proxy Error: {str(e)}")
+        logger.error(f"🚫 Proxy Error: {str(e)}")
         return JSONResponse(status_code=500, content={"detail": str(e)})
+
+@app.get("/health/ai")
+def check_ai_health():
+    """
+    Health check endpoint to verify AI API configuration.
+    Does not reveal actual keys, only shows if they are configured.
+    """
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+    
+    return {
+        "status": "operational" if (gemini_key or deepseek_key) else "degraded",
+        "providers": {
+            "gemini": {
+                "configured": bool(gemini_key),
+                "key_preview": f"{gemini_key[:8]}...{gemini_key[-4:]}" if gemini_key and len(gemini_key) > 12 else "not set"
+            },
+            "deepseek": {
+                "configured": bool(deepseek_key),
+                "key_preview": f"{deepseek_key[:8]}...{deepseek_key[-4:]}" if deepseek_key and len(deepseek_key) > 12 else "not set"
+            }
+        },
+        "message": "ElectrIA is ready" if (gemini_key or deepseek_key) else "No AI providers configured. Set GEMINI_API_KEY or DEEPSEEK_API_KEY environment variables."
+    }
 
 @app.get("/")
 def read_root():
