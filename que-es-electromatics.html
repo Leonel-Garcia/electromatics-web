@@ -93,8 +93,8 @@
                 events: {
                   'onStateChange': function(event) {
                     if (event.data == YT.PlayerState.ENDED) {
-                      event.target.stopVideo();
-                      event.target.seekTo(0);
+                      // Recargar el video en estado "cue" para volver al inicio sin reproducir
+                      event.target.cueVideoById('4aypGHROSs8');
                     }
                   }
                 }
