@@ -442,7 +442,7 @@ async def generate_content_proxy(request: Request):
                 logger.error(f"Gemini 1.5 Error: {e}")
 
         # 2. Try DeepSeek as fallback (secondary provider)
-        deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-09180722007046cd8ac3cc7007f4dcd8"
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-8424f217791b4ceeb2301450be3523de"
         if deepseek_key:
             try:
                 # Extract text from Gemini-format payload
