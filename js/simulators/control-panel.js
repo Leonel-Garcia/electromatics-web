@@ -2986,7 +2986,7 @@ function onMouseDown(e) {
     if (selectedWire && selectedWire.path && !isSimulating) {
         for (let i = 0; i < selectedWire.path.length; i++) {
             const pt = selectedWire.path[i];
-            if (Math.hypot(mx - pt.x, my - pt.y) < 8) {
+            if (Math.hypot(mx - pt.x, my - pt.y) < 10) {
                 pushHistory();
                 draggingHandle = { wire: selectedWire, index: i };
                 return;
@@ -3103,13 +3103,33 @@ function onMouseDown(e) {
         }
     }
 
-    // 3. Tocar Cable? (Selección - Solo si NO estamos simulando)
+    // 3. Tocar Cable? (Selección o Inserción de punto - Solo si NO estamos simulando)
     if (!isSimulating) {
         for (const w of wires) {
-            if (isMouseOverWire(mx, my, w)) {
+            const hitInfo = getWireHitInfo(mx, my, w);
+            if (hitInfo.hit) {
                 selectedWire = w;
-                selectedComponent = null; // Clear comp selection
-                // Update color picker to match wire
+                selectedComponent = null;
+
+                // Si clics sobre un segmento, insertar nuevo waypoint y arrastrarlo
+                if (hitInfo.segmentIndex !== -1) {
+                    pushHistory();
+                    const newPoint = { x: snapToGrid(mx), y: snapToGrid(my) };
+                    // El segmento i conecta fullPath[i] y fullPath[i+1]
+                    // fullPath es [p1, path[0], path[1], ..., p2]
+                    // Segmento 0 es p1 a path[0] -> Insertar en index 0 de path
+                    // Segmento i (>0) es path[i-1] a path[i] -> Insertar en index i de path
+                    // Segmento final es path[N-1] a p2 -> Insertar al final (push)
+                    
+                    if (w.path) {
+                        w.path.splice(hitInfo.segmentIndex, 0, newPoint);
+                        draggingHandle = { wire: w, index: hitInfo.segmentIndex };
+                    } else {
+                        w.path = [newPoint];
+                        draggingHandle = { wire: w, index: 0 };
+                    }
+                }
+
                 if(w.color) {
                     currentWireColor = w.color;
                     const sel = document.getElementById('wire-color');
@@ -3117,7 +3137,7 @@ function onMouseDown(e) {
                 }
                 hitObject = true;
                 draw();
-                return; // Stop propagation
+                return;
             }
         }
     }
@@ -4007,72 +4027,59 @@ function draw() {
                           phaseEnergized = (nodes[phaseKey] && nodes[phaseKey].size > 0);
                       }
 
-                      ctx.beginPath();
                       ctx.strokeStyle = phaseEnergized ? '#fcd34d' : '#000000';
                       if (phaseEnergized) {
                           ctx.shadowBlur = 8 * currentScale;
                           ctx.shadowColor = '#fbbf24';
                       } else { ctx.shadowBlur = 0; }
 
-                      // Dibujar la polilínea desplazada correctamente para evitar huecos en las esquinas
+                      // Crear el path de la fase compensando ángulos
+                      const phasePath = [];
                       for (let j = 0; j < path.length; j++) {
-                          const pPrev = path[j-1];
-                          const pCurr = path[j];
-                          const pNext = path[j+1];
-                          
+                          const pPrev = path[j-1], pCurr = path[j], pNext = path[j+1];
                           let ox = 0, oy = 0;
-                          
-                          if (!pPrev) { // Punto inicial
+                          if (!pPrev) {
                               const dx = pNext.x - pCurr.x, dy = pNext.y - pCurr.y;
                               const len = Math.sqrt(dx*dx + dy*dy);
                               if (len > 0) { ox = -dy/len * offset; oy = dx/len * offset; }
-                          } else if (!pNext) { // Punto final
+                          } else if (!pNext) {
                               const dx = pCurr.x - pPrev.x, dy = pCurr.y - pPrev.y;
                               const len = Math.sqrt(dx*dx + dy*dy);
                               if (len > 0) { ox = -dy/len * offset; oy = dx/len * offset; }
-                          } else { // Junta (Bisectriz)
+                          } else {
                               const dx1 = pCurr.x - pPrev.x, dy1 = pCurr.y - pPrev.y;
                               const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
                               const n1x = -dy1/len1, n1y = dx1/len1;
-
                               const dx2 = pNext.x - pCurr.x, dy2 = pNext.y - pCurr.y;
                               const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
                               const n2x = -dy2/len2, n2y = dx2/len2;
-                              
                               const cosTheta = n1x*n2x + n1y*n2y;
                               const factor = offset / (1 + cosTheta);
                               ox = (n1x + n2x) * factor;
                               oy = (n1y + n2y) * factor;
                           }
-                          
-                          if (j === 0) ctx.moveTo(pCurr.x + ox, pCurr.y + oy);
-                          else ctx.lineTo(pCurr.x + ox, pCurr.y + oy);
+                          phasePath.push({ x: pCurr.x + ox, y: pCurr.y + oy });
                       }
-                      ctx.stroke();
+                      drawRoundedPolyline(ctx, phasePath, 15);
                   });
                   if (isEnergized) ctx.restore();
              } else {
-                 ctx.beginPath();
-                 path.forEach((pt, idx) => {
-                     if (idx === 0) ctx.moveTo(pt.x, pt.y);
-                     else ctx.lineTo(pt.x, pt.y);
-                 });
-                 ctx.stroke();
-                 if (isEnergized) ctx.restore();
+                  drawRoundedPolyline(ctx, path, 15);
+                  if (isEnergized) ctx.restore();
              }
 
              ctx.shadowBlur = 0;
 
              // Tapar extremos y dibujar puntos del path
              ctx.fillStyle = ctx.strokeStyle;
-             path.forEach((pt, idx) => {
-                 const isEndpoint = (idx === 0 || idx === path.length - 1);
+             const joints = [path[0], ...(w.path || []), path[path.length-1]];
+             joints.forEach((pt, idx) => {
+                 const isEndpoint = (idx === 0 || idx === joints.length - 1);
                  if (isEndpoint) {
                      ctx.beginPath();
                      ctx.arc(pt.x, pt.y, isSelected ? 3 : 2, 0, Math.PI*2);
                      ctx.fill();
                  } else if (isSelected) {
-                     // Waypoints visibles solo si está seleccionado
                      ctx.beginPath();
                      ctx.arc(pt.x, pt.y, 6, 0, Math.PI*2);
                      ctx.fill();
@@ -4090,14 +4097,8 @@ function draw() {
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 5]);
         const p1 = wireStartObj.component.getTerminal(wireStartObj.terminalId);
-        const fullPath = [p1, ...wireStartObj.path, mousePos];
-        
-        ctx.beginPath();
-        fullPath.forEach((pt, idx) => {
-            if (idx === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
-        });
-        ctx.stroke();
+        const previewPath = [p1, ...wireStartObj.path, mousePos];
+        drawRoundedPolyline(ctx, previewPath, 15);
         ctx.setLineDash([]);
     }
 
@@ -4111,45 +4112,58 @@ function draw() {
 }
 
 
-// ================= UTILIDADES =================
+function drawRoundedPolyline(ctx, path, radius) {
+    if (!path || path.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    
+    for (let i = 1; i < path.length - 1; i++) {
+        const pCurr = path[i];
+        const pNext = path[i+1];
+        ctx.arcTo(pCurr.x, pCurr.y, pNext.x, pNext.y, radius);
+    }
+    
+    ctx.lineTo(path[path.length - 1].x, path[path.length - 1].y);
+    ctx.stroke();
+}
 
-// Hit test mejorado para polilíneas de N segmentos
 function isMouseOverWire(mx, my, wire) {
+    return getWireHitInfo(mx, my, wire).hit;
+}
+
+function getWireHitInfo(mx, my, wire) {
     const p1 = wire.from.getTerminal(wire.fromId);
     const p2 = wire.to.getTerminal(wire.toId);
-    if (!p1 || !p2) return false;
+    if (!p1 || !p2) return { hit: false };
 
     const fullPath = [p1, ...(wire.path || []), p2];
-    const threshold = wire.isTriple ? 40 : 10;
+    const threshold = wire.isTriple ? 40 : 15;
     
     for (let i = 0; i < fullPath.length - 1; i++) {
         const segStart = fullPath[i];
         const segEnd = fullPath[i+1];
         
         if (wire.isTriple) {
-            // Verificar las 3 líneas paralelas
             const spacing = 32;
             const dx = segEnd.x - segStart.x;
             const dy = segEnd.y - segStart.y;
             const len = Math.sqrt(dx*dx + dy*dy);
             if (len > 0) {
-                const nx = -dy / len;
-                const ny = dx / len;
+                const nx = -dy / len, ny = dx / len;
                 for (let offIdx = -1; offIdx <= 1; offIdx++) {
-                    const offset = offIdx * spacing;
-                    if (pDist(mx, my, segStart.x + nx * offset, segStart.y + ny * offset, 
-                                     segEnd.x + nx * offset, segEnd.y + ny * offset) < 15) {
-                        return true;
+                    if (pDist(mx, my, segStart.x + nx * offIdx * spacing, segStart.y + ny * offIdx * spacing, 
+                                     segEnd.x + nx * offIdx * spacing, segEnd.y + ny * offIdx * spacing) < 15) {
+                        return { hit: true, segmentIndex: i };
                     }
                 }
             }
         } else {
             if (pDist(mx, my, segStart.x, segStart.y, segEnd.x, segEnd.y) < threshold) {
-                return true;
+                return { hit: true, segmentIndex: i };
             }
         }
     }
-    return false;
+    return { hit: false, segmentIndex: -1 };
 }
 
 function pDist(x, y, x1, y1, x2, y2) {
