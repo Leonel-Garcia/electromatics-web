@@ -414,9 +414,35 @@ async def generate_content_proxy(request: Request):
     try:
         body = await request.json()
         
-        # 1. Try DeepSeek first (User Preference)
+        # 1. Try Gemini first (Now primary provider)
+        api_key = os.getenv("GEMINI_API_KEY")
+        if api_key:
+            # Attempt 1.1: Gemini 2.0 Flash
+            try:
+                url_v2 = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={api_key}"
+                google_response = requests.post(url_v2, json=body, headers={"Content-Type": "application/json"}, timeout=60)
+                
+                if google_response.status_code == 200:
+                    return JSONResponse(content=google_response.json())
+                    
+                logger.warning(f"Gemini 2.0 Flash failed ({google_response.status_code}), trying 1.5 Flash...")
+            except Exception as e:
+                logger.error(f"Gemini 2.0 Error: {e}")
+
+            # Attempt 1.2: Gemini 1.5 Flash (Fallback)
+            try:
+                url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                google_response = requests.post(url_v15, json=body, headers={"Content-Type": "application/json"}, timeout=60)
+                
+                if google_response.status_code == 200:
+                    return JSONResponse(content=google_response.json())
+                else:
+                    logger.error(f"Gemini 1.5 Flash Error: {google_response.text}")
+            except Exception as e:
+                logger.error(f"Gemini 1.5 Error: {e}")
+
+        # 2. Try DeepSeek as fallback (secondary provider)
         deepseek_key = os.getenv("DEEPSEEK_API_KEY") or "sk-09180722007046cd8ac3cc7007f4dcd8"
-        
         if deepseek_key:
             try:
                 # Extract text from Gemini-format payload
@@ -445,45 +471,13 @@ async def generate_content_proxy(request: Request):
                 if response.status_code == 200:
                     data = response.json()
                     content_text = data['choices'][0]['message']['content']
-                    # Return in a format the frontend (expecting Gemini or simple text) can handle
-                    # If the frontend expects raw text, we return it. If it expects Gemini JSON, we emulate it.
-                    # Based on previous logic, let's return a JSON with the text.
                     return JSONResponse(content={"text": content_text})
                 else:
                     logger.error(f"DeepSeek Error {response.status_code}: {response.text}")
             except Exception as e:
                 logger.error(f"DeepSeek Exception: {str(e)}")
-        
-        # 2. Fallback to Gemini
-        # 2. Fallback to Gemini (Try 2.0 Flash first, then 1.5 Flash)
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="No API Keys available")
 
-        # Attempt 1: Gemini 2.0 Flash
-        try:
-            url_v2 = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={api_key}"
-            google_response = requests.post(url_v2, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-            
-            if google_response.status_code == 200:
-                return JSONResponse(content=google_response.json())
-                
-            logger.warning(f"Gemini 2.0 Flash failed ({google_response.status_code}), trying 1.5 Flash...")
-        except Exception as e:
-            logger.error(f"Gemini 2.0 Error: {e}")
-
-        # Attempt 2: Gemini 1.5 Flash (Fallback)
-        try:
-            url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-            google_response = requests.post(url_v15, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-            
-            if google_response.status_code == 200:
-                return JSONResponse(content=google_response.json())
-            else:
-                return JSONResponse(status_code=google_response.status_code, content=google_response.json())
-        except Exception as e:
-            logger.error(f"Gemini 1.5 Error: {e}")
-            return JSONResponse(status_code=500, content={"error": {"message": "All AI models are currently busy."}})
+        raise HTTPException(status_code=500, detail="No AI Models (Gemini/DeepSeek) were available or primary keys failed.")
 
     except Exception as e:
         logger.error(f"Proxy Error: {str(e)}")
