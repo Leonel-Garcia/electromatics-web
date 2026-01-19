@@ -3193,8 +3193,8 @@ function onMouseUp(e) {
             for (const c of components) {
                 const t = c.getHoveredTerminal(mousePos.x, mousePos.y);
                 if (t) {
-                    p.x = c.x + t.x;
-                    p.y = c.y + t.y;
+                    p.x = t.x;
+                    p.y = t.y;
                     p.target = { component: c, terminalId: t.id };
                     break;
                 }
@@ -3982,32 +3982,47 @@ function draw() {
              }
 
              if (w.isTriple) {
-                 let index = 1;
-                 if (activeSet) index = activeSet.indexOf(w.fromId);
-                 const spacing = 32;
-                 const offsets = [(0 - index) * spacing, (1 - index) * spacing, (2 - index) * spacing];
-                 
-                 offsets.forEach((offset, i) => {
-                     let phaseEnergized = isEnergized;
-                     if (activeSet && isSimulating) {
-                         const phaseKey = `${w.from.id}_${activeSet[i]}`;
-                         phaseEnergized = (nodes[phaseKey] && nodes[phaseKey].size > 0);
-                     }
+                  const spacing = 32;
+                  let index = 1;
+                  if (activeSet) index = activeSet.indexOf(w.fromId);
+                  const baseOffsets = [(0 - index) * spacing, (1 - index) * spacing, (2 - index) * spacing];
 
-                     ctx.beginPath();
-                     ctx.strokeStyle = phaseEnergized ? '#fcd34d' : '#000000';
-                     if (phaseEnergized) {
-                         ctx.shadowBlur = 8;
-                         ctx.shadowColor = '#fbbf24';
-                     } else { ctx.shadowBlur = 0; }
+                  baseOffsets.forEach((offset, i) => {
+                      let phaseEnergized = isEnergized;
+                      if (activeSet && isSimulating) {
+                          const phaseKey = `${w.from.id}_${activeSet[i]}`;
+                          phaseEnergized = (nodes[phaseKey] && nodes[phaseKey].size > 0);
+                      }
 
-                     path.forEach((pt, idx) => {
-                         if (idx === 0) ctx.moveTo(pt.x + offset, pt.y);
-                         else ctx.lineTo(pt.x + offset, pt.y);
-                     });
-                     ctx.stroke();
-                 });
-                 if (isEnergized) ctx.restore();
+                      ctx.beginPath();
+                      ctx.strokeStyle = phaseEnergized ? '#fcd34d' : '#000000';
+                      if (phaseEnergized) {
+                          ctx.shadowBlur = 8;
+                          ctx.shadowColor = '#fbbf24';
+                      } else { ctx.shadowBlur = 0; }
+
+                      // Dibujar la polilínea desplazada perpendicularmente
+                      for (let j = 0; j < path.length - 1; j++) {
+                          const pA = path[j];
+                          const pB = path[j+1];
+                          
+                          // Vector dirección
+                          const dx = pB.x - pA.x;
+                          const dy = pB.y - pA.y;
+                          const len = Math.sqrt(dx*dx + dy*dy);
+                          
+                          if (len > 0) {
+                              // Normal perpendicular (rotación 90 deg)
+                              const nx = -dy / len;
+                              const ny = dx / len;
+                              
+                              if (j === 0) ctx.moveTo(pA.x + nx * offset, pA.y + ny * offset);
+                              ctx.lineTo(pB.x + nx * offset, pB.y + ny * offset);
+                          }
+                      }
+                      ctx.stroke();
+                  });
+                  if (isEnergized) ctx.restore();
              } else {
                  ctx.beginPath();
                  path.forEach((pt, idx) => {
@@ -4082,8 +4097,28 @@ function isMouseOverWire(mx, my, wire) {
     for (let i = 0; i < fullPath.length - 1; i++) {
         const segStart = fullPath[i];
         const segEnd = fullPath[i+1];
-        if (pDist(mx, my, segStart.x, segStart.y, segEnd.x, segEnd.y) < threshold) {
-            return true;
+        
+        if (wire.isTriple) {
+            // Verificar las 3 líneas paralelas
+            const spacing = 32;
+            const dx = segEnd.x - segStart.x;
+            const dy = segEnd.y - segStart.y;
+            const len = Math.sqrt(dx*dx + dy*dy);
+            if (len > 0) {
+                const nx = -dy / len;
+                const ny = dx / len;
+                for (let offIdx = -1; offIdx <= 1; offIdx++) {
+                    const offset = offIdx * spacing;
+                    if (pDist(mx, my, segStart.x + nx * offset, segStart.y + ny * offset, 
+                                     segEnd.x + nx * offset, segEnd.y + ny * offset) < 15) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            if (pDist(mx, my, segStart.x, segStart.y, segEnd.x, segEnd.y) < threshold) {
+                return true;
+            }
         }
     }
     return false;
