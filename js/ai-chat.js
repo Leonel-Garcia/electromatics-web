@@ -59,25 +59,35 @@ const ElectrIA = {
                 throw new Error(`API Error ${response.status}: ${errorMessage}`);
             }
 
-            // Handle Streaming Response (Backend yields raw text chunks)
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let result = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                result += decoder.decode(value, { stream: true });
-            }
-            // Flush stream
-            result += decoder.decode();
-
-            if (!result) {
-                 throw new Error("No content returned from API");
-            }
+            // Check if backend sent direct JSON or Stream
+            const contentType = response.headers.get("content-type");
             
-            return result;
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                
+                // Case 1: Proxy returned DeepSeek format {"text": "..."}
+                if (data.text) return data.text;
+                
+                // Case 2: Proxy returned Gemini format
+                if (data.candidates && data.candidates[0].content) {
+                    return data.candidates[0].content.parts[0].text;
+                }
+                
+                return "Respuesta recibida en formato no reconocido.";
+            } else {
+                // Case 3: Streaming Response (Backend yields raw text chunks)
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let result = '';
 
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    result += decoder.decode(value, { stream: true });
+                }
+                result += decoder.decode(); // Flush
+                return result || "No se obtuvo contenido de la IA.";
+            }
         } catch (error) {
             console.error("Error calling Gemini API:", error);
             if (error.message.includes('429') || error.message.includes('503')) {
