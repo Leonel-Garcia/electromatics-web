@@ -180,18 +180,38 @@
             Nuestra tecnología ayuda a reducir errores y optimizar el tiempo de ingeniería, siempre bajo la supervisión del profesional responsable.
           </p>
           
-          <!-- Video Explicativo Embebido -->
-          <div style="max-width: 800px; margin: 0 auto; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-            <iframe 
-              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-              src="https://www.youtube.com/embed/4aypGHROSs8" 
-              title="¿Qué hace Electromatics?" 
-              frameborder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              referrerpolicy="strict-origin-when-cross-origin" 
-              allowfullscreen>
-            </iframe>
+          <!-- Video Explicativo Embebido con Control de Fin -->
+          <div style="max-width: 800px; margin: 0 auto; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); background: #000;">
+            <div id="yt-player-home" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
           </div>
+
+          <script>
+            // Cargar la API de YouTube
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            var player;
+            function onYouTubeIframeAPIReady() {
+              player = new YT.Player('yt-player-home', {
+                videoId: '4aypGHROSs8',
+                playerVars: {
+                  'rel': 0,
+                  'modestbranding': 1,
+                  'iv_load_policy': 3
+                },
+                events: {
+                  'onStateChange': function(event) {
+                    if (event.data == YT.PlayerState.ENDED) {
+                      event.target.stopVideo();
+                      event.target.seekTo(0);
+                    }
+                  }
+                }
+              });
+            }
+          </script>
         </div>
       </section>
 

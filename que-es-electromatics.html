@@ -69,18 +69,38 @@
             Electromatics es una plataforma web de software con inteligencia artificial diseñada para apoyar el cálculo, aprendizaje y validación de instalaciones eléctricas residenciales e industriales, alineada con la <strong>Norma Fondonorma 200-2009</strong>.
           </p>
 
-          <!-- Video Explicativo -->
-          <div style="max-width: 850px; margin: 0 auto 30px auto; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-            <iframe 
-              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-              src="https://www.youtube.com/embed/4aypGHROSs8" 
-              title="¿Qué es Electromatics?" 
-              frameborder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              referrerpolicy="strict-origin-when-cross-origin" 
-              allowfullscreen>
-            </iframe>
+          <!-- Video Explicativo con Control de Fin -->
+          <div style="max-width: 850px; margin: 0 auto 30px auto; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); background: #000;">
+            <div id="yt-player-about" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
           </div>
+
+          <script>
+            // Cargar la API de YouTube
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            var player;
+            function onYouTubeIframeAPIReady() {
+              player = new YT.Player('yt-player-about', {
+                videoId: '4aypGHROSs8',
+                playerVars: {
+                  'rel': 0,
+                  'modestbranding': 1,
+                  'iv_load_policy': 3
+                },
+                events: {
+                  'onStateChange': function(event) {
+                    if (event.data == YT.PlayerState.ENDED) {
+                      event.target.stopVideo();
+                      event.target.seekTo(0);
+                    }
+                  }
+                }
+              });
+            }
+          </script>
 
           <p style="font-size: 18px; line-height: 1.8;">
             Su objetivo es ayudar a ingenieros electricistas, estudiantes y operadores a realizar cálculos técnicos confiables, comprender resultados normativos y generar reportes claros para proyectos reales.
