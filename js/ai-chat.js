@@ -55,7 +55,8 @@ const ElectrIA = {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                const errorMessage = errorData.error?.message || response.statusText;
+                // FastAPI suele poner el error en 'detail'
+                const errorMessage = errorData.detail || errorData.error?.message || response.statusText;
                 throw new Error(`API Error ${response.status}: ${errorMessage}`);
             }
 
