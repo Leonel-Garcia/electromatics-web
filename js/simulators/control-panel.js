@@ -213,7 +213,7 @@ const ASSET_PATHS = {
     'pressure-switch': 'img/simulators/control-panel/pressure-switch.png',
     'guardamotor': 'img/simulators/control-panel/guardamotor.png',
     'supervisor': 'img/simulators/control-panel/supervisor.png',
-    'dahlander-motor': 'img/simulators/control-panel/dahlander-motor.png?v=2'
+    'dahlander-motor': 'img/simulators/control-panel/dahlander-motor.png?v=3'
 };
 
 // ... (Rest of file) ...
