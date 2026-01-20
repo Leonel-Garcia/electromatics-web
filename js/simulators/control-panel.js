@@ -212,7 +212,8 @@ const ASSET_PATHS = {
     'terminal-block': 'img/simulators/control-panel/terminal-block.png',
     'pressure-switch': 'img/simulators/control-panel/pressure-switch.png',
     'guardamotor': 'img/simulators/control-panel/guardamotor.png',
-    'supervisor': 'img/simulators/control-panel/supervisor.png'
+    'supervisor': 'img/simulators/control-panel/supervisor.png',
+    'dahlander-motor': 'img/simulators/control-panel/dahlander-motor.png'
 };
 
 // ... (Rest of file) ...
@@ -1830,6 +1831,137 @@ class Motor6T extends Component {
     }
 }
 
+class DahlanderMotor extends Component {
+    constructor(x, y) {
+        super('dahlander-motor', x, y, 200, 180);
+        this.state = { 
+            running: false, 
+            speedMode: 'None', 
+            angle: 0, 
+            direction: 1,
+            hp: 5,
+            voltage: 480,
+            pf: 0.86,
+            eff: 90,
+            rpm: 0
+        };
+        // Terminal Layout for Dahlander faceplate
+        this.terminals = {
+            '1U': {x: 108, y: 45, label: '1U'}, '1V': {x: 130, y: 45, label: '1V'}, '1W': {x: 152, y: 45, label: '1W'},
+            '2U': {x: 108, y: 68, label: '2U'}, '2V': {x: 130, y: 68, label: '2V'}, '2W': {x: 152, y: 68, label: '2W'},
+            'T1': {x: 130, y: 142, label: 'T1'}, 'T2': {x: 155, y: 142, label: 'T2'},
+            'PE': {x: 180, y: 110, label: 'PE'}
+        };
+    }
+
+    update() {
+        const nodes = window.lastSolvedNodes || {};
+        const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
+        const n2u = nodes[`${this.id}_2U`], n2v = nodes[`${this.id}_2V`], n2w = nodes[`${this.id}_2W`];
+
+        const hasPhases1 = n1u && n1v && n1w && n1u.size > 0 && n1v.size > 0 && n1w.size > 0;
+        const hasPhases2 = n2u && n2v && n2w && n2u.size > 0 && n2v.size > 0 && n2w.size > 0;
+
+        // Verificar cortocircuito (puente) en 1U, 1V, 1W (Requerido para Alta Velocidad)
+        let shorted1 = false;
+        if (n1u && n1v && n1w) {
+            const intersection = new Set([...n1u].filter(x => n1v.has(x) && n1w.has(x)));
+            if (intersection.size > 0) shorted1 = true;
+        }
+
+        this.state.running = false;
+        this.state.speedMode = 'None';
+        this.state.rpm = 0;
+
+        if (hasPhases2 && shorted1) {
+            // Alta Velocidad (Doble Estrella / YY)
+            const p1 = [...n2u][0], p2 = [...n2v][0], p3 = [...n2w][0];
+            if (p1 !== p2 && p1 !== p3 && p2 !== p3) {
+                this.state.running = true;
+                this.state.speedMode = 'High';
+                this.state.rpm = 3500;
+                this.state.direction = this.getDirection(p1, p2, p3);
+            }
+        } else if (hasPhases1 && (!n2u || n2u.size === 0)) { 
+            // Baja Velocidad (Triángulo)
+            const p1 = [...n1u][0], p2 = [...n1v][0], p3 = [...n1w][0];
+            if (p1 !== p2 && p1 !== p3 && p2 !== p3) {
+                this.state.running = true;
+                this.state.speedMode = 'Low';
+                this.state.rpm = 1750;
+                this.state.direction = this.getDirection(p1, p2, p3);
+            }
+        }
+    }
+
+    getDirection(p1, p2, p3) {
+        const sequence = ['L1', 'L2', 'L3'];
+        const indices = [sequence.indexOf(p1), sequence.indexOf(p2), sequence.indexOf(p3)];
+        if (indices.includes(-1)) return 1;
+        const diff1 = (indices[1] - indices[0] + 3) % 3;
+        const diff2 = (indices[2] - indices[1] + 3) % 3;
+        return (diff1 === 1 && diff2 === 1) ? 1 : -1;
+    }
+
+    draw(ctx) {
+        if (assets[this.type]) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 15;
+            ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
+            ctx.shadowBlur = 0;
+        } else {
+             ctx.fillStyle = '#ea580c';
+             ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+        
+        // LED de Estado
+        const ledX = this.x + this.width - 20;
+        const ledY = this.y + 20;
+        const ledColor = this.state.running ? (this.state.speedMode === 'High' ? '#3b82f6' : '#22c55e') : '#64748b';
+        ctx.fillStyle = ledColor;
+        ctx.shadowColor = this.state.running ? ledColor : 'transparent';
+        ctx.shadowBlur = this.state.running ? 12 : 0;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Texto de velocidad
+        if (this.state.running) {
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText(this.state.speedMode + ' Speed', this.x + this.width - 10, this.y + 40);
+            ctx.fillText(this.state.rpm + ' RPM', this.x + this.width - 10, this.y + 55);
+        }
+
+        // Animación de rotor
+        if (this.state.running) {
+            const centerX = this.x + 32; 
+            const centerY = this.y + 115;
+            const rotorRadius = 40;
+            const speedFactor = this.state.speedMode === 'High' ? 0.16 : 0.08;
+            this.state.angle += speedFactor * this.state.direction;
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.state.angle);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(rotorRadius, 0);
+                ctx.stroke();
+                ctx.rotate(Math.PI / 4);
+            }
+            ctx.restore();
+        }
+        
+        this.drawTerminals(ctx);
+    }
+}
+
 class PhaseBridge extends Component {
     constructor(x, y) {
         super('bridge', x, y, 100, 20);
@@ -2958,6 +3090,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'pressure-switch': c = new PressureSwitch(x, y); break;
         case 'guardamotor': c = new Guardamotor(x, y); break;
         case 'supervisor': c = new ThreePhaseMonitor(x, y); break;
+        case 'dahlander': c = new DahlanderMotor(x, y); break;
         default: return;
     }
     // Calcular posición top-left basada en el mouse (centro)
@@ -3563,6 +3696,14 @@ function solveCircuit() {
                         if(nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
                     });
                 }
+                if (c instanceof DahlanderMotor) {
+                    // Windings: 1U-2U-1V-2V-1W-2W-1U
+                    [['1U','2U'],['2U','1V'],['1V','2V'],['2V','1W'],['1W','2W'],['2W','1U'],['T1','T2']].forEach(([t1, t2]) => {
+                        const k1 = `${c.id}_${t1}`, k2 = `${c.id}_${t2}`;
+                        if(nodes[k1]) nodes[k1].forEach(p => setNode(c, t2, p));
+                        if(nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
+                    });
+                }
                 if (c instanceof AlternatingRelay) {
                     // Terminal 4 is the power input, Terminal 7 is the common output
                     // Terminal 6 is output for pump 1, Terminal 8 is output for pump 2
@@ -3633,6 +3774,8 @@ function solveCircuit() {
                         ['U', 'V', 'W'],
                         ['U1', 'V1', 'W1'],
                         ['W2', 'U2', 'V2'],
+                        ['1U', '1V', '1W'],
+                        ['2U', '2V', '2W'],
                         ['1', '2', '3'] // Phase Bridge
                     ];
                     let setFrom = phaseSets.find(s => s.includes(w.fromId));
