@@ -508,7 +508,23 @@ async def generate_content_proxy(request: Request):
         if gemini_key:
             logger.info("🤖 Attempting Gemini API...")
             
-            # Attempt 1.1: Gemini 2.0 Flash (Experimental/New)
+            # Attempt 1.1: Gemini 1.5 Flash-8B (High Throughput / Best for Rate Limits)
+            try:
+                # Using v1beta for newest models access
+                url_v8b = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key={gemini_key}"
+                google_response = requests.post(url_v8b, json=body, headers={"Content-Type": "application/json"}, timeout=60)
+                
+                if google_response.status_code == 200:
+                    logger.info("✅ Gemini 1.5 Flash-8B responded successfully")
+                    return JSONResponse(content=google_response.json())
+                else:
+                    error_msg = f"Gemini 1.5 Flash-8B: {google_response.status_code}"
+                    errors_log.append(error_msg)
+                    logger.warning(f"⚠️ {error_msg}")
+            except Exception as e:
+                errors_log.append(f"Gemini 1.5 Flash-8B Exception: {str(e)}")
+
+            # Attempt 1.2: Gemini 2.0 Flash (Experimental)
             try:
                 url_v2 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={gemini_key}"
                 google_response = requests.post(url_v2, json=body, headers={"Content-Type": "application/json"}, timeout=60)
@@ -523,10 +539,9 @@ async def generate_content_proxy(request: Request):
             except Exception as e:
                 errors_log.append(f"Gemini 2.0 Exception: {str(e)}")
 
-            # Attempt 1.2: Gemini 1.5 Flash (Stable Fallback)
+            # Attempt 1.3: Gemini 1.5 Flash (Standard Fallback)
             try:
-                # Using v1 instead of v1beta for stability
-                url_v15 = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+                url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
                 google_response = requests.post(url_v15, json=body, headers={"Content-Type": "application/json"}, timeout=60)
                 
                 if google_response.status_code == 200:
@@ -538,17 +553,6 @@ async def generate_content_proxy(request: Request):
                     logger.warning(f"⚠️ {error_msg}")
             except Exception as e:
                 errors_log.append(f"Gemini 1.5 Exception: {str(e)}")
-
-            # Attempt 1.3: Gemini 1.5 Flash-8B (High Throttling Fallback)
-            try:
-                url_v8b = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-8b:generateContent?key={gemini_key}"
-                google_response = requests.post(url_v8b, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-                
-                if google_response.status_code == 200:
-                    logger.info("✅ Gemini 1.5 Flash-8B responded successfully")
-                    return JSONResponse(content=google_response.json())
-            except Exception:
-                pass
         else:
             errors_log.append("GEMINI_API_KEY not configured")
             logger.warning("⚠️ GEMINI_API_KEY environment variable not set")
