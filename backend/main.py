@@ -18,6 +18,14 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Additional imports for Zhipu AI (GLM)
+import time
+from jose import jwt
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 app = FastAPI()
 
 @app.on_event("startup")
@@ -415,6 +423,86 @@ async def generate_content_proxy(request: Request):
         body = await request.json()
         errors_log = []  # Track all errors for debugging
         
+        # 0. Try Zhipu AI (GLM) - Priority for testing
+        # Helper function for Zhipu Token
+        def generate_zhipu_token(apikey: str, exp_seconds: int = 60):
+            try:
+                id, secret = apikey.split(".")
+                payload = {
+                    "api_key": id,
+                    "exp": int(round(time.time() * 1000)) + exp_seconds * 1000,
+                    "timestamp": int(round(time.time() * 1000)),
+                }
+                return jwt.encode(
+                    payload,
+                    secret,
+                    algorithm="HS256",
+                    headers={"alg": "HS256", "sign_type": "SIGN"},
+                )
+            except Exception as e:
+                logger.error(f"Zhipu Token Gen Error: {e}")
+                return None
+
+        zhipu_key = os.getenv("ZHIPU_API_KEY")
+        if zhipu_key:
+            logger.info("🤖 Attempting Zhipu AI (GLM-4) API...")
+            try:
+                token = generate_zhipu_token(zhipu_key)
+                if token:
+                    # GLM-4 URL
+                    zhipu_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+                    
+                    # Extract prompt
+                    user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
+                    
+                    zhipu_payload = {
+                        "model": "glm-4",
+                        "messages": [
+                            {"role": "system", "content": "You are ElectrIA, an expert electrical engineering assistant. Always output valid JSON when requested."},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        "temperature": 0.7
+                    }
+                    
+                    zhipu_response = requests.post(
+                        zhipu_url,
+                        json=zhipu_payload,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Authorization": f"Bearer {token}"
+                        },
+                        timeout=60
+                    )
+                    
+                    if zhipu_response.status_code == 200:
+                        logger.info("✅ Zhipu AI (GLM-4) responded successfully")
+                        data = zhipu_response.json()
+                        content_text = data['choices'][0]['message']['content']
+                        # Return in Gemini format for frontend compatibility
+                        return JSONResponse(content={
+                            "candidates": [
+                                {
+                                    "content": {
+                                        "parts": [
+                                            {"text": content_text}
+                                        ],
+                                        "role": "model"
+                                    },
+                                    "finishReason": "STOP",
+                                    "index": 0
+                                }
+                            ]
+                        })
+                    else:
+                        error_msg = f"Zhipu AI: {zhipu_response.status_code} - {zhipu_response.text[:200]}"
+                        errors_log.append(error_msg)
+                        logger.warning(f"⚠️ {error_msg}")
+            except Exception as e:
+                errors_log.append(f"Zhipu AI Exception: {str(e)}")
+        else:
+             # Just logs, don't fill errors_log to avoid noise if not expected
+             pass
+
         # 1. Try Gemini first (Primary provider)
         gemini_key = os.getenv("GEMINI_API_KEY")
         if gemini_key:
@@ -542,6 +630,10 @@ def check_ai_health():
             "deepseek": {
                 "configured": bool(deepseek_key),
                 "key_preview": f"{deepseek_key[:8]}...{deepseek_key[-4:]}" if deepseek_key and len(deepseek_key) > 12 else "not set"
+            },
+            "zhipu": {
+                "configured": bool(os.getenv("ZHIPU_API_KEY")),
+                "key_preview": "configured" if os.getenv("ZHIPU_API_KEY") else "not set"
             }
         },
         "message": "ElectrIA is ready" if (gemini_key or deepseek_key) else "No AI providers configured. Set GEMINI_API_KEY or DEEPSEEK_API_KEY environment variables."
