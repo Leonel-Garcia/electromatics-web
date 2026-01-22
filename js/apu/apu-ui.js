@@ -59,7 +59,24 @@ const apuUI = {
             }
         };
 
-        // API 1: DolarAPI (Latam) - Often most reliable
+        // API 1: PyDolarVenezuela (Usually most up-to-date for BCV)
+        try {
+            console.log("Fetching BCV from PyDolarVenezuela...");
+            // Request specifically the BCV page to reduce payload and maybe get fresher data
+            const response = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv', { cache: 'no-cache' });
+            if (response.ok) {
+                const data = await response.json();
+                // Access path: monitors.bcv.price
+                const monitor = data.monitors?.bcv;
+                if (monitor && monitor.price) {
+                     // Check if price looks reasonable (> 0)
+                     updateUI(monitor.price, monitor.last_update, 'PyDolarVenezuela');
+                     return;
+                }
+            }
+        } catch (e) { console.warn("PyDolarVenezuela failed", e); }
+
+        // API 2: DolarAPI (Latam) - Fallback
         try {
             console.log("Fetching BCV rate from DolarAPI...");
             const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-cache' });
@@ -72,24 +89,9 @@ const apuUI = {
             }
         } catch (e) { console.warn("DolarAPI failed", e); }
 
-        // API 2: PyDolarVenezuela (Vercel) - Robust data
-        try {
-            console.log("Fetching BCV from PyDolarVenezuela...");
-            const response = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv', { cache: 'no-cache' });
-            if (response.ok) {
-                const data = await response.json();
-                // Structure: monitors -> bcv -> price / last_update
-                const monitor = data.monitors?.bcv || data.bcv;
-                if (monitor && monitor.price) {
-                     updateUI(monitor.price, monitor.last_update, 'PyDolarVenezuela');
-                     return;
-                }
-            }
-        } catch (e) { console.warn("PyDolarVenezuela failed", e); }
-
         // Fail State
         rateInput.style.opacity = '1'; 
-        console.error("All exchange rate APIs failed or returned invalid data.");
+        console.error("All exchange rate APIs failed.");
     },
 
     setDate() {
