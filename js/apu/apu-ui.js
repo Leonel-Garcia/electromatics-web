@@ -21,28 +21,76 @@ const apuUI = {
 
     async fetchExchangeRate() {
         const rateInput = document.getElementById('exchange-rate');
+        if (!rateInput) return;
+
+        // Create refresh button if it doesn't exist
+        if (!document.getElementById('btn-refresh-rate')) {
+            const btn = document.createElement('i');
+            btn.id = 'btn-refresh-rate';
+            btn.className = "fa-solid fa-arrows-rotate";
+            btn.style = "cursor:pointer; margin-left:8px; color:#007bff;";
+            btn.title = "Actualizar Tasa";
+            btn.onclick = () => this.fetchExchangeRate();
+            rateInput.parentNode.insertBefore(btn, rateInput.nextSibling);
+        }
+
+        const btn = document.getElementById('btn-refresh-rate');
+        btn.classList.add('fa-spin');
+
+        // Helper to update UI
+        const updateUI = (rate, source) => {
+            rateInput.value = parseFloat(rate).toFixed(2);
+            this.updateCalculation();
+            console.log(`Exchange Rate updated: ${rate} (${source})`);
+            
+            const label = rateInput.previousElementSibling;
+            if (label) {
+                const badge = label.querySelector('span');
+                const today = new Date().toLocaleDateString('es-VE');
+                if(badge) badge.innerHTML = `<span style="color:green; font-weight:bold;">(Actualizado: ${today})</span>`;
+                else label.innerHTML += ` <span style="color:green; font-size:0.9em; font-weight:bold;">(Actualizado: ${today})</span>`;
+            }
+            btn.classList.remove('fa-spin');
+        };
+
         try {
-            // Using DolarAPI.com (Latam standard)
-            const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
-            if(response.ok) {
+            // Priority 1: DolarAPI (Latam)
+            console.log("Fetching rate from DolarAPI...");
+            const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
+            if (response.ok) {
                 const data = await response.json();
-                // Structure: { promedio: 330.38, fechaActualizacion: ... }
-                const bcvRate = data.promedio;
-                
-                if (bcvRate) {
-                    rateInput.value = parseFloat(bcvRate).toFixed(2);
-                    this.updateCalculation();
-                    console.log(`BCV Rate updated: ${bcvRate}`);
-                    
-                    // Add badge
-                    const label = rateInput.previousElementSibling;
-                    const badge = label.querySelector('span');
-                    if(badge) badge.innerText = `(Actualizado: ${bcvRate})`;
-                    else label.innerHTML += ` <span style="color:green; font-size:0.9em;">(Actualizado)</span>`;
+                if (data.promedio && data.promedio > 0) {
+                    updateUI(data.promedio, 'DolarAPI');
+                    return;
                 }
             }
+            throw new Error("DolarAPI invalid response");
+
         } catch (error) {
-            console.warn('Could not fetch BCV rate, using default.', error);
+            console.warn('Primary rate API failed:', error);
+            
+            // Priority 2: PyDolarVenezuela (Backup)
+            try {
+                console.log("Fetching rate from PyDolarVenezuela...");
+                const resp2 = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv', { cache: 'no-store' });
+                if (resp2.ok) {
+                    const data2 = await resp2.json();
+                    // Structure often changes, but usually data.monitors.bcv.price
+                    const rate = data2.monitors?.bcv?.price || data2.price;
+                    if (rate) {
+                        updateUI(rate, 'PyDolarVenezuela');
+                        return;
+                    }
+                }
+            } catch (err2) {
+                console.error('Secondary rate API failed:', err2);
+            }
+
+            // Failure
+            btn.classList.remove('fa-spin');
+            btn.style.color = 'red';
+            btn.title = "Error actualizando tasa";
+            setTimeout(() => btn.style.color = '#007bff', 3000);
         }
     },
 
@@ -311,6 +359,7 @@ const apuUI = {
         // Sync to Project Model if it exists
         if (window.apuProject) {
             window.apuProject.syncActivePartida();
+            window.apuProject.renderMasterTable();
         }
     },
     

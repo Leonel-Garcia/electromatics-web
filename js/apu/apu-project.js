@@ -143,10 +143,22 @@ class APUProject {
         const tbody = document.getElementById('master-budget-body');
         if(!tbody) return;
         tbody.innerHTML = '';
+        
+        // Determine currency mode
+        const isBs = window.apuUI && window.apuUI.currentCurrency === 'BS';
+        const rateInput = document.getElementById('exchange-rate');
+        const rate = rateInput ? (parseFloat(rateInput.value) || 1) : 1;
+        const mult = isBs ? rate : 1;
+        const symbol = isBs ? 'Bs' : '$';
+
         let grandTotal = 0;
         this.partidas.forEach((p, index) => {
-            const total = p.qty * p.unitPrice;
-            grandTotal += total;
+            // p.unitPrice is in Base Currency (USD) as it comes from TotalUnitCost
+            const unitPriceDisplay = p.unitPrice * mult;
+            const totalDisplay = (p.qty * p.unitPrice) * mult;
+            
+            grandTotal += totalDisplay;
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${p.item}</td>
@@ -154,15 +166,24 @@ class APUProject {
                 <td>${p.description}</td>
                 <td style="text-align:center">${p.unit}</td>
                 <td style="text-align:center">${p.qty}</td>
-                <td style="text-align:right">$ ${p.unitPrice.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td style="text-align:right"><b>$ ${total.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b></td>
+                <td style="text-align:right">${symbol} ${unitPriceDisplay.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="text-align:right"><b>${symbol} ${totalDisplay.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b></td>
                 <td style="text-align:center">
                     <button class="btn-sm" onclick="apuProject.editPartida(${index})"><i class="fa-solid fa-pen-to-square"></i> APU</button>
+                    <button class="btn-sm btn-danger" onclick="apuProject.deletePartida(${index})" style="margin-left:5px;"><i class="fa-solid fa-trash"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-        document.getElementById('project-total').innerText = `$ ${grandTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('project-total').innerText = `${symbol} ${grandTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    deletePartida(index) {
+        if(confirm('¿Eliminar esta partida?')) {
+            this.partidas.splice(index, 1);
+            this.renderMasterTable();
+            this.renderSidebar();
+        }
     }
 
     renderSidebar() {
@@ -306,6 +327,8 @@ class APUProject {
         this.globalFcas = parseFloat(document.getElementById('global-fcas').value) || 250;
         document.getElementById('fcas-percent').value = this.globalFcas;
         if(window.apuUI) window.apuUI.updateCalculation();
+        // Also re-render master table because currency/rate might have changed implicitly via UI calls
+        this.renderMasterTable();
     }
 }
 
