@@ -42,30 +42,19 @@ const apuUI = {
                 const existingBadge = label.querySelector('.rate-badge');
                 if(existingBadge) existingBadge.remove();
 
-                // Format Date
-                let dateStr = "Hoy";
-                if(updateDateIso) {
-                    try {
-                        // Handle ISO or simple strings
-                        const d = new Date(updateDateIso);
-                        if (!isNaN(d.getTime())) {
-                            dateStr = d.toLocaleString('es-VE', { 
-                                day: '2-digit', month: '2-digit', year: 'numeric', 
-                                hour: '2-digit', minute: '2-digit', hour12: true 
-                            });
-                        } else {
-                           dateStr = updateDateIso; // Use raw string if parse fails but exists
-                        }
-                    } catch(e) { dateStr = new Date().toLocaleString('es-VE'); }
-                } else {
-                    dateStr = new Date().toLocaleString('es-VE');
-                }
+                // Format Date - User wants to see CURRENT check time
+                const now = new Date();
+                const dateStr = now.toLocaleString('es-VE', { 
+                    day: '2-digit', month: '2-digit', year: 'numeric', 
+                    hour: '2-digit', minute: '2-digit', hour12: true 
+                });
 
                 // Create new badge
                 const badge = document.createElement('div');
                 badge.className = 'rate-badge';
                 badge.style = "color:#2e7d32; font-size:0.85em; font-weight:600; margin-top:4px; padding:2px 0; border-top:1px dotted #ccc;";
-                badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> BCV: ${rate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Actualizado: ${dateStr}</span>`;
+                // Label changed to 'Verificado' or 'Consultado' to reflect THIS action
+                badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> BCV: ${rate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Consultado: ${dateStr}</span>`;
                 label.appendChild(badge);
             }
         };
