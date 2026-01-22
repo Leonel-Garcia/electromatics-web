@@ -23,26 +23,18 @@ const apuUI = {
         const rateInput = document.getElementById('exchange-rate');
         if (!rateInput) return;
 
-        // Create refresh button if it doesn't exist
-        let btn = document.getElementById('btn-refresh-rate');
-        if (!btn) {
-            btn = document.createElement('i');
-            btn.id = 'btn-refresh-rate';
-            btn.className = "fa-solid fa-arrows-rotate";
-            btn.style = "cursor:pointer; margin-left:8px; color:#007bff;";
-            btn.title = "Actualizar Tasa BCV";
-            btn.onclick = () => this.fetchExchangeRate();
-            rateInput.parentNode.insertBefore(btn, rateInput.nextSibling);
-        }
-
-        btn.classList.add('fa-spin'); // Start spinning
+        // Visual indicator that update is happening (subtle)
+        rateInput.style.opacity = '0.7';
 
         // Helper to update UI
-        const updateUI = (rate, updateDateIso) => {
-            rateInput.value = parseFloat(rate).toFixed(2);
-            this.updateCalculation(); // Trigger recalculation of budget
+        const updateUI = (rate, updateDateIso, source) => {
+            if(!rate || isNaN(rate)) return;
             
-            console.log(`BCV Rate updated: ${rate}`);
+            rateInput.value = parseFloat(rate).toFixed(2);
+            rateInput.style.opacity = '1';
+            
+            this.updateCalculation(); // Trigger recalculation of budget
+            console.log(`BCV Rate updated: ${rate} from ${source}`);
 
             const label = rateInput.previousElementSibling;
             if (label) {
@@ -54,11 +46,16 @@ const apuUI = {
                 let dateStr = "Hoy";
                 if(updateDateIso) {
                     try {
-                        const dateObj = new Date(updateDateIso);
-                        dateStr = dateObj.toLocaleString('es-VE', { 
-                            day: '2-digit', month: '2-digit', year: 'numeric', 
-                            hour: '2-digit', minute: '2-digit', hour12: true 
-                        });
+                        // Handle ISO or simple strings
+                        const d = new Date(updateDateIso);
+                        if (!isNaN(d.getTime())) {
+                            dateStr = d.toLocaleString('es-VE', { 
+                                day: '2-digit', month: '2-digit', year: 'numeric', 
+                                hour: '2-digit', minute: '2-digit', hour12: true 
+                            });
+                        } else {
+                           dateStr = updateDateIso; // Use raw string if parse fails but exists
+                        }
                     } catch(e) { dateStr = new Date().toLocaleString('es-VE'); }
                 } else {
                     dateStr = new Date().toLocaleString('es-VE');
@@ -67,51 +64,43 @@ const apuUI = {
                 // Create new badge
                 const badge = document.createElement('div');
                 badge.className = 'rate-badge';
-                badge.style = "color:#2e7d32; font-size:0.85em; font-weight:600; margin-top:2px;";
-                badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> BCV: ${rate} (${dateStr})`;
+                badge.style = "color:#2e7d32; font-size:0.85em; font-weight:600; margin-top:4px; padding:2px 0; border-top:1px dotted #ccc;";
+                badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> BCV: ${rate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Actualizado: ${dateStr}</span>`;
                 label.appendChild(badge);
             }
-            
-            btn.classList.remove('fa-spin');
         };
 
+        // API 1: DolarAPI (Latam) - Often most reliable
         try {
             console.log("Fetching BCV rate from DolarAPI...");
             const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-cache' });
-            
             if (response.ok) {
                 const data = await response.json();
                 if (data.promedio && data.promedio > 0) {
-                    updateUI(data.promedio, data.fechaActualizacion);
+                    updateUI(data.promedio, data.fechaActualizacion, 'DolarAPI');
                     return;
                 }
             }
-            throw new Error("Invalid DolarAPI data");
+        } catch (e) { console.warn("DolarAPI failed", e); }
 
-        } catch (error) {
-            console.warn('Primary API failed, trying backup...', error);
-            
-            try {
-                // Backup Source
-                const resp2 = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv', { cache: 'no-cache' });
-                if (resp2.ok) {
-                    const data2 = await resp2.json();
-                    const rate = data2.monitors?.bcv?.price || data2.price;
-                    const timeStr = data2.monitors?.bcv?.last_update || data2.last_update; // Try to get time
-                    
-                    if (rate) {
-                        updateUI(rate, timeStr); // Pass time if available, or undefined to show 'now'
-                        return;
-                    }
+        // API 2: PyDolarVenezuela (Vercel) - Robust data
+        try {
+            console.log("Fetching BCV from PyDolarVenezuela...");
+            const response = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv', { cache: 'no-cache' });
+            if (response.ok) {
+                const data = await response.json();
+                // Structure: monitors -> bcv -> price / last_update
+                const monitor = data.monitors?.bcv || data.bcv;
+                if (monitor && monitor.price) {
+                     updateUI(monitor.price, monitor.last_update, 'PyDolarVenezuela');
+                     return;
                 }
-            } catch (err2) {
-                console.error("All rate APIs failed", err2);
             }
+        } catch (e) { console.warn("PyDolarVenezuela failed", e); }
 
-            // Error State
-            btn.classList.remove('fa-spin');
-            btn.style.color = 'red';
-        }
+        // Fail State
+        rateInput.style.opacity = '1'; 
+        console.error("All exchange rate APIs failed or returned invalid data.");
     },
 
     setDate() {
