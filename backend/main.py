@@ -541,7 +541,8 @@ async def generate_content_proxy(request: Request):
 
             # Attempt 1.3: Gemini 1.5 Flash (Standard Fallback)
             try:
-                url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+                # Reverting to v1 for stability
+                url_v15 = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={gemini_key}"
                 google_response = requests.post(url_v15, json=body, headers={"Content-Type": "application/json"}, timeout=60)
                 
                 if google_response.status_code == 200:
