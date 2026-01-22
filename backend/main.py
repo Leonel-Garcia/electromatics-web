@@ -17,10 +17,6 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Additional imports for Zhipu AI (GLM)
-import time
-from jose import jwt
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -423,203 +419,61 @@ async def generate_content_proxy(request: Request):
         body = await request.json()
         errors_log = []  # Track all errors for debugging
         
-        # 0. Try Zhipu AI (GLM) - Priority for testing
-        # Helper function for Zhipu Token
-        def generate_zhipu_token(apikey: str, exp_seconds: int = 60):
-            try:
-                id, secret = apikey.split(".")
-                payload = {
-                    "api_key": id,
-                    "exp": int(round(time.time() * 1000)) + exp_seconds * 1000,
-                    "timestamp": int(round(time.time() * 1000)),
-                }
-                return jwt.encode(
-                    payload,
-                    secret,
-                    algorithm="HS256",
-                    headers={"alg": "HS256", "sign_type": "SIGN"},
-                )
-            except Exception as e:
-                logger.error(f"Zhipu Token Gen Error: {e}")
-                return None
-
-        zhipu_key = os.getenv("ZHIPU_API_KEY")
-        if zhipu_key:
-            logger.info("🤖 Attempting Zhipu AI (GLM-4) API...")
-            try:
-                token = generate_zhipu_token(zhipu_key)
-                if token:
-                    # GLM-4 URL
-                    zhipu_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-                    
-                    # Extract prompt
-                    user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
-                    
-                    zhipu_payload = {
-                        "model": "glm-4",
-                        "messages": [
-                            {"role": "system", "content": "You are ElectrIA, an expert electrical engineering assistant. Always output valid JSON when requested."},
-                            {"role": "user", "content": user_prompt}
-                        ],
-                        "temperature": 0.7
-                    }
-                    
-                    zhipu_response = requests.post(
-                        zhipu_url,
-                        json=zhipu_payload,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {token}"
-                        },
-                        timeout=60
-                    )
-                    
-                    if zhipu_response.status_code == 200:
-                        logger.info("✅ Zhipu AI (GLM-4) responded successfully")
-                        data = zhipu_response.json()
-                        content_text = data['choices'][0]['message']['content']
-                        # Return in Gemini format for frontend compatibility
-                        return JSONResponse(content={
-                            "candidates": [
-                                {
-                                    "content": {
-                                        "parts": [
-                                            {"text": content_text}
-                                        ],
-                                        "role": "model"
-                                    },
-                                    "finishReason": "STOP",
-                                    "index": 0
-                                }
-                            ]
-                        })
-                    else:
-                        error_msg = f"Zhipu AI: {zhipu_response.status_code} - {zhipu_response.text[:200]}"
-                        errors_log.append(error_msg)
-                        logger.warning(f"⚠️ {error_msg}")
-            except Exception as e:
-                errors_log.append(f"Zhipu AI Exception: {str(e)}")
-        else:
-             # Just logs, don't fill errors_log to avoid noise if not expected
-             pass
-
         # 1. Try Gemini first (Primary provider)
         gemini_key = os.getenv("GEMINI_API_KEY")
         if gemini_key:
             logger.info("🤖 Attempting Gemini API...")
             
-            # Attempt 1.1: Gemini 1.5 Flash-8B (High Throughput)
-            try:
-                # Try specific version 001 if generic fails
-                url_v8b = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key={gemini_key}"
-                google_response = requests.post(url_v8b, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-                
-                if google_response.status_code == 200:
-                    logger.info("✅ Gemini 1.5 Flash-8B responded successfully")
-                    return JSONResponse(content=google_response.json())
-                else:
-                    errors_log.append(f"Gemini 1.5 Flash-8B: {google_response.status_code}")
-            except Exception as e:
-                errors_log.append(f"Gemini 1.5 Flash-8B Exception: {str(e)}")
+            # Simplified Chain for Reliability
+            models_to_try = [
+                # 0. Gemini 3.0 (Newest / User Requested)
+                "gemini-3-pro-preview",
+                "gemini-3-flash-preview",
+                # 1. Flash 1.5-8B (Fastest, High Rate Limit)
+                "gemini-1.5-flash-8b",
+                # 2. Flash 1.5 Stable (Standard)
+                "gemini-1.5-flash",
+                # 3. Flash 2.0 Experimental (Previous New)
+                "gemini-2.0-flash-exp",
+                # 4. Pro 1.5 (Most powerful fallback)
+                "gemini-1.5-pro"
+            ]
 
-            # Attempt 1.2: Gemini 2.0 Flash (Experimental)
-            try:
-                url_v2 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={gemini_key}"
-                google_response = requests.post(url_v2, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-                
-                if google_response.status_code == 200:
-                    logger.info("✅ Gemini 2.0 Flash responded successfully")
-                    return JSONResponse(content=google_response.json())
-                else:
-                    errors_log.append(f"Gemini 2.0 Flash: {google_response.status_code}")
-            except Exception as e:
-                errors_log.append(f"Gemini 2.0 Exception: {str(e)}")
+            gemini_success = False
 
-            # Attempt 1.3: Gemini 1.5 Flash-002 (Latest Stable)
-            try:
-                url_v15_002 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent?key={gemini_key}"
-                google_response = requests.post(url_v15_002, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-                
-                if google_response.status_code == 200:
-                    logger.info("✅ Gemini 1.5 Flash-002 responded successfully")
-                    return JSONResponse(content=google_response.json())
-                else:
-                    errors_log.append(f"Gemini 1.5 Flash-002: {google_response.status_code}")
-            except Exception as e:
-                errors_log.append(f"Gemini 1.5 002 Exception: {str(e)}")
-
-            # Attempt 1.4: Gemini 1.5 Flash (Generic/Latest) - Back to v1beta as v1 404'd
-            try:
-                url_v15 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-                google_response = requests.post(url_v15, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-                
-                if google_response.status_code == 200:
-                    logger.info("✅ Gemini 1.5 Flash responded successfully")
-                    return JSONResponse(content=google_response.json())
-                else:
-                    errors_log.append(f"Gemini 1.5 Flash: {google_response.status_code}")
-            except Exception as e:
-                errors_log.append(f"Gemini 1.5 Exception: {str(e)}")
-
-            # Attempt 1.5: Gemini 1.5 Pro (Last Resort)
-            try:
-                url_pro = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={gemini_key}"
-                google_response = requests.post(url_pro, json=body, headers={"Content-Type": "application/json"}, timeout=60)
-                
-                if google_response.status_code == 200:
-                    logger.info("✅ Gemini 1.5 Pro responded successfully")
-                    return JSONResponse(content=google_response.json())
-                else:
-                    errors_log.append(f"Gemini 1.5 Pro: {google_response.status_code}")
-            except Exception as e:
-                errors_log.append(f"Gemini 1.5 Pro Exception: {str(e)}")
+            for model_name in models_to_try:
+                try:
+                    # Decide on API endpoint version based on model
+                    api_version = "v1beta" 
+                    if model_name == "gemini-1.5-flash":
+                         api_version = "v1" # Use stable v1 for standard flash
+                    
+                    url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model_name}:generateContent?key={gemini_key}"
+                    
+                    google_response = requests.post(url, json=body, headers={"Content-Type": "application/json"}, timeout=60)
+                    
+                    if google_response.status_code == 200:
+                        logger.info(f"✅ {model_name} responded successfully")
+                        return JSONResponse(content=google_response.json())
+                    else:
+                        errors_log.append(f"{model_name}: {google_response.status_code}")
+                except Exception as e:
+                    errors_log.append(f"{model_name} Exception: {str(e)}")
         else:
             errors_log.append("GEMINI_API_KEY not configured")
             logger.warning("⚠️ GEMINI_API_KEY environment variable not set")
 
-        # 2. Try DeepSeek as fallback (Secondary provider)
+        # 2. Try DeepSeek as fallback (Secondary provider) - Kept as backup just in case
         deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         if deepseek_key:
-            logger.info("🤖 Attempting DeepSeek API as fallback...")
-            try:
-                # Extract text from Gemini-format payload
-                user_prompt = body.get('contents', [])[0].get('parts', [])[0].get('text', '')
-                
-                deepseek_url = "https://api.deepseek.com/chat/completions"
-                deepseek_payload = {
-                    "model": "deepseek-chat",
-                    "messages": [
-                        {"role": "system", "content": "You are ElectrIA, an expert electrical engineering assistant. Always output valid JSON when requested."},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7
-                }
-                
-                response = requests.post(
-                    deepseek_url,
-                    json=deepseek_payload,
-                    headers={
-                        "Content-Type": "application/json",
-                        "Authorization": f"Bearer {deepseek_key}"
-                    },
-                    timeout=60
-                )
-                
-                if response.status_code == 200:
-                    logger.info("✅ DeepSeek responded successfully")
-                    data = response.json()
-                    content_text = data['choices'][0]['message']['content']
-                    return JSONResponse(content={"text": content_text})
-                else:
-                    error_msg = f"DeepSeek: {response.status_code} - {response.text[:200]}"
-                    errors_log.append(error_msg)
-                    logger.error(f"❌ {error_msg}")
-            except Exception as e:
-                errors_log.append(f"DeepSeek Exception: {str(e)}")
-                logger.error(f"❌ DeepSeek Exception: {str(e)}")
-        else:
-            errors_log.append("DEEPSEEK_API_KEY not configured")
-            logger.warning("⚠️ DEEPSEEK_API_KEY environment variable not set")
+             pass 
+             # ... Logic removed to simplify as user requested 'remove all those APIs to use this last one'
+             # actually, better to keep it commented out or minimal if user really wants to ONLY depend on Gemini
+             # But user said 'elimina todas esa api... pa usar esta ultima' (Gemini).
+             # So I will skip DeepSeek execution here to strictly follow users wish to rely on the new Gemini key.
+        
+        if errors_log:
+             logger.warning(f"Failed attempts: {errors_log}")
 
         # All providers failed
         error_summary = " | ".join(errors_log) if errors_log else "Unknown error"
