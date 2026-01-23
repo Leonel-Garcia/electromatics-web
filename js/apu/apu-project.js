@@ -46,6 +46,12 @@ class APUProject {
             if(detailView) detailView.style.display = 'none';
             btns[0].classList.add('active');
             btns[1].classList.remove('active');
+            
+            // Refresh BCV rate automatically when entering budget view
+            if (window.apuUI) {
+                window.apuUI.fetchExchangeRate();
+            }
+            
             this.renderMasterTable();
         } else {
             if(projectView) projectView.style.display = 'none';

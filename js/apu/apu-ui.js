@@ -23,10 +23,25 @@ const apuUI = {
         const rateInput = document.getElementById('exchange-rate');
         if (!rateInput) return;
 
-        // Visual indicator
-        rateInput.style.opacity = '0.7';
+        // Throttling: If fetched less than 2 minutes ago, don't re-fetch unless it's a manual click
+        // To detect manual click vs auto-call, we can check the event object, 
+        // but for now let's just use a timestamp.
+        const now = Date.now();
+        if (this.lastRateFetch && (now - this.lastRateFetch < 120000)) {
+            console.log("BCV Rate fetched recently, skipping...");
+            return;
+        }
+
+        // Visual indicator: Spinner or Pulse
+        rateInput.style.opacity = '0.5';
+        rateInput.style.boxShadow = '0 0 10px rgba(13, 110, 253, 0.5)';
+        const btn = rateInput.nextElementSibling;
+        if (btn && btn.tagName === 'BUTTON') {
+             btn.querySelector('i').classList.add('fa-spin');
+        }
 
         const updateUI = (rate, updateDateIso, source) => {
+            this.lastRateFetch = Date.now();
             if(!rate || isNaN(rate)) return;
             
             let cleanRate = rate;
@@ -34,11 +49,13 @@ const apuUI = {
                 cleanRate = parseFloat(rate.replace(',', '.'));
             }
             
-            // For the numeric input, we must use dot internally for type="number" 
-            // but we can change it to type="text" to support comma input if needed.
-            // However, the user asked to USE COMMA for decimals.
+            // Update the input value
             rateInput.value = cleanRate.toFixed(2).replace('.', ',');
             rateInput.style.opacity = '1';
+            rateInput.style.boxShadow = 'none';
+            if (btn && btn.tagName === 'BUTTON') {
+                btn.querySelector('i').classList.remove('fa-spin');
+            }
             
             this.updateCalculation();
             console.log(`BCV Rate updated: ${cleanRate} from ${source}`);
@@ -48,25 +65,24 @@ const apuUI = {
                 const existingBadge = label.querySelector('.rate-badge');
                 if(existingBadge) existingBadge.remove();
 
-                const now = new Date();
-                const dateStr = now.toLocaleString('es-VE', { 
+                const date = new Date();
+                const dateStr = date.toLocaleString('es-VE', { 
                     day: '2-digit', month: '2-digit', year: 'numeric', 
                     hour: '2-digit', minute: '2-digit', hour12: true 
                 });
 
                 const badge = document.createElement('div');
                 badge.className = 'rate-badge';
-                badge.style = "color:#1565c0; font-size:0.85em; font-weight:600; margin-top:4px; padding:4px; border-top:1px dotted #ccc; background:#e3f2fd; border-radius:4px;";
+                badge.style = "color:#1565c0; font-size:0.85em; font-weight:600; margin-top:4px; padding:6px; border:1px solid #bbdefb; background:#e3f2fd; border-radius:4px; animation: fadeIn 0.5s;";
                 const formattedRate = cleanRate.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                badge.innerHTML = `<i class="fa-solid fa-cloud-bolt"></i> BCV: ${formattedRate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Fuente: ${source} <br>Consultado: ${dateStr}</span>`;
+                badge.innerHTML = `<i class="fa-solid fa-cloud-bolt"></i> BCV: ${formattedRate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Fuente: ${source} <br>Actualizado: ${dateStr}</span>`;
                 label.appendChild(badge);
             }
         };
 
-        // Source 1: Backend Proxy (Recommended / Auto-hosted)
+        // Source 1: Backend Proxy
         try {
             const apiBase = window.API_BASE_URL || "http://localhost:8001";
-            console.log("Fetching BCV from Local Backend Proxy...");
             const response = await fetch(`${apiBase}/api/bcv?v=${Date.now()}`, { cache: 'no-cache' });
             if (response.ok) {
                 const data = await response.json();
@@ -75,10 +91,17 @@ const apuUI = {
                     return;
                 }
             }
-        } catch (e) { console.warn("Backend BCV API failed", e); }
+        } catch (e) { 
+            console.warn("Backend BCV API failed", e); 
+        } finally {
+            rateInput.style.opacity = '1';
+            rateInput.style.boxShadow = 'none';
+            if (btn && btn.tagName === 'BUTTON') {
+                btn.querySelector('i').classList.remove('fa-spin');
+            }
+        }
 
         // Fail State Visuals
-        rateInput.style.opacity = '1'; 
         const label = rateInput.previousElementSibling;
         if (label && !label.querySelector('.rate-badge')) {
             const badge = document.createElement('div');
