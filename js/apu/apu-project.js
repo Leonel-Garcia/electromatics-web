@@ -152,8 +152,9 @@ class APUProject {
         
         // Determine currency mode
         const isBs = window.apuUI && window.apuUI.currentCurrency === 'BS';
-        const rateInput = document.getElementById('exchange-rate');
-        const rate = rateInput ? (parseFloat(rateInput.value) || 1) : 1;
+        const exchangeInput = document.getElementById('exchange-rate');
+        const exchangeVal = exchangeInput ? exchangeInput.value : "1";
+        const rate = parseFloat(exchangeVal.toString().replace(',', '.')) || 1;
         const mult = isBs ? rate : 1;
         const symbol = isBs ? 'Bs' : '$';
 

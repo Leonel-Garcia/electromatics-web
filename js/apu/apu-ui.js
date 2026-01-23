@@ -29,13 +29,15 @@ const apuUI = {
         const updateUI = (rate, updateDateIso, source) => {
             if(!rate || isNaN(rate)) return;
             
-            // Clean rate if it's a string with commas
             let cleanRate = rate;
             if (typeof rate === 'string') {
                 cleanRate = parseFloat(rate.replace(',', '.'));
             }
             
-            rateInput.value = cleanRate.toFixed(2);
+            // For the numeric input, we must use dot internally for type="number" 
+            // but we can change it to type="text" to support comma input if needed.
+            // However, the user asked to USE COMMA for decimals.
+            rateInput.value = cleanRate.toFixed(2).replace('.', ',');
             rateInput.style.opacity = '1';
             
             this.updateCalculation();
@@ -270,7 +272,8 @@ const apuUI = {
         if (!model) return;
 
         const exchangeInput = document.getElementById('exchange-rate');
-        const exchangeRate = exchangeInput ? (parseFloat(exchangeInput.value) || 1) : 1;
+        let exchangeVal = exchangeInput ? exchangeInput.value : "1";
+        const exchangeRate = parseFloat(exchangeVal.toString().replace(',', '.')) || 1;
         const isBs = this.currentCurrency === 'BS';
         const mult = isBs ? exchangeRate : 1;
 
