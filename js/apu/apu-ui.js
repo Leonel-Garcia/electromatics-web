@@ -55,7 +55,8 @@ const apuUI = {
                 const badge = document.createElement('div');
                 badge.className = 'rate-badge';
                 badge.style = "color:#1565c0; font-size:0.85em; font-weight:600; margin-top:4px; padding:4px; border-top:1px dotted #ccc; background:#e3f2fd; border-radius:4px;";
-                badge.innerHTML = `<i class="fa-solid fa-cloud-bolt"></i> BCV: ${cleanRate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Fuente: ${source} <br>Consultado: ${dateStr}</span>`;
+                const formattedRate = cleanRate.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                badge.innerHTML = `<i class="fa-solid fa-cloud-bolt"></i> BCV: ${formattedRate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Fuente: ${source} <br>Consultado: ${dateStr}</span>`;
                 label.appendChild(badge);
             }
         };
@@ -64,7 +65,7 @@ const apuUI = {
         try {
             const apiBase = window.API_BASE_URL || "http://localhost:8001";
             console.log("Fetching BCV from Local Backend Proxy...");
-            const response = await fetch(`${apiBase}/api/bcv`, { cache: 'no-cache' });
+            const response = await fetch(`${apiBase}/api/bcv?v=${Date.now()}`, { cache: 'no-cache' });
             if (response.ok) {
                 const data = await response.json();
                 if (data.rate) {

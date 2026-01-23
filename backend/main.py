@@ -521,38 +521,9 @@ def check_ai_health():
 def get_bcv_rate():
     """
     Fetch the BCV (Banco Central de Venezuela) exchange rate.
-    Tries multiple sources for high availability.
+    Prioritizes direct scraping from the official website.
     """
-    sources = [
-        {"url": "https://ve.dolarapi.com/v1/dolares/oficial", "type": "dolarapi"},
-        {"url": "https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv", "type": "pydolar"}
-    ]
-    
-    for source in sources:
-        try:
-            logger.info(f"Fetching BCV rate from {source['url']}...")
-            response = requests.get(source['url'], timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                if source['type'] == 'dolarapi':
-                    return {
-                        "rate": data.get("promedio"),
-                        "source": "DolarAPI (BCV)",
-                        "updated_at": data.get("fechaActualizacion")
-                    }
-                elif source['type'] == 'pydolar':
-                    # Handle PyDolar structure
-                    monitor = data.get("monitors", {}).get("bcv", {})
-                    if monitor and monitor.get("price"):
-                        return {
-                            "rate": monitor.get("price"),
-                            "source": "PyDolar (BCV)",
-                            "updated_at": monitor.get("last_update")
-                        }
-        except Exception as e:
-            logger.warning(f"Failed to fetch from {source['url']}: {str(e)}")
-            
-    # Source 3: Direct Scrape from BCV Official (Hardest but most 'auto-hosted')
+    # Source 1: Direct Scrape from BCV Official (Most actual)
     try:
         logger.info("Attempting direct scrape from BCV official website...")
         headers = {
@@ -561,23 +532,48 @@ def get_bcv_rate():
         bcv_resp = requests.get("https://www.bcv.org.ve/", headers=headers, timeout=15, verify=False)
         if bcv_resp.status_code == 200:
             import re
-            logger.info(f"BCV Official Response length: {len(bcv_resp.text)}")
-            # Improved regex to handle variations in formatting
+            # Match number like 352,70630000
             match = re.search(r'id=["\']dolar["\'].*?strong>\s*([\d,.]+)\s*<', bcv_resp.text, re.DOTALL | re.IGNORECASE)
             if match:
                 rate_str = match.group(1).replace(',', '.')
                 logger.info(f"✅ BCV Scrape Success: {rate_str}")
                 return {
                     "rate": float(rate_str),
-                    "source": "BCV Oficial (Scrape)",
+                    "source": "BCV Oficial (Real-time Scrape)",
                     "updated_at": datetime.utcnow().isoformat()
                 }
-            else:
-                logger.warning("BCV Scrape failed: regex did not match.")
     except Exception as e:
         logger.warning(f"Direct BCV scrape failed: {str(e)}")
 
-    # Final Fallback
+    # Source 2: Fallback to APIs if scraper fails
+    sources = [
+        {"url": "https://ve.dolarapi.com/v1/dolares/oficial", "type": "dolarapi"},
+        {"url": "https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv", "type": "pydolar"}
+    ]
+    
+    for source in sources:
+        try:
+            logger.info(f"Falling back to {source['url']}...")
+            response = requests.get(source['url'], timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if source['type'] == 'dolarapi':
+                    return {
+                        "rate": data.get("promedio"),
+                        "source": "DolarAPI (Fallback)",
+                        "updated_at": data.get("fechaActualizacion")
+                    }
+                elif source['type'] == 'pydolar':
+                    monitor = data.get("monitors", {}).get("bcv", {})
+                    if monitor and monitor.get("price"):
+                        return {
+                            "rate": monitor.get("price"),
+                            "source": "PyDolar (Fallback)",
+                            "updated_at": monitor.get("last_update")
+                        }
+        except Exception as e:
+            logger.warning(f"Fallback failed for {source['url']}: {str(e)}")
+            
     raise HTTPException(status_code=503, detail="No se pudo obtener la tasa BCV de ninguna fuente.")
 
 @app.get("/")
