@@ -561,15 +561,19 @@ def get_bcv_rate():
         bcv_resp = requests.get("https://www.bcv.org.ve/", headers=headers, timeout=15, verify=False)
         if bcv_resp.status_code == 200:
             import re
-            # BCV usually has <div id="dolar"><strong> 36,1234 </strong></div>
-            match = re.search(r'id="dolar".*?strong>\s*([\d,.]+)\s*<', bcv_resp.text, re.DOTALL)
+            logger.info(f"BCV Official Response length: {len(bcv_resp.text)}")
+            # Improved regex to handle variations in formatting
+            match = re.search(r'id=["\']dolar["\'].*?strong>\s*([\d,.]+)\s*<', bcv_resp.text, re.DOTALL | re.IGNORECASE)
             if match:
                 rate_str = match.group(1).replace(',', '.')
+                logger.info(f"✅ BCV Scrape Success: {rate_str}")
                 return {
                     "rate": float(rate_str),
                     "source": "BCV Oficial (Scrape)",
                     "updated_at": datetime.utcnow().isoformat()
                 }
+            else:
+                logger.warning("BCV Scrape failed: regex did not match.")
     except Exception as e:
         logger.warning(f"Direct BCV scrape failed: {str(e)}")
 

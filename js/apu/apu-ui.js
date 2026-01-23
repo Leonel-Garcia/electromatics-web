@@ -102,8 +102,19 @@ const apuUI = {
 
     setDate() {
         const date = new Date();
-        const str = date.toLocaleDateString('es-VE', { year: 'numeric', month: 'short' });
-        document.getElementById('current-date').innerText = str;
+        const fullDateStr = date.toLocaleDateString('es-VE', { 
+            day: '2-digit', month: 'long', year: 'numeric' 
+        });
+        const shortDateStr = date.toLocaleDateString('es-VE', { 
+            month: 'short', year: 'numeric' 
+        });
+        
+        // Update both the "Jan 2026" header and any potential full date displays
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) dateEl.innerText = fullDateStr;
+
+        const displayDateEl = document.getElementById('display-project-date');
+        if (displayDateEl) displayDateEl.innerText = `Generado: ${fullDateStr}`;
     },
 
     bindEvents() {

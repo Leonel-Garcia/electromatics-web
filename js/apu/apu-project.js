@@ -18,13 +18,19 @@ class APUProject {
         if(nameInput) {
             nameInput.addEventListener('input', (e) => {
                 this.name = e.target.value;
-                document.getElementById('display-project-name').innerText = this.name;
+                const displayEl = document.getElementById('display-project-name');
+                if(displayEl) displayEl.innerText = this.name;
             });
         }
 
         const fileInput = document.getElementById('pdf-upload');
         if(fileInput) {
             fileInput.addEventListener('change', (e) => this.handlePdfImport(e));
+        }
+
+        // Ensure dates are set on startup
+        if (window.apuUI) {
+            window.apuUI.setDate();
         }
     }
 
