@@ -28,9 +28,10 @@ class APUProject {
             fileInput.addEventListener('change', (e) => this.handlePdfImport(e));
         }
 
-        // Ensure dates are set on startup
+        // Ensure dates and rates are set on startup
         if (window.apuUI) {
             window.apuUI.setDate();
+            window.apuUI.fetchExchangeRate();
         }
     }
 

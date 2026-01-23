@@ -77,28 +77,14 @@ const apuUI = {
             }
         } catch (e) { console.warn("Backend BCV API failed", e); }
 
-        // Source 2: Direct DolarAPI (Fallback)
-        try {
-            console.log("Fetching BCV rate from DolarAPI directly...");
-            const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-cache' });
-            if (response.ok) {
-                const data = await response.json();
-                if (data.promedio && data.promedio > 0) {
-                    updateUI(data.promedio, data.fechaActualizacion, 'DolarAPI Direct');
-                    return;
-                }
-            }
-        } catch (e) { console.warn("Direct DolarAPI failed", e); }
-
-        // Fail State
+        // Fail State Visuals
         rateInput.style.opacity = '1'; 
-        console.error("All exchange rate sources failed.");
         const label = rateInput.previousElementSibling;
         if (label && !label.querySelector('.rate-badge')) {
             const badge = document.createElement('div');
             badge.className = 'rate-badge';
             badge.style = "color:#d32f2f; font-size:0.85em; font-weight:600; margin-top:4px; background:#ffebee; padding:4px; border-radius:4px;";
-            badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error al actualizar tasa.<br><span style="font-weight:normal">Ajuste manualmente si es necesario.</span>`;
+            badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> No se pudo obtener tasa oficial.<br><span style="font-weight:normal">Usando valor de referencia.</span>`;
             label.appendChild(badge);
         }
     },
