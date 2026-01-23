@@ -682,8 +682,8 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
         alert('Función de descarga PDF en desarrollo. Por ahora puedes usar Ctrl+P para imprimir la página.');
     },
 
-    // Call Gemini API via Backend Proxy
-    callGeminiAPI: async (prompt) => {
+    // Call Gemini API via Backend Proxy with Retry Logic
+    callGeminiAPI: async (prompt, retries = 2) => {
         try {
             const response = await fetch(`${API_BASE_URL}/generate-content`, {
                 method: 'POST',
@@ -698,12 +698,33 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
             });
 
             if (!response.ok) {
-                if (response.status === 429) {
-                    throw new Error('Has excedido el límite de consultas de la IA (Error 429). Por favor espera un minuto e intenta de nuevo.');
+                // Handle specific error codes
+                if (response.status === 503) {
+                    if (retries > 0) {
+                        console.log(`Servicio temporalmente no disponible. Reintentando... (${retries} intentos restantes)`);
+                        // Wait 2 seconds before retry
+                        await new Promise(r => setTimeout(r, 2000));
+                        return CursoIA.callGeminiAPI(prompt, retries - 1);
+                    }
+                    throw new Error('El servicio de IA está temporalmente no disponible. Por favor, intenta de nuevo en unos momentos.');
                 }
+                
+                if (response.status === 429) {
+                    throw new Error('Has excedido el límite de consultas de la IA. Por favor espera un minuto e intenta de nuevo.');
+                }
+                
+                if (response.status === 500) {
+                    if (retries > 0) {
+                        console.log(`Error del servidor. Reintentando... (${retries} intentos restantes)`);
+                        await new Promise(r => setTimeout(r, 2000));
+                        return CursoIA.callGeminiAPI(prompt, retries - 1);
+                    }
+                    throw new Error('Error en el servidor de IA. Por favor, intenta de nuevo más tarde.');
+                }
+                
                 const errData = await response.json().catch(() => ({}));
                 const errMsg = errData.error?.message || response.statusText;
-                throw new Error(`API error (${response.status}): ${errMsg}`);
+                throw new Error(`Error de la API (${response.status}): ${errMsg}`);
             }
 
             // Handle Streaming Response
@@ -718,10 +739,20 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
             }
             fullText += decoder.decode();
 
-            return fullText || '';
+            if (!fullText || fullText.trim().length === 0) {
+                throw new Error('La IA devolvió una respuesta vacía. Por favor, intenta de nuevo.');
+            }
+
+            return fullText;
             
         } catch (error) {
-            console.error("Proxy Error:", error);
+            console.error("Error al llamar a la API:", error);
+            
+            // Network errors
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                throw new Error('No se puede conectar al servidor. Verifica tu conexión a internet.');
+            }
+            
             throw error;
         }
     },
