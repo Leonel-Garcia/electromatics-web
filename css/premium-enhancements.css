@@ -1,0 +1,743 @@
+/*
+  PREMIUM-ENHANCEMENTS.CSS - Versión Premium 2025
+  Mejoras visuales modernas para Electromatics
+  Características: Glassmorphism, Animaciones, Micro-interacciones
+*/
+
+/* ================================================
+   1. VARIABLES PREMIUM EXTENDIDAS
+   ================================================ */
+:root {
+  /* Gradientes Dinámicos */
+  --gradient-primary: linear-gradient(135deg, #00e5ff 0%, #0099ff 50%, #0066ff 100%);
+  --gradient-orange: linear-gradient(135deg, #ff9800 0%, #ff6d00 50%, #ff3d00 100%);
+  --gradient-dark: linear-gradient(135deg, #0b1116 0%, #161f29 50%, #1a2733 100%);
+  
+  /* Glassmorphism */
+  --glass-white: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* Efectos de Glow */
+  --glow-blue: 0 0 20px rgba(0, 229, 255, 0.4);
+  --glow-orange: 0 0 20px rgba(255, 109, 0, 0.4);
+  
+  /* Transiciones Suaves */
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ================================================
+   2. CARDS GLASSMORPHISM
+   ================================================ */
+.glass-card {
+  background: var(--glass-white);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  padding: 30px;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.4s var(--transition-smooth);
+}
+
+.glass-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px 0 rgba(0, 229, 255, 0.3);
+  border-color: var(--electric-blue);
+}
+
+.glass-card-premium {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.2), transparent);
+  transition: left 0.6s;
+}
+
+.glass-card-premium:hover::before {
+  left: 100%;
+}
+
+/* ================================================
+   3. BOTONES PREMIUM CON EFECTOS
+   ================================================ */
+.btn-premium {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s var(--transition-smooth);
+}
+
+.btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-premium:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-premium-blue {
+  background: var(--gradient-primary);
+  color: #000;
+  box-shadow: var(--glow-blue);
+}
+
+.btn-premium-blue:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
+}
+
+.btn-premium-orange {
+  background: var(--gradient-orange);
+  color: #fff;
+  box-shadow: var(--glow-orange);
+}
+
+.btn-premium-orange:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 30px rgba(255, 109, 0, 0.6);
+}
+
+.btn-premium-ghost {
+  background: transparent;
+  color: var(--electric-blue);
+  border: 2px solid var(--electric-blue);
+  box-shadow: none;
+}
+
+.btn-premium-ghost:hover {
+  background: rgba(0, 229, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  transform: translateY(-3px);
+}
+
+/* ================================================
+   4. INPUTS MODERNOS
+   ================================================ */
+.input-premium {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.input-premium input,
+.input-premium textarea {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 16px;
+  transition: all 0.3s var(--transition-smooth);
+  backdrop-filter: blur(10px);
+}
+
+.input-premium input:focus,
+.input-premium textarea:focus {
+  outline: none;
+  border-color: var(--electric-blue);
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.1), var(--glow-blue);
+  transform: translateY(-2px);
+}
+
+.input-premium label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Floating Label Effect */
+.input-floating {
+  position: relative;
+  margin-top: 24px;
+}
+
+.input-floating input {
+  padding: 20px 16px 8px 16px;
+}
+
+.input-floating label {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.3s var(--transition-smooth);
+  pointer-events: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.input-floating input:focus + label,
+.input-floating input:not(:placeholder-shown) + label {
+  top: 8px;
+  font-size: 12px;
+  color: var(--electric-blue);
+  font-weight: 600;
+}
+
+/* ================================================
+   5. ANIMACIONES Y MICROINTERACCIONES
+   ================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
+  }
+}
+
+/* Clases de Animación */
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s var(--transition-smooth) forwards;
+}
+
+.animate-fadeInDown {
+  animation: fadeInDown 0.6s var(--transition-smooth) forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.5s var(--transition-bounce) forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.6s var(--transition-smooth) forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.6s var(--transition-smooth) forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Delays para animaciones escalonadas */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* ================================================
+   6. BADGES Y CHIPS MODERNOS
+   ================================================ */
+.badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s var(--transition-smooth);
+}
+
+.badge-blue {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--electric-blue);
+  border: 1px solid var(--electric-blue);
+}
+
+.badge-orange {
+  background: rgba(255, 109, 0, 0.15);
+  color: var(--safety-orange);
+  border: 1px solid var(--safety-orange);
+}
+
+.badge-success {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.badge-premium:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ================================================
+   7. TOOLTIPS PREMIUM
+   ================================================ */
+.tooltip-premium {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-premium::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--text-primary);
+  font-size: 13px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.3s var(--transition-smooth);
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--electric-blue);
+}
+
+.tooltip-premium::before {
+  content: '';
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  border: 6px solid transparent;
+  border-top-color: var(--electric-blue);
+  opacity: 0;
+  transition: all 0.3s var(--transition-smooth);
+}
+
+.tooltip-premium:hover::after,
+.tooltip-premium:hover::before {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+/* ================================================
+   8. PROGRESS BARS ANIMADOS
+   ================================================ */
+.progress-premium {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-premium-bar {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 10px;
+  transition: width 0.6s var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-premium-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ================================================
+   9. LOADING SPINNER PREMIUM
+   ================================================ */
+.spinner-premium {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 229, 255, 0.1);
+  border-top-color: var(--electric-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.spinner-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--electric-blue);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.spinner-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.spinner-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* ================================================
+   10. ICONOS CON EFECTOS
+   ================================================ */
+.icon-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--glass-white);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  font-size: 24px;
+  transition: all 0.3s var(--transition-smooth);
+  color: var(--electric-blue);
+}
+
+.icon-premium:hover {
+  transform: translateY(-5px) rotate(5deg);
+  box-shadow: var(--glow-blue);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.icon-premium-orange {
+  color: var(--safety-orange);
+}
+
+.icon-premium-orange:hover {
+  box-shadow: var(--glow-orange);
+  background: rgba(255, 109, 0, 0.1);
+}
+
+/* ================================================
+   11. TABLES PREMIUM
+   ================================================ */
+.table-premium {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--glass-white);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+}
+
+.table-premium thead {
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.table-premium th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--electric-blue);
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+}
+
+.table-premium td {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.table-premium tbody tr {
+  transition: all 0.2s var(--transition-smooth);
+}
+
+.table-premium tbody tr:hover {
+  background: rgba(0, 229, 255, 0.05);
+  transform: scale(1.01);
+}
+
+/* ================================================
+   12. GRID DE CARACTERÍSTICAS
+   ================================================ */
+.features-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin: 40px 0;
+}
+
+.feature-card-premium {
+  position: relative;
+  padding: 30px;
+  border-radius: 16px;
+  background: var(--glass-white);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.4s var(--transition-smooth);
+  overflow: hidden;
+}
+
+.feature-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--transition-smooth);
+}
+
+.feature-card-premium:hover::before {
+  transform: scaleX(1);
+}
+
+.feature-card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 229, 255, 0.2);
+  border-color: var(--electric-blue);
+}
+
+.feature-icon-premium {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary);
+  border-radius: 16px;
+  font-size: 32px;
+  color: #000;
+  transition: all 0.3s var(--transition-smooth);
+}
+
+.feature-card-premium:hover .feature-icon-premium {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: var(--glow-blue);
+}
+
+/* ================================================
+   13. MODAL PREMIUM
+   ================================================ */
+.modal-premium {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--transition-smooth);
+}
+
+.modal-premium.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-content-premium {
+  background: var(--medium-bg-hex);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid var(--electric-blue);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transform: scale(0.9);
+  transition: transform 0.3s var(--transition-bounce);
+}
+
+.modal-premium.active .modal-content-premium {
+  transform: scale(1);
+}
+
+/* ================================================
+   14. RESPONSIVE UTILITIES
+   ================================================ */
+@media (max-width: 768px) {
+  .glass-card {
+    padding: 20px;
+  }
+  
+  .btn-premium {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+  
+  .features-grid-premium {
+    grid-template-columns: 1fr;
+  }
+  
+  .icon-premium {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+
+/* ================================================
+   15. UTILITY CLASSES
+   ================================================ */
+.text-gradient-blue {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-orange {
+  background: var(--gradient-orange);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glow-blue {
+  box-shadow: var(--glow-blue);
+}
+
+.glow-orange {
+  box-shadow: var(--glow-orange);
+}
+
+.blur-backdrop {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}

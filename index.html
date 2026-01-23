@@ -32,6 +32,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0" />
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <!-- FontAwesome for Icons -->
@@ -103,13 +104,14 @@
 
     <!-- Contenido Principal -->
     <main>
-      <!-- BLOQUE HERO (Modificado) -->
+      <!-- BLOQUE HERO (Modernizado con Glassmorphism) -->
       <section
         class="container"
         style="text-align: center; padding: 60px 0 60px 0"
       >
         <div class="hero-content">
-          <div
+          <!-- ElectrIA Badge con efecto premium -->
+          <div class="animate-fadeInDown"
             style="
               display: flex;
               align-items: center;
@@ -120,7 +122,8 @@
           >
             <img 
               src="images/electria-avatar.png" 
-              alt="ElectrIA Avatar" 
+              alt="ElectrIA Avatar"
+              class="animate-pulse"
               style="
                 width: 64px; 
                 height: 64px; 
@@ -129,24 +132,20 @@
                 box-shadow: 0 0 12px rgba(255, 152, 0, 0.4);
               "
             />
-            <span
-              style="
-                color: var(--safety-orange);
-                font-weight: 700;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-                font-size: 14px;
-              "
-              >Potenciado por ElectrIA</span
-            >
+            <span class="badge-premium badge-orange">
+              <i class="fa-solid fa-sparkles"></i>
+              Potenciado por ElectrIA
+            </span>
           </div>
           
-          <h1 style="font-size: 48px; margin-bottom: 20px; line-height: 1.2;">
+          <!-- Título Principal con animación -->
+          <h1 class="animate-fadeInUp delay-100" style="font-size: 48px; margin-bottom: 20px; line-height: 1.2;">
             Electromatics: Software con IA para<br />
-            <span style="color: var(--electric-blue);">Cálculo y Validación Eléctrica</span>
+            <span class="text-gradient-blue">Cálculo y Validación Eléctrica</span>
           </h1>
           
-          <p
+          <!-- Descripción -->
+          <p class="animate-fadeInUp delay-200"
             style="
               font-size: 20px;
               max-width: 800px;
@@ -160,12 +159,15 @@
             Apoya cálculos, aprendizaje y generación de reportes alineados con la <strong>Norma Fondonorma 200-2009</strong>.
           </p>
 
-          <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 40px;">
-             <a href="calculos-electricos.html" class="btn btn-primary">
+          <!-- Botones CTA Premium -->
+          <div class="animate-fadeInUp delay-300" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 40px;">
+             <a href="calculos-electricos.html" class="btn-premium btn-premium-blue">
+               <i class="fa-solid fa-rocket"></i>
                Descubre qué hacemos
              </a>
-             <a href="calculadora.html" class="btn btn-secondary">
-               <i class="fa-solid fa-calculator" style="margin-right: 8px"></i> Ir a la App
+             <a href="calculadora.html" class="btn-premium btn-premium-ghost">
+               <i class="fa-solid fa-calculator"></i>
+               Ir a la App
              </a>
           </div>
         </div>
@@ -215,32 +217,44 @@
         </div>
       </section>
 
-      <!-- BLOQUE 2: PÚBLICO OBJETIVO (Reemplaza grid anterior) -->
+      <!-- BLOQUE 2: PÚBLICO OBJETIVO (Premium Cards) -->
       <section class="container" style="margin-bottom: 80px;">
-        <div class="section-title">
+        <div class="section-title animate-fadeInUp">
             <h2>Para quién es Electromatics</h2>
             <p>Diseñado específicamente para las necesidades del sector eléctrico.</p>
         </div>
         
-        <div class="services-grid">
-          <div class="service-card">
-            <i class="fa-solid fa-helmet-safety" style="font-size: 32px; color: var(--safety-orange); margin-bottom: 20px;"></i>
+        <div class="features-grid-premium">
+          <div class="feature-card-premium animate-fadeInUp delay-100">
+            <div class="feature-icon-premium">
+              <i class="fa-solid fa-helmet-safety"></i>
+            </div>
             <h3>Ingenieros Electricistas</h3>
             <p>Optimización de tiempo en cálculos complejos, soporte normativo inmediato y generación de reportes profesionales para entregar a clientes.</p>
           </div>
-          <div class="service-card">
-            <i class="fa-solid fa-graduation-cap" style="font-size: 32px; color: var(--electric-blue); margin-bottom: 20px;"></i>
+          
+          <div class="feature-card-premium animate-fadeInUp delay-200">
+            <div class="feature-icon-premium">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
             <h3>Estudiantes</h3>
             <p>Aprendizaje guiado paso a paso. Comprensión práctica de los cálculos reales y preparación efectiva para el ejercicio profesional.</p>
           </div>
-          <div class="service-card">
-            <i class="fa-solid fa-bolt" style="font-size: 32px; color: var(--text-primary); margin-bottom: 20px;"></i>
+          
+          <div class="feature-card-premium animate-fadeInUp delay-300">
+            <div class="feature-icon-premium" style="background: var(--gradient-orange);">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
             <h3>Operadores Eléctricos</h3>
             <p>Herramientas para la verificación rápida de parámetros, comprensión de resultados técnicos y reducción de errores operativos en campo.</p>
           </div>
         </div>
-        <div style="text-align: center; margin-top: 30px;">
-            <a href="para-quien-es.html" class="btn btn-secondary">Ver detalles por perfil</a>
+        
+        <div class="animate-fadeInUp delay-400" style="text-align: center; margin-top: 30px;">
+            <a href="para-quien-es.html" class="btn-premium btn-premium-ghost">
+              <i class="fa-solid fa-users"></i>
+              Ver detalles por perfil
+            </a>
         </div>
       </section>
 
@@ -365,5 +379,6 @@
     <script src="js/ai-chat.js?v=7.0"></script>
     <script src="js/simple-auth.js"></script>
     <script src="js/ui.js?v=1.0"></script>
+    <script src="js/premium-interactions.js?v=1.0"></script>
   </body>
 </html>

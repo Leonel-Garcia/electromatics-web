@@ -41,6 +41,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/style.css?v=3.1" />
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0" />
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <link
@@ -83,67 +84,144 @@
     </header>
 
     <main>
-      <section class="container">
+      <section class="container" style="padding: 40px 20px;">
         <div class="ai-command-section">
-          <div style="margin-bottom: 40px">
-            <img
-              src="images/electria-avatar.png"
-              alt="ElectrIA"
-              style="
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                margin-bottom: 20px;
-                border: 4px solid var(--electric-blue);
-                box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
-              "
-            />
-            <h1>
-              Hola, soy
-              <span style="color: var(--electric-blue)">ElectrIA</span>
-            </h1>
-            <p style="font-size: 20px; color: var(--text-secondary)">
-              ¿Qué cálculo o consulta técnica necesitas realizar hoy?
-            </p>
+          <!-- Hero Header with Premium Design -->
+          <div class="glass-card-premium animate-fadeInDown" style="margin-bottom: 40px; text-align: center; padding: 50px 30px;">
+            <div class="animate-scaleIn delay-100">
+              <img
+                src="images/electria-avatar.png"
+                alt="ElectrIA"
+                class="animate-pulse"
+                style="
+                  width: 140px;
+                  height: 140px;
+                  border-radius: 50%;
+                  margin-bottom: 25px;
+                  border: 5px solid var(--electric-blue);
+                  box-shadow: 0 0 30px rgba(0, 229, 255, 0.5);
+                  background: var(--dark-bg-hex);
+                  padding: 5px;
+                "
+              />
+            </div>
+            
+            <div class="animate-fadeInUp delay-200">
+              <span class="badge-premium badge-orange" style="margin-bottom: 15px;">
+                <i class="fa-solid fa-sparkles"></i>
+                Powered by AI
+              </span>
+              
+              <h1 style="font-size: 48px; margin: 20px 0;">
+                Hola, soy
+                <span class="text-gradient-blue">ElectrIA</span>
+              </h1>
+              
+              <p style="font-size: 22px; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+                Tu asistente inteligente para cálculos eléctricos profesionales
+              </p>
+            </div>
           </div>
 
-          <div class="ai-input-wrapper">
-            <input
-              type="text"
-              id="ai-input"
-              class="ai-input"
-              placeholder="Ej: Calcula un motor de 10HP a 230V trifásico..."
-              autocomplete="off"
-            />
-            <button id="ai-send" class="ai-send-btn">
-              <i class="fa-solid fa-paper-plane"></i>
-            </button>
+          <!-- Input Area Premium -->
+          <div class="glass-card animate-fadeInUp delay-300" style="margin-bottom: 30px; padding: 40px;">
+            <div class="ai-input-wrapper">
+              <input
+                type="text"
+                id="ai-input"
+                class="ai-input"
+                placeholder="💬 Ej: Calcula un motor de 10HP a 230V trifásico..."
+                autocomplete="off"
+                style="
+                  background: rgba(0, 0, 0, 0.4);
+                  border: 2px solid rgba(0, 229, 255, 0.3);
+                  transition: all 0.3s ease;
+                "
+              />
+              <button id="ai-send" class="ai-send-btn animate-glow">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div class="ai-suggestions" style="margin-top: 25px;">
+              <div
+                class="suggestion-chip"
+                onclick="setInput('Calcula carga residencial para 120m2')"
+                style="
+                  background: rgba(0, 229, 255, 0.1);
+                  border: 1px solid rgba(0, 229, 255, 0.3);
+                  transition: all 0.3s ease;
+                "
+              >
+                <i class="fa-solid fa-house"></i> Carga Residencial 120m²
+              </div>
+              <div
+                class="suggestion-chip"
+                onclick="setInput('Motor 10HP 230V Trifásico')"
+                style="
+                  background: rgba(0, 229, 255, 0.1);
+                  border: 1px solid rgba(0, 229, 255, 0.3);
+                  transition: all 0.3s ease;
+                "
+              >
+                <i class="fa-solid fa-gear"></i> Motor 10HP 230V
+              </div>
+              <div
+                class="suggestion-chip"
+                onclick="setInput('¿Qué dice la sección 220?')"
+                style="
+                  background: rgba(0, 229, 255, 0.1);
+                  border: 1px solid rgba(0, 229, 255, 0.3);
+                  transition: all 0.3s ease;
+                "
+              >
+                <i class="fa-solid fa-book"></i> Consulta Norma 220
+              </div>
+              <div
+                class="suggestion-chip"
+                onclick="setInput('Tabla de conductores')"
+                style="
+                  background: rgba(0, 229, 255, 0.1);
+                  border: 1px solid rgba(0, 229, 255, 0.3);
+                  transition: all 0.3s ease;
+                "
+              >
+                <i class="fa-solid fa-bolt"></i> Conductores
+              </div>
+            </div>
           </div>
 
-          <div class="ai-suggestions">
-            <div
-              class="suggestion-chip"
-              onclick="setInput('Calcula carga residencial para 120m2')"
-            >
-              🏠 Carga Residencial 120m²
+          <!-- Features Grid -->
+          <div class="features-grid-premium animate-fadeInUp delay-400" style="margin-bottom: 40px;">
+            <div class="feature-card-premium">
+              <div class="feature-icon-premium">
+                <i class="fa-solid fa-calculator"></i>
+              </div>
+              <h3 style="color: var(--text-primary); margin-bottom: 10px;">Cálculos Precisos</h3>
+              <p style="color: var(--text-secondary); margin: 0;">
+                Dimensionamiento de conductores, protecciones y más según Fondonorma 200-2009
+              </p>
             </div>
-            <div
-              class="suggestion-chip"
-              onclick="setInput('Motor 10HP 230V Trifásico')"
-            >
-              ⚙️ Motor 10HP 230V
+
+            <div class="feature-card-premium">
+              <div class="feature-icon-premium" style="background: var(--gradient-orange);">
+                <i class="fa-solid fa-book-open"></i>
+              </div>
+              <h3 style="color: var(--text-primary); margin-bottom: 10px;">Consulta Normativa</h3>
+              <p style="color: var(--text-secondary); margin: 0;">
+                Acceso instantáneo a secciones específicas de la norma eléctrica venezolana
+              </p>
             </div>
-            <div
-              class="suggestion-chip"
-              onclick="setInput('¿Qué dice la sección 220?')"
-            >
-              📖 Consulta Norma 220
-            </div>
-            <div
-              class="suggestion-chip"
-              onclick="setInput('Tabla de conductores')"
-            >
-              ⚡ Conductores
+
+            <div class="feature-card-premium">
+              <div class="feature-icon-premium">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <h3 style="color: var(--text-primary); margin-bottom: 10px;">Reportes PDF</h3>
+              <p style="color: var(--text-secondary); margin: 0;">
+                Genera informes técnicos profesionales listos para entregar a clientes
+              </p>
             </div>
           </div>
 
@@ -217,6 +295,7 @@
     <script src="js/ui.js?v=1.0"></script>
     <script src="js/calculations.js?v=7.4"></script>
     <script src="js/ai-dispatcher.js?v=7.4"></script>
+    <script src="js/premium-interactions.js?v=1.0"></script>
     <!-- New Dispatcher Logic -->
 
     <script>

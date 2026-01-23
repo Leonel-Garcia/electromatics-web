@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Componentes Premium - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0" />
+    <style>
+        body {
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .demo-section {
+            margin-bottom: 60px;
+        }
+        .demo-title {
+            color: var(--electric-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .component-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card-premium animate-fadeInDown" style="text-align: center; padding: 40px; margin-bottom: 60px;">
+            <h1 class="text-gradient-blue" style="font-size: 48px; margin-bottom: 10px;">
+                Componentes Premium
+            </h1>
+            <p style="font-size: 20px; color: var(--text-secondary);">
+                Demo de todos los elementos visuales del nuevo diseño
+            </p>
+        </div>
+
+        <!-- Botones -->
+        <div class="demo-section animate-fadeInUp delay-100">
+            <h2 class="demo-title"><i class="fa-solid fa-hand-pointer"></i> Botones Premium</h2>
+            <div class="component-row">
+                <button class="btn-premium btn-premium-blue">
+                    <i class="fa-solid fa-rocket"></i>
+                    Botón Azul
+                </button>
+                <button class="btn-premium btn-premium-orange">
+                    <i class="fa-solid fa-fire"></i>
+                    Botón Naranja
+                </button>
+                <button class="btn-premium btn-premium-ghost">
+                    <i class="fa-solid fa-ghost"></i>
+                    Botón Ghost
+                </button>
+            </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="demo-section animate-fadeInUp delay-200">
+            <h2 class="demo-title"><i class="fa-solid fa-tag"></i> Badges & Chips</h2>
+            <div class="component-row">
+                <span class="badge-premium badge-blue">
+                    <i class="fa-solid fa-bolt"></i>
+                    Badge Azul
+                </span>
+                <span class="badge-premium badge-orange">
+                    <i class="fa-solid fa-star"></i>
+                    Badge Naranja
+                </span>
+                <span class="badge-premium badge-success">
+                    <i class="fa-solid fa-check"></i>
+                    Badge Éxito
+                </span>
+            </div>
+        </div>
+
+        <!-- Glass Cards -->
+        <div class="demo-section animate-fadeInUp delay-300">
+            <h2 class="demo-title"><i class="fa-solid fa-layer-group"></i> Glass Cards</h2>
+            <div class="component-row">
+                <div class="glass-card" style="flex: 1; min-width: 250px;">
+                    <h3 style="color: var(--text-primary);">Glass Card Simple</h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Tarjeta con efecto glassmorphism y backdrop blur
+                    </p>
+                </div>
+                <div class="glass-card-premium" style="flex: 1; min-width: 250px;">
+                    <h3 style="color: var(--text-primary);">Glass Card Premium</h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Con efecto shimmer al pasar el mouse
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="demo-section animate-fadeInUp delay-400">
+            <h2 class="demo-title"><i class="fa-solid fa-star"></i> Feature Cards</h2>
+            <div class="features-grid-premium">
+                <div class="feature-card-premium">
+                    <div class="feature-icon-premium">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <h3 style="color: var(--text-primary);">Cálculos</h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Dimensionamiento preciso según normas
+                    </p>
+                </div>
+                <div class="feature-card-premium">
+                    <div class="feature-icon-premium" style="background: var(--gradient-orange);">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <h3 style="color: var(--text-primary);">Normativa</h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Acceso instantáneo a la norma
+                    </p>
+                </div>
+                <div class="feature-card-premium">
+                    <div class="feature-icon-premium">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <h3 style="color: var(--text-primary);">Reportes</h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Genera PDFs profesionales
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inputs -->
+        <div class="demo-section animate-fadeInUp delay-500">
+            <h2 class="demo-title"><i class="fa-solid fa-keyboard"></i> Inputs Premium</h2>
+            <div style="max-width: 600px;">
+                <div class="input-premium">
+                    <label>Input Normal</label>
+                    <input type="text" placeholder="Escribe algo aquí...">
+                </div>
+                <div class="input-floating">
+                    <input type="text" placeholder=" ">
+                    <label>Input Floating Label</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Icons -->
+        <div class="demo-section animate-fadeInUp delay-600">
+            <h2 class="demo-title"><i class="fa-solid fa-icons"></i> Iconos Premium</h2>
+            <div class="component-row">
+                <div class="icon-premium">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="icon-premium icon-premium-orange">
+                    <i class="fa-solid fa-fire"></i>
+                </div>
+                <div class="icon-premium">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bars -->
+        <div class="demo-section animate-fadeInUp delay-700">
+            <h2 class="demo-title"><i class="fa-solid fa-spinner"></i> Progress Bars</h2>
+            <div style="max-width: 600px;">
+                <div class="progress-premium" style="margin-bottom: 20px;">
+                    <div class="progress-premium-bar" style="width: 75%;"></div>
+                </div>
+                <div class="progress-premium">
+                    <div class="progress-premium-bar" style="width: 45%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinners -->
+        <div class="demo-section animate-fadeInUp delay-800">
+            <h2 class="demo-title"><i class="fa-solid fa-circle-notch"></i> Loading Spinners</h2>
+            <div class="component-row" style="align-items: center;">
+                <div class="spinner-premium"></div>
+                <div class="spinner-dots">
+                    <div class="spinner-dot"></div>
+                    <div class="spinner-dot"></div>
+                    <div class="spinner-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Premium -->
+        <div class="demo-section animate-fadeInUp delay-900">
+            <h2 class="demo-title"><i class="fa-solid fa-table"></i> Tabla Premium</h2>
+            <table class="table-premium">
+                <thead>
+                    <tr>
+                        <th>Componente</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Glassmorphism Cards</td>
+                        <td><span class="badge-premium badge-success">✓ Activo</span></td>
+                        <td>
+                            <button class="btn-premium btn-premium-ghost" style="padding: 6px 12px; font-size: 12px;">
+                                Ver
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Premium Animations</td>
+                        <td><span class="badge-premium badge-success">✓ Activo</span></td>
+                        <td>
+                            <button class="btn-premium btn-premium-ghost" style="padding: 6px 12px; font-size: 12px;">
+                                Ver
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Interactive Components</td>
+                        <td><span class="badge-premium badge-blue">⚡ Premium</span></td>
+                        <td>
+                            <button class="btn-premium btn-premium-ghost" style="padding: 6px 12px; font-size: 12px;">
+                                Ver
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CTA Final -->
+        <div class="glass-card-premium animate-fadeInUp delay-1000" style="text-align: center; padding: 50px;">
+            <h2 style="color: var(--text-primary); margin-bottom: 20px;">
+                ¿Listo para ver la aplicación completa?
+            </h2>
+            <div style="display: flex; gap: 20px; justify-content: center;">
+                <a href="index.html" class="btn-premium btn-premium-blue">
+                    <i class="fa-solid fa-home"></i>
+                    Ir a Inicio
+                </a>
+                <a href="calculadora.html" class="btn-premium btn-premium-orange">
+                    <i class="fa-solid fa-calculator"></i>
+                    Ir a Calculadora
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/premium-interactions.js?v=1.0"></script>
+</body>
+</html>
