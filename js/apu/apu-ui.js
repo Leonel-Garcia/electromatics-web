@@ -23,75 +23,81 @@ const apuUI = {
         const rateInput = document.getElementById('exchange-rate');
         if (!rateInput) return;
 
-        // Visual indicator that update is happening (subtle)
+        // Visual indicator
         rateInput.style.opacity = '0.7';
 
-        // Helper to update UI
         const updateUI = (rate, updateDateIso, source) => {
             if(!rate || isNaN(rate)) return;
             
-            rateInput.value = parseFloat(rate).toFixed(2);
+            // Clean rate if it's a string with commas
+            let cleanRate = rate;
+            if (typeof rate === 'string') {
+                cleanRate = parseFloat(rate.replace(',', '.'));
+            }
+            
+            rateInput.value = cleanRate.toFixed(2);
             rateInput.style.opacity = '1';
             
-            this.updateCalculation(); // Trigger recalculation of budget
-            console.log(`BCV Rate updated: ${rate} from ${source}`);
+            this.updateCalculation();
+            console.log(`BCV Rate updated: ${cleanRate} from ${source}`);
 
             const label = rateInput.previousElementSibling;
             if (label) {
-                // Remove existing badge if any
                 const existingBadge = label.querySelector('.rate-badge');
                 if(existingBadge) existingBadge.remove();
 
-                // Format Date - User wants to see CURRENT check time
                 const now = new Date();
                 const dateStr = now.toLocaleString('es-VE', { 
                     day: '2-digit', month: '2-digit', year: 'numeric', 
                     hour: '2-digit', minute: '2-digit', hour12: true 
                 });
 
-                // Create new badge
                 const badge = document.createElement('div');
                 badge.className = 'rate-badge';
-                badge.style = "color:#2e7d32; font-size:0.85em; font-weight:600; margin-top:4px; padding:2px 0; border-top:1px dotted #ccc;";
-                // Label changed to 'Verificado' or 'Consultado' to reflect THIS action
-                badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> BCV: ${rate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Consultado: ${dateStr}</span>`;
+                badge.style = "color:#1565c0; font-size:0.85em; font-weight:600; margin-top:4px; padding:4px; border-top:1px dotted #ccc; background:#e3f2fd; border-radius:4px;";
+                badge.innerHTML = `<i class="fa-solid fa-cloud-bolt"></i> BCV: ${cleanRate} Bs ($) <br><span style="font-size:0.9em; color:#666;">Fuente: ${source} <br>Consultado: ${dateStr}</span>`;
                 label.appendChild(badge);
             }
         };
 
-        // API 1: PyDolarVenezuela (Usually most up-to-date for BCV)
+        // Source 1: Backend Proxy (Recommended / Auto-hosted)
         try {
-            console.log("Fetching BCV from PyDolarVenezuela...");
-            // Request specifically the BCV page to reduce payload and maybe get fresher data
-            const response = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv', { cache: 'no-cache' });
+            const apiBase = window.API_BASE_URL || "http://localhost:8001";
+            console.log("Fetching BCV from Local Backend Proxy...");
+            const response = await fetch(`${apiBase}/api/bcv`, { cache: 'no-cache' });
             if (response.ok) {
                 const data = await response.json();
-                // Access path: monitors.bcv.price
-                const monitor = data.monitors?.bcv;
-                if (monitor && monitor.price) {
-                     // Check if price looks reasonable (> 0)
-                     updateUI(monitor.price, monitor.last_update, 'PyDolarVenezuela');
-                     return;
+                if (data.rate) {
+                    updateUI(data.rate, data.updated_at, data.source || 'Backend API');
+                    return;
                 }
             }
-        } catch (e) { console.warn("PyDolarVenezuela failed", e); }
+        } catch (e) { console.warn("Backend BCV API failed", e); }
 
-        // API 2: DolarAPI (Latam) - Fallback
+        // Source 2: Direct DolarAPI (Fallback)
         try {
-            console.log("Fetching BCV rate from DolarAPI...");
+            console.log("Fetching BCV rate from DolarAPI directly...");
             const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-cache' });
             if (response.ok) {
                 const data = await response.json();
                 if (data.promedio && data.promedio > 0) {
-                    updateUI(data.promedio, data.fechaActualizacion, 'DolarAPI');
+                    updateUI(data.promedio, data.fechaActualizacion, 'DolarAPI Direct');
                     return;
                 }
             }
-        } catch (e) { console.warn("DolarAPI failed", e); }
+        } catch (e) { console.warn("Direct DolarAPI failed", e); }
 
         // Fail State
         rateInput.style.opacity = '1'; 
-        console.error("All exchange rate APIs failed.");
+        console.error("All exchange rate sources failed.");
+        const label = rateInput.previousElementSibling;
+        if (label && !label.querySelector('.rate-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'rate-badge';
+            badge.style = "color:#d32f2f; font-size:0.85em; font-weight:600; margin-top:4px; background:#ffebee; padding:4px; border-radius:4px;";
+            badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error al actualizar tasa.<br><span style="font-weight:normal">Ajuste manualmente si es necesario.</span>`;
+            label.appendChild(badge);
+        }
     },
 
     setDate() {

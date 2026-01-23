@@ -517,6 +517,65 @@ def check_ai_health():
         "message": "ElectrIA is ready" if (gemini_key or deepseek_key) else "No AI providers configured. Set GEMINI_API_KEY or DEEPSEEK_API_KEY environment variables."
     }
 
+@app.get("/api/bcv")
+def get_bcv_rate():
+    """
+    Fetch the BCV (Banco Central de Venezuela) exchange rate.
+    Tries multiple sources for high availability.
+    """
+    sources = [
+        {"url": "https://ve.dolarapi.com/v1/dolares/oficial", "type": "dolarapi"},
+        {"url": "https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv", "type": "pydolar"}
+    ]
+    
+    for source in sources:
+        try:
+            logger.info(f"Fetching BCV rate from {source['url']}...")
+            response = requests.get(source['url'], timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if source['type'] == 'dolarapi':
+                    return {
+                        "rate": data.get("promedio"),
+                        "source": "DolarAPI (BCV)",
+                        "updated_at": data.get("fechaActualizacion")
+                    }
+                elif source['type'] == 'pydolar':
+                    # Handle PyDolar structure
+                    monitor = data.get("monitors", {}).get("bcv", {})
+                    if monitor and monitor.get("price"):
+                        return {
+                            "rate": monitor.get("price"),
+                            "source": "PyDolar (BCV)",
+                            "updated_at": monitor.get("last_update")
+                        }
+        except Exception as e:
+            logger.warning(f"Failed to fetch from {source['url']}: {str(e)}")
+            
+    # Source 3: Direct Scrape from BCV Official (Hardest but most 'auto-hosted')
+    try:
+        logger.info("Attempting direct scrape from BCV official website...")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        bcv_resp = requests.get("https://www.bcv.org.ve/", headers=headers, timeout=15, verify=False)
+        if bcv_resp.status_code == 200:
+            import re
+            # BCV usually has <div id="dolar"><strong> 36,1234 </strong></div>
+            match = re.search(r'id="dolar".*?strong>\s*([\d,.]+)\s*<', bcv_resp.text, re.DOTALL)
+            if match:
+                rate_str = match.group(1).replace(',', '.')
+                return {
+                    "rate": float(rate_str),
+                    "source": "BCV Oficial (Scrape)",
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+    except Exception as e:
+        logger.warning(f"Direct BCV scrape failed: {str(e)}")
+
+    # Final Fallback
+    raise HTTPException(status_code=503, detail="No se pudo obtener la tasa BCV de ninguna fuente.")
+
 @app.get("/")
 def read_root():
     return {"message": "Electromatics API is running"}
