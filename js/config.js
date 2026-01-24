@@ -13,7 +13,7 @@ const getApiUrl = () => {
     
     // Lista de dominios de producción
     if (hostname.includes('electromatics.com.ve') || hostname.includes('onrender.com') || hostname.includes('github.io')) {
-        return 'https://electromatics-api.onrender.com';
+        return 'https://electromatics-web.onrender.com';
     }
     
     // Para desarrollo local (localhost, 127.0.0.1, o IPs de red local como 192.168.x.x)
