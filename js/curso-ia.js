@@ -727,23 +727,33 @@ IMPORTANTE: Genera mínimo 4 bloques de contenido y 5 preguntas de quiz. El cont
                 throw new Error(`Error de la API (${response.status}): ${errMsg}`);
             }
 
-            // Handle Streaming Response
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let fullText = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                fullText += decoder.decode(value, { stream: true });
+            // Parse the JSON response from the backend
+            const data = await response.json();
+            
+            // Extract text from Gemini's response structure
+            let textContent = '';
+            
+            if (data.candidates && data.candidates[0]?.content?.parts) {
+                // Standard Gemini response format
+                textContent = data.candidates[0].content.parts
+                    .map(part => part.text || '')
+                    .join('');
+            } else if (data.text) {
+                // Simple text response
+                textContent = data.text;
+            } else if (typeof data === 'string') {
+                // Already a string
+                textContent = data;
+            } else {
+                console.error('Unexpected response format:', data);
+                throw new Error('Formato de respuesta inesperado de la IA.');
             }
-            fullText += decoder.decode();
 
-            if (!fullText || fullText.trim().length === 0) {
+            if (!textContent || textContent.trim().length === 0) {
                 throw new Error('La IA devolvió una respuesta vacía. Por favor, intenta de nuevo.');
             }
 
-            return fullText;
+            return textContent;
             
         } catch (error) {
             console.error("Error al llamar a la API:", error);
