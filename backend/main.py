@@ -454,7 +454,11 @@ async def generate_content_proxy(request: Request):
                     
                     if google_response.status_code == 200:
                         logger.info(f"✅ {model_name} responded successfully")
-                        return JSONResponse(content=google_response.json())
+                        # Ensure proper JSON response with explicit Content-Type
+                        return JSONResponse(
+                            content=google_response.json(),
+                            media_type="application/json"
+                        )
                     else:
                         errors_log.append(f"{model_name}: {google_response.status_code}")
                 except Exception as e:
