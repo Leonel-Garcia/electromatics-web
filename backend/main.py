@@ -504,27 +504,21 @@ async def generate_content_proxy(request: Request):
         if gemini_key:
             logger.info("🤖 Attempting Gemini API...")
             
-            # Simplified Chain for Reliability
+            # Use only stable, publicly available models
+            # Avoiding beta/preview models that cause 404/429 errors
             models_to_try = [
-                # 0. Gemini 3.0 (Newest / User Requested)
-                "gemini-3-pro-preview",
-                "gemini-3-flash-preview",
-                # 1. Flash 1.5-8B (Fastest, High Rate Limit)
-                "gemini-1.5-flash-8b",
-                # 2. Flash 1.5 Stable (Standard)
-                "gemini-1.5-flash",
-                # 3. Flash 2.0 Experimental (Previous New)
-                "gemini-2.0-flash-exp",
-                # 4. Pro 1.5 (Most powerful fallback)
-                "gemini-1.5-pro"
+                # Primary: Free tier Flash model (most reliable)
+                "gemini-1.5-flash-latest",
+                # Fallback: Pro model for complex queries
+                "gemini-1.5-pro-latest",
+                # Alternative: Experimental (may have higher limits)
+                "gemini-exp-1206"
             ]
 
             for model_name in models_to_try:
                 try:
-                    # Decide on API endpoint version based on model
-                    api_version = "v1beta" 
-                    if model_name == "gemini-1.5-flash":
-                         api_version = "v1" # Use stable v1 for standard flash
+                    # Use v1 stable endpoint for -latest models
+                    api_version = "v1"
                     
                     url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model_name}:generateContent?key={gemini_key}"
                     

@@ -1086,7 +1086,8 @@ class ThermalRelay extends Component {
             tripped: false,
             currentLimit: 5.0, // Amperes
             currentSense: 0.0,
-            tripEnabled: true
+            tripEnabled: true,
+            resetMode: 'Manual'
         };
         // Entradas (pines de cobre arriba) -> Salidas (tornillos abajo)
         this.terminals = {
@@ -2609,6 +2610,16 @@ function setupEventListeners() {
              const inputLimit = document.getElementById('input-limit');
              inputLimit.value = component.state.currentLimit;
              inputLimit.onchange = (e) => component.state.currentLimit = parseFloat(e.target.value);
+             
+             const selectReset = document.getElementById('select-thermal-reset');
+             if (selectReset) {
+                 selectReset.value = component.state.resetMode || 'Manual';
+                 selectReset.onchange = (e) => {
+                     component.state.resetMode = e.target.value;
+                     draw();
+                 };
+             }
+
              document.getElementById('btn-reset-relay').onclick = () => { component.state.tripped = false; draw(); };
         } else {
              thermal.style.display = 'none';
@@ -3979,10 +3990,18 @@ function solveCircuit() {
         // The original `components.filter(c => c instanceof Motor).forEach(m => { ... });` block is now split and re-ordered.
 
         components.filter(c => c instanceof ThermalRelay).forEach(r => {
+             // Trip Logic
              if (r.state.tripEnabled && !r.state.tripped && r.state.currentSense > r.state.currentLimit) {
                  r.state.tripped = true;
                  console.log(`Relé Térmico ${r.id} TRIPPED`);
                  circuitChanged = true; // Topología cambia (NC abre)
+             }
+             
+             // Auto Reset Logic
+             if (r.state.tripped && r.state.resetMode === 'Auto' && r.state.currentSense < r.state.currentLimit) {
+                 r.state.tripped = false;
+                 // console.log(`Relé Térmico ${r.id} AUTO RESET`);
+                 circuitChanged = true; // Topología cambia (NC cierra)
              }
         });
 
