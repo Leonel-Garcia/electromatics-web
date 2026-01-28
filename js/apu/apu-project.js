@@ -301,14 +301,24 @@ class APUProject {
         const zone = document.querySelector('.import-zone');
         const originalContent = zone.innerHTML;
 
-        // Mostrar estado de procesamiento
+        // Limpiar partidas actuales visualmente para que el usuario vea que algo está pasando
+        const tbody = document.getElementById('master-budget-body');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>ElectrIA está analizando el nuevo documento...</td></tr>';
+        }
+
+        // Mostrar estado de procesamiento en el sidebar
         zone.innerHTML = `
             <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:var(--electric-blue)"></i><br>
-            <b>ElectrIA Procesando PDF...</b>
-            <p style="font-size:10px; margin:5px 0;">Extrayendo texto del documento...</p>
+            <b>Despertando servidor ElectrIA...</b>
+            <p style="font-size:10px; margin:5px 0;">Esto puede tardar 20-30 seg si el servidor estaba inactivo.</p>
         `;
 
         try {
+            // Intentar despertar el servidor antes de enviar el archivo pesado
+            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://electromatics-api.onrender.com';
+            await fetch(apiUrl).catch(() => {}); // Ignorar errores de ping
+
             // 1. Configurar PDF.js
             if (typeof pdfjsLib !== 'undefined') {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -320,19 +330,18 @@ class APUProject {
             
             // 3. Extraer texto de todas las páginas
             let fullText = '';
-            zone.innerHTML = `
-                <i class="fa-solid fa-file-lines fa-beat" style="font-size:24px; color:#4CAF50"></i><br>
-                <b>Leyendo páginas del PDF...</b>
-                <p style="font-size:10px; margin:5px 0;">0 / ${pdf.numPages} páginas</p>
-            `;
-
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
+                // Mejorar la extracción para mantener orden de líneas
                 const pageText = textContent.items.map(item => item.str).join(' ');
                 fullText += pageText + '\n';
                 
-                zone.querySelector('p').innerText = `${i} / ${pdf.numPages} páginas`;
+                zone.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:var(--electric-blue)"></i><br>
+                    <b>Leyendo PDF...</b>
+                    <p style="font-size:10px; margin:5px 0;">Página ${i} de ${pdf.numPages} leída.</p>
+                `;
             }
 
             if (!fullText.trim()) {
@@ -342,8 +351,8 @@ class APUProject {
             // 4. Enviar a ElectrIA para análisis
             zone.innerHTML = `
                 <i class="fa-solid fa-brain fa-beat-fade" style="font-size:24px; color:var(--safety-orange)"></i><br>
-                <b>ElectrIA analizando partidas...</b>
-                <p style="font-size:10px; margin:5px 0;">Procesando ${fullText.length} caracteres</p>
+                <b>ElectrIA analizando...</b>
+                <p style="font-size:10px; margin:5px 0;">Esto puede tardar unos segundos. Enviando datos reales.</p>
             `;
 
             const partidas = await this.extractPartidasWithAI(fullText);
@@ -381,29 +390,25 @@ class APUProject {
             ? pdfText.substring(0, maxChars) + '\n... [TEXTO TRUNCADO]' 
             : pdfText;
 
-        const prompt = `Eres un experto en presupuestos de obras eléctricas venezolanas.
-
-Analiza el siguiente texto extraído de un PDF de presupuesto eléctrico y extrae TODAS las partidas que encuentres.
+        const prompt = `Eres un experto en presupuestos de ingeniería eléctrica venezolana.
+Analiza este texto extraído de un PDF (posiblemente convertido de Excel) y genera una lista de partidas.
 
 TEXTO DEL PDF:
 """
 ${truncatedText}
 """
 
-INSTRUCCIONES:
-1. Identifica cada partida/ítem del presupuesto
-2. Para cada partida extrae: código (ej: E541.111.101), descripción, unidad (pto, m, pza, etc.), y cantidad
-3. Si no hay código, genera uno apropiado basado en la categoría Covenin/Fondonorma
-4. Si no encuentras cantidad, usa 1 como valor por defecto
-5. Ignora subtotales, totales, encabezados y pies de página
+REQUERIMIENTOS:
+1. Extrae: código de la partida, descripción clara, unidad (pto, m, global, pza, etc.) y cantidad.
+2. Si el código no está claro, genera uno incremental tipo "E.001", "E.002", etc.
+3. Si la cantidad no es un número legible, asume 1.
+4. MUY IMPORTANTE: El texto puede estar algo desordenado por la conversión; usa tu inteligencia para rearmar las descripciones lógicas.
 
-RESPONDE ÚNICAMENTE con un array JSON válido, sin explicaciones ni markdown:
+RESPONDE SÓLO CON UN ARRAY JSON (sin markdown ni texto extra):
 [
-  {"item": 1, "code": "E541.111.111", "description": "Descripción de la partida", "unit": "pto", "qty": 12},
-  {"item": 2, "code": "E511.111.011", "description": "Otra partida", "unit": "m", "qty": 100}
-]
-
-Si no encuentras partidas válidas, responde con un array vacío: []`;
+  {"item": 1, "code": "E541.111.111", "description": "Salida de tomacorriente...", "unit": "pto", "qty": 10},
+  ...
+]`;
 
         const maxRetries = 3;
         let retryCount = 0;
@@ -424,13 +429,21 @@ Si no encuentras partidas válidas, responde con un array vacío: []`;
                 });
 
                 if (!response.ok) {
+                    let errorDetail = "Error desconocido";
+                    try {
+                        const errorData = await response.json();
+                        errorDetail = errorData.detail || response.statusText;
+                    } catch (e) {
+                        errorDetail = response.statusText;
+                    }
+
                     if (response.status === 503 && retryCount < maxRetries - 1) {
                         retryCount++;
-                        console.warn(`Servidor ocupado (503). Reintento ${retryCount}/${maxRetries} en 3 segundos...`);
-                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        console.warn(`Servidor ocupado (503). Reintento ${retryCount}/${maxRetries} en 4 segundos...`);
+                        await new Promise(resolve => setTimeout(resolve, 4000));
                         continue;
                     }
-                    throw new Error(`Error del servidor: ${response.status}`);
+                    throw new Error(`Servidor responde: ${response.status} - ${errorDetail}`);
                 }
 
                 // Manejar respuesta

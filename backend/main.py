@@ -457,7 +457,7 @@ async def generate_content_proxy(request: Request):
                     "Authorization": f"Bearer {grok_key}"
                 }
                 
-                grok_response = requests.post(url, json=grok_body, headers=headers, timeout=60)
+                grok_response = requests.post(url, json=grok_body, headers=headers, timeout=25)
                 
                 if grok_response.status_code == 200:
                     logger.info("✅ Grok API responded successfully")
@@ -522,7 +522,7 @@ async def generate_content_proxy(request: Request):
                     
                     url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model_name}:generateContent?key={gemini_key}"
                     
-                    google_response = requests.post(url, json=body, headers={"Content-Type": "application/json"}, timeout=60)
+                    google_response = requests.post(url, json=body, headers={"Content-Type": "application/json"}, timeout=25)
                     
                     if google_response.status_code == 200:
                         logger.info(f"✅ {model_name} responded successfully")
@@ -567,7 +567,7 @@ async def generate_content_proxy(request: Request):
                     "Authorization": f"Bearer {deepseek_key}"
                 }
                 
-                deepseek_response = requests.post(url, json=deepseek_body, headers=headers, timeout=60)
+                deepseek_response = requests.post(url, json=deepseek_body, headers=headers, timeout=25)
                 
                 if deepseek_response.status_code == 200:
                     logger.info("✅ DeepSeek API responded successfully")
