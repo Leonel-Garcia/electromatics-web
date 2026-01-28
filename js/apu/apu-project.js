@@ -294,24 +294,188 @@ class APUProject {
         });
     }
 
-    handlePdfImport(e) {
+    async handlePdfImport(e) {
         const file = e.target.files[0];
-        if(!file) return;
+        if (!file) return;
+
         const zone = document.querySelector('.import-zone');
         const originalContent = zone.innerHTML;
-        zone.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:var(--electric-blue)"></i><br><b>ElectrIA Procesando...</b>`;
-        setTimeout(() => {
-            this.partidas = [
-                { item: 1, code: 'E541.111.111', description: 'Salida de Tomacorriente Doble 120V', unit: 'pto', qty: 12, unitPrice: 0, apuData: null },
-                { item: 2, code: 'E541.111.101', description: 'Salida para Alumbrado en Techo', unit: 'pto', qty: 8, unitPrice: 0, apuData: null },
-                { item: 3, code: 'E511.111.011', description: 'Tubería EMT 1/2" embutida', unit: 'm', qty: 150, unitPrice: 0, apuData: null },
-                { item: 4, code: 'E521.111.001', description: 'Cable Cu THHN #12 AWG', unit: 'm', qty: 300, unitPrice: 0, apuData: null }
-            ];
+
+        // Mostrar estado de procesamiento
+        zone.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:var(--electric-blue)"></i><br>
+            <b>ElectrIA Procesando PDF...</b>
+            <p style="font-size:10px; margin:5px 0;">Extrayendo texto del documento...</p>
+        `;
+
+        try {
+            // 1. Configurar PDF.js
+            if (typeof pdfjsLib !== 'undefined') {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+
+            // 2. Leer el archivo PDF
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            
+            // 3. Extraer texto de todas las páginas
+            let fullText = '';
+            zone.innerHTML = `
+                <i class="fa-solid fa-file-lines fa-beat" style="font-size:24px; color:#4CAF50"></i><br>
+                <b>Leyendo páginas del PDF...</b>
+                <p style="font-size:10px; margin:5px 0;">0 / ${pdf.numPages} páginas</p>
+            `;
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+                
+                zone.querySelector('p').innerText = `${i} / ${pdf.numPages} páginas`;
+            }
+
+            if (!fullText.trim()) {
+                throw new Error('El PDF no contiene texto legible. Podría ser un PDF escaneado.');
+            }
+
+            // 4. Enviar a ElectrIA para análisis
+            zone.innerHTML = `
+                <i class="fa-solid fa-brain fa-beat-fade" style="font-size:24px; color:var(--safety-orange)"></i><br>
+                <b>ElectrIA analizando partidas...</b>
+                <p style="font-size:10px; margin:5px 0;">Procesando ${fullText.length} caracteres</p>
+            `;
+
+            const partidas = await this.extractPartidasWithAI(fullText);
+
+            if (partidas && partidas.length > 0) {
+                // Éxito: cargar las nuevas partidas
+                this.partidas = partidas;
+                zone.innerHTML = originalContent;
+                this.renderMasterTable();
+                this.renderSidebar();
+                alert(`✅ ElectrIA ha extraído ${partidas.length} partidas del PDF.\n\nProceda a realizar el APU de cada una.`);
+            } else {
+                throw new Error('No se pudieron extraer partidas del documento.');
+            }
+
+        } catch (error) {
+            console.error('Error procesando PDF:', error);
             zone.innerHTML = originalContent;
-            this.renderMasterTable();
-            this.renderSidebar();
-            alert("ElectrIA ha extraído las partidas. Proceda a realizar el APU de cada una.");
-        }, 2000);
+            
+            // Mostrar error descriptivo
+            alert(`❌ Error al procesar el PDF:\n\n${error.message}\n\nPuede agregar las partidas manualmente usando el botón "+ Añadir Partida Manual".`);
+        }
+
+        // Limpiar el input para permitir seleccionar el mismo archivo de nuevo
+        e.target.value = '';
+    }
+
+    /**
+     * Extrae partidas del texto del PDF usando la IA
+     */
+    async extractPartidasWithAI(pdfText) {
+        // Limitar el texto para no exceder límites de la API
+        const maxChars = 15000;
+        const truncatedText = pdfText.length > maxChars 
+            ? pdfText.substring(0, maxChars) + '\n... [TEXTO TRUNCADO]' 
+            : pdfText;
+
+        const prompt = `Eres un experto en presupuestos de obras eléctricas venezolanas.
+
+Analiza el siguiente texto extraído de un PDF de presupuesto eléctrico y extrae TODAS las partidas que encuentres.
+
+TEXTO DEL PDF:
+"""
+${truncatedText}
+"""
+
+INSTRUCCIONES:
+1. Identifica cada partida/ítem del presupuesto
+2. Para cada partida extrae: código (ej: E541.111.101), descripción, unidad (pto, m, pza, etc.), y cantidad
+3. Si no hay código, genera uno apropiado basado en la categoría Covenin/Fondonorma
+4. Si no encuentras cantidad, usa 1 como valor por defecto
+5. Ignora subtotales, totales, encabezados y pies de página
+
+RESPONDE ÚNICAMENTE con un array JSON válido, sin explicaciones ni markdown:
+[
+  {"item": 1, "code": "E541.111.111", "description": "Descripción de la partida", "unit": "pto", "qty": 12},
+  {"item": 2, "code": "E511.111.011", "description": "Otra partida", "unit": "m", "qty": 100}
+]
+
+Si no encuentras partidas válidas, responde con un array vacío: []`;
+
+        try {
+            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://electromatics-api.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/generate-content`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: 'user',
+                        parts: [{ text: prompt }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+
+            // Manejar respuesta
+            const contentType = response.headers.get('content-type');
+            let aiResponse = '';
+
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                if (data.text) {
+                    aiResponse = data.text;
+                } else if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                    aiResponse = data.candidates[0].content.parts[0].text;
+                }
+            } else {
+                // Streaming response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    aiResponse += decoder.decode(value, { stream: true });
+                }
+            }
+
+            // Limpiar y parsear la respuesta JSON
+            aiResponse = aiResponse.trim();
+            
+            // Remover posibles bloques de código markdown
+            if (aiResponse.startsWith('```json')) {
+                aiResponse = aiResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            } else if (aiResponse.startsWith('```')) {
+                aiResponse = aiResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+            }
+
+            const partidas = JSON.parse(aiResponse);
+            
+            if (!Array.isArray(partidas)) {
+                throw new Error('La respuesta de la IA no es un array válido');
+            }
+
+            // Validar y normalizar cada partida
+            return partidas.map((p, index) => ({
+                item: p.item || index + 1,
+                code: p.code || `E.${String(index + 1).padStart(3, '0')}`,
+                description: p.description || 'Partida sin descripción',
+                unit: p.unit || 'und',
+                qty: parseFloat(p.qty) || 1,
+                unitPrice: 0,
+                apuData: null
+            }));
+
+        } catch (error) {
+            console.error('Error extrayendo partidas con IA:', error);
+            throw new Error(`Error al analizar con IA: ${error.message}`);
+        }
     }
 
     async exportMasterPDF() {
