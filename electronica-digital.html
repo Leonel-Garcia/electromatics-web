@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>Electrónica Digital: Microcontroladores y Lógica | Electromatics</title>
+    <meta name="description" content="Explora la electrónica digital en Electromatics: desde compuertas lógicas hasta sistemas embebidos con microcontroladores Arduino, ESP32 y más." />
+    <meta name="keywords" content="electrónica digital, microcontroladores, arduino, esp32, sistemas embebidos, lógica digital" />
+    <meta name="author" content="Leonel García" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://electromatics.com.ve/electronica-digital.html" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0" />
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+      .electronics-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('images/digital_electronics_hero.png');
+        background-size: cover;
+        background-position: center;
+        padding: 80px 20px;
+        text-align: center;
+        color: white;
+        border-radius: 166px;
+        margin-bottom: 50px;
+      }
+      
+      .content-section {
+        background: var(--medium-bg-hex);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+      }
+
+      .branch-card {
+        background: var(--light-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        padding: 25px;
+        transition: all 0.3s ease;
+      }
+
+      .branch-card:hover {
+        border-color: var(--electric-blue);
+        transform: translateY(-5px);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header y Navegación -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        
+        <button class="mobile-nav-toggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <a href="index.html">Inicio</a>
+          <a href="que-es-electromatics.html">Qué es</a>
+          <a href="para-quien-es.html">Para quién</a>
+          <a href="calculos-electricos.html">Cálculos</a>
+          <a href="normativa-electrica.html">Normativa</a>
+          <a href="simuladores.html">Simuladores</a>
+          <div class="nav-dropdown">
+            <a href="electronica.html" class="active dropdown-trigger">Electrónica <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 5px;"></i></a>
+            <div class="dropdown-content">
+              <a href="electronica-analogica.html">Electrónica Analógica</a>
+              <a href="electronica-potencia.html">Electrónica de Potencia</a>
+              <a href="electronica-digital.html" class="active">Electrónica Digital</a>
+            </div>
+          </div>
+          <a href="formacion.html">Formación</a>
+          <a href="electro-info.html">Tecno-Info</a>
+          <a href="museo.html">Museo</a>
+          <a href="apu.html">Presupuestos</a>
+          <a href="calculadora.html">App IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="electronics-hero">
+        <h1><i class="fa-solid fa-binary"></i> Electrónica Digital</h1>
+        <p>Lógica programable, sistemas embebidos y procesamiento digital</p>
+      </section>
+
+      <section class="content-section">
+        <h2>Aprendizaje y Desarrollo Digital</h2>
+        <p>Desde los fundamentos de compuertas lógicas hasta la programación de sistemas complejos.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px;">
+          <div class="branch-card">
+            <i class="fa-solid fa-toggle-on" style="font-size: 2.5rem; color: #b366ff; margin-bottom: 20px; display: block;"></i>
+            <h3>Lógica Combinacional</h3>
+            <p>Compuertas AND, OR, NOT, XOR. Mapas de Karnaugh y simplificación de circuitos lógicos.</p>
+          </div>
+          <div class="branch-card">
+            <i class="fa-solid fa-microchip" style="font-size: 2.5rem; color: #0088cc; margin-bottom: 20px; display: block;"></i>
+            <h3>Microcontroladores</h3>
+            <p>Programación de Arduino, ESP32 y arquitectura de microprocesadores para control industrial.</p>
+          </div>
+          <div class="branch-card">
+            <i class="fa-solid fa-code" style="font-size: 2.5rem; color: #ff3399; margin-bottom: 20px; display: block;"></i>
+            <h3>Sistemas Embebidos</h3>
+            <p>Integración de sensores, actuadores y protocolos de comunicación (I2C, SPI, UART).</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="main-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-info">
+            <h3>Electromatics.com.ve</h3>
+            <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+          </div>
+          <div class="footer-links">
+            <h4>Plataforma</h4>
+            <a href="calculadora.html">Calculadora IA</a>
+            <a href="normativa-electrica.html">Normativa 200-2009</a>
+            <a href="electronica.html">Área de Electrónica</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/config.js?v=7.0"></script>
+    <script src="js/ui.js?v=1.0"></script>
+    <script src="js/premium-interactions.js?v=1.0"></script>
+  </body>
+</html>

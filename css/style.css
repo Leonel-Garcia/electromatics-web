@@ -156,6 +156,11 @@ a:hover {
   margin-right: 12px;
 }
 
+.desktop-nav {
+  display: flex;
+  align-items: center;
+}
+
 .desktop-nav a {
   margin-left: 20px;
   font-weight: 500;
@@ -183,6 +188,62 @@ a:hover {
 .desktop-nav a:hover::after,
 .desktop-nav a.active::after {
   width: 100%;
+}
+
+/* Dropdown Menu Styles */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--medium-bg-hex);
+  min-width: 220px;
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-top: 10px;
+  padding: 10px 0;
+  left: 50%;
+  transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+}
+
+.dropdown-content a {
+  color: var(--text-secondary) !important;
+  padding: 12px 20px !important;
+  margin: 0 !important;
+  display: block;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(0, 229, 255, 0.1);
+  color: var(--electric-blue) !important;
+}
+
+.dropdown-content a::after {
+  display: none;
+}
+
+.nav-dropdown:hover .dropdown-content {
+  display: block;
+  animation: dropdownFade 0.3s ease;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 /* 3. Botones y Formularios
