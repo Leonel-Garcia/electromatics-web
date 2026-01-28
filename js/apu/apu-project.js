@@ -118,6 +118,80 @@ class APUProject {
         this.renderSidebar();
     }
 
+    /**
+     * Resetea completamente el presupuesto actual.
+     * Limpia todas las partidas y permite comenzar un proyecto nuevo desde cero.
+     */
+    resetProject() {
+        const confirmMsg = `¿Está seguro de que desea iniciar un NUEVO PRESUPUESTO?
+
+⚠️ ADVERTENCIA: Esta acción eliminará TODAS las partidas actuales y sus APUs.
+
+✅ El presupuesto actual será borrado completamente.
+✅ Podrá cargar un nuevo PDF con partidas frescas.
+✅ El nombre del proyecto será reiniciado.`;
+
+        if (!confirm(confirmMsg)) {
+            return; // Usuario canceló
+        }
+
+        // 1. Limpiar todas las partidas
+        this.partidas = [];
+        this.activePartidaIndex = null;
+
+        // 2. Reiniciar el nombre del proyecto
+        this.name = "Nuevo Presupuesto Eléctrico";
+        const nameInput = document.getElementById('project-name');
+        if (nameInput) {
+            nameInput.value = this.name;
+        }
+        const displayName = document.getElementById('display-project-name');
+        if (displayName) {
+            displayName.innerText = this.name;
+        }
+
+        // 3. Limpiar el sistema APU global si existe
+        if (window.apuSystem) {
+            window.apuSystem.description = '';
+            window.apuSystem.unit = 'und';
+            window.apuSystem.yield = 1;
+            window.apuSystem.materials = [];
+            window.apuSystem.equipment = [];
+            window.apuSystem.labor = [];
+        }
+
+        // 4. Limpiar la interfaz de detalle APU si está visible
+        if (window.apuUI) {
+            // Limpia los campos del formulario de detalle
+            const fields = ['partida-desc', 'partida-codigo', 'partida-unidad', 'partida-cantidad', 'apu-partida-no'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            // Llama a updateCalculation para refrescar
+            if (typeof apuUI.updateCalculation === 'function') {
+                apuUI.updateCalculation();
+            }
+        }
+
+        // 5. Reiniciar el input de archivo PDF para permitir seleccionar el mismo archivo otra vez
+        const pdfInput = document.getElementById('pdf-upload');
+        if (pdfInput) {
+            pdfInput.value = '';
+        }
+
+        // 6. Actualizar las vistas
+        this.renderMasterTable();
+        this.renderSidebar();
+
+        // 7. Volver a la vista de presupuesto
+        this.switchView('project');
+
+        // 8. Notificar al usuario
+        alert('✅ Presupuesto reiniciado correctamente.\n\nAhora puede cargar un nuevo PDF con partidas o agregar partidas manualmente.');
+    }
+
     editPartida(index) {
         this.activePartidaIndex = index;
         const partida = this.partidas[index];

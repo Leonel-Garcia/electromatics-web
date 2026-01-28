@@ -66,6 +66,16 @@
             color: white;
         }
 
+        /* Estilos para botón de reset/nuevo presupuesto */
+        .btn-reset-project:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+        .btn-reset-project:active {
+            transform: translateY(0);
+        }
+
         .import-zone {
             border: 2px dashed #ccc;
             padding: 20px;
@@ -296,6 +306,11 @@
             <div id="project-overview-sidebar">
                 <h4 style="margin:0 0 10px 0;"><i class="fa-solid fa-briefcase"></i> Mi Proyecto</h4>
                 <input type="text" id="project-name" class="sheet-input" style="border-bottom:1px solid #ccc; font-weight:bold; margin-bottom:15px;" value="Nuevo Presupuesto Eléctrico">
+                
+                <!-- Botón para iniciar nuevo presupuesto -->
+                <button onclick="apuProject.resetProject()" class="btn-reset-project" style="width:100%; padding:10px; margin-bottom:15px; background: linear-gradient(135deg, #e74c3c, #c0392b); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.3s ease;">
+                    <i class="fa-solid fa-rotate-left"></i> Nuevo Presupuesto (Reset)
+                </button>
                 
                 <div class="import-zone" onclick="document.getElementById('pdf-upload').click()">
                     <i class="fa-solid fa-file-pdf" style="font-size: 24px; color: #d32f2f;"></i><br>
