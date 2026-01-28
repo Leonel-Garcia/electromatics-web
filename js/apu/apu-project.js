@@ -405,76 +405,93 @@ RESPONDE ÚNICAMENTE con un array JSON válido, sin explicaciones ni markdown:
 
 Si no encuentras partidas válidas, responde con un array vacío: []`;
 
-        try {
-            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://electromatics-api.onrender.com';
-            
-            const response = await fetch(`${apiUrl}/generate-content`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        role: 'user',
-                        parts: [{ text: prompt }]
-                    }]
-                })
-            });
+        const maxRetries = 3;
+        let retryCount = 0;
 
-            if (!response.ok) {
-                throw new Error(`Error del servidor: ${response.status}`);
-            }
+        while (retryCount < maxRetries) {
+            try {
+                const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://electromatics-api.onrender.com';
+                
+                const response = await fetch(`${apiUrl}/generate-content`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: 'user',
+                            parts: [{ text: prompt }]
+                        }]
+                    })
+                });
 
-            // Manejar respuesta
-            const contentType = response.headers.get('content-type');
-            let aiResponse = '';
-
-            if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                if (data.text) {
-                    aiResponse = data.text;
-                } else if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                    aiResponse = data.candidates[0].content.parts[0].text;
+                if (!response.ok) {
+                    if (response.status === 503 && retryCount < maxRetries - 1) {
+                        retryCount++;
+                        console.warn(`Servidor ocupado (503). Reintento ${retryCount}/${maxRetries} en 3 segundos...`);
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        continue;
+                    }
+                    throw new Error(`Error del servidor: ${response.status}`);
                 }
-            } else {
-                // Streaming response
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    aiResponse += decoder.decode(value, { stream: true });
+
+                // Manejar respuesta
+                const contentType = response.headers.get('content-type');
+                let aiResponse = '';
+
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.text) {
+                        aiResponse = data.text;
+                    } else if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                        aiResponse = data.candidates[0].content.parts[0].text;
+                    }
+                } else {
+                    // Streaming response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        aiResponse += decoder.decode(value, { stream: true });
+                    }
+                }
+
+                // Limpiar y parsear la respuesta JSON
+                aiResponse = aiResponse.trim();
+                
+                // Remover posibles bloques de código markdown
+                if (aiResponse.startsWith('```json')) {
+                    aiResponse = aiResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                } else if (aiResponse.startsWith('```')) {
+                    aiResponse = aiResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                }
+
+                const partidas = JSON.parse(aiResponse);
+                
+                if (!Array.isArray(partidas)) {
+                    throw new Error('La respuesta de la IA no es un array válido');
+                }
+
+                // Validar y normalizar cada partida
+                return partidas.map((p, index) => ({
+                    item: p.item || index + 1,
+                    code: p.code || `E.${String(index + 1).padStart(3, '0')}`,
+                    description: p.description || 'Partida sin descripción',
+                    unit: p.unit || 'und',
+                    qty: parseFloat(p.qty) || 1,
+                    unitPrice: 0,
+                    apuData: null
+                }));
+
+            } catch (error) {
+                if (retryCount < maxRetries - 1) {
+                    retryCount++;
+                    console.warn(`Error en intento ${retryCount}. Reintentando...`, error);
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                } else {
+                    console.error('Error extrayendo partidas con IA tras reintentos:', error);
+                    throw new Error(`Error al analizar con IA: ${error.message}`);
                 }
             }
-
-            // Limpiar y parsear la respuesta JSON
-            aiResponse = aiResponse.trim();
-            
-            // Remover posibles bloques de código markdown
-            if (aiResponse.startsWith('```json')) {
-                aiResponse = aiResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-            } else if (aiResponse.startsWith('```')) {
-                aiResponse = aiResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
-            }
-
-            const partidas = JSON.parse(aiResponse);
-            
-            if (!Array.isArray(partidas)) {
-                throw new Error('La respuesta de la IA no es un array válido');
-            }
-
-            // Validar y normalizar cada partida
-            return partidas.map((p, index) => ({
-                item: p.item || index + 1,
-                code: p.code || `E.${String(index + 1).padStart(3, '0')}`,
-                description: p.description || 'Partida sin descripción',
-                unit: p.unit || 'und',
-                qty: parseFloat(p.qty) || 1,
-                unitPrice: 0,
-                apuData: null
-            }));
-
-        } catch (error) {
-            console.error('Error extrayendo partidas con IA:', error);
-            throw new Error(`Error al analizar con IA: ${error.message}`);
         }
     }
 
