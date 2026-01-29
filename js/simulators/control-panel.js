@@ -1870,56 +1870,78 @@ class DahlanderMotor extends Component {
 
     update() {
         const nodes = window.lastSolvedNodes || {};
-        const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
-        const n2u = nodes[`${this.id}_2U`], n2v = nodes[`${this.id}_2V`], n2w = nodes[`${this.id}_2W`];
+        // Obtener Sets de nodos para cada terminal. Si no existen, usar Set vacío.
+        const n1u = nodes[`${this.id}_1U`] || new Set();
+        const n1v = nodes[`${this.id}_1V`] || new Set();
+        const n1w = nodes[`${this.id}_1W`] || new Set();
+        const n2u = nodes[`${this.id}_2U`] || new Set();
+        const n2v = nodes[`${this.id}_2V`] || new Set();
+        const n2w = nodes[`${this.id}_2W`] || new Set();
 
-        const hasPhases1 = n1u && n1v && n1w && n1u.size > 0 && n1v.size > 0 && n1w.size > 0;
-        const hasPhases2 = n2u && n2v && n2w && n2u.size > 0 && n2v.size > 0 && n2w.size > 0;
+        // Helper para ver si tiene tensión (fase activa 'L1', 'L2', 'L3')
+        // Ignoramos nodos internos o secundarios, buscamos fases de red.
+        const hasPhase = (nSet) => {
+            if (!nSet || nSet.size === 0) return false;
+            for (let id of nSet) {
+                if (id === 'L1' || id === 'L2' || id === 'L3') return true;
+                // Soporte para fuentes monofásicas mapeadas
+                if (id === 'L') return true; 
+            }
+            return false;
+        };
 
-        // Verificar cortocircuito (puente) en 1U, 1V, 1W (Requerido para Alta Velocidad)
-        let shorted1 = false;
-        if (n1u && n1v && n1w) {
-            const intersection = new Set([...n1u].filter(x => n1v.has(x) && n1w.has(x)));
-            if (intersection.size > 0) shorted1 = true;
+        const active1 = hasPhase(n1u) && hasPhase(n1v) && hasPhase(n1w);
+        const active2 = hasPhase(n2u) && hasPhase(n2v) && hasPhase(n2w);
+
+        // Detección de Puente (Short) en 1U-1V-1W
+        // Para que estén en corto, deben compartir al menos un ID de nodo (mismo potencial)
+        // Y ese potencial NO debe sarl L1, L2 o L3 (porque sería un corto de red)
+        let isShorted1 = false;
+        if (n1u.size > 0 && n1v.size > 0 && n1w.size > 0) {
+            // Buscamos intersección completa
+            const common = [...n1u].filter(x => n1v.has(x) && n1w.has(x));
+            if (common.length > 0) isShorted1 = true;
         }
 
         this.state.running = false;
         this.state.speedMode = 'None';
         this.state.rpm = 0;
-
-        // Default pitch (standard speed)
         let targetPitch = 1.0;
 
-        if (hasPhases2 && shorted1) {
-            // Alta Velocidad (Doble Estrella / YY)
+        // Lógica de Estado: Prioridad a Alta si se cumplen condiciones estrictas
+        if (active2 && isShorted1) {
+            // Alta Velocidad: Alimentación en 2, Puente en 1
             const p1 = [...n2u][0], p2 = [...n2v][0], p3 = [...n2w][0];
-            if (p1 !== p2 && p1 !== p3 && p2 !== p3) {
+            if (p1 !== p2) { // Validación básica anti-corto
                 this.state.running = true;
                 this.state.speedMode = 'High';
                 this.state.rpm = 3500;
                 this.state.direction = this.getDirection(p1, p2, p3);
-                targetPitch = 1.5; // Agudizar sonido (1.5x frec base)
+                targetPitch = 1.5;
             }
-        } else if (hasPhases1 && (!n2u || n2u.size === 0)) { 
-            // Baja Velocidad (Triángulo)
+        } else if (active1 && !isShorted1) {
+            // Baja Velocidad: Alimentación en 1, 1 NO Puenteado
+            // (Ignoramos active2 porque puede haber voltaje inducido o de retorno)
             const p1 = [...n1u][0], p2 = [...n1v][0], p3 = [...n1w][0];
-            if (p1 !== p2 && p1 !== p3 && p2 !== p3) {
+            if (p1 !== p2) {
                 this.state.running = true;
                 this.state.speedMode = 'Low';
                 this.state.rpm = 1750;
                 this.state.direction = this.getDirection(p1, p2, p3);
-                targetPitch = 1.0; // Sonido normal
+                targetPitch = 1.0;
             }
         }
 
-        // Controlar audio global si este motor está corriendo
-        if (this.state.running && window.motorAudio) {
-            window.motorAudio.setPitch(targetPitch);
-        } else if (!this.state.running && window.motorAudio && window.motorAudio.isPlaying) {
-           // Si este motor se detiene, restauramos pitch a 1.0 por si hay otros motores
-           // (Esta lógica es simple, idealmente comprobaríamos si hay OTRO motor en alta)
-           // Por ahora, asumimos que este es el principal foco de atención
-           // window.motorAudio.setPitch(1.0); // Opcional, dependiendo de la preferencia
+        // Gestión de Audio
+        if (window.motorAudio) {
+            // Asegurar que el contexto esté activo (fix para "no tiene sonido")
+            if (this.state.running && window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
+                 window.motorAudio.unlock(); // Try implicit unlock
+            }
+
+            if (this.state.running) {
+                window.motorAudio.setPitch(targetPitch);
+            }
         }
     }
 
