@@ -412,241 +412,92 @@ def heartbeat(visit_id: int, db: Session = Depends(database.get_db)):
 @app.post("/generate-content")
 async def generate_content_proxy(request: Request):
     """
-    Secure proxy for AI API calls.
-    Priority: Grok (xAI) -> Gemini -> DeepSeek
+    Secure proxy for Gemini AI API calls.
+    Uses ONLY Gemini (Google) as the AI provider.
     """
     try:
         body = await request.json()
-        errors_log = []  # Track all errors for debugging
+        errors_log = []
         
-        # 1. Try Grok (xAI) first - Newest provider
-        grok_key = os.getenv("GROK_API_KEY")
-        if grok_key:
-            logger.info("🚀 Attempting Grok API (xAI)...")
-            
-            try:
-                # Transform Gemini format to OpenAI-compatible format for Grok
-                # Gemini format: {"contents": [{"parts": [{"text": "..."}]}]}
-                # OpenAI format: {"messages": [{"role": "user", "content": "..."}]}
-                
-                grok_body = {
-                    "model": "grok-2",  # Stable production model (Jan 2026)
-                    "messages": [],
-                    "temperature": 0.7,
-                    "max_tokens": 4096
-                }
-                
-                # Extract text from Gemini format
-                if "contents" in body:
-                    for content in body["contents"]:
-                        if "parts" in content:
-                            for part in content["parts"]:
-                                if "text" in part:
-                                    grok_body["messages"].append({
-                                        "role": "user",
-                                        "content": part["text"]
-                                    })
-                
-                # Fallback: if no messages were extracted, use raw body
-                if not grok_body["messages"] and "prompt" in body:
-                    grok_body["messages"] = [{"role": "user", "content": body["prompt"]}]
-                
-                url = "https://api.x.ai/v1/chat/completions"
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {grok_key}"
-                }
-                
-                grok_response = requests.post(url, json=grok_body, headers=headers, timeout=25)
-                
-                if grok_response.status_code == 200:
-                    logger.info("✅ Grok API responded successfully")
-                    grok_data = grok_response.json()
-                    
-                    # Transform OpenAI response back to Gemini format
-                    # OpenAI: {"choices": [{"message": {"content": "..."}}]}
-                    # Gemini: {"candidates": [{"content": {"parts": [{"text": "..."}]}}]}
-                    
-                    gemini_format = {
-                        "candidates": [{
-                            "content": {
-                                "parts": [{
-                                    "text": grok_data["choices"][0]["message"]["content"]
-                                }],
-                                "role": "model"
-                            },
-                            "finishReason": "STOP",
-                            "safetyRatings": []
-                        }],
-                        "usageMetadata": {
-                            "promptTokenCount": grok_data.get("usage", {}).get("prompt_tokens", 0),
-                            "candidatesTokenCount": grok_data.get("usage", {}).get("completion_tokens", 0),
-                            "totalTokenCount": grok_data.get("usage", {}).get("total_tokens", 0)
-                        }
-                    }
-                    
-                    return JSONResponse(
-                        content=gemini_format,
-                        media_type="application/json"
-                    )
-                else:
-                    errors_log.append(f"Grok: {grok_response.status_code} - {grok_response.text[:200]}")
-                    logger.warning(f"⚠️ Grok API failed: {grok_response.status_code}")
-            except Exception as e:
-                errors_log.append(f"Grok Exception: {str(e)}")
-                logger.error(f"❌ Grok API error: {str(e)}")
-        else:
-            errors_log.append("GROK_API_KEY not configured")
-            logger.info("ℹ️ GROK_API_KEY not set, skipping Grok")
-        
-        # 2. Try Gemini (Google) - Primary fallback
+        # Get Gemini API Key
         gemini_key = os.getenv("GEMINI_API_KEY")
-        if gemini_key:
-            logger.info("🤖 Attempting Gemini API...")
-            
-            # Use only stable, publicly available models (Updated Jan 2026)
-            # Priority: Latest stable models first
-            models_to_try = [
-                # Primary: Gemini 2.0 Flash (newest, most capable)
-                "gemini-2.0-flash",
-                # Secondary: Stable Flash model
-                "gemini-1.5-flash",
-                # Tertiary: Pro model for complex queries  
-                "gemini-1.5-pro",
-                # Fallback: Older flash if newer models have issues
-                "gemini-1.5-flash-latest"
-            ]
+        if not gemini_key:
+            logger.error("❌ GEMINI_API_KEY not configured in environment")
+            raise HTTPException(
+                status_code=503, 
+                detail="ElectrIA no configurada. Falta GEMINI_API_KEY."
+            )
+        
+        logger.info("🤖 ElectrIA: Procesando solicitud con Gemini...")
+        
+        # Gemini models to try (Jan 2026 stable versions)
+        models_to_try = [
+            "gemini-2.0-flash",      # Primary: Latest Flash model
+            "gemini-1.5-flash",      # Secondary: Stable Flash
+            "gemini-1.5-pro",        # Tertiary: Pro for complex tasks
+        ]
 
-            for model_name in models_to_try:
-                try:
-                    # Use v1 stable endpoint for -latest models
-                    api_version = "v1"
-                    
-                    url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model_name}:generateContent?key={gemini_key}"
-                    
-                    google_response = requests.post(url, json=body, headers={"Content-Type": "application/json"}, timeout=25)
-                    
-                    if google_response.status_code == 200:
-                        logger.info(f"✅ {model_name} responded successfully")
-                        return JSONResponse(
-                            content=google_response.json(),
-                            media_type="application/json"
-                        )
-                    else:
-                        errors_log.append(f"{model_name}: {google_response.status_code}")
-                except Exception as e:
-                    errors_log.append(f"{model_name} Exception: {str(e)}")
-        else:
-            errors_log.append("GEMINI_API_KEY not configured")
-            logger.warning("⚠️ GEMINI_API_KEY environment variable not set")
-
-        # 3. Try DeepSeek as last fallback (Tertiary provider)
-        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-        if deepseek_key:
-            logger.info("🔷 Attempting DeepSeek API...")
+        for model_name in models_to_try:
             try:
-                # DeepSeek uses OpenAI-compatible format like Grok
-                deepseek_body = {
-                    "model": "deepseek-chat",
-                    "messages": [],
-                    "temperature": 0.7
-                }
+                url = f"https://generativelanguage.googleapis.com/v1/models/{model_name}:generateContent?key={gemini_key}"
                 
-                # Extract text from Gemini format
-                if "contents" in body:
-                    for content in body["contents"]:
-                        if "parts" in content:
-                            for part in content["parts"]:
-                                if "text" in part:
-                                    deepseek_body["messages"].append({
-                                        "role": "user",
-                                        "content": part["text"]
-                                    })
+                logger.info(f"📡 Intentando modelo: {model_name}")
                 
-                url = "https://api.deepseek.com/v1/chat/completions"
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {deepseek_key}"
-                }
+                google_response = requests.post(
+                    url, 
+                    json=body, 
+                    headers={"Content-Type": "application/json"}, 
+                    timeout=30
+                )
                 
-                deepseek_response = requests.post(url, json=deepseek_body, headers=headers, timeout=25)
-                
-                if deepseek_response.status_code == 200:
-                    logger.info("✅ DeepSeek API responded successfully")
-                    deepseek_data = deepseek_response.json()
-                    
-                    # Transform to Gemini format
-                    gemini_format = {
-                        "candidates": [{
-                            "content": {
-                                "parts": [{
-                                    "text": deepseek_data["choices"][0]["message"]["content"]
-                                }],
-                                "role": "model"
-                            },
-                            "finishReason": "STOP"
-                        }]
-                    }
-                    
+                if google_response.status_code == 200:
+                    logger.info(f"✅ {model_name} respondió exitosamente")
                     return JSONResponse(
-                        content=gemini_format,
+                        content=google_response.json(),
                         media_type="application/json"
                     )
                 else:
-                    errors_log.append(f"DeepSeek: {deepseek_response.status_code}")
+                    error_detail = google_response.text[:300] if google_response.text else "Sin detalles"
+                    errors_log.append(f"{model_name}: {google_response.status_code} - {error_detail}")
+                    logger.warning(f"⚠️ {model_name} falló: {google_response.status_code}")
+                    
+            except requests.exceptions.Timeout:
+                errors_log.append(f"{model_name}: Timeout")
+                logger.warning(f"⏱️ {model_name} timeout")
             except Exception as e:
-                errors_log.append(f"DeepSeek Exception: {str(e)}")
+                errors_log.append(f"{model_name}: {str(e)[:100]}")
+                logger.error(f"❌ {model_name} error: {str(e)}")
         
-        if errors_log:
-             logger.warning(f"Failed attempts: {errors_log}")
-
-        # All providers failed
-        error_summary = " | ".join(errors_log) if errors_log else "Unknown error"
-        logger.error(f"🚫 All AI providers failed: {error_summary}")
+        # All models failed
+        error_summary = " | ".join(errors_log)
+        logger.error(f"🚫 Todos los modelos Gemini fallaron: {error_summary}")
         raise HTTPException(
             status_code=503, 
-            detail=f"ElectrIA no disponible temporalmente. Todos los proveedores de IA fallaron. Intenta de nuevo en unos segundos."
+            detail=f"ElectrIA temporalmente no disponible. Errores: {error_summary}"
         )
 
     except HTTPException:
-        raise  # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
-        logger.error(f"🚫 Proxy Error: {str(e)}")
+        logger.error(f"🚫 Error inesperado en ElectrIA: {str(e)}")
         return JSONResponse(status_code=500, content={"detail": str(e)})
 
 @app.get("/health/ai")
 def check_ai_health():
     """
-    Health check endpoint to verify AI API configuration.
-    Does not reveal actual keys, only shows if they are configured.
+    Health check endpoint to verify Gemini AI API configuration.
     """
-    grok_key = os.getenv("GROK_API_KEY")
     gemini_key = os.getenv("GEMINI_API_KEY")
-    deepseek_key = os.getenv("DEEPSEEK_API_KEY")
     
-    # At least one provider should be configured
-    is_operational = bool(grok_key or gemini_key or deepseek_key)
+    is_operational = bool(gemini_key)
     
     return {
-        "status": "operational" if is_operational else "degraded",
-        "providers": {
-            "grok": {
-                "configured": bool(grok_key),
-                "key_preview": f"{grok_key[:6]}...{grok_key[-4:]}" if grok_key and len(grok_key) > 12 else "not set",
-                "priority": 1
-            },
-            "gemini": {
-                "configured": bool(gemini_key),
-                "key_preview": f"{gemini_key[:8]}...{gemini_key[-4:]}" if gemini_key and len(gemini_key) > 12 else "not set",
-                "priority": 2
-            },
-            "deepseek": {
-                "configured": bool(deepseek_key),
-                "key_preview": f"{deepseek_key[:8]}...{deepseek_key[-4:]}" if deepseek_key and len(deepseek_key) > 12 else "not set",
-                "priority": 3
-            }
-        },
-        "message": "ElectrIA is ready" if is_operational else "No AI providers configured. Set GROK_API_KEY, GEMINI_API_KEY or DEEPSEEK_API_KEY environment variables."
+        "status": "operational" if is_operational else "not_configured",
+        "provider": "Gemini (Google AI)",
+        "configured": is_operational,
+        "key_preview": f"{gemini_key[:8]}...{gemini_key[-4:]}" if gemini_key and len(gemini_key) > 12 else "not set",
+        "models": ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+        "message": "ElectrIA is ready" if is_operational else "GEMINI_API_KEY not configured"
     }
 
 @app.get("/api/bcv")
