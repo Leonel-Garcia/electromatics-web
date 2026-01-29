@@ -430,7 +430,7 @@ async def generate_content_proxy(request: Request):
                 # OpenAI format: {"messages": [{"role": "user", "content": "..."}]}
                 
                 grok_body = {
-                    "model": "grok-beta",  # or "grok-2-latest"
+                    "model": "grok-2",  # Stable production model (Jan 2026)
                     "messages": [],
                     "temperature": 0.7,
                     "max_tokens": 4096
@@ -504,15 +504,17 @@ async def generate_content_proxy(request: Request):
         if gemini_key:
             logger.info("🤖 Attempting Gemini API...")
             
-            # Use only stable, publicly available models
-            # Avoiding beta/preview models that cause 404/429 errors
+            # Use only stable, publicly available models (Updated Jan 2026)
+            # Priority: Latest stable models first
             models_to_try = [
-                # Primary: Free tier Flash model (most reliable)
-                "gemini-1.5-flash-latest",
-                # Fallback: Pro model for complex queries
-                "gemini-1.5-pro-latest",
-                # Alternative: Experimental (may have higher limits)
-                "gemini-exp-1206"
+                # Primary: Gemini 2.0 Flash (newest, most capable)
+                "gemini-2.0-flash",
+                # Secondary: Stable Flash model
+                "gemini-1.5-flash",
+                # Tertiary: Pro model for complex queries  
+                "gemini-1.5-pro",
+                # Fallback: Older flash if newer models have issues
+                "gemini-1.5-flash-latest"
             ]
 
             for model_name in models_to_try:
