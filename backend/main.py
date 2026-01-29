@@ -430,16 +430,18 @@ async def generate_content_proxy(request: Request):
         
         logger.info("🤖 ElectrIA: Procesando solicitud con Gemini...")
         
-        # Gemini models to try (Jan 2026 stable versions)
+        # Gemini models to try (Jan 2026 - using v1beta API)
+        # Priority: Gemini 2.5 Flash (fast) -> Gemini 2.5 Pro (powerful) -> Gemini 2.0 Flash (fallback)
         models_to_try = [
-            "gemini-2.0-flash",      # Primary: Latest Flash model
-            "gemini-1.5-flash",      # Secondary: Stable Flash
-            "gemini-1.5-pro",        # Tertiary: Pro for complex tasks
+            "gemini-2.5-flash",      # Primary: Fast and efficient (until Jun 2026)
+            "gemini-2.5-pro",        # Secondary: High capability (until Jun 2026)
+            "gemini-2.0-flash",      # Tertiary: Fallback (until Mar 2026)
         ]
 
         for model_name in models_to_try:
             try:
-                url = f"https://generativelanguage.googleapis.com/v1/models/{model_name}:generateContent?key={gemini_key}"
+                # Use v1beta endpoint which supports all current models
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={gemini_key}"
                 
                 logger.info(f"📡 Intentando modelo: {model_name}")
                 
@@ -496,7 +498,7 @@ def check_ai_health():
         "provider": "Gemini (Google AI)",
         "configured": is_operational,
         "key_preview": f"{gemini_key[:8]}...{gemini_key[-4:]}" if gemini_key and len(gemini_key) > 12 else "not set",
-        "models": ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+        "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
         "message": "ElectrIA is ready" if is_operational else "GEMINI_API_KEY not configured"
     }
 
