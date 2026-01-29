@@ -22,10 +22,19 @@
 
         /* Slide Styles Base */
         .content-area, .content-wrapper { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
-        .slide-header { position: absolute; top: 40px; left: 60px; display: flex; align-items: center; z-index: 10; }
-        .slide-header img { height: 35px; margin-right: 15px; vertical-align: middle; }
-        .slide-header span { color: #64B5F6; letter-spacing: 2px; font-weight: 500; text-transform: uppercase; font-size: 13px; }
-        .slide-header::before { display: none; } /* Remove the yellow line */
+        .slide-header { position: absolute; top: 40px; left: 60px; display: flex; align-items: center; z-index: 10; font-family: "Inter", sans-serif; }
+        .slide-header img { height: 35px; margin-right: 12px; vertical-align: middle; }
+        .slide-header span { 
+            font-weight: 800; 
+            font-size: 24px; 
+            letter-spacing: -0.03em;
+            background: linear-gradient(90deg, #fff, #00e5ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: none; /* Reset uppercase */
+        }
+        .slide-header::before { display: none; }
         
         /* Standard Title Position */
         /* Standard Title Position - Absolute for perfect consistency */
@@ -67,8 +76,8 @@
         .slide-number { color: #FFD700; font-weight: 900; font-family: "Roboto Mono", monospace; opacity: 0.9; line-height: 1; }
         
         /* Slide 1 Specifics */
-        .s1-content { padding: 100px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-        .s1-number { font-size: 78px; margin-bottom: 35px; }
+        .s1-content { padding: 100px; display: flex; flex-direction: column; justify-content: flex-start; height: 100%; padding-top: 240px; }
+        .s1-number { display: none; }
         .s1-heading { font-size: 88px; margin-bottom: 35px; }
         .s1-sub { font-size: 32px; margin-bottom: 70px; font-weight: 500; color: #FFD700; border-left: 5px solid #64B5F6; padding-left: 28px; line-height: 1.4; }
         .s1-presenter { font-size: 20px; color: #B0BEC5; margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
@@ -192,7 +201,7 @@
             
             <div class="s1-content">
                 <div class="s1-number">TEMA 1</div>
-                <h1 class="s1-heading">Sistemas<br/>Combinacionales</h1>
+                <h1 class="fixed-title-pos">Sistemas<br/>Combinacionales</h1>
                 <div class="s1-sub">
                     <p>Introducción a los Sistemas Digitales<br/>Circuitos Lógicos y Funciones Booleanas</p>
                 </div>
