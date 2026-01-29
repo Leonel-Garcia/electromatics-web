@@ -103,6 +103,30 @@
             .s1-content { padding: 80px 20px; text-align: center; }
             .s1-sub { border-left: none; border-bottom: 5px solid #64B5F6; padding-left: 0; padding-bottom: 20px; }
         }
+        /* Slide 10 */
+        .features-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }
+        .feat-item { display: flex; align-items: center; gap: 15px; font-size: 18px; color: #FFF; }
+        .feat-icon { color: #64B5F6; font-size: 24px; }
+        
+        .outputs-box { background-color: rgba(100, 181, 246, 0.12); border: 2px solid rgba(100, 181, 246, 0.3); border-radius: 12px; padding: 20px 25px; margin-top: 20px; }
+        .out-title { font-size: 16px; color: #64B5F6; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .out-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; font-size: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .out-item:last-child { border-bottom: none; }
+        
+        /* Slide 11 */
+        .summary-container { display: flex; flex-direction: column; height: 100%; padding: 40px 60px; }
+        .sum-header { margin-bottom: 30px; text-align: center; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex: 1; }
+        .sum-card { background-color: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 15px; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.3s; }
+        .sum-card:hover { transform: translateY(-5px); background-color: rgba(255, 255, 255, 0.08); }
+        .sum-num { position: absolute; top: 10px; left: 10px; font-size: 20px; font-weight: 900; color: rgba(100, 181, 246, 0.15); font-family: "Roboto Mono"; }
+        .sum-icon { font-size: 24px; color: #FFD700; margin-bottom: 10px; }
+        .sum-title { font-size: 15px; font-weight: 700; color: #FFF; margin-bottom: 10px; line-height: 1.2; }
+        .sum-list { list-style: none; padding: 0; margin: 0; font-size: 12px; color: #B0BEC5; text-align: left; width: 100%; }
+        .sum-list li { margin-bottom: 4px; padding-left: 12px; position: relative; }
+        .sum-list li::before { content: "•"; position: absolute; left: 0; color: #64B5F6; }
+        .slide-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255, 215, 0, 0.2); text-align: center; font-size: 14px; color: #B0BEC5; }
+
     </style>
 </head>
 <body>
@@ -115,7 +139,7 @@
     <!-- Navigation -->
     <div id="controls">
         <button class="control-btn" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
-        <span id="slide-indicator">1 / 9</span>
+        <span id="slide-indicator">1 / 11</span>
         <button class="control-btn" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
         <button class="control-btn" onclick="toggleFullScreen()" title="Pantalla Completa"><i class="fa-solid fa-expand"></i></button>
     </div>
@@ -450,6 +474,130 @@
                         <img src="https://sfile.chatglm.cn/images-ppt/b290b89250af.png" alt="Decodificador"/>
                         <div class="img-caption">Decodificador 2 a 4</div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: COMPARADORES -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">10</div>
+                    <h1 class="gen-heading">Comparadores<br/>Digitales</h1>
+                    <div class="def-box">
+                        <p class="def-txt"><i class="fas fa-balance-scale" style="color: #FFD700; margin-right: 10px"></i>Sistemas combinacionales que comparan magnitudes de cantidades binarias para determinar su relación.</p>
+                    </div>
+                    <div class="features-list">
+                        <div class="feat-item"><i class="fas fa-equals feat-icon"></i><span>Igualdad: A = B</span></div>
+                        <div class="feat-item"><i class="fas fa-greater-than feat-icon"></i><span>Mayor que: A > B</span></div>
+                        <div class="feat-item"><i class="fas fa-less-than feat-icon"></i><span>Menor que: A < B</span></div>
+                        <div class="feat-item"><i class="fas fa-layer-group feat-icon"></i><span>Cascada: Expansión de bits</span></div>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box">
+                        <img src="https://sfile.chatglm.cn/images-ppt/83568fa0466d.png" alt="Comparador 4-bit"/>
+                    </div>
+                    <div class="outputs-box">
+                        <div class="out-title"><i class="fas fa-satellite-dish"></i>SALIDAS</div>
+                        <div class="out-item"><span style="font-family: 'Roboto Mono'; color: #B0BEC5;">A = B</span><i class="fas fa-arrow-right" style="color: #FFD700;"></i><span style="font-weight: 500;">Bit de igualdad</span></div>
+                        <div class="out-item"><span style="font-family: 'Roboto Mono'; color: #B0BEC5;">A > B</span><i class="fas fa-arrow-right" style="color: #FFD700;"></i><span style="font-weight: 500;">Bit mayor</span></div>
+                        <div class="out-item"><span style="font-family: 'Roboto Mono'; color: #B0BEC5;">A < B</span><i class="fas fa-arrow-right" style="color: #FFD700;"></i><span style="font-weight: 500;">Bit menor</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: RESUMEN -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            
+            <div class="summary-container">
+                <div class="sum-header">
+                    <h1 style="font-size: 36px; font-weight: 900; color: #FFF; margin-bottom: 5px;">Resumen: Sistemas Combinacionales</h1>
+                    <p style="font-size: 16px; color: #64B5F6;">Fundamentos de Circuitos Lógicos Digitales</p>
+                </div>
+                
+                <div class="summary-grid">
+                    <div class="sum-card">
+                        <div class="sum-num">01</div>
+                        <div class="sum-icon"><i class="fas fa-wave-square"></i></div>
+                        <div class="sum-title">Señales Digitales</div>
+                        <ul class="sum-list">
+                            <li>Valores discretos 0/1</li>
+                            <li>Inmunidad ruido</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">02</div>
+                        <div class="sum-icon"><i class="fas fa-circuit-board"></i></div>
+                        <div class="sum-title">Combinacionales</div>
+                        <ul class="sum-list">
+                            <li>Salida = f(Entrada)</li>
+                            <li>Sin memoria</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">03</div>
+                        <div class="sum-icon"><i class="fas fa-project-diagram"></i></div>
+                        <div class="sum-title">Álgebra Boole</div>
+                        <ul class="sum-list">
+                            <li>AND, OR, NOT</li>
+                            <li>De Morgan</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">04</div>
+                        <div class="sum-icon"><i class="fas fa-table"></i></div>
+                        <div class="sum-title">Formas Canónicas</div>
+                        <ul class="sum-list">
+                            <li>Minterms (SOP)</li>
+                            <li>Maxterms (POS)</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">05</div>
+                        <div class="sum-icon"><i class="fas fa-th"></i></div>
+                        <div class="sum-title">Mapas Karnaugh</div>
+                        <ul class="sum-list">
+                            <li>Simplificación visual</li>
+                            <li>Agrupamiento 2^n</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">06</div>
+                        <div class="sum-icon"><i class="fas fa-microchip"></i></div>
+                        <div class="sum-title">Puertas Lógicas</div>
+                        <ul class="sum-list">
+                            <li>Univ: NAND, NOR</li>
+                            <li>XOR, XNOR</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">07</div>
+                        <div class="sum-icon"><i class="fas fa-random"></i></div>
+                        <div class="sum-title">MUX / DEMUX</div>
+                        <ul class="sum-list">
+                            <li>Selectores</li>
+                            <li>Distribuidores</li>
+                        </ul>
+                    </div>
+                    <div class="sum-card">
+                        <div class="sum-num">08</div>
+                        <div class="sum-icon"><i class="fas fa-exchange-alt"></i></div>
+                        <div class="sum-title">Codificadores</div>
+                        <ul class="sum-list">
+                            <li>Binario ↔ Otros</li>
+                            <li>Comparadores</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="slide-footer">
+                    <p><i class="fas fa-lightbulb" style="color: #FFD700; margin-right: 8px;"></i>Los sistemas combinacionales forman la base de la electrónica digital moderna</p>
                 </div>
             </div>
         </div>
