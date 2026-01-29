@@ -138,7 +138,7 @@ class MotorAudioManager {
             gain.connect(this.masterGain);
             osc.start();
             
-            this.oscillators.push({ osc, gain, lfo, lfoGain });
+            this.oscillators.push({ osc, gain, lfo, lfoGain, originalFreq: config.freq });
         });
 
         // Fade in - Increased volume to 0.7
@@ -181,6 +181,19 @@ class MotorAudioManager {
         } else if (!anyMotorRunning && this.isPlaying) {
             this.stop();
         }
+    }
+
+    setPitch(multiplier) {
+        if (!this.audioCtx || this.oscillators.length === 0) return;
+        const now = this.audioCtx.currentTime;
+        this.oscillators.forEach(item => {
+            // Smooth transition to new pitch
+            const targetFreq = item.originalFreq * multiplier;
+            // Solo actualizamos si la diferencia es significativa para evitar llamadas excesivas
+            if (Math.abs(item.osc.frequency.value - targetFreq) > 1) {
+                item.osc.frequency.setTargetAtTime(targetFreq, now, 0.2);
+            }
+        });
     }
 }
 
@@ -1874,6 +1887,9 @@ class DahlanderMotor extends Component {
         this.state.speedMode = 'None';
         this.state.rpm = 0;
 
+        // Default pitch (standard speed)
+        let targetPitch = 1.0;
+
         if (hasPhases2 && shorted1) {
             // Alta Velocidad (Doble Estrella / YY)
             const p1 = [...n2u][0], p2 = [...n2v][0], p3 = [...n2w][0];
@@ -1882,6 +1898,7 @@ class DahlanderMotor extends Component {
                 this.state.speedMode = 'High';
                 this.state.rpm = 3500;
                 this.state.direction = this.getDirection(p1, p2, p3);
+                targetPitch = 1.5; // Agudizar sonido (1.5x frec base)
             }
         } else if (hasPhases1 && (!n2u || n2u.size === 0)) { 
             // Baja Velocidad (Triángulo)
@@ -1891,7 +1908,18 @@ class DahlanderMotor extends Component {
                 this.state.speedMode = 'Low';
                 this.state.rpm = 1750;
                 this.state.direction = this.getDirection(p1, p2, p3);
+                targetPitch = 1.0; // Sonido normal
             }
+        }
+
+        // Controlar audio global si este motor está corriendo
+        if (this.state.running && window.motorAudio) {
+            window.motorAudio.setPitch(targetPitch);
+        } else if (!this.state.running && window.motorAudio && window.motorAudio.isPlaying) {
+           // Si este motor se detiene, restauramos pitch a 1.0 por si hay otros motores
+           // (Esta lógica es simple, idealmente comprobaríamos si hay OTRO motor en alta)
+           // Por ahora, asumimos que este es el principal foco de atención
+           // window.motorAudio.setPitch(1.0); // Opcional, dependiendo de la preferencia
         }
     }
 
@@ -1915,25 +1943,49 @@ class DahlanderMotor extends Component {
              ctx.fillRect(this.x, this.y, this.width, this.height);
         }
         
-        // LED de Estado
-        const ledX = this.x + this.width - 20;
-        const ledY = this.y + 20;
-        const ledColor = this.state.running ? (this.state.speedMode === 'High' ? '#3b82f6' : '#22c55e') : '#64748b';
-        ctx.fillStyle = ledColor;
-        ctx.shadowColor = this.state.running ? ledColor : 'transparent';
-        ctx.shadowBlur = this.state.running ? 12 : 0;
-        ctx.beginPath();
-        ctx.arc(ledX, ledY, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        // --- Indicadores de Velocidad ---
+        const isHigh = this.state.speedMode === 'High';
+        const isLow = this.state.speedMode === 'Low';
+        
+        ctx.font = 'bold 9px Inter';
+        ctx.textAlign = 'center';
 
-        // Texto de velocidad
+        // Indicador BAJA (Izquierda)
+        const lowX = this.x + this.width - 45;
+        const lowY = this.y + 20;
+        ctx.fillStyle = isLow ? '#22c55e' : '#334155'; // Verde brillante on, Gris oscuro off
+        ctx.beginPath();
+        ctx.arc(lowX, lowY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        if (isLow) { // Glow
+            ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+        }
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText('BAJA', lowX, lowY + 15);
+
+        // Indicador ALTA (Derecha)
+        const highX = this.x + this.width - 15;
+        const highY = this.y + 20;
+        ctx.fillStyle = isHigh ? '#3b82f6' : '#334155'; // Azul brillante on, Gris oscuro off
+        ctx.beginPath();
+        ctx.arc(highX, highY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        if (isHigh) { // Glow
+            ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+        }
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText('ALTA', highX, highY + 15);
+
+
+        // Texto de RPM y Feedback
         if (this.state.running) {
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = '#fbbf24'; // Amber text
             ctx.font = 'bold 12px Inter';
             ctx.textAlign = 'right';
-            ctx.fillText(this.state.speedMode + ' Speed', this.x + this.width - 10, this.y + 40);
-            ctx.fillText(this.state.rpm + ' RPM', this.x + this.width - 10, this.y + 55);
+            const speedText = isHigh ? 'ALTA VELOCIDAD' : 'BAJA VELOCIDAD';
+            ctx.fillText(speedText, this.x + this.width - 10, this.y + 55);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(this.state.rpm + ' RPM', this.x + this.width - 10, this.y + 70);
         }
 
         // Animación de rotor
@@ -1941,21 +1993,31 @@ class DahlanderMotor extends Component {
             const centerX = this.x + 32; 
             const centerY = this.y + 115;
             const rotorRadius = 40;
-            const speedFactor = this.state.speedMode === 'High' ? 0.16 : 0.08;
+            // Velocidad de animación visual más rápida para Alta
+            const speedFactor = isHigh ? 0.25 : 0.12; 
             this.state.angle += speedFactor * this.state.direction;
             
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(this.state.angle);
+            
+            // Aspas del rotor
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 4;
             for (let i = 0; i < 8; i++) {
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
+                // Colorar puntas según velocidad (visual feedback extra)
+                ctx.strokeStyle = isHigh ? '#3b82f6' : (isLow ? '#22c55e' : '#334155');
                 ctx.lineTo(rotorRadius, 0);
                 ctx.stroke();
                 ctx.rotate(Math.PI / 4);
             }
+            
+            // Centro
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
+            
             ctx.restore();
         }
         
