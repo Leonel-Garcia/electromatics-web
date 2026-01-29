@@ -168,33 +168,45 @@
         .sum-list li::before { content: "•"; position: absolute; left: 0; color: #64B5F6; }
         .slide-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255, 215, 0, 0.2); text-align: center; font-size: 14px; color: #B0BEC5; }
 
-        /* K-Map Styles */
-        .kmap-container { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        /* K-Map Styles Compact */
+        .kmap-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .kmap-wrapper { position: relative; display: inline-block; margin: 0 auto; }
-        .kmap-table { border-collapse: separate; border-spacing: 4px; font-family: 'Roboto Mono', monospace; }
-        .kmap-header { color: #64B5F6; font-weight: bold; text-align: center; font-size: 14px; }
+        .kmap-table { border-collapse: separate; border-spacing: 3px; font-family: 'Roboto Mono', monospace; }
+        .kmap-header { color: #64B5F6; font-weight: bold; text-align: center; font-size: 12px; }
         .kmap-cell { 
-            width: 50px; height: 50px; 
+            width: 36px; height: 36px; 
             background: rgba(255, 255, 255, 0.05); 
             border: 1px solid rgba(255, 255, 255, 0.1); 
             text-align: center; vertical-align: middle; 
-            color: #fff; font-size: 18px; 
+            color: #fff; font-size: 16px; 
             position: relative;
-            cursor: default;
+            cursor: pointer; transition: background 0.2s;
         }
+        .kmap-cell:hover { background: rgba(255,255,255,0.15); }
         .kmap-cell.one { color: #FFD700; font-weight: bold; background: rgba(255, 215, 0, 0.05); }
         .kmap-cell.zero { color: #546E7A; }
         
-        /* Grouping Visuals */
-        .group-highlight {
-            position: absolute;
-            border: 2px solid;
+        /* Compact Truth Table */
+        .tt-container {
+            width: 140px;
+            height: 320px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            font-size: 12px;
         }
+        .tt-table { width: 100%; border-collapse: collapse; font-family: 'Roboto Mono'; }
+        .tt-table th { background: rgba(100,181,246,0.2); color: #64B5F6; position: sticky; top: 0; padding: 5px; z-index: 5; }
+        .tt-table td { padding: 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); color: #B0BEC5; }
+        .tt-row-1 { background: rgba(255, 215, 0, 0.05); color: #FFF !important; font-weight: bold; }
+
+        /* Grouping Highlighters */
+        .group-highlight { position: absolute; border: 2px solid; border-radius: 6px; pointer-events: none; }
         .g-red { border-color: #FF5252; background: rgba(255, 82, 82, 0.15); }
         .g-green { border-color: #69F0AE; background: rgba(105, 240, 174, 0.15); }
+        
+        .kmap-flex-row { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
         
         /* Result Box */
         .kmap-result { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border-left: 4px solid #64B5F6; margin-top: 10px; }
@@ -460,78 +472,75 @@
                         <div class="diff-item"><div class="diff-lbl">PASO 4</div><div class="diff-val">Simplificar</div></div>
                     </div>
                 </div>
-                <div class="col-right" style="flex: 0 0 50%;"> <!-- Increased width -->
-                    <div class="kmap-container">
-                        <div style="background: rgba(10, 25, 41, 0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(100, 181, 246, 0.3);">
-                            <div class="kmap-wrapper">
-                                <span style="position: absolute; top: -25px; left: -25px; color: #64B5F6; font-family: 'Roboto Mono';">AB\CD</span>
-                                <table class="kmap-table">
-                                    <tr>
-                                        <td></td>
-                                        <td class="kmap-header">00</td>
-                                        <td class="kmap-header">01</td>
-                                        <td class="kmap-header">11</td>
-                                        <td class="kmap-header">10</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="kmap-header">00</td>
-                                        <td class="kmap-cell one">1</td>
-                                        <td class="kmap-cell one">1</td>
-                                        <td class="kmap-cell zero">0</td>
-                                        <td class="kmap-cell zero">0</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="kmap-header">01</td>
-                                        <td class="kmap-cell one">1</td>
-                                        <td class="kmap-cell one">1</td>
-                                        <td class="kmap-cell zero">0</td>
-                                        <td class="kmap-cell zero">0</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="kmap-header">11</td>
-                                        <td class="kmap-cell one">1</td>
-                                        <td class="kmap-cell zero">0</td>
-                                        <td class="kmap-cell zero">0</td>
-                                        <td class="kmap-cell one">1</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="kmap-header">10</td>
-                                        <td class="kmap-cell one">1</td>
-                                        <td class="kmap-cell zero">0</td>
-                                        <td class="kmap-cell zero">0</td>
-                                        <td class="kmap-cell one">1</td>
-                                    </tr>
-                                </table>
-                                
-                                <!-- Visual Groupings (Overlay) -->
-                                <!-- Group 1: 4 ones top-left square (Red) -->
-                                <div class="group-highlight g-red" style="top: 32px; left: 60px; width: 108px; height: 108px;"></div>
-                                
-                                <!-- Group 2: 4 corners/edges (Green) - Split boxes for visual representation -->
-                                <!-- We represent the wrapping group (corners) with simplified markers for this CSS approach -->
-                                <div class="group-highlight g-green" style="top: 140px; left: 60px; width: 54px; height: 108px;"></div>
-                                <div class="group-highlight g-green" style="top: 140px; left: 222px; width: 54px; height: 108px;"></div>
-                            </div>
+                <div class="col-right" style="flex: 0 0 55%;">
+                    <div class="kmap-flex-row">
+                        <!-- Truth Table -->
+                        <div class="tt-container">
+                            <table class="tt-table">
+                                <thead><tr><th>ABCD</th><th>F</th></tr></thead>
+                                <tbody>
+                                    <tr class="tt-row-1"><td>0000</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0001</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0010</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0011</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0100</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0101</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0110</td><td>1</td></tr>
+                                    <tr class="tt-row-1"><td>0111</td><td>1</td></tr>
+                                    <tr><td>1000</td><td>0</td></tr>
+                                    <tr><td>1001</td><td>0</td></tr>
+                                    <tr><td>1010</td><td>0</td></tr>
+                                    <tr><td>1011</td><td>0</td></tr>
+                                    <tr class="tt-row-1"><td>1100</td><td>1</td></tr>
+                                    <tr><td>1101</td><td>0</td></tr>
+                                    <tr class="tt-row-1"><td>1110</td><td>1</td></tr>
+                                    <tr><td>1111</td><td>0</td></tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div class="kmap-result">
-                            <h4 style="color: #FFF; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Cálculo de Simplificación</h4>
-                            
-                            <div class="res-line">
-                                <span class="tag-group tag-red">GRUPO ROJO (4 celdas)</span>
-                                <span style="font-size: 14px; color: #B0BEC5;">C y D cambian → Elimina C,D</span>
+                        <!-- K-Map System -->
+                        <div class="kmap-container" style="flex: 1;">
+                            <div style="background: rgba(10, 25, 41, 0.8); padding: 15px; border-radius: 12px; border: 1px solid rgba(100, 181, 246, 0.3); text-align: center;">
+                                <div class="kmap-wrapper">
+                                    <span style="position: absolute; top: -20px; left: -20px; color: #64B5F6; font-family: 'Roboto Mono'; font-size: 12px;">AB\CD</span>
+                                    <table class="kmap-table">
+                                        <tr><td></td><td class="kmap-header">00</td><td class="kmap-header">01</td><td class="kmap-header">11</td><td class="kmap-header">10</td></tr>
+                                        <tr>
+                                            <td class="kmap-header">00</td>
+                                            <td class="kmap-cell one">1</td><td class="kmap-cell one">1</td><td class="kmap-cell one">1</td><td class="kmap-cell one">1</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="kmap-header">01</td>
+                                            <td class="kmap-cell one">1</td><td class="kmap-cell one">1</td><td class="kmap-cell one">1</td><td class="kmap-cell one">1</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="kmap-header">11</td>
+                                            <td class="kmap-cell one">1</td><td class="kmap-cell zero">0</td><td class="kmap-cell zero">0</td><td class="kmap-cell one">1</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="kmap-header">10</td>
+                                            <td class="kmap-cell zero">0</td><td class="kmap-cell zero">0</td><td class="kmap-cell zero">0</td><td class="kmap-cell zero">0</td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <!-- Visual Groupings -->
+                                    <!-- Red: Rows 0 and 1 fully -->
+                                    <div class="group-highlight g-red" style="top: 24px; left: 45px; width: 155px; height: 78px;"></div>
+                                    
+                                    <!-- Green: Col 00/10 of Row 01/11 (The BD' wrap) -->
+                                    <!-- Using split boxes for visual wrap clarity -->
+                                    <div class="group-highlight g-green" style="top: 65px; left: 45px; width: 38px; height: 78px;"></div>
+                                    <div class="group-highlight g-green" style="top: 65px; left: 162px; width: 38px; height: 78px;"></div>
+                                </div>
                             </div>
-                            <div class="res-eq" style="padding-left: 10px; margin-bottom: 10px;">Termino 1: <strong style="color: #FF5252">A̅</strong></div>
 
-                            <div class="res-line">
-                                <span class="tag-group tag-green">GRUPO VERDE (4 celdas esquinas)</span>
-                                <span style="font-size: 14px; color: #B0BEC5;">Col 00 y 10 / Fila 11 y 10</span>
-                            </div>
-                            <div class="res-eq" style="padding-left: 10px;">Termino 2: <strong style="color: #69F0AE">B·D̅</strong></div>
-
-                            <div style="margin-top: 15px; text-align: center; background: rgba(100, 181, 246, 0.1); padding: 10px; border-radius: 6px;">
-                                <span style="color: #64B5F6; font-weight: bold; margin-right: 10px;">SOLUCIÓN FINAL:</span>
-                                <span style="font-family: 'Roboto Mono'; font-size: 24px; color: #FFD700;">F = A̅ + B·D̅</span>
+                            <div class="kmap-result" style="padding: 10px;">
+                                <div class="res-line"><span class="tag-group tag-red">ROJO (8)</span> <span style="font-size: 13px; color:#B0BEC5;">Filas 00,01 → <strong>A̅</strong></span></div>
+                                <div class="res-line"><span class="tag-group tag-green">VERDE (4)</span> <span style="font-size: 13px; color:#B0BEC5;">Col 00,10 / Fila x1 → <strong>B·D̅</strong></span></div>
+                                <div style="margin-top: 8px; text-align: center; background: rgba(100, 181, 246, 0.1); padding: 5px; border-radius: 4px;">
+                                    <span style="font-family: 'Roboto Mono'; font-size: 18px; color: #FFD700;">F = A̅ + B·D̅</span>
+                                </div>
                             </div>
                         </div>
                     </div>
