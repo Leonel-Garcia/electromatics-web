@@ -22,8 +22,31 @@
 
         /* Slide Styles Base */
         .content-area, .content-wrapper { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
-        .slide-header { position: absolute; top: 40px; left: 60px; font-size: 13px; color: #64B5F6; letter-spacing: 2px; font-weight: 500; text-transform: uppercase; display: flex; align-items: center; z-index: 10; }
-        .slide-header::before { content: ""; display: block; width: 35px; height: 2.5px; background-color: #FFD700; margin-right: 15px; }
+        .slide-header { position: absolute; top: 40px; left: 60px; display: flex; align-items: center; z-index: 10; }
+        .slide-header img { height: 35px; margin-right: 15px; vertical-align: middle; }
+        .slide-header span { color: #64B5F6; letter-spacing: 2px; font-weight: 500; text-transform: uppercase; font-size: 13px; }
+        .slide-header::before { display: none; } /* Remove the yellow line */
+        
+        /* Standard Title Position */
+        .fixed-title-pos {
+            font-size: 46px; 
+            margin-bottom: 30px; 
+            line-height: 1.2;
+            font-weight: 900;
+            color: #FFF;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            /* Ensure fixed position in flow */
+            margin-top: 0;
+        }
+
+        /* Override col-left to force top alignment */
+        .col-left { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start; /* Was center */
+            padding-top: 40px; /* Push content down to align with fixed standard */
+        }
         
         /* Slide Visibility */
         .slide { display: none; width: 100%; height: 100%; animation: fadeIn 0.5s ease-in-out; }
@@ -153,7 +176,10 @@
             <div class="deco-circle dc-1"></div>
             <div class="deco-circle dc-2"></div>
             <div class="deco-circle dc-3"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - CURSO BÁSICO</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             
             <div class="s1-content">
                 <div class="s1-number">TEMA 1</div>
@@ -172,11 +198,14 @@
         <!-- SLIDE 2: ANALOG VS DIGITAL -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">02</div>
-                    <h1 class="gen-heading">Introducción<br/>Señales Digitales</h1>
+                    <h1 class="fixed-title-pos">Introducción<br/>Señales Digitales</h1>
                     <div class="gen-sub">Analógico versus Digital</div>
                     
                     <div class="card-vs">
@@ -225,11 +254,14 @@
         <!-- SLIDE 3: DEFINICION COMBINACIONAL -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">03</div>
-                    <h1 class="gen-heading">Circuito<br/>Combinacional</h1>
+                    <h1 class="fixed-title-pos">Circuito<br/>Combinacional</h1>
                     <div class="def-box">
                         <div class="def-lbl"><i class="fas fa-check-circle mr-2"></i>DEFINICIÓN</div>
                         <p class="def-txt">Un circuito lógico es <strong style="color: #FFD700">puramente combinacional</strong> si la salida depende única y exclusivamente del valor de sus entradas en el momento considerado.</p>
@@ -274,11 +306,14 @@
         <!-- SLIDE 4: ALGEBRA BOOLE -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">04</div>
-                    <h1 class="gen-heading">Álgebra de<br/>Boole</h1>
+                    <h1 class="fixed-title-pos">Álgebra de<br/>Boole</h1>
                     <div class="ops-grid">
                         <div class="op-card">
                             <div class="op-sym">AND</div>
@@ -315,11 +350,14 @@
         <!-- SLIDE 5: FORMAS CANONICAS -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">05</div>
-                    <h1 class="gen-heading">Tablas de Verdad<br/>y Formas Canónicas</h1>
+                    <h1 class="fixed-title-pos">Tablas de Verdad<br/>y Formas Canónicas</h1>
                     <div class="img-box" style="padding: 24px;">
                         <table class="truth-table">
                             <thead><tr><th>A</th><th>B</th><th>F(A,B)</th></tr></thead>
@@ -349,11 +387,14 @@
         <!-- SLIDE 6: KARNAUGH -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">06</div>
-                    <h1 class="gen-heading">Mapas de<br/>Karnaugh</h1>
+                    <h1 class="fixed-title-pos">Mapas de<br/>Karnaugh</h1>
                     <div class="def-box">
                         <div class="def-lbl"><i class="fas fa-lightbulb mr-2"></i>MÉTODO VISUAL</div>
                         <p class="def-txt">Simplificación sistemática de expresiones booleanas mediante agrupamiento de unos adyacentes.</p>
@@ -377,11 +418,14 @@
         <!-- SLIDE 7: PUERTAS LOGICAS -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">07</div>
-                    <h1 class="gen-heading">Puertas Lógicas<br/>Básicas</h1>
+                    <h1 class="fixed-title-pos">Puertas Lógicas<br/>Básicas</h1>
                     <div class="gates-grid">
                         <div class="gate-card">
                             <div class="gate-head"><span style="font-weight: 700; font-size: 18px;">AND</span></div>
@@ -413,11 +457,14 @@
         <!-- SLIDE 8: MUX/DEMUX -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">08</div>
-                    <h1 class="gen-heading">Multiplexores y<br/>Demultiplexores</h1>
+                    <h1 class="fixed-title-pos">Multiplexores y<br/>Demultiplexores</h1>
                     
                     <div class="card-vs" style="flex-direction: column; gap: 8px;">
                         <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -447,11 +494,14 @@
         <!-- SLIDE 9: CODIFICADORES/DECODIFICADORES -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">09</div>
-                    <h1 class="gen-heading">Codificadores y<br/>Decodificadores</h1>
+                    <h1 class="fixed-title-pos">Codificadores y<br/>Decodificadores</h1>
                     
                     <div class="card-vs" style="flex-direction: column; gap: 8px;">
                         <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -481,11 +531,14 @@
         <!-- SLIDE 10: COMPARADORES -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             <div class="layout-split">
                 <div class="col-left">
                     <div class="gen-number">10</div>
-                    <h1 class="gen-heading">Comparadores<br/>Digitales</h1>
+                    <h1 class="fixed-title-pos">Comparadores<br/>Digitales</h1>
                     <div class="def-box">
                         <p class="def-txt"><i class="fas fa-balance-scale" style="color: #FFD700; margin-right: 10px"></i>Sistemas combinacionales que comparan magnitudes de cantidades binarias para determinar su relación.</p>
                     </div>
@@ -513,7 +566,10 @@
         <!-- SLIDE 11: RESUMEN -->
         <div class="slide">
             <div class="grid-pattern"></div>
-            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="slide-header">
+                <img src="images/logo.png" alt="Electromatics">
+                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+            </div>
             
             <div class="summary-container">
                 <div class="sum-header">
