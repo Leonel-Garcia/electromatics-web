@@ -651,11 +651,76 @@ def check_ai_health():
 def get_bcv_rate():
     """
     Fetch the BCV (Banco Central de Venezuela) exchange rate.
-    Prioritizes direct scraping from the official website with multiple fallback patterns.
+    Uses multiple reliable APIs with fallbacks to ensure daily updates.
+    Priority: 1) bcv-api.rafnixg.dev 2) api.dolarvzla.com 3) Direct BCV scrape 4) Fallback
     """
-    # Source 1: Direct Scrape from BCV Official
+    errors_log = []
+    
+    # Source 1: BCV API by rafnixg (most reliable, dedicated BCV scraper)
     try:
-        logger.info("📡 Iniciando scrap directo de BCV (bcv.org.ve)...")
+        logger.info("📡 Intentando API bcv-api.rafnixg.dev...")
+        resp = requests.get("https://bcv-api.rafnixg.dev/rates/", timeout=10)
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            # API returns: {"dollar": 367.30, "date": "2026-01-29"}
+            if "dollar" in data:
+                rate = float(data["dollar"])
+                logger.info(f"✅ bcv-api.rafnixg.dev: {rate}")
+                return {
+                    "rate": rate,
+                    "source": "BCV Oficial (API rafnixg)",
+                    "updated_at": data.get("date", datetime.utcnow().isoformat())
+                }
+            # Alternative format: {"rates": {"USD": 55.12}}
+            elif "rates" in data and "USD" in data["rates"]:
+                rate = float(data["rates"]["USD"])
+                logger.info(f"✅ bcv-api.rafnixg.dev (alt): {rate}")
+                return {
+                    "rate": rate,
+                    "source": "BCV Oficial (API rafnixg)",
+                    "updated_at": data.get("date", datetime.utcnow().isoformat())
+                }
+        errors_log.append(f"rafnixg: {resp.status_code}")
+    except Exception as e:
+        errors_log.append(f"rafnixg: {str(e)[:50]}")
+        logger.warning(f"⚠️ bcv-api.rafnixg.dev falló: {str(e)}")
+
+    # Source 2: DolarVZLA API (public, high rate limit)
+    try:
+        logger.info("📡 Intentando API api.dolarvzla.com...")
+        resp = requests.get("https://api.dolarvzla.com/public/exchange-rate", timeout=10)
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            # Look for BCV rate in the response
+            if isinstance(data, dict):
+                # Format: {"bcv": {"usd": 55.12, ...}, "paralelo": {...}}
+                if "bcv" in data and "usd" in data["bcv"]:
+                    rate = float(data["bcv"]["usd"])
+                    logger.info(f"✅ dolarvzla.com (bcv): {rate}")
+                    return {
+                        "rate": rate,
+                        "source": "BCV Oficial (DolarVZLA API)",
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                # Alternative: direct USD field
+                elif "usd" in data:
+                    rate = float(data["usd"])
+                    logger.info(f"✅ dolarvzla.com: {rate}")
+                    return {
+                        "rate": rate,
+                        "source": "BCV Oficial (DolarVZLA)",
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+        errors_log.append(f"dolarvzla: {resp.status_code}")
+    except Exception as e:
+        errors_log.append(f"dolarvzla: {str(e)[:50]}")
+        logger.warning(f"⚠️ api.dolarvzla.com falló: {str(e)}")
+
+    # Source 3: Direct Scrape from BCV Official (fallback due to SSL/JS issues)
+    try:
+        logger.info("📡 Intentando scrap directo de BCV (bcv.org.ve)...")
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -664,7 +729,6 @@ def get_bcv_rate():
             'Pragma': 'no-cache'
         }
         
-        # Simple fetch with verify=False due to frequent BCV SSL issues
         bcv_resp = requests.get("https://www.bcv.org.ve/", headers=headers, timeout=15, verify=False)
         
         if bcv_resp.status_code == 200:
@@ -678,47 +742,44 @@ def get_bcv_rate():
             if not match:
                 match = re.search(r'USD.*?strong>\s*([\d,.]+)\s*<', html_content, re.DOTALL | re.IGNORECASE)
             
-            # Pattern 3: Look for any strong tag with a value greater than 30 (current range)
+            # Pattern 3: Look for strong tags with rate-like values (50-500 range for current BCV)
             if not match:
-                # Find all potential rates
                 potentials = re.findall(r'strong>\s*([\d]{2,3},[\d]+)\s*<', html_content)
                 if potentials:
-                    # Usually the last one or one containing 'dolar' context is best, but let's be careful
-                    # BCV order is usually EUR, CNY, TRY, RUB, USD (USD is last)
-                    rate_str = potentials[-1]
-                    logger.info(f"🔍 Encontrado patrón alternativo (potenciales): {potentials}")
-                    rate_str = rate_str.replace(',', '.')
+                    # BCV order is EUR, CNY, TRY, RUB, USD (USD is usually last)
+                    rate_str = potentials[-1].replace(',', '.')
+                    rate = float(rate_str)
+                    logger.info(f"✅ BCV Scrape (patrón secundario): {rate}")
                     return {
-                        "rate": float(rate_str),
-                        "source": "BCV Oficial (Patrón Secundario)",
+                        "rate": rate,
+                        "source": "BCV Oficial (Scrape Directo)",
                         "updated_at": datetime.utcnow().isoformat()
                     }
 
             if match:
                 rate_str = match.group(1).replace(',', '.')
-                logger.info(f"✅ BCV Scrape Exitoso: {rate_str}")
+                rate = float(rate_str)
+                logger.info(f"✅ BCV Scrape Exitoso: {rate}")
                 return {
-                    "rate": float(rate_str),
+                    "rate": rate,
                     "source": "BCV Oficial (Scrape en Tiempo Real)",
                     "updated_at": datetime.utcnow().isoformat()
                 }
-            else:
-                logger.warning("⚠️ BCV Scrape falló: No se encontró el patrón de la tasa en el HTML.")
-                # Log a bit of the HTML for debugging if possible (truncated)
-                logger.debug(f"HTML Sample: {html_content[:500]}")
-        else:
-            logger.warning(f"⚠️ BCV respondió con Status: {bcv_resp.status_code}")
+        errors_log.append(f"BCV scrape: {bcv_resp.status_code if 'bcv_resp' in dir() else 'failed'}")
     except Exception as e:
-        logger.error(f"❌ Error crítico en BCV Scrape: {str(e)}")
+        errors_log.append(f"BCV scrape: {str(e)[:50]}")
+        logger.warning(f"⚠️ BCV Scrape falló: {str(e)}")
 
-    # Source 2: Hardcoded Fallback (Last resort but updated to current known value)
-    # Manual Update: 23-Jan-2026
-    current_fixed_rate = 352.71
-    logger.info(f"ℹ️ Usando tasa de respaldo manual actualizada: {current_fixed_rate}")
+    # Source 4: Hardcoded Fallback (last resort, needs manual update when all APIs fail)
+    # IMPORTANT: Update this value periodically when APIs are unavailable
+    # Last Manual Update: 29-Jan-2026
+    current_fixed_rate = 367.30  # Updated to current BCV rate
+    logger.warning(f"⚠️ Todas las APIs fallaron, usando tasa de respaldo: {current_fixed_rate}. Errores: {errors_log}")
     return {
         "rate": current_fixed_rate,
-        "source": "Sistema Electromatics (Update 23-Jan)",
-        "updated_at": datetime.utcnow().isoformat()
+        "source": "Sistema Electromatics (Respaldo 29-Ene-2026)",
+        "updated_at": datetime.utcnow().isoformat(),
+        "warning": "Tasa de respaldo - APIs no disponibles temporalmente"
     }
 
 @app.get("/")
