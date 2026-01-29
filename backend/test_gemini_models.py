@@ -20,7 +20,7 @@ endpoints_to_test = [
 ]
 
 for version, base_url in endpoints_to_test:
-    print(f"\n🔍 Testing API {version}")
+    print(f"\n Testing API {version}")
     print("-" * 60)
     
     try:
@@ -36,7 +36,7 @@ for version, base_url in endpoints_to_test:
                 if 'generateContent' in m.get('supportedGenerationMethods', [])
             ]
             
-            print(f"✅ Found {len(compatible_models)} compatible models:\n")
+            print(f" Found {len(compatible_models)} compatible models:\n")
             
             for model in compatible_models[:10]:  # Show first 10
                 name = model.get('name', 'Unknown')
@@ -45,11 +45,11 @@ for version, base_url in endpoints_to_test:
                 print(f"    Display: {display_name}")
                 print()
         else:
-            print(f"❌ Error {response.status_code}: {response.text[:200]}")
+            print(f" Error {response.status_code}: {response.text[:200]}")
             
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f" Exception: {str(e)}")
 
 print("\n" + "="*60)
-print("🎯 RECOMMENDED: Use the first model name shown above")
+print(" RECOMMENDED: Use the first model name shown above")
 print("="*60)
