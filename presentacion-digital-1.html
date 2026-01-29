@@ -28,25 +28,32 @@
         .slide-header::before { display: none; } /* Remove the yellow line */
         
         /* Standard Title Position */
+        /* Standard Title Position - Absolute for perfect consistency */
         .fixed-title-pos {
+            position: absolute;
+            top: 110px;
+            left: 80px;
+            width: 60%;
+            margin: 0;
             font-size: 46px; 
-            margin-bottom: 30px; 
-            line-height: 1.2;
+            line-height: 1.1;
             font-weight: 900;
             color: #FFF;
             text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            /* Ensure fixed position in flow */
-            margin-top: 0;
+            z-index: 20;
         }
 
+        /* Override col-left to force top alignment */
         /* Override col-left to force top alignment */
         .col-left { 
             flex: 1; 
             display: flex; 
             flex-direction: column; 
             justify-content: flex-start; /* Was center */
-            padding-top: 40px; /* Push content down to align with fixed standard */
+            padding-top: 240px; /* clear absolute title */
         }
+        
+        .gen-number { display: none; } /* Hide page numbers */
         
         /* Slide Visibility */
         .slide { display: none; width: 100%; height: 100%; animation: fadeIn 0.5s ease-in-out; }
@@ -137,7 +144,9 @@
         .out-item:last-child { border-bottom: none; }
         
         /* Slide 11 */
-        .summary-container { display: flex; flex-direction: column; height: 100%; padding: 40px 60px; }
+        .summary-container { display: flex; flex-direction: column; height: 100%; padding: 240px 60px 40px 60px; /* Top padding matches col-left */ }
+        .sum-header { display: none; } /* We will use absolute title instead */
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex: 1; margin-top: 10px; }
         .sum-header { margin-bottom: 30px; text-align: center; }
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex: 1; }
         .sum-card { background-color: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 15px; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.3s; }
@@ -178,7 +187,7 @@
             <div class="deco-circle dc-3"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             
             <div class="s1-content">
@@ -200,11 +209,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">02</div>
+
                     <h1 class="fixed-title-pos">Introducción<br/>Señales Digitales</h1>
                     <div class="gen-sub">Analógico versus Digital</div>
                     
@@ -256,11 +265,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">03</div>
+
                     <h1 class="fixed-title-pos">Circuito<br/>Combinacional</h1>
                     <div class="def-box">
                         <div class="def-lbl"><i class="fas fa-check-circle mr-2"></i>DEFINICIÓN</div>
@@ -308,11 +317,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">04</div>
+
                     <h1 class="fixed-title-pos">Álgebra de<br/>Boole</h1>
                     <div class="ops-grid">
                         <div class="op-card">
@@ -352,11 +361,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">05</div>
+
                     <h1 class="fixed-title-pos">Tablas de Verdad<br/>y Formas Canónicas</h1>
                     <div class="img-box" style="padding: 24px;">
                         <table class="truth-table">
@@ -389,11 +398,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">06</div>
+
                     <h1 class="fixed-title-pos">Mapas de<br/>Karnaugh</h1>
                     <div class="def-box">
                         <div class="def-lbl"><i class="fas fa-lightbulb mr-2"></i>MÉTODO VISUAL</div>
@@ -420,11 +429,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">07</div>
+
                     <h1 class="fixed-title-pos">Puertas Lógicas<br/>Básicas</h1>
                     <div class="gates-grid">
                         <div class="gate-card">
@@ -459,11 +468,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">08</div>
+
                     <h1 class="fixed-title-pos">Multiplexores y<br/>Demultiplexores</h1>
                     
                     <div class="card-vs" style="flex-direction: column; gap: 8px;">
@@ -496,11 +505,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">09</div>
+
                     <h1 class="fixed-title-pos">Codificadores y<br/>Decodificadores</h1>
                     
                     <div class="card-vs" style="flex-direction: column; gap: 8px;">
@@ -533,11 +542,11 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             <div class="layout-split">
                 <div class="col-left">
-                    <div class="gen-number">10</div>
+
                     <h1 class="fixed-title-pos">Comparadores<br/>Digitales</h1>
                     <div class="def-box">
                         <p class="def-txt"><i class="fas fa-balance-scale" style="color: #FFD700; margin-right: 10px"></i>Sistemas combinacionales que comparan magnitudes de cantidades binarias para determinar su relación.</p>
@@ -568,14 +577,12 @@
             <div class="grid-pattern"></div>
             <div class="slide-header">
                 <img src="images/logo.png" alt="Electromatics">
-                <span>INGENIERÍA DIGITAL - TEMA 1</span>
+                <span>Electromatics.com.ve</span>
             </div>
             
             <div class="summary-container">
-                <div class="sum-header">
-                    <h1 style="font-size: 36px; font-weight: 900; color: #FFF; margin-bottom: 5px;">Resumen: Sistemas Combinacionales</h1>
-                    <p style="font-size: 16px; color: #64B5F6;">Fundamentos de Circuitos Lógicos Digitales</p>
-                </div>
+                <h1 class="fixed-title-pos">Resumen: Sistemas<br>Combinacionales</h1>
+                <div style="position: absolute; top: 200px; left: 80px; font-size: 16px; color: #64B5F6;">Fundamentos de Circuitos Lógicos Digitales</div>
                 
                 <div class="summary-grid">
                     <div class="sum-card">
