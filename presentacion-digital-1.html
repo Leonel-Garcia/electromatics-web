@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas Combinacionales - Presentación | Electromatics</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: "Roboto", sans-serif; background-color: #050d15; overflow-x: hidden; }
+        .slide-container { width: 100%; max-width: 1280px; aspect-ratio: 16/9; position: relative; background: linear-gradient(135deg, #0a1929 0%, #1a237e 100%); color: #FFF; overflow: hidden; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .grid-pattern { position: absolute; top: 0; right: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255, 215, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 215, 0, 0.04) 1px, transparent 1px); background-size: 35px 35px; z-index: 0; }
+        
+        /* Navigation Controls */
+        #controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 20px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); }
+        .control-btn { color: white; background: none; border: none; font-size: 24px; cursor: pointer; transition: color 0.3s; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .control-btn:hover { color: #FFD700; background: rgba(255,255,255,0.1); }
+        #slide-indicator { color: #64B5F6; font-family: "Roboto Mono", monospace; display: flex; align-items: center; font-size: 16px; font-weight: bold; }
+
+        /* Slide Styles Base */
+        .content-area, .content-wrapper { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
+        .slide-header { position: absolute; top: 40px; left: 60px; font-size: 13px; color: #64B5F6; letter-spacing: 2px; font-weight: 500; text-transform: uppercase; display: flex; align-items: center; z-index: 10; }
+        .slide-header::before { content: ""; display: block; width: 35px; height: 2.5px; background-color: #FFD700; margin-right: 15px; }
+        
+        /* Slide Visibility */
+        .slide { display: none; width: 100%; height: 100%; animation: fadeIn 0.5s ease-in-out; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        /* Specific CSS from User */
+        .circuit-lines { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; opacity: 0.06; background-image: radial-gradient(circle, rgba(74, 144, 226, 0.35) 1.5px, transparent 1.5px); background-size: 25px 25px; z-index: 0; }
+        .main-heading { font-weight: 900; line-height: 1.1; color: #FFF; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); letter-spacing: -1px; }
+        /* Adjusted for scale */
+        .slide-number { color: #FFD700; font-weight: 900; font-family: "Roboto Mono", monospace; opacity: 0.9; line-height: 1; }
+        
+        /* Slide 1 Specifics */
+        .s1-content { padding: 100px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        .s1-number { font-size: 78px; margin-bottom: 35px; }
+        .s1-heading { font-size: 88px; margin-bottom: 35px; }
+        .s1-sub { font-size: 32px; margin-bottom: 70px; font-weight: 500; color: #FFD700; border-left: 5px solid #64B5F6; padding-left: 28px; line-height: 1.4; }
+        .s1-presenter { font-size: 20px; color: #B0BEC5; margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+        .deco-circle { position: absolute; border: 1.5px solid rgba(255, 215, 0, 0.18); border-radius: 50%; z-index: 0; }
+        .dc-1 { width: 600px; height: 600px; right: -180px; top: -120px; }
+        .dc-2 { width: 420px; height: 420px; right: -90px; top: -30px; border-color: rgba(74, 144, 226, 0.12); }
+        .dc-3 { width: 240px; height: 240px; right: 30px; top: 120px; }
+
+        /* General Content Layout for other slides */
+        .layout-split { display: flex; height: 100%; padding: 100px 60px 60px 80px; gap: 50px; }
+        .col-left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .col-right { flex: 0 0 42%; display: flex; flex-direction: column; justify-content: center; }
+        
+        .gen-number { font-size: 62px; margin-bottom: 25px; }
+        .gen-heading { font-size: 46px; margin-bottom: 30px; line-height: 1.2; }
+        .gen-sub { font-size: 22px; color: #64B5F6; font-weight: 500; margin-bottom: 35px; }
+
+        /* Components */
+        .card-vs { background-color: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 22px 28px; display: flex; align-items: flex-start; gap: 18px; margin-bottom: 20px; transition: all 0.3s ease; }
+        .card-vs:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 215, 0, 0.35); transform: translateX(5px); }
+        .card-icon { width: 52px; height: 52px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px; }
+        .icon-analog { background-color: rgba(156, 39, 176, 0.25); color: #E91E63; }
+        .icon-digital { background-color: rgba(76, 175, 80, 0.25); color: #4CAF50; }
+
+        .img-box { background-color: rgba(0, 0, 0, 0.35); border: 2.5px solid rgba(100, 181, 246, 0.35); border-radius: 14px; overflow: hidden; box-shadow: 0 12px 50px rgba(0, 0, 0, 0.45); }
+        .img-box img { width: 100%; height: auto; display: block; }
+        .img-caption { background-color: rgba(10, 25, 41, 0.92); padding: 14px 24px; text-align: center; border-top: 1.5px solid rgba(255, 215, 0, 0.25); color: #FFD700; font-weight: 600; font-size: 15px; }
+
+        .key-diffs { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 25px; }
+        .diff-item { background-color: rgba(255, 255, 255, 0.045); padding: 14px 16px; border-radius: 8px; border-left: 3.5px solid #64B5F6; }
+        .diff-lbl { font-size: 12px; color: #64B5F6; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .diff-val { font-size: 16px; color: #FFF; font-weight: 500; }
+
+        /* Slide 3 */
+        .def-box { background-color: rgba(255, 215, 0, 0.1); border-left: 5px solid #FFD700; padding: 26px 30px; border-radius: 0 10px 10px 0; margin-bottom: 35px; }
+        .def-lbl { color: #FFD700; font-weight: 700; font-size: 14px; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px; }
+        .def-txt { color: #FFF; font-size: 19px; line-height: 1.5; }
+        
+        .truth-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-family: "Roboto Mono", monospace; }
+        .truth-table th { background-color: rgba(100, 181, 246, 0.18); color: #64B5F6; font-weight: 700; text-transform: uppercase; font-size: 13px; border: 1.5px solid rgba(255, 255, 255, 0.12); padding: 14px; }
+        .truth-table td { color: #B0BEC5; border: 1.5px solid rgba(255, 255, 255, 0.12); padding: 14px; text-align: center; font-size: 16px; }
+
+        /* Operations Grid */
+        .ops-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 35px; }
+        .op-card { background-color: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 18px; text-align: center; transition: all 0.3s ease; }
+        .op-card:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 215, 0, 0.35); transform: translateY(-3px); }
+        .op-sym { font-size: 28px; font-weight: 900; color: #FFD700; margin-bottom: 10px; font-family: "Roboto Mono"; }
+        .op-name { font-size: 17px; font-weight: 700; }
+        
+        /* Gates Grid */
+        .gates-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .gate-card { background-color: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 18px 22px; transition: all 0.3s; }
+        .gate-card:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 215, 0, 0.35); transform: translateX(5px); }
+        .gate-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .gate-univ { background-color: rgba(255, 215, 0, 0.25); color: #FFD700; padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: 700; }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .slide-container { width: 100vw; height: auto; aspect-ratio: auto; min-height: 100vh; overflow-y: auto; }
+            .layout-split { flex-direction: column; padding: 80px 20px 40px 20px; }
+            .col-right { order: -1; }
+            .s1-content { padding: 80px 20px; text-align: center; }
+            .s1-sub { border-left: none; border-bottom: 5px solid #64B5F6; padding-left: 0; padding-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Back Button -->
+    <a href="electronica-digital.html" style="position: fixed; top: 20px; left: 20px; z-index: 200; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 8px; color: white; text-decoration: none; border: 1px solid rgba(255,255,255,0.2); font-family: 'Inter', sans-serif;">
+        <i class="fa-solid fa-arrow-left"></i> Volver
+    </a>
+
+    <!-- Navigation -->
+    <div id="controls">
+        <button class="control-btn" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
+        <span id="slide-indicator">1 / 9</span>
+        <button class="control-btn" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="control-btn" onclick="toggleFullScreen()" title="Pantalla Completa"><i class="fa-solid fa-expand"></i></button>
+    </div>
+
+    <div class="slide-container" id="presentation-container">
+        
+        <!-- SLIDE 1: PORTADA -->
+        <div class="slide active">
+            <div class="grid-pattern"></div>
+            <div class="circuit-lines"></div>
+            <div class="deco-circle dc-1"></div>
+            <div class="deco-circle dc-2"></div>
+            <div class="deco-circle dc-3"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - CURSO BÁSICO</p></div>
+            
+            <div class="s1-content">
+                <div class="s1-number">TEMA 1</div>
+                <h1 class="s1-heading">Sistemas<br/>Combinacionales</h1>
+                <div class="s1-sub">
+                    <p>Introducción a los Sistemas Digitales<br/>Circuitos Lógicos y Funciones Booleanas</p>
+                </div>
+                <div class="s1-presenter">
+                    <p class="presenter-name" style="font-weight: 700; font-size: 22px; color: #FFF">Ingeniería Electrónica y Digital</p>
+                    <p>Análisis y Diseño de Circuitos Lógicos</p>
+                    <p style="font-size: 14px; color: #9ca3af; margin-top: 8px;"><i class="fas fa-book mr-2"></i>Contenido Académico - Fundamentos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: ANALOG VS DIGITAL -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">02</div>
+                    <h1 class="gen-heading">Introducción<br/>Señales Digitales</h1>
+                    <div class="gen-sub">Analógico versus Digital</div>
+                    
+                    <div class="card-vs">
+                        <div class="card-icon icon-analog"><i class="fas fa-wave-square"></i></div>
+                        <div>
+                            <h3 style="font-size: 22px; font-weight: 700; color: #FFF; margin-bottom: 8px;">Analógico</h3>
+                            <p style="color: #B0BEC5;">Valores continuos en un rango. Ej: temperatura, voltaje, tiempo</p>
+                        </div>
+                    </div>
+                    <div class="card-vs">
+                        <div class="card-icon icon-digital"><i class="fas fa-microchip"></i></div>
+                        <div>
+                            <h3 style="font-size: 22px; font-weight: 700; color: #FFF; margin-bottom: 8px;">Digital</h3>
+                            <p style="color: #B0BEC5;">Valores discretos (0 y 1). Mayor inmunidad al ruido y fácil procesamiento</p>
+                        </div>
+                    </div>
+
+                    <div class="key-diffs">
+                        <div class="diff-item">
+                            <div class="diff-lbl">Rango</div>
+                            <div class="diff-val">Continuo vs Discreto</div>
+                        </div>
+                        <div class="diff-item">
+                            <div class="diff-lbl">Precisión</div>
+                            <div class="diff-val">Infinita vs Finita</div>
+                        </div>
+                        <div class="diff-item">
+                            <div class="diff-lbl">Ruido</div>
+                            <div class="diff-val">Vulnerable vs Resistente</div>
+                        </div>
+                        <div class="diff-item">
+                            <div class="diff-lbl">Teorema</div>
+                            <div class="diff-val">Nyquist-Shannon</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box">
+                        <img src="https://sfile.chatglm.cn/images-ppt/02443ae1e063.jpg" alt="Señal Analógica vs Digital"/>
+                        <div class="img-caption">Comparación visual de formas de onda</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: DEFINICION COMBINACIONAL -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">03</div>
+                    <h1 class="gen-heading">Circuito<br/>Combinacional</h1>
+                    <div class="def-box">
+                        <div class="def-lbl"><i class="fas fa-check-circle mr-2"></i>DEFINICIÓN</div>
+                        <p class="def-txt">Un circuito lógico es <strong style="color: #FFD700">puramente combinacional</strong> si la salida depende única y exclusivamente del valor de sus entradas en el momento considerado.</p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+                        <div style="display: flex; gap: 10px;">
+                            <i class="fas fa-circle" style="color: #64B5F6; font-size: 10px; margin-top: 6px;"></i>
+                            <span style="color: #B0BEC5;">Salida determinada por entrada actual</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <i class="fas fa-circle" style="color: #64B5F6; font-size: 10px; margin-top: 6px;"></i>
+                            <span style="color: #B0BEC5;">Sistema sin memoria</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <i class="fas fa-circle" style="color: #64B5F6; font-size: 10px; margin-top: 6px;"></i>
+                            <span style="color: #B0BEC5;">Modelable con tabla de verdad</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box" style="padding: 20px;">
+                        <div style="font-size: 16px; color: #64B5F6; font-weight: 700; text-transform: uppercase; margin-bottom: 18px;">Ejemplo: Comparador</div>
+                        <table class="truth-table">
+                            <thead><tr><th>A</th><th>B</th><th>Z = A == B</th></tr></thead>
+                            <tbody>
+                                <tr><td>0</td><td>0</td><td>1</td></tr>
+                                <tr><td>0</td><td>1</td><td>0</td></tr>
+                                <tr><td>1</td><td>0</td><td>0</td></tr>
+                                <tr><td>1</td><td>1</td><td>1</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="background-color: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 24px; margin-top: 20px;">
+                        <div style="color: #FFD700; font-size: 15px; font-weight: 700; text-transform: uppercase; text-align: center;">FUNCIÓN LÓGICA (XNOR)</div>
+                        <div style="font-family: 'Roboto Mono'; font-size: 19px; color: #FFF; text-align: center; margin-top: 10px;">Z = A·B + A̅·B̅</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: ALGEBRA BOOLE -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">04</div>
+                    <h1 class="gen-heading">Álgebra de<br/>Boole</h1>
+                    <div class="ops-grid">
+                        <div class="op-card">
+                            <div class="op-sym">AND</div>
+                            <div class="op-name">A · B</div>
+                            <div style="font-size: 13px; color: #B0BEC5;">Multiplicación</div>
+                        </div>
+                        <div class="op-card">
+                            <div class="op-sym">OR</div>
+                            <div class="op-name">A + B</div>
+                            <div style="font-size: 13px; color: #B0BEC5;">Adición</div>
+                        </div>
+                        <div class="op-card">
+                            <div class="op-sym">NOT</div>
+                            <div class="op-name">Ā</div>
+                            <div style="font-size: 13px; color: #B0BEC5;">Inversión</div>
+                        </div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.35); border-radius: 10px; padding: 18px;">
+                        <p style="margin: 0; color: #B0BEC5;"><i class="fas fa-lightbulb" style="color: #FFD700; margin-right: 10px;"></i>Base matemática para el análisis y diseño de circuitos lógicos digitales</p>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <h3 style="color: #64B5F6; font-size: 18px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px;">Axiomas Fundamentales</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="diff-item"><div class="diff-lbl">Conmutativa</div><div class="diff-val">A+B = B+A</div></div>
+                        <div class="diff-item"><div class="diff-lbl">Conmutativa</div><div class="diff-val">A·B = B·A</div></div>
+                        <div class="diff-item"><div class="diff-lbl">Distributiva</div><div class="diff-val">A·(B+C)=AB+AC</div></div>
+                        <div class="diff-item"><div class="diff-lbl">De Morgan</div><div class="diff-val">A̅·B̅ = A+B</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: FORMAS CANONICAS -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">05</div>
+                    <h1 class="gen-heading">Tablas de Verdad<br/>y Formas Canónicas</h1>
+                    <div class="img-box" style="padding: 24px;">
+                        <table class="truth-table">
+                            <thead><tr><th>A</th><th>B</th><th>F(A,B)</th></tr></thead>
+                            <tbody>
+                                <tr><td>0</td><td>0</td><td>0</td></tr>
+                                <tr><td>0</td><td>1</td><td>1</td></tr>
+                                <tr><td>1</td><td>0</td><td>1</td></tr>
+                                <tr><td>1</td><td>1</td><td>0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <h3 style="color: #64B5F6; font-size: 18px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px;">Formas Canónicas</h3>
+                    <div class="card-vs" style="flex-direction: column; gap: 10px;">
+                        <div style="width: 100%; display: flex; justify-content: space-between;">
+                            <span style="font-weight: 700; font-size: 20px;">Suma de Productos (1FC)</span>
+                            <span class="gate-univ" style="background: rgba(100, 181, 246, 0.25); color: #64B5F6;">MINTERMS</span>
+                        </div>
+                        <p style="color: #B0BEC5;">Usa las filas donde F=1. F = Σ(1,2)</p>
+                        <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; font-family: 'Roboto Mono'; width: 100%; color: #FFD700;">F = A̅·B + A·B̅</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: KARNAUGH -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">06</div>
+                    <h1 class="gen-heading">Mapas de<br/>Karnaugh</h1>
+                    <div class="def-box">
+                        <div class="def-lbl"><i class="fas fa-lightbulb mr-2"></i>MÉTODO VISUAL</div>
+                        <p class="def-txt">Simplificación sistemática de expresiones booleanas mediante agrupamiento de unos adyacentes.</p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="diff-item"><div class="diff-lbl">PASO 1</div><div class="diff-val">Construir mapa</div></div>
+                        <div class="diff-item"><div class="diff-lbl">PASO 2</div><div class="diff-val">Ubicar 1s</div></div>
+                        <div class="diff-item"><div class="diff-lbl">PASO 3</div><div class="diff-val">Agrupar (2^n)</div></div>
+                        <div class="diff-item"><div class="diff-lbl">PASO 4</div><div class="diff-val">Simplificar</div></div>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box">
+                        <img src="https://sfile.chatglm.cn/images-ppt/7607fde1f598.jpg" alt="Mapa Karnaugh"/>
+                        <div class="img-caption">Agrupamiento de 4 variables</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: PUERTAS LOGICAS -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">07</div>
+                    <h1 class="gen-heading">Puertas Lógicas<br/>Básicas</h1>
+                    <div class="gates-grid">
+                        <div class="gate-card">
+                            <div class="gate-head"><span style="font-weight: 700; font-size: 18px;">AND</span></div>
+                            <div style="font-family: 'Roboto Mono'; color: #B0BEC5;">Z = A·B</div>
+                        </div>
+                        <div class="gate-card">
+                            <div class="gate-head"><span style="font-weight: 700; font-size: 18px;">OR</span></div>
+                            <div style="font-family: 'Roboto Mono'; color: #B0BEC5;">Z = A+B</div>
+                        </div>
+                        <div class="gate-card">
+                            <div class="gate-head"><span style="font-weight: 700; font-size: 18px;">NAND</span><span class="gate-univ">UNIV</span></div>
+                            <div style="font-family: 'Roboto Mono'; color: #B0BEC5;">Z = (AB)'</div>
+                        </div>
+                        <div class="gate-card">
+                            <div class="gate-head"><span style="font-weight: 700; font-size: 18px;">NOR</span><span class="gate-univ">UNIV</span></div>
+                            <div style="font-family: 'Roboto Mono'; color: #B0BEC5;">Z = (A+B)'</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box">
+                        <img src="https://sfile.chatglm.cn/images-ppt/cb192f794ed3.png" alt="Puertas Lógicas"/>
+                        <div class="img-caption">Símbolos y Tablas de Verdad</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: MUX/DEMUX -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">08</div>
+                    <h1 class="gen-heading">Multiplexores y<br/>Demultiplexores</h1>
+                    
+                    <div class="card-vs" style="flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <span style="font-weight: 700; font-size: 24px;">Multiplexor (MUX)</span>
+                            <span class="gate-univ" style="background: rgba(100, 181, 246, 0.25); color: #64B5F6;">MANY→ONE</span>
+                        </div>
+                        <p style="color: #B0BEC5;">Selector de datos. Transmite una de varias entradas a la salida.</p>
+                    </div>
+
+                    <div class="card-vs" style="flex-direction: column; gap: 8px; border-left: 4px solid #64B5F6;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <span style="font-weight: 700; font-size: 24px;">Demultiplexor</span>
+                            <span class="gate-univ" style="background: rgba(100, 181, 246, 0.25); color: #64B5F6;">ONE→MANY</span>
+                        </div>
+                        <p style="color: #B0BEC5;">Distribuye una entrada hacia una de varias salidas.</p>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box">
+                        <img src="https://sfile.chatglm.cn/images-ppt/43acdc7985f0.png" alt="MUX DEMUX"/>
+                        <div class="img-caption">Esquema funcional MUX-DEMUX</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: CODIFICADORES/DECODIFICADORES -->
+        <div class="slide">
+            <div class="grid-pattern"></div>
+            <div class="slide-header"><p>INGENIERÍA DIGITAL - TEMA 1</p></div>
+            <div class="layout-split">
+                <div class="col-left">
+                    <div class="gen-number">09</div>
+                    <h1 class="gen-heading">Codificadores y<br/>Decodificadores</h1>
+                    
+                    <div class="card-vs" style="flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <span style="font-weight: 700; font-size: 22px;">Codificador</span>
+                            <span class="gate-univ" style="background: rgba(100, 181, 246, 0.25); color: #64B5F6;">MANY→BIN</span>
+                        </div>
+                        <p style="color: #B0BEC5;">Convierte entrada activa en código binario (ej. Decimal a BCD).</p>
+                    </div>
+
+                    <div class="card-vs" style="flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <span style="font-weight: 700; font-size: 22px;">Decodificador</span>
+                            <span class="gate-univ" style="background: rgba(100, 181, 246, 0.25); color: #64B5F6;">BIN→HOT</span>
+                        </div>
+                        <p style="color: #B0BEC5;">Activa una única salida para cada código de entrada (ej. BCD a 7 segmentos).</p>
+                    </div>
+                </div>
+                <div class="col-right">
+                    <div class="img-box">
+                        <img src="https://sfile.chatglm.cn/images-ppt/b290b89250af.png" alt="Decodificador"/>
+                        <div class="img-caption">Decodificador 2 a 4</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const indicator = document.getElementById('slide-indicator');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (i === index) {
+                    slide.classList.add('active');
+                }
+            });
+            indicator.innerText = `${index + 1} / ${slides.length}`;
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                showSlide(currentSlide + 1);
+            } else {
+                showSlide(0); // Loop back
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            } else {
+                showSlide(slides.length - 1); // Loop to end
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.getElementById('presentation-container').requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
