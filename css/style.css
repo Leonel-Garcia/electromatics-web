@@ -145,7 +145,7 @@ a:hover {
 }
 
 .logo span {
-  background: linear-gradient(90deg, #fff, var(--electric-blue));
+  background: linear-gradient(90deg, var(--electric-blue), var(--safety-orange));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
