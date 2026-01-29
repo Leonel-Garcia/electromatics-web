@@ -195,7 +195,15 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px;
             font-size: 12px;
+            pointer-events: auto; /* Ensure scrolling works */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: #64B5F6 rgba(255, 255, 255, 0.05); /* Firefox */
         }
+        /* Custom Scrollbar Webkit */
+        .tt-container::-webkit-scrollbar { width: 6px; }
+        .tt-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
+        .tt-container::-webkit-scrollbar-thumb { background: #64B5F6; border-radius: 4px; }
+        .tt-container::-webkit-scrollbar-thumb:hover { background: #FFD700; }
         .tt-table { width: 100%; border-collapse: collapse; font-family: 'Roboto Mono'; }
         .tt-table th { background: rgba(100,181,246,0.2); color: #64B5F6; position: sticky; top: 0; padding: 5px; z-index: 5; }
         .tt-table td { padding: 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); color: #B0BEC5; }
