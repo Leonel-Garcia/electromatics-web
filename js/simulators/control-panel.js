@@ -1881,11 +1881,13 @@ class DahlanderMotor extends Component {
         };
         
         this.frameCounter = 0;
+        this.errorMsg = '';
     }
 
     update() {
         this.frameCounter++;
         const nodes = window.lastSolvedNodes || {};
+        this.errorMsg = '';
         
         const getPhase = (termId) => {
             const nSet = nodes[`${this.id}_${termId}`];
@@ -1903,21 +1905,14 @@ class DahlanderMotor extends Component {
         const hasPower1 = !!(p1u && p1v && p1w);
         const hasPower2 = !!(p2u && p2v && p2w);
 
-        // Bridge Detection
-        // CRITICAL FIX: L1/L2/L3 cannot be the bridge node. 
-        // A valid bridge is a local wire (UUID) or a star point, NOT a grid phase.
         let isShorted1 = false;
         let commonNode = null;
         const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
         
         if (n1u && n1v && n1w && n1u.size > 0) {
             const allNodes = [...n1u];
-            // Filter intersection
             const common = allNodes.filter(id => n1v.has(id) && n1w.has(id));
-            
-            // Filter out Grid Phases from result
-            // If the user wired L1 to all 3 terminals, 'L1' is common, but that is NOT a Dahlander Star Point.
-            // That is a Source Short. We trigger 'High' only on valid Star Point (Floating or Neutral-ish).
+            // Correctly exclude Grid Phases
             const validCommon = common.filter(id => !['L1', 'L2', 'L3', 'N', 'PE'].includes(id));
             
             if (validCommon.length > 0) {
@@ -1926,21 +1921,25 @@ class DahlanderMotor extends Component {
             }
         }
 
-        if (this.frameCounter % 100 === 0) {
-            console.groupCollapsed(`Dahlander [${this.id}] Debug v10.0`);
-            console.log('Short Check:', { isShorted1, commonNode });
-            console.groupEnd();
-        }
-
         this.state.running = false;
         this.state.speedMode = 'None';
         this.state.rpm = 0;
         let targetPitch = 1.0;
 
-        // Logic
-        // HIGH: Power on 2 AND Valid Bridge on 1
+        // Helper: Check phases are distinct
+        const checkPhases = (a, b, c) => {
+            if (!a || !b || !c) return false;
+            if (a === b || b === c || a === c) {
+                this.errorMsg = `DUPLICATE: ${a}-${b}-${c}`;
+                return false;
+            }
+            return true;
+        };
+
+        // --- LOGIC ---
+        // 1. HIGH SPEED (Priority)
         if (hasPower2 && isShorted1) {
-             if (p2u !== p2v && p2v !== p2w) { // Basic phase validity
+             if (checkPhases(p2u, p2v, p2w)) {
                 this.state.running = true;
                 this.state.speedMode = 'High';
                 this.state.rpm = 3500;
@@ -1948,9 +1947,10 @@ class DahlanderMotor extends Component {
                 targetPitch = 1.5;
              }
         }
-        // LOW: Power on 1 AND NO Power on 2 AND NO Bridge on 1
-        else if (hasPower1 && !hasPower2 && !isShorted1) {
-             if (p1u !== p1v && p1v !== p1w) {
+        // 2. LOW SPEED
+        // Removed !hasPower2 to allow operation even if ghost voltage exists on 2
+        else if (hasPower1 && !isShorted1) {
+             if (checkPhases(p1u, p1v, p1w)) {
                 this.state.running = true;
                 this.state.speedMode = 'Low';
                 this.state.rpm = 1750;
@@ -1958,13 +1958,18 @@ class DahlanderMotor extends Component {
                 targetPitch = 1.0;
              }
         }
+
+        if (this.frameCounter % 100 === 0) {
+            console.groupCollapsed(`Dahlander [${this.id}] Debug v11.0`);
+            console.log('Short?', isShorted1);
+            console.log('Phase Error?', this.errorMsg);
+            console.groupEnd();
+        }
         
-        // Debug String
         const fmt = (p) => p ? p.substring(0,2) : '-';
         const sID = commonNode ? String(commonNode).substring(0,4) : 'NO';
         this.debugInfo = `1:${fmt(p1u)}${fmt(p1v)}${fmt(p1w)} 2:${fmt(p2u)}${fmt(p2v)}${fmt(p2w)} S:${sID}`;
 
-        // Audio
         if (window.motorAudio) {
             if (this.state.running) {
                 if (!window.motorAudio.isPlaying) {
@@ -2004,8 +2009,8 @@ class DahlanderMotor extends Component {
             ctx.fillStyle = '#e2e8f0'; ctx.fillRect(this.x+80, this.y, 150, this.height);
         }
 
-        // Rotor (Centered Vertically - Adjusted)
-        const rotorX = this.x + 15; // Closer to edge
+        // Rotor (Centered)
+        const rotorX = this.x + 15; 
         const rotorY = this.y + 85; 
         
         if (this.state.running) {
@@ -2015,13 +2020,13 @@ class DahlanderMotor extends Component {
             ctx.save();
             ctx.translate(rotorX, rotorY);
             ctx.rotate(this.state.angle);
-            ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill(); // Shaft
-            ctx.fillStyle = '#94a3b8'; // Blades
+            ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = '#94a3b8'; 
             for(let i=0; i<8; i++) {
                 ctx.beginPath(); ctx.moveTo(18, -2); ctx.lineTo(28, -4); ctx.lineTo(28, 4); ctx.lineTo(18, 2);
                 ctx.fill(); ctx.rotate(Math.PI/4);
             }
-            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill(); // Cap
+            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
             ctx.restore();
             
             ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
@@ -2056,6 +2061,16 @@ class DahlanderMotor extends Component {
 
         this.drawTerminals(ctx);
         
+        // Error Warning
+        if (this.errorMsg) {
+             ctx.fillStyle = 'rgba(239, 68, 68, 0.9)'; 
+             ctx.fillRect(this.x + 85, this.y + 30, 140, 20);
+             ctx.fillStyle = '#fff';
+             ctx.font = 'bold 10px monospace';
+             ctx.textAlign = 'center';
+             ctx.fillText(this.errorMsg, this.x + 155, this.y + 43);
+        }
+
         // INFO BAR
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.fillRect(this.x, this.y + this.height, this.width, 15);
@@ -2078,6 +2093,18 @@ class PhaseBridge extends Component {
             '3': { x: 20 + s * 2, y: 10 }
         };
         this.width = 40 + s * 2;
+    updateTerminals() {
+        const s = this.state.spacing;
+        this.terminals = {
+            '1': { x: 20, y: 10 },
+            '2': { x: 20 + s, y: 10 },
+            '3': { x: 20 + s * 2, y: 10 }
+        };
+        this.width = 40 + s * 2;
+    }
+    update() {
+        this.connect('1', '2');
+        this.connect('2', '3');
     }
     draw(ctx) {
         ctx.save();
