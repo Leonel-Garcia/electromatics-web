@@ -1910,6 +1910,8 @@ class DahlanderMotor extends Component {
         let targetPitch = 1.0;
 
         // Lógica de Estado: Prioridad a Alta si se cumplen condiciones estrictas
+        console.log(`Dahlander Debug [${this.id}]: Active1=${active1} (Sets: ${n1u.size},${n1v.size},${n1w.size}), Active2=${active2}, Shorted1=${isShorted1}`);
+
         if (active2 && isShorted1) {
             // Alta Velocidad: Alimentación en 2, Puente en 1
             const p1 = [...n2u][0], p2 = [...n2v][0], p3 = [...n2w][0];
@@ -1922,7 +1924,6 @@ class DahlanderMotor extends Component {
             }
         } else if (active1 && !isShorted1) {
             // Baja Velocidad: Alimentación en 1, 1 NO Puenteado
-            // (Ignoramos active2 porque puede haber voltaje inducido o de retorno)
             const p1 = [...n1u][0], p2 = [...n1v][0], p3 = [...n1w][0];
             if (p1 !== p2) {
                 this.state.running = true;
@@ -1935,13 +1936,25 @@ class DahlanderMotor extends Component {
 
         // Gestión de Audio
         if (window.motorAudio) {
-            // Asegurar que el contexto esté activo (fix para "no tiene sonido")
-            if (this.state.running && window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
-                 window.motorAudio.unlock(); // Try implicit unlock
-            }
-
             if (this.state.running) {
+                // Si no está sonando, iniciar
+                if (!window.motorAudio.isPlaying) {
+                    window.motorAudio.start();
+                }
+                // Actualizar pitch
                 window.motorAudio.setPitch(targetPitch);
+            } else {
+                // Si este motor se detiene, verificar si hay otros sonando antes de parar todo
+                if (window.motorAudio.isPlaying) {
+                     // Check simple: si este era el único que corría, stop.
+                     const otherRunning = window.components.some(c => c.id !== this.id && c.state && c.state.running);
+                     if (!otherRunning) {
+                         window.motorAudio.stop();
+                     } else {
+                         // Si hay otros, restaurar pitch normal?
+                         window.motorAudio.setPitch(1.0);
+                     }
+                }
             }
         }
     }
