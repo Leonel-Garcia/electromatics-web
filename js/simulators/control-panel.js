@@ -1863,13 +1863,11 @@ class DahlanderMotor extends Component {
             rpm: 0
         };
         
-        // COORDINATES
         const fpX = 90; 
         const row1Y = 55;
         const row2Y = 90;
         const bottomY = 135;
         
-        // HITBOX DEBUG: We will draw these to ensure user clicks right place
         this.terminals = {
             '1U': {x: fpX + 30, y: row1Y, label: '1U'}, 
             '1V': {x: fpX + 55, y: row1Y, label: '1V'}, 
@@ -1906,25 +1904,31 @@ class DahlanderMotor extends Component {
         const hasPower2 = !!(p2u && p2v && p2w);
 
         // Bridge Detection
+        // CRITICAL FIX: L1/L2/L3 cannot be the bridge node. 
+        // A valid bridge is a local wire (UUID) or a star point, NOT a grid phase.
         let isShorted1 = false;
         let commonNode = null;
         const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
         
         if (n1u && n1v && n1w && n1u.size > 0) {
             const allNodes = [...n1u];
-            // EXCLUDE SOURCES from 'Common Bridge' check
-            // If they share L1, that's not a bridge, that's a source short (which implies bridge, but we want the bridge node)
-            // Filter out system IDs? Usually system IDs are 'L1','L2'...
+            // Filter intersection
             const common = allNodes.filter(id => n1v.has(id) && n1w.has(id));
-            if (common.length > 0) {
+            
+            // Filter out Grid Phases from result
+            // If the user wired L1 to all 3 terminals, 'L1' is common, but that is NOT a Dahlander Star Point.
+            // That is a Source Short. We trigger 'High' only on valid Star Point (Floating or Neutral-ish).
+            const validCommon = common.filter(id => !['L1', 'L2', 'L3', 'N', 'PE'].includes(id));
+            
+            if (validCommon.length > 0) {
                 isShorted1 = true;
-                commonNode = common[0];
+                commonNode = validCommon[0];
             }
         }
 
         if (this.frameCounter % 100 === 0) {
-            console.groupCollapsed(`Dahlander [${this.id}] Debug v9.5`);
-            console.log('ShortID:', commonNode);
+            console.groupCollapsed(`Dahlander [${this.id}] Debug v10.0`);
+            console.log('Short Check:', { isShorted1, commonNode });
             console.groupEnd();
         }
 
@@ -1934,8 +1938,9 @@ class DahlanderMotor extends Component {
         let targetPitch = 1.0;
 
         // Logic
+        // HIGH: Power on 2 AND Valid Bridge on 1
         if (hasPower2 && isShorted1) {
-             if (p2u !== p2v && p2v !== p2w) {
+             if (p2u !== p2v && p2v !== p2w) { // Basic phase validity
                 this.state.running = true;
                 this.state.speedMode = 'High';
                 this.state.rpm = 3500;
@@ -1943,6 +1948,7 @@ class DahlanderMotor extends Component {
                 targetPitch = 1.5;
              }
         }
+        // LOW: Power on 1 AND NO Power on 2 AND NO Bridge on 1
         else if (hasPower1 && !hasPower2 && !isShorted1) {
              if (p1u !== p1v && p1v !== p1w) {
                 this.state.running = true;
@@ -1955,7 +1961,6 @@ class DahlanderMotor extends Component {
         
         // Debug String
         const fmt = (p) => p ? p.substring(0,2) : '-';
-        // Show SHORT ID if present
         const sID = commonNode ? String(commonNode).substring(0,4) : 'NO';
         this.debugInfo = `1:${fmt(p1u)}${fmt(p1v)}${fmt(p1w)} 2:${fmt(p2u)}${fmt(p2v)}${fmt(p2w)} S:${sID}`;
 
@@ -1966,6 +1971,7 @@ class DahlanderMotor extends Component {
                     if (window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
                          window.motorAudio.audioCtx.resume();
                     }
+                    console.log("Dahlander starting audio...");
                     window.motorAudio.start();
                 }
                 window.motorAudio.setPitch(targetPitch);
@@ -1998,9 +2004,9 @@ class DahlanderMotor extends Component {
             ctx.fillStyle = '#e2e8f0'; ctx.fillRect(this.x+80, this.y, 150, this.height);
         }
 
-        // Rotor (Centered Vertically)
-        const rotorX = this.x + 25; 
-        const rotorY = this.y + 80; // Height/2 = 80
+        // Rotor (Centered Vertically - Adjusted)
+        const rotorX = this.x + 15; // Closer to edge
+        const rotorY = this.y + 85; 
         
         if (this.state.running) {
             const speed = (this.state.speedMode === 'High') ? 0.4 : 0.2;
@@ -2027,7 +2033,7 @@ class DahlanderMotor extends Component {
              ctx.restore();
         }
 
-        // STATUS LEDs
+        // LEDs
         const fpX = this.x + 90; 
         const isHigh = this.state.speedMode === 'High';
         const isLow = this.state.speedMode === 'Low';
@@ -2050,19 +2056,6 @@ class DahlanderMotor extends Component {
 
         this.drawTerminals(ctx);
         
-        // --- HITBOX DEBUG OVERLAY ---
-        // Draws red circles over terminals to verify position
-        /*
-        ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 1;
-        for (let key in this.terminals) {
-            const t = this.terminals[key];
-            ctx.beginPath();
-            ctx.arc(this.x + t.x, this.y + t.y, 5, 0, Math.PI*2);
-            ctx.stroke();
-        }
-        */
-
         // INFO BAR
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.fillRect(this.x, this.y + this.height, this.width, 15);
