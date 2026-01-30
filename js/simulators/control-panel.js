@@ -1850,7 +1850,7 @@ class Motor6T extends Component {
 
 class DahlanderMotor extends Component {
     constructor(x, y) {
-        super('dahlander-motor', x, y, 230, 160); // Adjusted size for the new wide format
+        super('dahlander-motor', x, y, 230, 160);
         this.state = { 
             running: false, 
             speedMode: 'None', 
@@ -1863,44 +1863,34 @@ class DahlanderMotor extends Component {
             rpm: 0
         };
         
-        // COORDINATES MAPPING (Based on uploaded image)
-        // Motor body is on Left, Faceplate is on Right.
-        // Faceplate starts approx x=90.
-        // Top Row (1U, 1V, 1W): y=55
-        // Bottom Row (2U, 2V, 2W): y=90
-        // Switch/Thermostat (T1, T2): Bottom Left of faceplate -> y=130
-        // PE: Bottom Right of faceplate -> y=130
-        
-        const fpX = 90; // Faceplate start X
+        // COORDINATES (Image: Body Left, Faceplate Right)
+        const fpX = 90; 
         const row1Y = 55;
         const row2Y = 90;
         const bottomY = 135;
         
         this.terminals = {
-            // Fila Superior (Baja Velocidad)
+            // Row 1 (Low Speed / Delta Ends)
             '1U': {x: fpX + 30, y: row1Y, label: '1U'}, 
             '1V': {x: fpX + 55, y: row1Y, label: '1V'}, 
             '1W': {x: fpX + 80, y: row1Y, label: '1W'},
             
-            // Fila Inferior (Alta Velocidad)
+            // Row 2 (High Speed / Star Points)
             '2U': {x: fpX + 30, y: row2Y, label: '2U'}, 
             '2V': {x: fpX + 55, y: row2Y, label: '2V'}, 
             '2W': {x: fpX + 80, y: row2Y, label: '2W'},
             
-            // Termostato (Contactos Verdes en la imagen)
+            // Misc
             'T1': {x: fpX + 30, y: bottomY, label: 'T1'}, 
             'T2': {x: fpX + 55, y: bottomY, label: 'T2'},
-            
-            // Tierra (Amarillo/Verde)
             'PE': {x: fpX + 110, y: bottomY, label: 'PE'}
         };
-        console.log('Dahlander Motor v7.0 - New Image Coordinates');
+        console.log('Dahlander Motor v8.0 - Rotor Correction & Debug');
     }
 
     update() {
         const nodes = window.lastSolvedNodes || {};
         
-        // Helper: Phase detection
         const getPhase = (termId) => {
             const nSet = nodes[`${this.id}_${termId}`];
             if (!nSet) return null;
@@ -1914,19 +1904,16 @@ class DahlanderMotor extends Component {
         const p1u = getPhase('1U'), p1v = getPhase('1V'), p1w = getPhase('1W');
         const p2u = getPhase('2U'), p2v = getPhase('2V'), p2w = getPhase('2W');
 
-        const hasPower1 = p1u && p1v && p1w;
-        const hasPower2 = p2u && p2v && p2w;
+        const hasPower1 = !!(p1u && p1v && p1w);
+        const hasPower2 = !!(p2u && p2v && p2w);
 
-        // Bridge Detection for Standard Dahlander (Delta/Double Star)
-        // High Speed requires Source on 2U,2V,2W AND Short on 1U-1V-1W.
-        
+        // Bridge Detection for High Speed (Shorting 1U-1V-1W)
         let isShorted1 = false;
         const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
         
         if (n1u && n1v && n1w && n1u.size > 0) {
-            // Find common node ID excluding typical source IDs (though source IDs wouldn't be common unless external short)
             const allNodes = [...n1u];
-            // We need an ID that is present in all three sets
+            // Find intersection. Common node must exist across all 3.
             const common = allNodes.filter(id => n1v.has(id) && n1w.has(id));
             if (common.length > 0) isShorted1 = true;
         }
@@ -1936,14 +1923,11 @@ class DahlanderMotor extends Component {
         this.state.rpm = 0;
         let targetPitch = 1.0;
 
-        // LOGIC MATRIX:
-        // 1. HIGH SPEED: Power on 2 AND Short on 1.
+        // --- INTERNAL LOGIC ---
+        // High (YY): Power on 2, Bridge on 1.
         if (hasPower2 && isShorted1) {
-             const p1 = [...nodes[`${this.id}_2U`]][0];
-             const p2 = [...nodes[`${this.id}_2V`]][0];
-             const p3 = [...nodes[`${this.id}_2W`]][0];
-             
-             if (p1 !== p2 && p2 !== p3) { // Simple short-circuit check
+             // Verify no short on source 2
+             if (p2u !== p2v && p2v !== p2w) {
                 this.state.running = true;
                 this.state.speedMode = 'High';
                 this.state.rpm = 3500;
@@ -1951,13 +1935,10 @@ class DahlanderMotor extends Component {
                 targetPitch = 1.5;
              }
         }
-        // 2. LOW SPEED: Power on 1 AND NO Power on 2 (to avoid conflicts) AND NO Short on 1.
+        // Low (D): Power on 1, NO Power on 2, NO Bridge on 1.
         else if (hasPower1 && !hasPower2 && !isShorted1) {
-             const p1 = [...nodes[`${this.id}_1U`]][0];
-             const p2 = [...nodes[`${this.id}_1V`]][0];
-             const p3 = [...nodes[`${this.id}_1W`]][0];
-
-             if (p1 !== p2 && p2 !== p3) {
+             // Verify no short on source 1
+             if (p1u !== p1v && p1v !== p1w) {
                 this.state.running = true;
                 this.state.speedMode = 'Low';
                 this.state.rpm = 1750;
@@ -1966,14 +1947,13 @@ class DahlanderMotor extends Component {
              }
         }
         
-        // Debug
-        // console.log(`Dahlander: P1:${hasPower1} P2:${hasPower2} Short1:${isShorted1} -> ${this.state.speedMode}`);
+        // Debug State Storage (for draw)
+        this.debugInfo = `P1:${hasPower1?1:0} P2:${hasPower2?1:0} S1:${isShorted1?1:0}`;
 
-        // Audio Management
+        // Audio
         if (window.motorAudio) {
             if (this.state.running) {
                 if (!window.motorAudio.isPlaying) {
-                    // Try to resume if locked
                     if (window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
                          window.motorAudio.audioCtx.resume();
                     }
@@ -1981,13 +1961,9 @@ class DahlanderMotor extends Component {
                 }
                 window.motorAudio.setPitch(targetPitch);
             } else {
-                // If I was running and now I stopped, check if I should stop audio
-                // (Only if no other motor is running)
                 if (window.motorAudio.isPlaying && this.state.rpm === 0) {
                      const others = window.components.filter(c => c.id !== this.id && c.state && c.state.running);
-                     if (others.length === 0) {
-                        window.motorAudio.stop();
-                     }
+                     if (others.length === 0) window.motorAudio.stop();
                 }
             }
         }
@@ -1998,40 +1974,25 @@ class DahlanderMotor extends Component {
         const seq = ['L1', 'L2', 'L3'];
         const i1 = seq.indexOf(p1), i2 = seq.indexOf(p2), i3 = seq.indexOf(p3);
         if (i1 === -1 || i2 === -1 || i3 === -1) return 1;
-        
-        // Standard phase sequence check
-        // 0-1-2 (L1-L2-L3) -> CW
-        // 0-2-1 (L1-L3-L2) -> CCW
-        
-        // Delta indices
-        const d1 = (i2 - i1 + 3) % 3; // 1 means forward step
-        // If d1 is 1 (L1->L2), expected d2 is 1 (L2->L3)
-        if (d1 === 1) return 1; 
-        return -1;
+        const d1 = (i2 - i1 + 3) % 3;
+        return (d1 === 1) ? 1 : -1;
     }
 
     draw(ctx) {
-        // 1. Draw Image
         if (assets[this.type]) {
             ctx.shadowColor = 'rgba(0,0,0,0.3)';
             ctx.shadowBlur = 15;
-            // Draw slightly larger to fit terminals comfortably
             ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
             ctx.shadowBlur = 0;
         } else {
-            // Fallback
-            ctx.fillStyle = '#f97316';
-            ctx.fillRect(this.x, this.y, 80, this.height); // Motor body
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(this.x+80, this.y, 150, this.height); // Faceplate
+            ctx.fillStyle = '#f97316'; ctx.fillRect(this.x, this.y, 80, this.height);
+            ctx.fillStyle = '#e2e8f0'; ctx.fillRect(this.x+80, this.y, 150, this.height);
         }
 
-        // 2. Rotor Animation (Shaft)
-        // Position: Far left relative to component.
-        // Based on image: Shaft is protruding from the orange body on the left.
-        // Center Y is approx 95 (middle of height 160 is 80, but perspective makes it lower)
-        const rotorX = this.x + 35; 
-        const rotorY = this.y + 105; 
+        // Rotor Animation
+        // Updated Center: x + 45 (Left side body center estimate), y + 100
+        const rotorX = this.x + 45; 
+        const rotorY = this.y + 100; 
         
         if (this.state.running) {
             const speed = (this.state.speedMode === 'High') ? 0.4 : 0.2;
@@ -2040,84 +2001,57 @@ class DahlanderMotor extends Component {
             ctx.save();
             ctx.translate(rotorX, rotorY);
             ctx.rotate(this.state.angle);
-            
-            // Draw Shaft/Gear
-            ctx.fillStyle = '#475569'; // Dark shaft
-            ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill();
-            
-            // Teeth/Blades
+            // Shaft
+            ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill();
+            // Teeth
             ctx.fillStyle = '#94a3b8';
             for(let i=0; i<8; i++) {
-                ctx.beginPath();
-                ctx.moveTo(18, -2);
-                ctx.lineTo(28, -4);
-                ctx.lineTo(28, 4);
-                ctx.lineTo(18, 2);
-                ctx.fill();
-                ctx.rotate(Math.PI/4);
+                ctx.beginPath(); ctx.moveTo(18, -2); ctx.lineTo(28, -4); ctx.lineTo(28, 4); ctx.lineTo(18, 2);
+                ctx.fill(); ctx.rotate(Math.PI/4);
             }
-            
-            // Center
-            ctx.fillStyle = '#1e293b';
-            ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
-            
+            // Cap
+            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
             ctx.restore();
             
-            // RPM Text
-            ctx.fillStyle = '#fbbf24';
-            ctx.font = 'bold 10px monospace'; // Monospace for numbers
-            ctx.textAlign = 'center';
+            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
             ctx.fillText(`${this.state.rpm}`, rotorX, rotorY + 45);
-            ctx.font = '8px Inter';
-            ctx.fillText("RPM", rotorX, rotorY + 55);
-
         } else {
-            // Static Rotor
-             ctx.save();
-             ctx.translate(rotorX, rotorY);
-             ctx.fillStyle = '#475569'; 
-             ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill();
-             ctx.fillStyle = '#1e293b';
-             ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
+             ctx.save(); ctx.translate(rotorX, rotorY);
+             ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill();
+             ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
              ctx.restore();
         }
 
-        // 3. Status LEDs on Faceplate
-        // Map to image box (Right side)
+        // LEDs (Right Faceplate)
         const fpX = this.x + 90; 
-        // LED positions near labels
-        
         const isHigh = this.state.speedMode === 'High';
         const isLow = this.state.speedMode === 'Low';
         
-        // Low Speed Indicator (Green) -> Near 1U/1V/1W
-        ctx.beginPath();
-        ctx.arc(fpX + 115, this.y + 60, 4, 0, Math.PI*2);
-        ctx.fillStyle = isLow ? '#22c55e' : '#cbd5e1'; 
-        ctx.fill();
+        // Low LED
+        ctx.beginPath(); ctx.arc(fpX + 115, this.y + 60, 4, 0, Math.PI*2);
+        ctx.fillStyle = isLow ? '#22c55e' : '#cbd5e1'; ctx.fill();
         if(isLow) {
             ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
-            ctx.fillStyle = '#22c55e';
-            ctx.font = 'bold 9px Inter';
-            ctx.textAlign = 'left';
+            ctx.fillStyle = '#22c55e'; ctx.font = 'bold 9px Inter'; ctx.textAlign = 'left';
             ctx.fillText("BAJA", fpX + 122, this.y + 63);
         }
 
-        // High Speed Indicator (Blue) -> Near 2U/2V/2W
-         ctx.beginPath();
-        ctx.arc(fpX + 115, this.y + 95, 4, 0, Math.PI*2);
-        ctx.fillStyle = isHigh ? '#3b82f6' : '#cbd5e1'; 
-        ctx.fill();
+        // High LED
+        ctx.beginPath(); ctx.arc(fpX + 115, this.y + 95, 4, 0, Math.PI*2);
+        ctx.fillStyle = isHigh ? '#3b82f6' : '#cbd5e1'; ctx.fill();
         if(isHigh) {
             ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
-            ctx.fillStyle = '#3b82f6';
-            ctx.font = 'bold 9px Inter';
-            ctx.textAlign = 'left';
+            ctx.fillStyle = '#3b82f6'; ctx.font = 'bold 9px Inter'; ctx.textAlign = 'left';
             ctx.fillText("ALTA", fpX + 122, this.y + 98);
         }
 
-        // 4. Terminals
         this.drawTerminals(ctx);
+        
+        // DEBUG OVERLAY
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(this.x, this.y + this.height, this.width, 15);
+        ctx.fillStyle = '#fff'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(this.debugInfo || "Init...", this.x + this.width/2, this.y + this.height + 10);
     }
 }
 
