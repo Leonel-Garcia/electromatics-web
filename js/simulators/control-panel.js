@@ -2096,46 +2096,6 @@ class PhaseBridge extends Component {
         this.width = 40 + s * 2;
     }
 
-    update() {
-        // Emulate electrical bridge by merging nodes
-        // This relies on the Solver identifying that these terminals are shorted.
-        // If the solver doesn't support 'internalConnections', we must rely on the fact 
-        // that Dahlander looks for COMMON nodes.
-        // If we inject a 'virtual' common node into all 3, it works.
-        // But better: Check if we have a way to tell the solver.
-        
-        // For now, let's try to inject a "BRIDGE_ID" into the nodes of 1, 2, 3
-        // so Dahlander detects a common node.
-        if (window.lastSolvedNodes) {
-            const id1 = `${this.id}_1`;
-            const id2 = `${this.id}_2`;
-            const id3 = `${this.id}_3`;
-            
-            const s1 = window.lastSolvedNodes[id1];
-            const s2 = window.lastSolvedNodes[id2];
-            const s3 = window.lastSolvedNodes[id3];
-            
-            // Bridge Phase Logic:
-            // If any L1/L2/L3 is in s1, add it to s2, s3, etc.
-            // This effectively shorts them for any component reading 'lastSolvedNodes' AFTER this update.
-            // (Assuming Dahlander updates AFTER Bridge).
-            
-            // Create a super-set
-            const union = new Set();
-            if(s1) s1.forEach(x => union.add(x));
-            if(s2) s2.forEach(x => union.add(x));
-            if(s3) s3.forEach(x => union.add(x));
-            
-            // Also add a unique bridge identifier to ensure Dahlander sees a "common node" even if no phases are present
-            union.add(`BRIDGE_${this.id}`);
-
-            // Write back
-            if(s1) union.forEach(x => s1.add(x));
-            if(s2) union.forEach(x => s2.add(x));
-            if(s3) union.forEach(x => s3.add(x));
-        }
-    }
-
     draw(ctx) {
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -3854,34 +3814,28 @@ function solveCircuit() {
                     }
                 }
                 if (c instanceof PhaseBridge) {
-                    // Cortocircuito entre los 3 terminales
                     const k1 = `${c.id}_1`, k2 = `${c.id}_2`, k3 = `${c.id}_3`;
-                    const allPotentials = new Set();
-                    if(nodes[k1]) nodes[k1].forEach(p => allPotentials.add(p));
-                    if(nodes[k2]) nodes[k2].forEach(p => allPotentials.add(p));
-                    if(nodes[k3]) nodes[k3].forEach(p => allPotentials.add(p));
+                    // Manual bridging of sets
+                    const s1 = nodes[k1], s2 = nodes[k2], s3 = nodes[k3];
+                    const union = new Set();
+                    if(s1) s1.forEach(p => union.add(p));
+                    if(s2) s2.forEach(p => union.add(p));
+                    if(s3) s3.forEach(p => union.add(p));
                     
-                    allPotentials.forEach(p => {
-                        setNode(c, '1', p);
-                        setNode(c, '2', p);
-                        setNode(c, '3', p);
-                    });
-                }
-                if (c instanceof Motor6T) {
-                    // Bobinados internos: U1-U2, V1-V2, W1-W2
-                    [['U1','U2'], ['V1','V2'], ['W1','W2']].forEach(([t1, t2]) => {
-                        const k1 = `${c.id}_${t1}`, k2 = `${c.id}_${t2}`;
-                        if(nodes[k1]) nodes[k1].forEach(p => setNode(c, t2, p));
-                        if(nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
-                    });
-                }
-                if (c instanceof DahlanderMotor) {
-                    // Windings: 1U-2U-1V-2V-1W-2W-1U
-                    [['1U','2U'],['2U','1V'],['1V','2V'],['2V','1W'],['1W','2W'],['2W','1U'],['T1','T2']].forEach(([t1, t2]) => {
-                        const k1 = `${c.id}_${t1}`, k2 = `${c.id}_${t2}`;
-                        if(nodes[k1]) nodes[k1].forEach(p => setNode(c, t2, p));
-                        if(nodes[k2]) nodes[k2].forEach(p => setNode(c, t1, p));
-                    });
+                    // Add a virtual bridge node so Dahlander detects a physical short
+                    // even if no grid phases are present yet.
+                    union.add(`BRIDGE_${c.id}`);
+
+                    if(union.size > 0) {
+                        if (!nodes[k1]) nodes[k1] = new Set();
+                        if (!nodes[k2]) nodes[k2] = new Set();
+                        if (!nodes[k3]) nodes[k3] = new Set();
+                        union.forEach(p => {
+                            nodes[k1].add(p);
+                            nodes[k2].add(p);
+                            nodes[k3].add(p);
+                        });
+                    }
                 }
                 if (c instanceof AlternatingRelay) {
                     // Terminal 4 is the power input, Terminal 7 is the common output
