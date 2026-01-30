@@ -2028,11 +2028,54 @@ class DahlanderMotor extends Component {
             ctx.fillStyle = '#fff';
             ctx.fillText(this.state.rpm + ' RPM', this.x + this.width - 10, this.y + 70);
         }
+        
+        // Diagnósticos visuales (Siempre visibles por ahora para depuración)
+        // Recalcular estados para dibujar
+        const nodes = window.lastSolvedNodes || {};
+        const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
+        const n2u = nodes[`${this.id}_2U`], n2v = nodes[`${this.id}_2V`], n2w = nodes[`${this.id}_2W`];
+            
+        // Helper hasPhase local (se podría refactorizar pero por brevedad repetimos)
+        const hasP = (nSet) => {
+             if (!nSet) return false;
+             for (let id of nSet) { if (id === 'L1' || id === 'L2' || id === 'L3' || id === 'L') return true; }
+             return false;
+        };
+        const v1 = hasP(n1u) && hasP(n1v) && hasP(n1w);
+        const v2 = hasP(n2u) && hasP(n2v) && hasP(n2w);
+        let bridge = false;
+        if (n1u && n1v && n1w && n1u.size>0) {
+             const c = [...n1u].filter(x => n1v.has(x) && n1w.has(x));
+             if (c.length > 0) bridge = true;
+        }
+
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'left';
+        // Debug info position
+        const dy = this.y + 140; 
+        
+        // Estado de Voltaje 1
+        ctx.fillStyle = v1 ? '#22c55e' : '#64748b';
+        ctx.fillText(`V1:${v1 ? 'OK' : 'NO'}`, this.x + 10, dy);
+        
+        // Estado de Voltaje 2
+        ctx.fillStyle = v2 ? '#3b82f6' : '#64748b';
+        ctx.fillText(`V2:${v2 ? 'OK' : 'NO'}`, this.x + 60, dy);
+        
+        // Estado de Puente
+        ctx.fillStyle = bridge ? '#ef4444' : '#64748b';
+        ctx.fillText(`P:${bridge ? 'SI' : 'NO'}`, this.x + 110, dy);
+
+        if (v1 && bridge && !v2) {
+             ctx.fillStyle = '#ef4444';
+             ctx.font = 'bold 10px Inter';
+             ctx.fillText('¡QUITA PUENTE!', this.x + 10, dy + 12);
+        }
 
         // Animación de rotor
         if (this.state.running) {
-            const centerX = this.x + 32; 
-            const centerY = this.y + 115;
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2 + 10; // Ajuste ligero hacia abajo del centro absoluto
             const rotorRadius = 40;
             // Velocidad de animación visual más rápida para Alta
             const speedFactor = isHigh ? 0.25 : 0.12; 
