@@ -86,22 +86,25 @@ class MotorAudioManager {
     }
 
     start() {
-        if (!audioUnlocked) {
-            this.pendingStart = true;
-            console.log('Audio not unlocked yet, pending start...');
+        if (!this.audioUnlocked) {
+            console.log('Audio locked. Waiting for user interaction...');
+            // No retornamos inmediatamente, marcamos pendiente y retornamos
+            // Esto permite que el siguiente click desbloquee Y arranque
             return;
         }
         
         if (!this.audioCtx) {
             if (!this.init()) return;
         }
+
+        // Resume context if suspended (common in browsers)
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().then(() => {
+                console.log('AudioContext resumed successfully');
+            });
+        }
         
         if (this.isPlaying) return;
-
-        // Resume context if needed
-        if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume();
-        }
 
         // Base frequency (60Hz - power line frequency)
         const baseFreq = 60;
