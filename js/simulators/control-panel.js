@@ -2085,14 +2085,7 @@ class PhaseBridge extends Component {
         this.state = { spacing: 32 }; 
         this.updateTerminals();
     }
-    updateTerminals() {
-        const s = this.state.spacing;
-        this.terminals = {
-            '1': { x: 20, y: 10 },
-            '2': { x: 20 + s, y: 10 },
-            '3': { x: 20 + s * 2, y: 10 }
-        };
-        this.width = 40 + s * 2;
+
     updateTerminals() {
         const s = this.state.spacing;
         this.terminals = {
@@ -2102,10 +2095,47 @@ class PhaseBridge extends Component {
         };
         this.width = 40 + s * 2;
     }
+
     update() {
-        this.connect('1', '2');
-        this.connect('2', '3');
+        // Emulate electrical bridge by merging nodes
+        // This relies on the Solver identifying that these terminals are shorted.
+        // If the solver doesn't support 'internalConnections', we must rely on the fact 
+        // that Dahlander looks for COMMON nodes.
+        // If we inject a 'virtual' common node into all 3, it works.
+        // But better: Check if we have a way to tell the solver.
+        
+        // For now, let's try to inject a "BRIDGE_ID" into the nodes of 1, 2, 3
+        // so Dahlander detects a common node.
+        if (window.lastSolvedNodes) {
+            const id1 = `${this.id}_1`;
+            const id2 = `${this.id}_2`;
+            const id3 = `${this.id}_3`;
+            
+            const s1 = window.lastSolvedNodes[id1];
+            const s2 = window.lastSolvedNodes[id2];
+            const s3 = window.lastSolvedNodes[id3];
+            
+            // Bridge Phase Logic:
+            // If any L1/L2/L3 is in s1, add it to s2, s3, etc.
+            // This effectively shorts them for any component reading 'lastSolvedNodes' AFTER this update.
+            // (Assuming Dahlander updates AFTER Bridge).
+            
+            // Create a super-set
+            const union = new Set();
+            if(s1) s1.forEach(x => union.add(x));
+            if(s2) s2.forEach(x => union.add(x));
+            if(s3) s3.forEach(x => union.add(x));
+            
+            // Also add a unique bridge identifier to ensure Dahlander sees a "common node" even if no phases are present
+            union.add(`BRIDGE_${this.id}`);
+
+            // Write back
+            if(s1) union.forEach(x => s1.add(x));
+            if(s2) union.forEach(x => s2.add(x));
+            if(s3) union.forEach(x => s3.add(x));
+        }
     }
+
     draw(ctx) {
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -2124,6 +2154,7 @@ class PhaseBridge extends Component {
         ctx.font = 'bold 8px Inter';
         ctx.textAlign = 'center';
         ctx.fillText(this.state.spacing === 32 ? 'IEC' : 'MOT', this.x + this.width/2, this.y + 13);
+        
         for (const [id, t] of Object.entries(this.terminals)) {
             const tx = this.x + t.x;
             const ty = this.y + t.y;
@@ -2134,6 +2165,15 @@ class PhaseBridge extends Component {
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 1;
             ctx.stroke();
+            // Draw lines between them to visualize the short
+            if(id !== '3') {
+               ctx.beginPath(); ctx.moveTo(tx, ty); 
+               // Next terminal
+               const nextId = String(parseInt(id)+1);
+               const nextT = this.terminals[nextId];
+               if(nextT) ctx.lineTo(this.x + nextT.x, this.y + nextT.y);
+               ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth=4; ctx.stroke();
+            }
         }
     }
 }
