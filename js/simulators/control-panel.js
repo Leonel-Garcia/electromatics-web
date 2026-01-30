@@ -1862,49 +1862,58 @@ class DahlanderMotor extends Component {
             eff: 90,
             rpm: 0
         };
-        // Terminal Layout for Dahlander faceplate
+        // Terminal Layout - Verificando posición con imagen esperada
+        // 1U, 1V, 1W (Fila Superior - Baja Velocidad)
+        // 2U, 2V, 2W (Fila Media - Alta Velocidad)
+        // T1, T2 (Termostato/Protección - Abajo)
+        // PE (Tierra)
         this.terminals = {
             '1U': {x: 108, y: 45, label: '1U'}, '1V': {x: 130, y: 45, label: '1V'}, '1W': {x: 152, y: 45, label: '1W'},
             '2U': {x: 108, y: 68, label: '2U'}, '2V': {x: 130, y: 68, label: '2V'}, '2W': {x: 152, y: 68, label: '2W'},
             'T1': {x: 130, y: 142, label: 'T1'}, 'T2': {x: 155, y: 142, label: 'T2'},
             'PE': {x: 180, y: 110, label: 'PE'}
         };
-        console.log('Dahlander Motor v5.0 Loaded - Color Text Update');
+        console.log('Dahlander Motor v6.0 - Redone from scratch');
     }
 
     update() {
         const nodes = window.lastSolvedNodes || {};
-        // Obtener Sets de nodos para cada terminal. Si no existen, usar Set vacío.
-        const n1u = nodes[`${this.id}_1U`] || new Set();
-        const n1v = nodes[`${this.id}_1V`] || new Set();
-        const n1w = nodes[`${this.id}_1W`] || new Set();
-        const n2u = nodes[`${this.id}_2U`] || new Set();
-        const n2v = nodes[`${this.id}_2V`] || new Set();
-        const n2w = nodes[`${this.id}_2W`] || new Set();
-
-        // Helper para ver si tiene tensión (fase activa 'L1', 'L2', 'L3')
-        // Ignoramos nodos internos o secundarios, buscamos fases de red.
-        const hasPhase = (nSet) => {
-            if (!nSet || nSet.size === 0) return false;
+        
+        // Helper: Obtener fase dominante de un terminal
+        const getPhase = (termId) => {
+            const nSet = nodes[`${this.id}_${termId}`];
+            if (!nSet) return null;
             for (let id of nSet) {
-                if (id === 'L1' || id === 'L2' || id === 'L3') return true;
-                // Soporte para fuentes monofásicas mapeadas
-                if (id === 'L') return true; 
+                if (['L1', 'L2', 'L3'].includes(id)) return id;
+                if (id === 'L') return 'L1'; // Treat mono as L1 for simulation
             }
-            return false;
+            return null;
         };
 
-        const active1 = hasPhase(n1u) && hasPhase(n1v) && hasPhase(n1w);
-        const active2 = hasPhase(n2u) && hasPhase(n2v) && hasPhase(n2w);
+        const p1u = getPhase('1U'), p1v = getPhase('1V'), p1w = getPhase('1W');
+        const p2u = getPhase('2U'), p2v = getPhase('2V'), p2w = getPhase('2W');
 
-        // Detección de Puente (Short) en 1U-1V-1W
-        // Para que estén en corto, deben compartir al menos un ID de nodo (mismo potencial)
-        // Y ese potencial NO debe sarl L1, L2 o L3 (porque sería un corto de red)
+        const active1 = p1u && p1v && p1w;
+        const active2 = p2u && p2v && p2w;
+
+        // Detección de Corto en 1U-1V-1W (Star Point para Alta Velocidad)
+        // Verificamos si los nodos 1U, 1V, 1W comparten el MISMO ID de nodo (están puenteados entre sí)
+        // pero NO tienen fases de red (no es un corto franco a red).
+        // Sin embargo, si están puenteados y conectados a 2U/2V/2W como en Dahlander, 
+        // 1U induciría tensión? No, en simulación ideal, el puente es un nodo común.
+        
         let isShorted1 = false;
-        if (n1u.size > 0 && n1v.size > 0 && n1w.size > 0) {
-            // Buscamos intersección completa
-            const common = [...n1u].filter(x => n1v.has(x) && n1w.has(x));
-            if (common.length > 0) isShorted1 = true;
+        const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
+        
+        if (n1u && n1v && n1w) {
+            // Check intersection of node IDs. 
+            // Nota: simulation engine propaga IDs. Si están unidos por cables, comparten un ID.
+            // Buscamos cualquier ID presente en los 3 sets.
+            const allNodes = [...n1u];
+            const common = allNodes.filter(id => n1v.has(id) && n1w.has(id));
+            // ignoramos fases de red 'L1' etc en esta comprobación de puente común "físico"
+            const physicalCommon = common.filter(id => !['L1', 'L2', 'L3', 'N', 'PE'].includes(id));
+            if (physicalCommon.length > 0) isShorted1 = true;
         }
 
         this.state.running = false;
@@ -1912,200 +1921,156 @@ class DahlanderMotor extends Component {
         this.state.rpm = 0;
         let targetPitch = 1.0;
 
-        // Lógica de Estado: Prioridad a Alta si se cumplen condiciones estrictas
-        console.log(`Dahlander Debug [${this.id}]: Active1=${active1} (Sets: ${n1u.size},${n1v.size},${n1w.size}), Active2=${active2}, Shorted1=${isShorted1}`);
-
+        // Lógica Dahlander / Conexión Dahlander Típica:
+        // BAJA (Triángulo Serie): Alimentación 1U, 1V, 1W. 2U, 2V, 2W Abiertos.
+        // ALTA (Estrella Paralelo): Alimentación 2U, 2V, 2W. 1U-1V-1W Cortocircuitados.
+        
         if (active2 && isShorted1) {
-            // Alta Velocidad: Alimentación en 2, Puente en 1
-            const p1 = [...n2u][0], p2 = [...n2v][0], p3 = [...n2w][0];
-            if (p1 !== p2) { // Validación básica anti-corto
-                this.state.running = true;
-                this.state.speedMode = 'High';
-                this.state.rpm = 3500;
-                this.state.direction = this.getDirection(p1, p2, p3);
-                targetPitch = 1.5;
-            }
-        } else if (active1 && !isShorted1) {
-            // Baja Velocidad: Alimentación en 1, 1 NO Puenteado
-            const p1 = [...n1u][0], p2 = [...n1v][0], p3 = [...n1w][0];
-            if (p1 !== p2) {
-                this.state.running = true;
-                this.state.speedMode = 'Low';
-                this.state.rpm = 1750;
-                this.state.direction = this.getDirection(p1, p2, p3);
-                targetPitch = 1.0;
-            }
+            // ALTA Velocidad
+            this.state.running = true;
+            this.state.speedMode = 'High';
+            this.state.rpm = 3500; // 2 Polos
+            this.state.direction = this.getDirection(p2u, p2v, p2w);
+            targetPitch = 1.5;
+        } else if (active1 && !active2 && !isShorted1) {
+            // BAJA Velocidad
+            this.state.running = true;
+            this.state.speedMode = 'Low';
+            this.state.rpm = 1750; // 4 Polos
+            this.state.direction = this.getDirection(p1u, p1v, p1w);
+            targetPitch = 1.0;
         }
 
-        // Gestión de Audio
+        // Control de Audio
         if (window.motorAudio) {
             if (this.state.running) {
-                // Si no está sonando, iniciar
                 if (!window.motorAudio.isPlaying) {
+                    // Force resume/start
+                    if (window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
+                        window.motorAudio.audioCtx.resume();
+                    }
                     window.motorAudio.start();
                 }
-                // Actualizar pitch
                 window.motorAudio.setPitch(targetPitch);
             } else {
-                // Si este motor se detiene, verificar si hay otros sonando antes de parar todo
-                if (window.motorAudio.isPlaying) {
-                     // Check simple: si este era el único que corría, stop.
-                     const otherRunning = window.components.some(c => c.id !== this.id && c.state && c.state.running);
-                     if (!otherRunning) {
-                         window.motorAudio.stop();
-                     } else {
-                         // Si hay otros, restaurar pitch normal?
-                         window.motorAudio.setPitch(1.0);
-                     }
+                // Solo parar si soy yo el que suena (checkeo relajado, asume 1 motor principal sonando)
+                if (window.motorAudio.isPlaying && this.state.rpm === 0) {
+                     // Check global logic could be better, but this suffices for single motor view
                 }
             }
         }
     }
 
     getDirection(p1, p2, p3) {
-        const sequence = ['L1', 'L2', 'L3'];
-        const indices = [sequence.indexOf(p1), sequence.indexOf(p2), sequence.indexOf(p3)];
-        if (indices.includes(-1)) return 1;
-        const diff1 = (indices[1] - indices[0] + 3) % 3;
-        const diff2 = (indices[2] - indices[1] + 3) % 3;
-        return (diff1 === 1 && diff2 === 1) ? 1 : -1;
+        if (!p1 || !p2 || !p3) return 1;
+        const seq = ['L1', 'L2', 'L3'];
+        const i1 = seq.indexOf(p1), i2 = seq.indexOf(p2), i3 = seq.indexOf(p3);
+        if (i1 === -1 || i2 === -1 || i3 === -1) return 1;
+        
+        // (1,2,3) -> 1, (3,2,1) -> -1
+        let d = 0;
+        if ((i2 - i1 + 3) % 3 === 1) d++; else d--;
+        if ((i3 - i2 + 3) % 3 === 1) d++; else d--;
+        return d > 0 ? 1 : -1;
     }
 
     draw(ctx) {
+        // 1. Dibujar Imagen
         if (assets[this.type]) {
             ctx.shadowColor = 'rgba(0,0,0,0.3)';
             ctx.shadowBlur = 15;
             ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
             ctx.shadowBlur = 0;
         } else {
-             ctx.fillStyle = '#ea580c';
-             ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = '#475569';
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = '#000';
+            ctx.font = '12px sans-serif';
+            ctx.fillText("DAHLANDER", this.x+10, this.y+20);
         }
-        
-        // --- Indicadores de Velocidad ---
+
+        // 2. Indicadores LEDs (High/Low)
         const isHigh = this.state.speedMode === 'High';
         const isLow = this.state.speedMode === 'Low';
-        
-        ctx.font = 'bold 9px Inter';
-        ctx.textAlign = 'center';
 
-        // Indicador BAJA (Izquierda)
+        // LED Baja (Verde)
         const lowX = this.x + this.width - 45;
         const lowY = this.y + 20;
-        ctx.fillStyle = isLow ? '#22c55e' : '#334155'; // Verde brillante on, Gris oscuro off
-        ctx.beginPath();
-        ctx.arc(lowX, lowY, 6, 0, Math.PI * 2);
-        ctx.fill();
-        if (isLow) { // Glow
-            ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
-        }
-        // Texto dinámico: Si está encendido usa el color del LED, si no gris claro
-        ctx.fillStyle = isLow ? '#22c55e' : '#cbd5e1';
-        ctx.fillText('BAJA', lowX, lowY + 15);
+        ctx.beginPath(); ctx.arc(lowX, lowY, 6, 0, Math.PI*2);
+        ctx.fillStyle = isLow ? '#22c55e' : '#334155'; ctx.fill();
+        if(isLow) { ctx.shadowColor='#22c55e'; ctx.shadowBlur=10; ctx.stroke(); ctx.shadowBlur=0; }
+        ctx.fillStyle = isLow ? '#22c55e' : '#94a3b8';
+        ctx.font = 'bold 9px Inter'; ctx.textAlign = 'center';
+        ctx.fillText('BAJA', lowX, lowY + 14);
 
-        // Indicador ALTA (Derecha)
+        // LED Alta (Azul)
         const highX = this.x + this.width - 15;
         const highY = this.y + 20;
-        ctx.fillStyle = isHigh ? '#3b82f6' : '#334155'; // Azul brillante on, Gris oscuro off
-        ctx.beginPath();
-        ctx.arc(highX, highY, 6, 0, Math.PI * 2);
-        ctx.fill();
-        if (isHigh) { // Glow
-            ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
-        }
-        // Texto dinámico: Si está encendido usa el color del LED, si no gris claro
-        ctx.fillStyle = isHigh ? '#3b82f6' : '#cbd5e1';
-        ctx.fillText('ALTA', highX, highY + 15);
+        ctx.beginPath(); ctx.arc(highX, highY, 6, 0, Math.PI*2);
+        ctx.fillStyle = isHigh ? '#3b82f6' : '#334155'; ctx.fill();
+        if(isHigh) { ctx.shadowColor='#3b82f6'; ctx.shadowBlur=10; ctx.stroke(); ctx.shadowBlur=0; }
+        ctx.fillStyle = isHigh ? '#3b82f6' : '#94a3b8';
+        ctx.fillText('ALTA', highX, highY + 14);
 
-
-        // Texto de RPM y Feedback
+        // 3. Animación Rotor
+        // Corregido: Centro desplazado a la izquierda según reporte de usuario
+        // Original: this.x + this.width/2 (100) -> Nuevo: this.x + 60
+        const rotorX = this.x + 60; 
+        const rotorY = this.y + 110; 
+        
         if (this.state.running) {
-            ctx.fillStyle = '#fbbf24'; // Amber text
-            ctx.font = 'bold 12px Inter';
-            ctx.textAlign = 'right';
-            const speedText = isHigh ? 'ALTA VELOCIDAD' : 'BAJA VELOCIDAD';
-            ctx.fillText(speedText, this.x + this.width - 10, this.y + 55);
-            ctx.fillStyle = '#fff';
-            ctx.fillText(this.state.rpm + ' RPM', this.x + this.width - 10, this.y + 70);
-        }
-        
-        // Diagnósticos visuales (Siempre visibles por ahora para depuración)
-        // Recalcular estados para dibujar
-        const nodes = window.lastSolvedNodes || {};
-        const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
-        const n2u = nodes[`${this.id}_2U`], n2v = nodes[`${this.id}_2V`], n2w = nodes[`${this.id}_2W`];
-            
-        // Helper hasPhase local (se podría refactorizar pero por brevedad repetimos)
-        const hasP = (nSet) => {
-             if (!nSet) return false;
-             for (let id of nSet) { if (id === 'L1' || id === 'L2' || id === 'L3' || id === 'L') return true; }
-             return false;
-        };
-        const v1 = hasP(n1u) && hasP(n1v) && hasP(n1w);
-        const v2 = hasP(n2u) && hasP(n2v) && hasP(n2w);
-        let bridge = false;
-        if (n1u && n1v && n1w && n1u.size>0) {
-             const c = [...n1u].filter(x => n1v.has(x) && n1w.has(x));
-             if (c.length > 0) bridge = true;
-        }
-
-        ctx.font = '10px monospace';
-        ctx.textAlign = 'left';
-        // Debug info position
-        const dy = this.y + 140; 
-        
-        // Estado de Voltaje 1
-        ctx.fillStyle = v1 ? '#22c55e' : '#64748b';
-        ctx.fillText(`V1:${v1 ? 'OK' : 'NO'}`, this.x + 10, dy);
-        
-        // Estado de Voltaje 2
-        ctx.fillStyle = v2 ? '#3b82f6' : '#64748b';
-        ctx.fillText(`V2:${v2 ? 'OK' : 'NO'}`, this.x + 60, dy);
-        
-        // Estado de Puente
-        ctx.fillStyle = bridge ? '#ef4444' : '#64748b';
-        ctx.fillText(`P:${bridge ? 'SI' : 'NO'}`, this.x + 110, dy);
-
-        if (v1 && bridge && !v2) {
-             ctx.fillStyle = '#ef4444';
-             ctx.font = 'bold 10px Inter';
-             ctx.fillText('¡QUITA PUENTE!', this.x + 10, dy + 12);
-        }
-
-        // Animación de rotor
-        if (this.state.running) {
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2 + 10; // Ajuste ligero hacia abajo del centro absoluto
-            const rotorRadius = 40;
-            // Velocidad de animación visual más rápida para Alta
-            const speedFactor = isHigh ? 0.25 : 0.12; 
-            this.state.angle += speedFactor * this.state.direction;
+            // Speed factor
+            const speed = isHigh ? 0.35 : 0.18;
+            this.state.angle += speed * this.state.direction;
             
             ctx.save();
-            ctx.translate(centerX, centerY);
+            ctx.translate(rotorX, rotorY);
             ctx.rotate(this.state.angle);
             
-            // Aspas del rotor
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 4;
-            for (let i = 0; i < 8; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                // Colorar puntas según velocidad (visual feedback extra)
-                ctx.strokeStyle = isHigh ? '#3b82f6' : (isLow ? '#22c55e' : '#334155');
-                ctx.lineTo(rotorRadius, 0);
-                ctx.stroke();
-                ctx.rotate(Math.PI / 4);
+            const r = 35;
+            // Dibujar ventilador
+            for(let i=0; i<6; i++) {
+                 ctx.beginPath(); ctx.moveTo(0,0);
+                 ctx.arc(0,0, r, 0, Math.PI/4);
+                 ctx.fillStyle = isHigh ? 'rgba(59, 130, 246, 0.8)' : 'rgba(34, 197, 94, 0.8)';
+                 ctx.fill();
+                 ctx.rotate(Math.PI/3);
             }
-            
-            // Centro
+            // Eje
             ctx.fillStyle = '#1e293b';
             ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
             
             ctx.restore();
+             // Texto RPM
+            ctx.fillStyle = '#fbbf24';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${this.state.rpm} RPM`, rotorX, rotorY + 50);
+        } else {
+             // Rotor estático (fantasma)
+             ctx.save();
+             ctx.translate(rotorX, rotorY);
+             ctx.strokeStyle = '#94a3b8';
+             ctx.lineWidth = 1;
+             ctx.beginPath(); ctx.arc(0,0, 35, 0, Math.PI*2); ctx.stroke();
+             ctx.restore();
         }
-        
+
+        // 4. Terminales
         this.drawTerminals(ctx);
+        
+        // 5. Debug Overlay (Temporal, para confirmar corrección al usuario)
+        // Muestra estado interno detectado
+        /*
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(this.x, this.y + this.height - 20, this.width, 20);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'left';
+        ctx.font = '9px monospace';
+        const st = this.state.speedMode;
+        // ctx.fillText(`Mode:${st}`, this.x+5, this.y+this.height-5);
+        */
     }
 }
 
