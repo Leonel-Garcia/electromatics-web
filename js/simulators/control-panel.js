@@ -1863,32 +1863,29 @@ class DahlanderMotor extends Component {
             rpm: 0
         };
         
-        // COORDINATES (Image: Body Left, Faceplate Right)
+        // COORDINATES
         const fpX = 90; 
         const row1Y = 55;
         const row2Y = 90;
         const bottomY = 135;
         
         this.terminals = {
-            // Row 1 (Low Speed / Delta Ends)
             '1U': {x: fpX + 30, y: row1Y, label: '1U'}, 
             '1V': {x: fpX + 55, y: row1Y, label: '1V'}, 
             '1W': {x: fpX + 80, y: row1Y, label: '1W'},
-            
-            // Row 2 (High Speed / Star Points)
             '2U': {x: fpX + 30, y: row2Y, label: '2U'}, 
             '2V': {x: fpX + 55, y: row2Y, label: '2V'}, 
             '2W': {x: fpX + 80, y: row2Y, label: '2W'},
-            
-            // Misc
             'T1': {x: fpX + 30, y: bottomY, label: 'T1'}, 
             'T2': {x: fpX + 55, y: bottomY, label: 'T2'},
             'PE': {x: fpX + 110, y: bottomY, label: 'PE'}
         };
-        console.log('Dahlander Motor v8.0 - Rotor Correction & Debug');
+        
+        this.frameCounter = 0; // For debug throttling
     }
 
     update() {
+        this.frameCounter++;
         const nodes = window.lastSolvedNodes || {};
         
         const getPhase = (termId) => {
@@ -1907,15 +1904,28 @@ class DahlanderMotor extends Component {
         const hasPower1 = !!(p1u && p1v && p1w);
         const hasPower2 = !!(p2u && p2v && p2w);
 
-        // Bridge Detection for High Speed (Shorting 1U-1V-1W)
+        // Bridge Detection
         let isShorted1 = false;
+        let commonNode = null;
         const n1u = nodes[`${this.id}_1U`], n1v = nodes[`${this.id}_1V`], n1w = nodes[`${this.id}_1W`];
         
         if (n1u && n1v && n1w && n1u.size > 0) {
             const allNodes = [...n1u];
-            // Find intersection. Common node must exist across all 3.
             const common = allNodes.filter(id => n1v.has(id) && n1w.has(id));
-            if (common.length > 0) isShorted1 = true;
+            if (common.length > 0) {
+                isShorted1 = true;
+                commonNode = common[0];
+            }
+        }
+
+        // --- DEBUG LOGGING (Every ~100 frames) ---
+        if (this.frameCounter % 100 === 0) {
+            console.groupCollapsed(`Dahlander [${this.id}] Debug`);
+            console.log('Terminals 1 (Low):', { p1u, p1v, p1w, raw: {n1u, n1v, n1w} });
+            console.log('Terminals 2 (High):', { p2u, p2v, p2w });
+            console.log('Short Check:', { isShorted1, commonNode });
+            console.log('Logic:', { hasPower1, hasPower2 });
+            console.groupEnd();
         }
 
         this.state.running = false;
@@ -1923,10 +1933,8 @@ class DahlanderMotor extends Component {
         this.state.rpm = 0;
         let targetPitch = 1.0;
 
-        // --- INTERNAL LOGIC ---
-        // High (YY): Power on 2, Bridge on 1.
+        // Logic
         if (hasPower2 && isShorted1) {
-             // Verify no short on source 2
              if (p2u !== p2v && p2v !== p2w) {
                 this.state.running = true;
                 this.state.speedMode = 'High';
@@ -1935,9 +1943,7 @@ class DahlanderMotor extends Component {
                 targetPitch = 1.5;
              }
         }
-        // Low (D): Power on 1, NO Power on 2, NO Bridge on 1.
         else if (hasPower1 && !hasPower2 && !isShorted1) {
-             // Verify no short on source 1
              if (p1u !== p1v && p1v !== p1w) {
                 this.state.running = true;
                 this.state.speedMode = 'Low';
@@ -1947,8 +1953,9 @@ class DahlanderMotor extends Component {
              }
         }
         
-        // Debug State Storage (for draw)
-        this.debugInfo = `P1:${hasPower1?1:0} P2:${hasPower2?1:0} S1:${isShorted1?1:0}`;
+        // Short Debug String
+        const fmt = (p) => p ? p.substring(0,2) : '-';
+        this.debugInfo = `1:${fmt(p1u)}${fmt(p1v)}${fmt(p1w)} 2:${fmt(p2u)}${fmt(p2v)}${fmt(p2w)} S:${isShorted1?'YES':'NO'}`;
 
         // Audio
         if (window.motorAudio) {
@@ -1989,8 +1996,7 @@ class DahlanderMotor extends Component {
             ctx.fillStyle = '#e2e8f0'; ctx.fillRect(this.x+80, this.y, 150, this.height);
         }
 
-        // Rotor Animation
-        // Updated Center: x + 45 (Left side body center estimate), y + 100
+        // Rotor
         const rotorX = this.x + 45; 
         const rotorY = this.y + 100; 
         
@@ -2001,15 +2007,12 @@ class DahlanderMotor extends Component {
             ctx.save();
             ctx.translate(rotorX, rotorY);
             ctx.rotate(this.state.angle);
-            // Shaft
             ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill();
-            // Teeth
             ctx.fillStyle = '#94a3b8';
             for(let i=0; i<8; i++) {
                 ctx.beginPath(); ctx.moveTo(18, -2); ctx.lineTo(28, -4); ctx.lineTo(28, 4); ctx.lineTo(18, 2);
                 ctx.fill(); ctx.rotate(Math.PI/4);
             }
-            // Cap
             ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
             ctx.restore();
             
@@ -2022,12 +2025,11 @@ class DahlanderMotor extends Component {
              ctx.restore();
         }
 
-        // LEDs (Right Faceplate)
+        // LEDs
         const fpX = this.x + 90; 
         const isHigh = this.state.speedMode === 'High';
         const isLow = this.state.speedMode === 'Low';
         
-        // Low LED
         ctx.beginPath(); ctx.arc(fpX + 115, this.y + 60, 4, 0, Math.PI*2);
         ctx.fillStyle = isLow ? '#22c55e' : '#cbd5e1'; ctx.fill();
         if(isLow) {
@@ -2036,7 +2038,6 @@ class DahlanderMotor extends Component {
             ctx.fillText("BAJA", fpX + 122, this.y + 63);
         }
 
-        // High LED
         ctx.beginPath(); ctx.arc(fpX + 115, this.y + 95, 4, 0, Math.PI*2);
         ctx.fillStyle = isHigh ? '#3b82f6' : '#cbd5e1'; ctx.fill();
         if(isHigh) {
