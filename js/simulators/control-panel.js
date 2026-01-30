@@ -1866,6 +1866,7 @@ class DahlanderMotor extends Component {
             'T1': {x: 130, y: 142, label: 'T1'}, 'T2': {x: 155, y: 142, label: 'T2'},
             'PE': {x: 180, y: 110, label: 'PE'}
         };
+        console.log('Dahlander Motor v5.0 Loaded - Color Text Update');
     }
 
     update() {
@@ -1982,7 +1983,8 @@ class DahlanderMotor extends Component {
         if (isLow) { // Glow
             ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
         }
-        ctx.fillStyle = '#cbd5e1';
+        // Texto dinámico: Si está encendido usa el color del LED, si no gris claro
+        ctx.fillStyle = isLow ? '#22c55e' : '#cbd5e1';
         ctx.fillText('BAJA', lowX, lowY + 15);
 
         // Indicador ALTA (Derecha)
@@ -1995,7 +1997,8 @@ class DahlanderMotor extends Component {
         if (isHigh) { // Glow
             ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
         }
-        ctx.fillStyle = '#cbd5e1';
+        // Texto dinámico: Si está encendido usa el color del LED, si no gris claro
+        ctx.fillStyle = isHigh ? '#3b82f6' : '#cbd5e1';
         ctx.fillText('ALTA', highX, highY + 15);
 
 
