@@ -1869,6 +1869,7 @@ class DahlanderMotor extends Component {
         const row2Y = 90;
         const bottomY = 135;
         
+        // HITBOX DEBUG: We will draw these to ensure user clicks right place
         this.terminals = {
             '1U': {x: fpX + 30, y: row1Y, label: '1U'}, 
             '1V': {x: fpX + 55, y: row1Y, label: '1V'}, 
@@ -1881,7 +1882,7 @@ class DahlanderMotor extends Component {
             'PE': {x: fpX + 110, y: bottomY, label: 'PE'}
         };
         
-        this.frameCounter = 0; // For debug throttling
+        this.frameCounter = 0;
     }
 
     update() {
@@ -1911,6 +1912,9 @@ class DahlanderMotor extends Component {
         
         if (n1u && n1v && n1w && n1u.size > 0) {
             const allNodes = [...n1u];
+            // EXCLUDE SOURCES from 'Common Bridge' check
+            // If they share L1, that's not a bridge, that's a source short (which implies bridge, but we want the bridge node)
+            // Filter out system IDs? Usually system IDs are 'L1','L2'...
             const common = allNodes.filter(id => n1v.has(id) && n1w.has(id));
             if (common.length > 0) {
                 isShorted1 = true;
@@ -1918,13 +1922,9 @@ class DahlanderMotor extends Component {
             }
         }
 
-        // --- DEBUG LOGGING (Every ~100 frames) ---
         if (this.frameCounter % 100 === 0) {
-            console.groupCollapsed(`Dahlander [${this.id}] Debug`);
-            console.log('Terminals 1 (Low):', { p1u, p1v, p1w, raw: {n1u, n1v, n1w} });
-            console.log('Terminals 2 (High):', { p2u, p2v, p2w });
-            console.log('Short Check:', { isShorted1, commonNode });
-            console.log('Logic:', { hasPower1, hasPower2 });
+            console.groupCollapsed(`Dahlander [${this.id}] Debug v9.5`);
+            console.log('ShortID:', commonNode);
             console.groupEnd();
         }
 
@@ -1953,9 +1953,11 @@ class DahlanderMotor extends Component {
              }
         }
         
-        // Short Debug String
+        // Debug String
         const fmt = (p) => p ? p.substring(0,2) : '-';
-        this.debugInfo = `1:${fmt(p1u)}${fmt(p1v)}${fmt(p1w)} 2:${fmt(p2u)}${fmt(p2v)}${fmt(p2w)} S:${isShorted1?'YES':'NO'}`;
+        // Show SHORT ID if present
+        const sID = commonNode ? String(commonNode).substring(0,4) : 'NO';
+        this.debugInfo = `1:${fmt(p1u)}${fmt(p1v)}${fmt(p1w)} 2:${fmt(p2u)}${fmt(p2v)}${fmt(p2w)} S:${sID}`;
 
         // Audio
         if (window.motorAudio) {
@@ -1996,9 +1998,9 @@ class DahlanderMotor extends Component {
             ctx.fillStyle = '#e2e8f0'; ctx.fillRect(this.x+80, this.y, 150, this.height);
         }
 
-        // Rotor
-        const rotorX = this.x + 45; 
-        const rotorY = this.y + 100; 
+        // Rotor (Centered Vertically)
+        const rotorX = this.x + 25; 
+        const rotorY = this.y + 80; // Height/2 = 80
         
         if (this.state.running) {
             const speed = (this.state.speedMode === 'High') ? 0.4 : 0.2;
@@ -2007,13 +2009,13 @@ class DahlanderMotor extends Component {
             ctx.save();
             ctx.translate(rotorX, rotorY);
             ctx.rotate(this.state.angle);
-            ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(0,0, 20, 0, Math.PI*2); ctx.fill(); // Shaft
+            ctx.fillStyle = '#94a3b8'; // Blades
             for(let i=0; i<8; i++) {
                 ctx.beginPath(); ctx.moveTo(18, -2); ctx.lineTo(28, -4); ctx.lineTo(28, 4); ctx.lineTo(18, 2);
                 ctx.fill(); ctx.rotate(Math.PI/4);
             }
-            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(0,0, 8, 0, Math.PI*2); ctx.fill(); // Cap
             ctx.restore();
             
             ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
@@ -2025,7 +2027,7 @@ class DahlanderMotor extends Component {
              ctx.restore();
         }
 
-        // LEDs
+        // STATUS LEDs
         const fpX = this.x + 90; 
         const isHigh = this.state.speedMode === 'High';
         const isLow = this.state.speedMode === 'Low';
@@ -2048,7 +2050,20 @@ class DahlanderMotor extends Component {
 
         this.drawTerminals(ctx);
         
-        // DEBUG OVERLAY
+        // --- HITBOX DEBUG OVERLAY ---
+        // Draws red circles over terminals to verify position
+        /*
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1;
+        for (let key in this.terminals) {
+            const t = this.terminals[key];
+            ctx.beginPath();
+            ctx.arc(this.x + t.x, this.y + t.y, 5, 0, Math.PI*2);
+            ctx.stroke();
+        }
+        */
+
+        // INFO BAR
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.fillRect(this.x, this.y + this.height, this.width, 15);
         ctx.fillStyle = '#fff'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
