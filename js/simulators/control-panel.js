@@ -43,6 +43,7 @@ class MotorAudioManager {
         this.isPlaying = false;
         this.targetVolume = 0;
         this.pendingStart = false;
+        this.unlocked = false; // Propiedad interna para estado de desbloqueo
     }
 
     init() {
@@ -86,10 +87,9 @@ class MotorAudioManager {
     }
 
     start() {
-        if (!this.audioUnlocked) {
+        if (!this.unlocked && !audioUnlocked) {
             console.log('Audio locked. Waiting for user interaction...');
-            // No retornamos inmediatamente, marcamos pendiente y retornamos
-            // Esto permite que el siguiente click desbloquee Y arranque
+            this.pendingStart = true;
             return;
         }
         
@@ -202,10 +202,18 @@ class MotorAudioManager {
 
 // Global audio manager instance
 const motorAudio = new MotorAudioManager();
+window.motorAudio = motorAudio; // Exponer globalmente para componentes como Dahlander
 
 // Unlock audio on first user interaction
-document.addEventListener('click', () => motorAudio.unlock(), { once: true });
-document.addEventListener('touchstart', () => motorAudio.unlock(), { once: true });
+const unlockAudio = () => {
+    motorAudio.unlocked = true;
+    motorAudio.unlock();
+    audioUnlocked = true;
+    window.audioUnlocked = true;
+};
+
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 
 
@@ -2454,7 +2462,7 @@ function loop() {
         
         // Sincronizar audio del motor con el estado de los motores
         const anyMotorRunning = components.some(c => 
-            (c instanceof Motor || c instanceof Motor6T) && c.state.running
+            (c instanceof Motor || c instanceof Motor6T || (typeof DahlanderMotor !== 'undefined' && c instanceof DahlanderMotor)) && c.state.running
         );
         motorAudio.update(anyMotorRunning);
 
