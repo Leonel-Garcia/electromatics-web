@@ -1367,6 +1367,27 @@ class Motor extends Component {
         this.state.nominalCurrent = Math.round(fla * 10) / 10;
         return this.state.nominalCurrent;
     }
+
+    update() {
+        if (window.motorAudio) {
+            if (this.state.running) {
+                if (!window.motorAudio.isPlaying) {
+                    if (window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
+                        window.motorAudio.audioCtx.resume();
+                    }
+                    window.motorAudio.start();
+                }
+                window.motorAudio.setPitch(1.0); // Tono normal para motor estándar
+            } else {
+                if (window.motorAudio.isPlaying) {
+                    // Solo detener si no hay otros motores funcionando
+                    const others = window.components.filter(c => c.id !== this.id && c.state && c.state.running);
+                    if (others.length === 0) window.motorAudio.stop();
+                }
+            }
+        }
+    }
+
     draw(ctx) {
         // Dibuja imagen base si existe
         if (assets[this.type]) {
@@ -1747,6 +1768,27 @@ class Motor6T extends Component {
         this.state.nominalCurrent = Math.round(fla * 10) / 10;
         return this.state.nominalCurrent;
     }
+
+    update() {
+        if (window.motorAudio) {
+            if (this.state.running) {
+                if (!window.motorAudio.isPlaying) {
+                    if (window.motorAudio.audioCtx && window.motorAudio.audioCtx.state === 'suspended') {
+                        window.motorAudio.audioCtx.resume();
+                    }
+                    window.motorAudio.start();
+                }
+                // Podríamos variar el tono según conexión, pero por ahora mantendremos 1.0 para estabilidad
+                window.motorAudio.setPitch(1.0);
+            } else {
+                if (window.motorAudio.isPlaying) {
+                    const others = window.components.filter(c => c.id !== this.id && c.state && c.state.running);
+                    if (others.length === 0) window.motorAudio.stop();
+                }
+            }
+        }
+    }
+
     draw(ctx) {
         if (assets['motor6t']) {
             ctx.shadowColor = 'rgba(0,0,0,0.3)';
