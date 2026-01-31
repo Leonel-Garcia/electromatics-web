@@ -2121,11 +2121,6 @@ class DahlanderMotor extends Component {
              ctx.fillText(this.errorMsg, this.x + 155, this.y + 43);
         }
 
-        // INFO BAR
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(this.x, this.y + this.height, this.width, 15);
-        ctx.fillStyle = '#fff'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
-        ctx.fillText(this.debugInfo || "Init...", this.x + this.width/2, this.y + this.height + 10);
     }
 }
 
