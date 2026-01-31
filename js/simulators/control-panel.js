@@ -4683,53 +4683,65 @@ function loadFromLocalStorage() {
 function deserializeCircuit(jsonString) {
     try {
         const data = JSON.parse(jsonString);
-        components = [];
-        wires = [];
+        if (!data || !data.components) throw new Error("Formato de archivo inválido");
+
+        // Detener simulación antes de limpiar
+        isSimulating = false;
+        if (typeof updateStatus === 'function') updateStatus();
+        window.lastSolvedNodes = {}; // Limpiar estado visual de energía
+
+        // IMPORTANTE: Vaciar los arreglos sin romper referencias globales
+        components.length = 0;
+        wires.length = 0;
+        
         selectedComponent = null;
         selectedWire = null;
 
         // 1. Recrear Componentes
         data.components.forEach(cData => {
             const oldLen = components.length;
+            // Usamos skipHistory = true para no llenar el undoStack durante la carga
             addComponent(cData.type, cData.x + 50, cData.y + 50, true); 
             
-            // Verificar si el componente se agregó realmente
             if (components.length > oldLen) {
                 const c = components[components.length - 1];
-                // Overwrite specific props
                 c.id = cData.id;
                 c.x = cData.x;
                 c.y = cData.y;
                 c.rotation = cData.rotation || 0;
                 if (cData.state) Object.assign(c.state, cData.state);
             } else {
-                console.warn(`No se pudo crear el componente de tipo: ${cData.type}`);
+                console.warn(`No se pudo recrear componente: ${cData.type}`);
             }
         });
 
-        // 2. Recrear Cables
-        data.wires.forEach(wData => {
-            const fromComp = components.find(c => c.id === wData.from);
-            const toComp = components.find(c => c.id === wData.to);
+        // 2. Recrear Cables (si existen)
+        if (data.wires && Array.isArray(data.wires)) {
+            data.wires.forEach(wData => {
+                const fromComp = components.find(c => c.id === wData.from);
+                const toComp = components.find(c => c.id === wData.to);
 
-            if (fromComp && toComp) {
-                wires.push({
-                    from: fromComp,
-                    fromId: wData.fromId,
-                    to: toComp,
-                    toId: wData.toId,
-                    color: wData.color,
-                    isTriple: wData.isTriple,
-                    path: wData.path || []
-                });
-            }
-        });
+                if (fromComp && toComp) {
+                    wires.push({
+                        from: fromComp,
+                        fromId: wData.fromId,
+                        to: toComp,
+                        toId: wData.toId,
+                        color: wData.color || '#fbbf24',
+                        isTriple: wData.isTriple || false,
+                        path: wData.path || []
+                    });
+                }
+            });
+        }
 
         draw();
         console.log("Circuito cargado con éxito.");
+        return true;
     } catch (err) {
         console.error("Error al cargar circuito:", err);
-        alert("Error al procesar el archivo del circuito.");
+        alert("Error al procesar el archivo del circuito: " + err.message);
+        return false;
     }
 }
 
