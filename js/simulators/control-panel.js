@@ -3270,10 +3270,10 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'alternating-relay': c = new AlternatingRelay(x, y); break;
         case 'float-switch': c = new FloatSwitch(x, y); break;
         case 'terminal-block': c = new TerminalBlock(x, y); break;
-        case 'terminal-block': c = new TerminalBlock(x, y); break;
         case 'pressure-switch': c = new PressureSwitch(x, y); break;
         case 'guardamotor': c = new Guardamotor(x, y); break;
         case 'supervisor': c = new ThreePhaseMonitor(x, y); break;
+        case 'dahlander-motor':
         case 'dahlander': c = new DahlanderMotor(x, y); break;
         default: return;
     }
@@ -4690,13 +4690,21 @@ function deserializeCircuit(jsonString) {
 
         // 1. Recrear Componentes
         data.components.forEach(cData => {
-            addComponent(cData.type, cData.x + 50, cData.y + 50); // addComponent offsets from center
-            const c = components[components.length - 1];
-            // Overwrite specific props
-            c.id = cData.id;
-            c.x = cData.x;
-            c.y = cData.y;
-            if (cData.state) Object.assign(c.state, cData.state);
+            const oldLen = components.length;
+            addComponent(cData.type, cData.x + 50, cData.y + 50, true); 
+            
+            // Verificar si el componente se agregó realmente
+            if (components.length > oldLen) {
+                const c = components[components.length - 1];
+                // Overwrite specific props
+                c.id = cData.id;
+                c.x = cData.x;
+                c.y = cData.y;
+                c.rotation = cData.rotation || 0;
+                if (cData.state) Object.assign(c.state, cData.state);
+            } else {
+                console.warn(`No se pudo crear el componente de tipo: ${cData.type}`);
+            }
         });
 
         // 2. Recrear Cables
