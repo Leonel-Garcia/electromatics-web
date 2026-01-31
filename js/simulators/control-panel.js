@@ -2059,9 +2059,9 @@ class DahlanderMotor extends Component {
             ctx.fillStyle = '#e2e8f0'; ctx.fillRect(this.x+80, this.y, 150, this.height);
         }
 
-        // Rotor (Centered)
+        // Rotor (Centered with shaft)
         const rotorX = this.x + 15; 
-        const rotorY = this.y + 85; 
+        const rotorY = this.y + 78; 
         
         if (this.state.running) {
             const speed = (this.state.speedMode === 'High') ? 0.4 : 0.2;
