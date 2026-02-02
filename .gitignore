@@ -21,3 +21,30 @@ __pycache__/
 
 # Test files with credentials (NEVER commit these!)
 test_*.py
+
+# ========================================
+# Simutronica Development Files
+# ========================================
+# Only dist/, style.css and assets/ are needed for production
+
+# Node modules (dependencies)
+simutron/node_modules/
+
+# Source files (already bundled in dist/)
+simutron/src/
+
+# Development files
+simutron/vite.config.js
+simutron/package.json
+simutron/package-lock.json
+simutron/index.html
+simutron/MIGRACION.md
+simutron/fix_scoping.py
+
+# Legacy/Old files
+simutron/legacy_prototype/
+simutron/old_exe_dump/
+
+# Original ZIP
+Simutron.zip
+simutron.zip
