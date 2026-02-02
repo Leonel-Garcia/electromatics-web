@@ -171,6 +171,40 @@
         </div>
 
         <div class="sim-grid">
+            <!-- Laboratorio Virtual (Simutronica) -->
+            <div class="sim-card" style="border-top: 4px solid var(--electric-blue);">
+                <div class="sim-preview">
+                    <!-- Custom SVG: Digital Lab -->
+                    <svg width="100%" height="100%" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                        <!-- Breadboard representation -->
+                        <rect x="20" y="30" width="160" height="60" rx="4" fill="#f1f5f9" />
+                        <rect x="25" y="35" width="150" height="50" rx="2" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                        <!-- Chips -->
+                        <rect x="70" y="50" width="30" height="15" rx="2" fill="#1e293b" />
+                        <rect x="110" y="50" width="30" height="15" rx="2" fill="#1e293b" />
+                        <!-- Pins -->
+                        <circle cx="75" cy="50" r="1.5" fill="#94a3b8" /><circle cx="80" cy="50" r="1.5" fill="#94a3b8" /><circle cx="85" cy="50" r="1.5" fill="#94a3b8" />
+                        <circle cx="115" cy="50" r="1.5" fill="#94a3b8" /><circle cx="120" cy="50" r="1.5" fill="#94a3b8" /><circle cx="125" cy="50" r="1.5" fill="#94a3b8" />
+                        <!-- Wires -->
+                        <path d="M40,40 L70,55" stroke="#FF5252" stroke-width="2" fill="none" />
+                        <path d="M140,40 L125,55" stroke="#448aff" stroke-width="2" fill="none" />
+                    </svg>
+                </div>
+                <div class="sim-content">
+                    <div class="sim-tags">
+                        <span class="sim-tag" style="background: rgba(0, 229, 255, 0.1); color: var(--electric-blue);">Electrónica Digital</span>
+                        <span class="sim-tag">Serie 74xx</span>
+                    </div>
+                    <h3 class="sim-title">Laboratorio Virtual Pro</h3>
+                    <p class="sim-desc">
+                        Simulador avanzado de prototipado. Monta compuertas lógicas, contadores, temporizadores e instrumentos sobre un breadboard interactivo con motor en tiempo real.
+                    </p>
+                    <a href="laboratorio-virtual.html" class="btn btn-primary full-width" style="background: var(--electric-blue);">
+                        <i class="fa-solid fa-flask-vial" style="margin-right: 8px;"></i> Abrir Laboratorio
+                    </a>
+                </div>
+            </div>
+
             <!-- PID Simulator -->
             <div class="sim-card">
                 <div class="sim-preview">

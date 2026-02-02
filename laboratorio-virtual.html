@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>Laboratorio Virtual de Electrónica Digital | Electromatics</title>
+    <meta name="description" content="Simulador interactivo de electrónica digital. Monta circuitos con compuertas lógicas serie 74xx, instrumentos de medida y más." />
+    <meta name="keywords" content="simulador electrónica, laboratorio virtual, compuertas lógicas, breadboard virtual, ingeniería electrónica" />
+    <meta name="author" content="Leonel García" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css?v=3.0" />
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0" />
+    <link rel="stylesheet" href="simutron/style.css" />
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+      /* Estilos para integrar el simulador en la estructura del sitio */
+      body {
+          overflow: hidden !important; /* El simulador maneja su propio scroll/workspace */
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+      }
+
+      .main-header {
+          flex-shrink: 0;
+      }
+
+      #sim-container {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+      }
+
+      /* Ajustes de Simutron para que quepa bien */
+      #toolbar {
+          background: var(--dark-bg-hex);
+          border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+      }
+
+      #workspace {
+          background: #0d0e14;
+      }
+
+      #palette {
+          background: rgba(20, 22, 30, 0.95);
+          border-right: 1px solid rgba(0, 229, 255, 0.1);
+      }
+
+      .btn-primary-sim {
+          background: var(--electric-blue);
+          border: none;
+          color: white;
+          padding: 8px 20px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: bold;
+          transition: all 0.3s;
+      }
+
+      .btn-primary-sim:hover {
+          box-shadow: 0 0 15px var(--electric-blue);
+          transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header y Navegación -->
+    <header class="main-header">
+      <nav class="container">
+        <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;" />
+          <span>Electromatics.com.ve</span>
+        </a>
+        
+        <button class="mobile-nav-toggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="desktop-nav">
+          <div class="nav-dropdown">
+            <a class="dropdown-trigger" href="index.html">Inicio <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 5px;"></i></a>
+            <div class="dropdown-content">
+              <a href="que-es-electromatics.html">Qué es</a>
+              <a href="para-quien-es.html">Para quién</a>
+            </div>
+          </div>
+          <a href="calculos-electricos.html">Cálculos</a>
+          <a href="normativa-electrica.html">Normativa</a>
+          <a href="simuladores.html">Simuladores</a>
+          <a href="electronica.html" class="active">Electrónica</a>
+          <a href="formacion.html">Formación</a>
+          <a href="electro-info.html">Tecno-Info</a>
+          <a href="museo.html">Museo</a>
+          <a href="apu.html">Presupuestos</a>
+          <a href="calculadora.html">App IA</a>
+          <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+        </div>
+      </nav>
+    </header>
+
+    <div id="sim-container">
+        <div id="toolbar">
+          <div class="logo-sim" style="font-weight: 800; font-family: 'Outfit'; font-size: 1.2rem; background: var(--gradient-blue); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+            SIMUTRONICA <span style="font-size: 0.7em; opacity: 0.7; color: var(--safety-orange); -webkit-text-fill-color: var(--safety-orange);">PRO</span>
+          </div>
+          <div class="controls">
+            <button id="btn-wire-mode" class="btn" title="Activar Modo Cableado"><i class="fa-solid fa-plug"></i> CABLEAR</button>
+            <button id="btn-help" class="btn" title="Mostrar Ayuda Técnica"><i class="fa-solid fa-circle-question"></i> AYUDA</button>
+            <span class="v-separator">|</span>
+            <button id="btn-run" class="btn"><i class="fa-solid fa-play"></i> RUN</button>
+            <button id="btn-stop" class="btn"><i class="fa-solid fa-stop"></i> STOP</button>
+            <button id="btn-reset" class="btn"><i class="fa-solid fa-rotate-left"></i> RESET</button>
+            <span class="v-separator">|</span>
+            <button id="btn-save" class="btn" title="Guardar Proyecto"><i class="fa-solid fa-floppy-disk"></i> GUARDAR</button>
+            <button id="btn-load" class="btn" title="Cargar Proyecto"><i class="fa-solid fa-folder-open"></i> CARGAR</button>
+            <input type="file" id="file-input" style="display: none;" accept=".json" />
+          </div>
+        </div>
+        <div id="workspace">
+          <div id="palette">
+            <h3>Componentes</h3>
+            <div id="palette-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          <div id="inspector" style="display:none; flex-direction:column; padding:10px; background:#1e1e1e; border-left:1px solid #333; width: 200px;">
+            <h3>Propiedades</h3>
+            <div id="inspector-content">
+                <!-- Dynamic Content -->
+            </div>
+          </div>
+          <div id="canvas-container" style="flex: 1; position: relative; overflow: hidden; background: #1a1a1e;">
+            <canvas id="bg-canvas"></canvas>
+            <div id="component-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5"></div>
+            <svg id="wire-layer" class="wire-canvas" style="z-index: 10"></svg>
+            
+            <div id="schematic-viewer" style="display:none;">
+                <div class="schematic-header">
+                    <span id="schematic-title">📋 Especificaciones Técnicas</span>
+                    <button id="close-schematic">×</button>
+                </div>
+                <div class="schematic-body">
+                    <div id="schematic-info">
+                        <p id="schematic-description"></p>
+                    </div>
+                    <div id="schematic-content"></div>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <div id="modal-container" style="display:none;">
+      <div id="library-modal">
+        <div class="modal-header">
+          <h2 style="margin: 0; background: none; -webkit-text-fill-color: white;">📚 Librería de Chips Serie 74xx</h2>
+          <button id="close-modal">×</button>
+        </div>
+        <div id="library-grid" class="modal-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <script src="js/config.js?v=7.0"></script>
+    <script src="js/simple-auth.js?v=8.0"></script>
+    <script src="js/ui.js?v=1.0"></script>
+    <script src="simutron/dist/simutronica.bundle.js"></script>
+  </body>
+</html>

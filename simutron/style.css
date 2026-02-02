@@ -1,0 +1,478 @@
+:root {
+  --bg-color: #0d0e14;
+  --panel-bg: rgba(20, 22, 30, 0.85);
+  --panel-border: rgba(0, 123, 255, 0.2);
+  --accent-color: #007bff; /* Electric Blue */
+  --accent-secondary: #ff8c00; /* Safety Orange */
+  --accent-gradient: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
+  --accent-glow: 0 0 15px rgba(0, 123, 255, 0.3);
+  --text-primary: #f0f4f8;
+  --text-secondary: #94a3b8;
+
+  --breadboard-color: #f1f5f9;
+  --breadboard-hole: #1e293b;
+
+  --font-family: "Outfit", "Inter", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Toolbar */
+#toolbar {
+  height: 50px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  justify-content: space-between;
+}
+
+.btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  font-family: var(--font-family);
+}
+
+.btn:hover {
+  background: var(--accent-color);
+  box-shadow: var(--accent-glow);
+}
+
+.btn.active {
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 0 15px var(--accent-color);
+}
+
+.v-separator {
+    color: rgba(255,255,255,0.2);
+    margin: 0 10px;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 5px rgba(255, 140, 0, 0.3));
+}
+
+h2, h3 {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+/* Main Layout */
+#workspace {
+  flex: 1;
+  position: relative;
+  display: flex;
+}
+
+#palette {
+  width: 260px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+#canvas-container {
+  flex: 1;
+  position: relative;
+  background: #1a1a1e; /* Dark mat */
+  overflow: hidden;
+  cursor: grab;
+}
+
+/* Component Cards */
+.component-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.component-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Canvas Overlay Objects */
+/* Palette Categories */
+.palette-category {
+  margin-bottom: 10px;
+}
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 5px;
+  transition: background 0.2s, opacity 0.2s;
+}
+.category-header:hover {
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.08); /* Fallback for hover bg if needed */
+}
+.category-header::after {
+  content: '▼';
+  font-size: 0.7rem;
+  -webkit-text-fill-color: var(--accent-secondary);
+  transition: transform 0.2s;
+}
+.palette-category.collapsed .category-header::after {
+  transform: rotate(-90deg);
+}
+.category-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 500px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+.palette-category.collapsed .category-content {
+  max-height: 0;
+}
+
+.sim-component {
+  position: absolute;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  pointer-events: auto; /* Ensure components capture clicks */
+  cursor: grab;
+  transition: filter 0.2s, transform 0.1s;
+}
+
+.sim-component.selected {
+    filter: drop-shadow(0 0 10px var(--accent-color));
+    outline: 2px solid var(--accent-color);
+}
+
+.sim-component:active {
+    cursor: grabbing;
+}
+
+#component-layer {
+    pointer-events: none; /* Let clicks pass through empty space to breadboard */
+}
+
+.sim-probe-tip {
+    pointer-events: auto; /* Ensure probes can be dragged */
+}
+
+.wire-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 10;
+  pointer-events: none; /* Let transparent areas pass through */
+}
+
+/* Wire Color Picker */
+#wire-palette {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    background: rgba(30, 30, 35, 0.9);
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    z-index: 20;
+}
+
+.color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s;
+}
+
+.color-dot.active {
+    border-color: #fff;
+    transform: scale(1.2);
+}
+
+.wire-handle {
+    pointer-events: auto;
+    cursor: crosshair;
+    fill: rgba(255,255,255,0.5);
+    stroke: #fff;
+    stroke-width: 1px;
+    transition: r 0.2s, fill 0.2s;
+}
+.wire-handle:hover {
+    fill: #fff;
+    r: 6;
+}
+.wire-handle.dragging {
+    fill: #0f0;
+    r: 7;
+}
+.wire-handle.selected {
+    fill: var(--accent-color);
+    stroke: #fff;
+    stroke-width: 2px;
+    r: 6;
+}
+
+/* SVG Wire Layer - allow interaction on wires */
+#wire-layer {
+    pointer-events: none;
+}
+#wire-layer > * {
+    pointer-events: auto;
+}
+#wire-layer path {
+    pointer-events: stroke;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+#wire-layer path:hover {
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.7));
+}
+#wire-layer circle.wire-handle {
+    pointer-events: auto;
+    cursor: grab;
+}
+
+#modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#library-modal {
+    background: var(--bg-color);
+    width: 80%;
+    max-width: 900px;
+    height: 80%;
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#close-modal {
+    background: transparent;
+    border: none;
+    color: var(--accent-secondary);
+    font-size: 2.5rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+#close-modal:hover {
+    transform: rotate(90deg) scale(1.2);
+}
+
+.modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.library-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--panel-border);
+    padding: 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.library-card:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--accent-color);
+    transform: translateY(-5px);
+}
+
+.library-card .chip-model {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+}
+
+.library-card .chip-desc {
+    font-size: 0.8rem;
+    color: #888;
+    text-align: center;
+}
+
+#schematic-viewer {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 600px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+    z-index: 1000;
+    max-height: 80vh;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    border-bottom: 4px solid var(--accent-color);
+}
+
+.schematic-body {
+    display: flex;
+    padding: 20px;
+    gap: 30px;
+}
+
+#schematic-info {
+    flex: 1;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    padding-right: 20px;
+}
+
+#schematic-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+#schematic-content {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.schematic-header {
+    padding: 12px 20px;
+    background: linear-gradient(to right, rgba(0, 123, 255, 0.2), rgba(255, 140, 0, 0.1));
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: grab;
+    user-select: none;
+}
+.schematic-header:active {
+    cursor: grabbing;
+}
+
+#close-schematic {
+    background: none;
+    border: none;
+    color: var(--accent-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+#schematic-content {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+#schematic-content svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.pin-label-small {
+    font-size: 8px;
+    font-family: inherit;
+    fill: #ccc;
+}
+
+.gate-line {
+    stroke: var(--accent-color);
+    stroke-width: 2;
+    fill: none;
+}
+
+.gate-box {
+    stroke: var(--text-secondary);
+    stroke-width: 1;
+    fill: rgba(255,255,255,0.05);
+}
+
