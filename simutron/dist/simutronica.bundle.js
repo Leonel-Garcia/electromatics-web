@@ -2379,48 +2379,48 @@
       const specs = {
         "7408": {
           title: "SN7408 Quad 2-Input AND Gate",
-          desc: "Imagen real del catálogo de Texas Instruments. Muestra la disposición de las 4 compuertas AND internas y la identificación exacta de cada pin (A, B, Y).",
-          image: "simutron/assets/datasheets/7408.png"
+          desc: "Diagrama de pines estándar (DIP-14). Contiene 4 compuertas AND independientes de 2 entradas. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = A • B.",
+          image: "simutron/assets/datasheets/7408.svg"
         },
         "7404": {
           title: "SN7404 Hex Inverter",
-          desc: "Diagrama técnico original. Identifica los 6 inversores independientes. Nota la muesca superior para orientación del pin 1 (A1) al pin 14 (VCC).",
-          image: "simutron/assets/datasheets/7404.png"
+          desc: "Diagrama de pines estándar (DIP-14). Contiene 6 inversores independientes. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = NOT A.",
+          image: "simutron/assets/datasheets/7404.svg"
         },
         "7432": {
           title: "SN7432 Quad 2-Input OR Gate",
-          desc: "Esquema de conexiones del fabricante. Realiza la función lógica Y = A + B. Verifica la conexión a tierra en el pin 7 y alimentación en el pin 14.",
-          image: "simutron/assets/datasheets/7432.png"
+          desc: "Diagrama de pines estándar (DIP-14). Contiene 4 compuertas OR independientes de 2 entradas. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = A + B.",
+          image: "simutron/assets/datasheets/7432.svg"
         },
         "7490": {
-          title: "SN7490 Decade Counter",
-          desc: "Manual técnico original. Detalla la estructura interna del contador decádico MOD-10, incluyendo los resets R0 y R9.",
-          image: "simutron/assets/datasheets/7490.png"
+          title: "SN7490 Decade Counter (Asíncrono)",
+          desc: "Contador de décadas (DIV-10). Configuración estándar: Conectar Salida estandar QA (Pin 12) a Entrada B (Pin 1) para conteo BCD 0-9. Alimentación: Pin 5 (VCC), Pin 10 (GND). Reset 0: Pines 2 y 3 en ALTO.",
+          image: "simutron/assets/datasheets/7490.svg"
         },
         "7447": {
           title: "SN7447 BCD to 7-Segment Decoder",
-          desc: 'Hoja de datos original de Fairchild/TI. Incluye el esquema de compuertas completo. Verifica la conexión del segmento "a" en el pin 13.',
-          image: "simutron/assets/datasheets/7447.png"
+          desc: "Decodificador BCD a 7 Segmentos (Salidas Activas en BAJO, Open Collector). Diseñado para displays de Ánodo Común. Alimentación: Pin 16 (VCC), Pin 8 (GND).",
+          image: "simutron/assets/datasheets/7447.svg"
         },
         "LM741": {
           title: "uA741 Operational Amplifier",
-          desc: "Imagen real del catálogo. Identifica claramente las entradas (+) y (-), la salida y los pines de alimentación V+ y V-.",
-          image: "simutron/assets/datasheets/741.png"
+          desc: "Amplificador Operacional de propósito general. Pines clave: 2 (In-), 3 (In+), 6 (Salida). Alimentación simétrica: 7 (V+), 4 (V-).",
+          image: "simutron/assets/datasheets/741.svg"
         },
         "LM555": {
           title: "NE555 Precision Timer",
-          desc: "Esquema de bloques funcional del fabricante. Detalla la red de resistencias internas, comparadores y el flip-flop de salida.",
-          image: "simutron/assets/datasheets/555.png"
+          desc: "Temporizador de precisión. Modos: Monoestable y Astable. Alimentación: Pin 8 (VCC), Pin 1 (GND). Salida en Pin 3. Trigger < 1/3 VCC activa la salida.",
+          image: "simutron/assets/datasheets/555.svg"
         },
         "7-Segment": {
           title: "Display de 7 Segmentos (Ánodo Común)",
-          desc: "Diagrama técnico del display de 10 pines. IMPORTANTE: Los pines centrales (3 y 8) son el Ánodo Común (VCC). Los segmentos (a-g, dp) se encienden al recibir 0V (GND).",
-          image: "simutron/assets/datasheets/7segment.png"
+          desc: "Configuración de pines estándar. Pines 3 y 8 son Ánodo Común (Conectar a VCC). Los segmentos (a-g) se encienden al ponerlos a tierra (Lógica Negativa, ideal para 7447).",
+          image: "simutron/assets/datasheets/7segment.svg"
         },
         "74283": {
           title: "SN74LS283 4-Bit Binary Full Adder",
-          desc: "Sumador binario completo de 4 bits con acarreo rápido. Realiza la suma A + B + C0. Las entradas son A1-A4 y B1-B4. Las salidas de la suma son S1-S4 y C4 es el acarreo de salida.",
-          image: "simutron/assets/datasheets/74283.png"
+          desc: "Sumador completo de 4 bits con acarreo rápido. Suma dos palabras binarias (A y B) más un acarreo de entrada (C0). Salida Sigma 1-4. Alimentación: Pin 16 (VCC), Pin 8 (GND).",
+          image: "simutron/assets/datasheets/74283.svg"
         }
       };
       return specs[name];
