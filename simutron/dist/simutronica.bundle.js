@@ -2632,6 +2632,9 @@
     isPowered() {
       const vcc = this.getPin(this.vccPin).getVoltage();
       const gnd = this.getPin(this.gndPin).getVoltage();
+      if (this.modelNumber === "08" && Math.random() < 0.01) {
+        console.log(`IC7408 Power Check: VCC=${vcc.toFixed(2)}V, GND=${gnd.toFixed(2)}V`);
+      }
       return vcc > 3.5 && gnd < 1.5;
     }
     // Helper to read logic level (Threshold approx 0.8V - 2.0V)
@@ -2671,6 +2674,9 @@
         const stateA = this.getLogicState(gate.a);
         const stateB = this.getLogicState(gate.b);
         const result = stateA === 1 && stateB === 1 ? 1 : 0;
+        if (Math.random() < 0.01 && (stateA || stateB)) {
+          console.log(`Gate [${gate.a}, ${gate.b}] -> ${gate.y}: InA=${stateA} InB=${stateB} Out=${result}`);
+        }
         this.setLogicState(gate.y, result);
       });
     }
