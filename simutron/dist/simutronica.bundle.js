@@ -651,13 +651,13 @@
       return el;
     }
     createGround(comp, el) {
-      console.log("Rendering Ground v1.9 (Black Path)");
       el.style.width = "30px";
       el.style.height = "30px";
       el.style.display = "flex";
       el.style.justifyContent = "center";
       el.style.background = "transparent";
       el.style.border = "none";
+      el.style.colorScheme = "light";
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30" style="overflow:visible !important;">
             <path d="M 15 0 L 15 12 M 5 12 L 25 12 M 10 17 L 20 17 M 13 22 L 17 22" 
@@ -3099,7 +3099,6 @@
     computeOutputs() {
     }
   }
-  alert("CRITICAL FIX v1.9 LOADED");
   class App {
     constructor() {
       console.log("App: Initializing...");
