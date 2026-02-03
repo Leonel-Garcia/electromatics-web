@@ -1203,9 +1203,7 @@
       this.isWiring = false;
       this.isWireMode = false;
       this.startPin = null;
-      this.activeProbe = null;
-      this.selectedWire = null;
-      this.selectedComponent = null;
+      this.wiringPoints = [];
       this.currentMousePos = { x: 0, y: 0 };
       this.onComponentSelected = null;
       this.onComponentDeselected = null;
@@ -1424,6 +1422,7 @@
           this.deselectWire();
           const coords = this.getHoleCoords(hole.r, hole.c);
           this.isWiring = true;
+          this.wiringPoints = [];
           this.wiringStart = {
             type: "hole",
             r: hole.r,
@@ -1433,6 +1432,16 @@
             net: this.breadboard.getNetAt(hole.r, hole.c)
           };
           this.currentMousePos = { x, y };
+          this.updateWires();
+          e.stopPropagation();
+        }
+      } else if (this.isWiring) {
+        const rect2 = this.container.getBoundingClientRect();
+        const x2 = e.clientX - rect2.left;
+        const y2 = e.clientY - rect2.top;
+        const hole = this.breadboard.getHoleAt(x2, y2);
+        if (!hole) {
+          this.wiringPoints.push({ x: x2, y: y2 });
           this.updateWires();
           e.stopPropagation();
         }
@@ -1491,6 +1500,7 @@
       const pin = component.getPin(pinId);
       if (!this.isWiring) {
         this.isWiring = true;
+        this.wiringPoints = [];
         this.wiringStart = {
           type: "pin",
           pin,
@@ -1519,14 +1529,14 @@
       this.dragStartPos = { x: e.clientX, y: e.clientY };
       e.stopPropagation();
     }
-    startWireDrag(e, conn, handle) {
+    startWireDrag(e, conn, pointIndex) {
       this.wireDrag = {
         conn,
+        pointIndex,
         startX: e.clientX,
         startY: e.clientY,
-        startOffset: { ...conn.offset }
+        startPos: pointIndex >= 0 ? { ...conn.waypoints[pointIndex] } : { ...conn.offset }
       };
-      handle.classList.add("dragging");
       e.stopPropagation();
       e.preventDefault();
     }
@@ -1570,8 +1580,13 @@
       if (this.wireDrag) {
         const dx = e.clientX - this.wireDrag.startX;
         const dy = e.clientY - this.wireDrag.startY;
-        this.wireDrag.conn.offset.x = this.wireDrag.startOffset.x + dx;
-        this.wireDrag.conn.offset.y = this.wireDrag.startOffset.y + dy;
+        if (this.wireDrag.pointIndex >= 0) {
+          this.wireDrag.conn.waypoints[this.wireDrag.pointIndex].x = this.wireDrag.startPos.x + dx;
+          this.wireDrag.conn.waypoints[this.wireDrag.pointIndex].y = this.wireDrag.startPos.y + dy;
+        } else {
+          this.wireDrag.conn.offset.x = this.wireDrag.startPos.x + dx;
+          this.wireDrag.conn.offset.y = this.wireDrag.startPos.y + dy;
+        }
         this.updateWires();
       }
       if (!this.dragItem && !this.wireDrag) {
@@ -1643,6 +1658,7 @@
         this.wiringStart.el.style.boxShadow = "";
       }
       this.wiringStart = null;
+      this.wiringPoints = [];
       this.isWiring = false;
       this.updateWires();
     }
@@ -1653,21 +1669,18 @@
       }
       const startEp = this.wiringStart;
       this.wiringStart = null;
+      const waypoints = [...this.wiringPoints];
+      this.wiringPoints = [];
       this.isWiring = false;
-      if (startEp.type === "pin" && startEp.el) {
-        startEp.el.style.background = "";
-        startEp.el.style.boxShadow = "";
-      }
-      startEp.net;
-      endEndpoint.net;
       if (startEp.type === "pin" && endEndpoint.type === "pin" && startEp.pin === endEndpoint.pin) return;
       if (startEp.type === "hole" && endEndpoint.type === "hole" && startEp.r === endEndpoint.r && startEp.c === endEndpoint.c) return;
       const conn = {
         p1: startEp,
-        // Endpoint Object
         p2: endEndpoint,
         color: this.activeColor,
-        offset: { x: 0, y: 50 + Math.random() * 20 }
+        waypoints,
+        offset: { x: 0, y: 0 }
+        // Legacy fallback
       };
       this.connections.push(conn);
       this.rebuildTopology();
@@ -2178,70 +2191,60 @@
     drawTemporaryWire() {
       const startPos = this.wiringStart.type === "pin" ? this.getPinPosition(this.wiringStart.pin) : { x: this.wiringStart.x, y: this.wiringStart.y };
       if (!startPos) return;
-      const endPos = this.currentMousePos;
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", startPos.x);
-      line.setAttribute("y1", startPos.y);
-      line.setAttribute("x2", endPos.x);
-      line.setAttribute("y2", endPos.y);
-      line.setAttribute("stroke", this.activeColor);
-      line.setAttribute("stroke-width", "3");
-      line.setAttribute("stroke-dasharray", "8,4");
-      line.setAttribute("stroke-opacity", "0.8");
-      line.setAttribute("stroke-linecap", "round");
+      let pathData = `M ${startPos.x} ${startPos.y}`;
+      this.wiringPoints.forEach((p) => {
+        pathData += ` L ${p.x} ${p.y}`;
+      });
+      pathData += ` L ${this.currentMousePos.x} ${this.currentMousePos.y}`;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathData);
+      path.setAttribute("stroke", this.activeColor);
+      path.setAttribute("stroke-width", "4");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-dasharray", "8,4");
+      path.setAttribute("stroke-opacity", "0.8");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
       const animate = document.createElementNS("http://www.w3.org/2000/svg", "animate");
       animate.setAttribute("attributeName", "stroke-dashoffset");
-      animate.setAttribute("from", "0");
-      animate.setAttribute("to", "24");
+      animate.setAttribute("from", "24");
+      animate.setAttribute("to", "0");
       animate.setAttribute("dur", "0.5s");
       animate.setAttribute("repeatCount", "indefinite");
-      line.appendChild(animate);
-      this.svgLayer.appendChild(line);
-      const startCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      startCircle.setAttribute("cx", startPos.x);
-      startCircle.setAttribute("cy", startPos.y);
-      startCircle.setAttribute("r", "6");
-      startCircle.setAttribute("fill", this.activeColor);
-      startCircle.setAttribute("fill-opacity", "0.8");
-      startCircle.setAttribute("stroke", "#fff");
-      startCircle.setAttribute("stroke-width", "2");
-      this.svgLayer.appendChild(startCircle);
-      const endCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      endCircle.setAttribute("cx", endPos.x);
-      endCircle.setAttribute("cy", endPos.y);
-      endCircle.setAttribute("r", "4");
-      endCircle.setAttribute("fill", this.activeColor);
-      endCircle.setAttribute("fill-opacity", "0.6");
-      const pulseAnimate = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-      pulseAnimate.setAttribute("attributeName", "r");
-      pulseAnimate.setAttribute("values", "4;8;4");
-      pulseAnimate.setAttribute("dur", "0.8s");
-      pulseAnimate.setAttribute("repeatCount", "indefinite");
-      endCircle.appendChild(pulseAnimate);
-      this.svgLayer.appendChild(endCircle);
+      path.appendChild(animate);
+      this.svgLayer.appendChild(path);
+      const hint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hint.setAttribute("cx", this.currentMousePos.x);
+      hint.setAttribute("cy", this.currentMousePos.y);
+      hint.setAttribute("r", "5");
+      hint.setAttribute("fill", this.activeColor);
+      hint.setAttribute("fill-opacity", "0.4");
+      this.svgLayer.appendChild(hint);
     }
     drawFlexibleWire(conn, p1, p2) {
       const color = conn.color || "#555";
       const isSelected = conn === this.selectedWire;
-      const checkX = (p1.x + p2.x) / 2;
-      const checkY = (p1.y + p2.y) / 2;
-      const cpX = checkX + conn.offset.x;
-      const cpY = checkY + conn.offset.y;
-      const d = `M ${p1.x} ${p1.y} Q ${cpX} ${cpY} ${p2.x} ${p2.y}`;
+      const waypoints = conn.waypoints || [];
+      const points = [p1, ...waypoints, p2];
+      let d = `M ${points[0].x} ${points[0].y}`;
+      if (waypoints.length === 0 && conn.offset && (conn.offset.x !== 0 || conn.offset.y !== 0)) {
+        const cpX = (p1.x + p2.x) / 2 + conn.offset.x;
+        const cpY = (p1.y + p2.y) / 2 + conn.offset.y;
+        d = `M ${p1.x} ${p1.y} Q ${cpX} ${cpY} ${p2.x} ${p2.y}`;
+      } else {
+        for (let i = 1; i < points.length; i++) {
+          d += ` L ${points[i].x} ${points[i].y}`;
+        }
+      }
       if (isSelected) {
         const glowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
         glowPath.setAttribute("d", d);
-        glowPath.setAttribute("stroke", "#fff");
+        glowPath.setAttribute("stroke", color);
         glowPath.setAttribute("stroke-width", "12");
         glowPath.setAttribute("fill", "none");
-        glowPath.setAttribute("stroke-opacity", "0.4");
+        glowPath.setAttribute("stroke-opacity", "0.2");
         glowPath.setAttribute("stroke-linecap", "round");
-        const pulseAnim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-        pulseAnim.setAttribute("attributeName", "stroke-opacity");
-        pulseAnim.setAttribute("values", "0.2;0.6;0.2");
-        pulseAnim.setAttribute("dur", "1.5s");
-        pulseAnim.setAttribute("repeatCount", "indefinite");
-        glowPath.appendChild(pulseAnim);
+        glowPath.setAttribute("stroke-linejoin", "round");
         this.svgLayer.appendChild(glowPath);
       }
       const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -2259,28 +2262,72 @@
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", d);
       path.setAttribute("stroke", color);
-      path.setAttribute("stroke-width", isSelected ? "7" : "5");
+      path.setAttribute("stroke-width", isSelected ? "6" : "4");
       path.setAttribute("fill", "none");
-      path.setAttribute("stroke-opacity", "1");
       path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
       path.style.pointerEvents = "none";
+      path.style.filter = "drop-shadow(1px 1px 2px rgba(0,0,0,0.4))";
       this.svgLayer.appendChild(path);
-      const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      const hX = 0.25 * p1.x + 0.5 * cpX + 0.25 * p2.x;
-      const hY = 0.25 * p1.y + 0.5 * cpY + 0.25 * p2.y;
-      handle.setAttribute("cx", hX);
-      handle.setAttribute("cy", hY);
-      handle.setAttribute("r", isSelected ? "7" : "4");
-      handle.setAttribute("class", "wire-handle" + (isSelected ? " selected" : ""));
       if (isSelected) {
-        handle.setAttribute("fill", "#00ff88");
-        handle.setAttribute("stroke", "#fff");
-        handle.setAttribute("stroke-width", "2");
+        if (waypoints.length === 0 && conn.offset && (conn.offset.x !== 0 || conn.offset.y !== 0)) {
+          const cpX = (p1.x + p2.x) / 2 + conn.offset.x;
+          const cpY = (p1.y + p2.y) / 2 + conn.offset.y;
+          const hX = 0.25 * p1.x + 0.5 * cpX + 0.25 * p2.x;
+          const hY = 0.25 * p1.y + 0.5 * cpY + 0.25 * p2.y;
+          this.createHandle(hX, hY, conn, -1);
+        } else {
+          waypoints.forEach((p, idx) => {
+            this.createHandle(p.x, p.y, conn, idx);
+          });
+          for (let i = 0; i < points.length - 1; i++) {
+            const mx = (points[i].x + points[i + 1].x) / 2;
+            const my = (points[i].y + points[i + 1].y) / 2;
+            this.createAddHandle(mx, my, conn, i);
+          }
+        }
       }
+    }
+    createHandle(x, y, conn, idx) {
+      const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      handle.setAttribute("cx", x);
+      handle.setAttribute("cy", y);
+      handle.setAttribute("r", "6");
+      handle.setAttribute("fill", "#fff");
+      handle.setAttribute("stroke", conn.color);
+      handle.setAttribute("stroke-width", "2");
+      handle.style.cursor = "move";
+      handle.style.pointerEvents = "auto";
       handle.onmousedown = (e) => {
         e.stopPropagation();
-        if (this.selectedWire !== conn) this.selectWire(conn);
-        this.startWireDrag(e, conn, handle);
+        this.startWireDrag(e, conn, idx);
+      };
+      handle.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (idx >= 0) {
+          conn.waypoints.splice(idx, 1);
+          this.updateWires();
+        }
+      };
+      this.svgLayer.appendChild(handle);
+    }
+    createAddHandle(x, y, conn, afterIdx) {
+      const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      handle.setAttribute("cx", x);
+      handle.setAttribute("cy", y);
+      handle.setAttribute("r", "4");
+      handle.setAttribute("fill", conn.color);
+      handle.setAttribute("fill-opacity", "0.2");
+      handle.setAttribute("stroke", "#fff");
+      handle.setAttribute("stroke-width", "1");
+      handle.style.cursor = "pointer";
+      handle.style.pointerEvents = "auto";
+      handle.onmousedown = (e) => {
+        e.stopPropagation();
+        conn.waypoints.splice(afterIdx + 1, 0, { x, y });
+        this.updateWires();
+        this.startWireDrag(e, conn, afterIdx + 1);
       };
       this.svgLayer.appendChild(handle);
     }
