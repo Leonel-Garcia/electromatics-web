@@ -655,14 +655,15 @@
       el.style.height = "30px";
       el.style.display = "flex";
       el.style.justifyContent = "center";
+      const darkColor = "#000000";
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30" style="overflow:visible; pointer-events:none;">
-            <!-- Vertical Connection -->
-            <line x1="15" y1="0" x2="15" y2="12" stroke="#000000" stroke-width="2"/>
-            <!-- 3 Horizontal Lines -->
-            <line x1="5" y1="12" x2="25" y2="12" stroke="#000000" stroke-width="2"/>
-            <line x1="10" y1="17" x2="20" y2="17" stroke="#000000" stroke-width="2"/>
-            <line x1="13" y1="22" x2="17" y2="22" stroke="#000000" stroke-width="2"/>
+            <!-- Connection Line -->
+            <line x1="15" y1="0" x2="15" y2="12" stroke="${darkColor}" stroke-width="2.5"/>
+            <!-- 3 Horizontal Lines (Triangle shape) -->
+            <line x1="5" y1="12" x2="25" y2="12" stroke="${darkColor}" stroke-width="2.5"/>
+            <line x1="10" y1="17" x2="20" y2="17" stroke="${darkColor}" stroke-width="2"/>
+            <line x1="13" y1="22" x2="17" y2="22" stroke="${darkColor}" stroke-width="1.5"/>
         </svg>
       `;
       this.addLeg(el, 14, 0, "gnd");

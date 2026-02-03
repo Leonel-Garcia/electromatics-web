@@ -490,8 +490,8 @@ export class ChipFactory {
       el.style.justifyContent = 'center';
       
       // Standard Ground Symbol (SVG)
-      // Usamos un color oscuro (#1a1a1a) para que resalte sobre el breadboard blanco
-      const darkColor = '#1a1a1a';
+      // Usamos un color NEGRO PURO (#000000) para que resalte sobre el breadboard blanco
+      const darkColor = '#000000';
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30" style="overflow:visible; pointer-events:none;">
             <!-- Connection Line -->
