@@ -651,19 +651,22 @@
       return el;
     }
     createGround(comp, el) {
+      console.log("Rendering Ground v1.8");
       el.style.width = "30px";
       el.style.height = "30px";
       el.style.display = "flex";
       el.style.justifyContent = "center";
-      const darkColor = "#1a237e";
+      el.style.background = "#ffff00";
+      el.style.border = "1px solid black";
+      const darkColor = "#000000";
       el.innerHTML = `
-        <svg width="30" height="30" viewBox="0 0 30 30" style="overflow:visible; pointer-events:none;">
+        <svg width="30" height="30" viewBox="0 0 30 30" style="overflow:visible !important; pointer-events:none !important; filter: none !important;">
             <!-- Connection Line -->
-            <line x1="15" y1="0" x2="15" y2="12" style="stroke:${darkColor} !important; stroke-width:3px !important;"/>
+            <line x1="15" y1="0" x2="15" y2="12" style="stroke:${darkColor} !important; stroke-width:4px !important;" />
             <!-- 3 Horizontal Lines (Triangle shape) -->
-            <line x1="5" y1="12" x2="25" y2="12" style="stroke:${darkColor} !important; stroke-width:3px !important;"/>
-            <line x1="10" y1="17" x2="20" y2="17" style="stroke:${darkColor} !important; stroke-width:2.5px !important;"/>
-            <line x1="13" y1="22" x2="17" y2="22" style="stroke:${darkColor} !important; stroke-width:2px !important;"/>
+            <line x1="5" y1="12" x2="25" y2="12" style="stroke:${darkColor} !important; stroke-width:4px !important;" />
+            <line x1="10" y1="17" x2="20" y2="17" style="stroke:${darkColor} !important; stroke-width:3px !important;" />
+            <line x1="13" y1="22" x2="17" y2="22" style="stroke:${darkColor} !important; stroke-width:2px !important;" />
         </svg>
       `;
       this.addLeg(el, 14, 0, "gnd");
