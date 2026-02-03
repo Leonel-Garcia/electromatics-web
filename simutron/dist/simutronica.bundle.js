@@ -655,7 +655,7 @@
       el.style.height = "30px";
       el.style.display = "flex";
       el.style.justifyContent = "center";
-      const darkColor = "#000000";
+      const darkColor = "#1a237e";
       el.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 30 30" style="overflow:visible; pointer-events:none;">
             <!-- Connection Line -->
