@@ -484,14 +484,13 @@ export class ChipFactory {
   }
   
   createGround(comp, el) {
-      console.log('Rendering Ground v1.9 (Black Path)');
-      
       el.style.width = '30px'; 
       el.style.height = '30px';
       el.style.display = 'flex';
       el.style.justifyContent = 'center';
       el.style.background = 'transparent';
       el.style.border = 'none';
+      el.style.colorScheme = 'light';
       
       // Símbolo de Tierra Estándar (Triángulo de líneas)
       // Usamos un solo path para asegurar que todo tenga el mismo estilo
