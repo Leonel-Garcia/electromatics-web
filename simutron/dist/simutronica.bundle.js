@@ -1205,6 +1205,8 @@
       this.startPin = null;
       this.wiringPoints = [];
       this.currentMousePos = { x: 0, y: 0 };
+      this.history = [];
+      this.maxHistory = 30;
       this.onComponentSelected = null;
       this.onComponentDeselected = null;
       this.componentMap = /* @__PURE__ */ new Map();
@@ -1236,11 +1238,18 @@
     }
     onKeyDown(e) {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.ctrlKey && e.key === "z") {
+        this.undo();
+        e.preventDefault();
+        return;
+      }
       if (e.key === "Delete" || e.key === "Backspace") {
         if (this.selectedWire) {
+          this.saveHistory();
           this.deleteSelectedWire();
           e.preventDefault();
         } else if (this.selectedComponent) {
+          this.saveHistory();
           const { comp, el } = this.selectedComponent;
           this.deleteComponent(comp, el);
           this.deselectComponent();
@@ -1251,6 +1260,124 @@
         this.deselectWire();
         this.deselectComponent();
       }
+    }
+    saveHistory() {
+      const snapshot = {
+        components: Array.from(this.engine.components).map((comp) => ({
+          type: comp.metadata.name,
+          id: comp.id,
+          x: comp.x,
+          y: comp.y,
+          rotation: comp.rotation || 0,
+          properties: {
+            resistance: comp.resistance,
+            capacitance: comp.capacitance,
+            maxVoltage: comp.maxVoltage,
+            voltage: comp.voltage,
+            color: comp.color
+          }
+        })),
+        wires: this.connections.map((conn) => ({
+          p1: this.serializeEndpointForHistory(conn.p1),
+          p2: this.serializeEndpointForHistory(conn.p2),
+          color: conn.color,
+          waypoints: (conn.waypoints || []).map((p) => ({ ...p }))
+        }))
+      };
+      this.history.push(JSON.stringify(snapshot));
+      if (this.history.length > this.maxHistory) {
+        this.history.shift();
+      }
+    }
+    serializeEndpointForHistory(ep) {
+      if (ep.type === "pin") {
+        return { type: "pin", compId: ep.comp.id, pinId: ep.pin.id };
+      } else {
+        return { type: "hole", r: ep.r, c: ep.c };
+      }
+    }
+    undo() {
+      if (this.history.length === 0) return;
+      const lastState = JSON.parse(this.history.pop());
+      this.applyHistoryState(lastState);
+    }
+    applyHistoryState(state) {
+      this.engine.stop();
+      const componentsToRemove = Array.from(this.engine.components);
+      componentsToRemove.forEach((comp) => {
+        let el = null;
+        for (const [vEl, c] of this.componentMap.entries()) {
+          if (c === comp) {
+            el = vEl;
+            break;
+          }
+        }
+        this.deleteComponentInternal(comp, el);
+      });
+      this.connections = [];
+      const compClasses = window.app.compClasses;
+      const compMap = /* @__PURE__ */ new Map();
+      state.components.forEach((cData) => {
+        const CompClass = compClasses[cData.type];
+        if (CompClass) {
+          const comp = new CompClass(cData.id);
+          comp.x = cData.x;
+          comp.y = cData.y;
+          comp.rotation = cData.rotation;
+          if (cData.properties) {
+            Object.assign(comp, cData.properties);
+          }
+          this.engine.addComponent(comp);
+          const el = window.app.factory.createVisual(comp);
+          document.getElementById("component-layer").appendChild(el);
+          this.registerComponent(comp, el);
+          el.style.left = `${comp.x}px`;
+          el.style.top = `${comp.y}px`;
+          if (comp.rotation) el.style.transform = `rotate(${comp.rotation}deg)`;
+          compMap.set(comp.id, comp);
+        }
+      });
+      state.wires.forEach((wData) => {
+        const p1 = this.deserializeEndpointForHistory(wData.p1, compMap);
+        const p2 = this.deserializeEndpointForHistory(wData.p2, compMap);
+        if (p1 && p2) {
+          this.connections.push({
+            p1,
+            p2,
+            color: wData.color,
+            waypoints: wData.waypoints || []
+          });
+        }
+      });
+      this.rebuildTopology();
+      this.updateWires();
+    }
+    deserializeEndpointForHistory(epData, compMap) {
+      if (epData.type === "pin") {
+        const comp = compMap.get(epData.compId);
+        if (comp) {
+          const pin = comp.getPin(epData.pinId);
+          return { type: "pin", comp, pin };
+        }
+      } else {
+        const coords = this.getHoleCoords(epData.r, epData.c);
+        return {
+          type: "hole",
+          r: epData.r,
+          c: epData.c,
+          x: coords.x,
+          y: coords.y,
+          net: this.breadboard.getNetAt(epData.r, epData.c)
+        };
+      }
+      return null;
+    }
+    deleteComponentInternal(comp, el) {
+      if (el) el.remove();
+      const probes = document.querySelectorAll(`.sim-probe-tip[data-comp-id="${comp.id}"]`);
+      probes.forEach((p) => p.remove());
+      this.engine.removeComponent(comp);
+      this.componentMap.delete(el);
     }
     createWireToolbar() {
       const toolbar = document.createElement("div");
@@ -1523,6 +1650,7 @@
       }
     }
     startDrag(e, comp, el) {
+      this.saveHistory();
       this.dragItem = { comp, el };
       const rect = el.getBoundingClientRect();
       this.dragOffset.x = e.clientX - rect.left;
@@ -1657,6 +1785,7 @@
         this.isWiring = false;
         return;
       }
+      this.saveHistory();
       const startEp = this.wiringStart;
       this.wiringStart = null;
       const waypoints = [...this.wiringPoints];
