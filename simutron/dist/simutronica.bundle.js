@@ -1417,32 +1417,41 @@
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       if (this.isWireMode) {
-        const hole = this.breadboard.getHoleAt(x, y);
-        if (hole) {
-          this.deselectWire();
-          const coords = this.getHoleCoords(hole.r, hole.c);
-          this.isWiring = true;
-          this.wiringPoints = [];
-          this.wiringStart = {
-            type: "hole",
-            r: hole.r,
-            c: hole.c,
-            x: coords.x,
-            y: coords.y,
-            net: this.breadboard.getNetAt(hole.r, hole.c)
-          };
-          this.currentMousePos = { x, y };
-          this.updateWires();
-          e.stopPropagation();
-        }
-      } else if (this.isWiring) {
-        const rect2 = this.container.getBoundingClientRect();
-        const x2 = e.clientX - rect2.left;
-        const y2 = e.clientY - rect2.top;
-        const hole = this.breadboard.getHoleAt(x2, y2);
-        if (!hole) {
-          this.wiringPoints.push({ x: x2, y: y2 });
-          this.updateWires();
+        if (!this.isWiring) {
+          const hole = this.breadboard.getHoleAt(x, y);
+          if (hole) {
+            this.deselectWire();
+            const coords = this.getHoleCoords(hole.r, hole.c);
+            this.isWiring = true;
+            this.wiringPoints = [];
+            this.wiringStart = {
+              type: "hole",
+              r: hole.r,
+              c: hole.c,
+              x: coords.x,
+              y: coords.y,
+              net: this.breadboard.getNetAt(hole.r, hole.c)
+            };
+            this.currentMousePos = { x, y };
+            this.updateWires();
+            e.stopPropagation();
+          }
+        } else {
+          const hole = this.breadboard.getHoleAt(x, y);
+          if (hole) {
+            const coords = this.getHoleCoords(hole.r, hole.c);
+            this.finishWiring({
+              type: "hole",
+              r: hole.r,
+              c: hole.c,
+              x: coords.x,
+              y: coords.y,
+              net: this.breadboard.getNetAt(hole.r, hole.c)
+            });
+          } else {
+            this.wiringPoints.push({ x, y });
+            this.updateWires();
+          }
           e.stopPropagation();
         }
       } else {
@@ -1626,25 +1635,6 @@
       if (this.wireDrag) {
         this.wireDrag = null;
         this.updateWires();
-      }
-      if (this.isWiring) {
-        const rect = this.container.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const hole = this.breadboard.getHoleAt(x, y);
-        if (hole) {
-          const coords = this.getHoleCoords(hole.r, hole.c);
-          this.finishWiring({
-            type: "hole",
-            r: hole.r,
-            c: hole.c,
-            x: coords.x,
-            y: coords.y,
-            net: this.breadboard.getNetAt(hole.r, hole.c)
-          });
-        } else {
-          this.cancelWiring();
-        }
       }
       if (this.isWireMode) {
         this.container.style.cursor = "crosshair";
@@ -2262,7 +2252,7 @@
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", d);
       path.setAttribute("stroke", color);
-      path.setAttribute("stroke-width", isSelected ? "6" : "4");
+      path.setAttribute("stroke-width", isSelected ? "4" : "2.5");
       path.setAttribute("fill", "none");
       path.setAttribute("stroke-linecap", "round");
       path.setAttribute("stroke-linejoin", "round");
