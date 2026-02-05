@@ -240,6 +240,26 @@ const ASSET_PATHS = {
     'dahlander-motor': 'img/simulators/control-panel/dahlander-motor.png?v=7'
 };
 
+/**
+ * Calcula la dirección de rotación de un sistema trifásico.
+ * Secuencia Positiva (1): L1-L2-L3, L2-L3-L1, L3-L1-L2
+ * Secuencia Negativa (-1): L1-L3-L2, L3-L2-L1, L2-L1-L3
+ */
+function getThreePhaseDirection(p1, p2, p3) {
+    if (!p1 || !p2 || !p3) return 1;
+    const seq = ['L1', 'L2', 'L3'];
+    // Normalizar nombres si es necesario (ej: quitar prefijos si los hubiera)
+    const findPhase = (p) => seq.find(s => p.includes(s));
+    const n1 = findPhase(p1), n2 = findPhase(p2), n3 = findPhase(p3);
+    
+    const i1 = seq.indexOf(n1), i2 = seq.indexOf(n2), i3 = seq.indexOf(n3);
+    if (i1 === -1 || i2 === -1 || i3 === -1) return 1;
+
+    // La dirección se invierte si cambiamos dos fases cualquiera
+    const d = (i2 - i1 + 3) % 3;
+    return (d === 1) ? 1 : -1;
+}
+
 // ... (Rest of file) ...
 
 
@@ -2040,12 +2060,7 @@ class DahlanderMotor extends Component {
     }
 
     getDirection(p1, p2, p3) {
-        if (!p1 || !p2 || !p3) return 1;
-        const seq = ['L1', 'L2', 'L3'];
-        const i1 = seq.indexOf(p1), i2 = seq.indexOf(p2), i3 = seq.indexOf(p3);
-        if (i1 === -1 || i2 === -1 || i3 === -1) return 1;
-        const d1 = (i2 - i1 + 3) % 3;
-        return (d1 === 1) ? 1 : -1;
+        return getThreePhaseDirection(p1, p2, p3);
     }
 
     draw(ctx) {
@@ -4081,9 +4096,7 @@ function solveCircuit() {
                         m.state.running = true;
                         circuitChanged = true; // Changed to 'circuitChanged' to match existing pattern
                     }
-                    if (uPhase==='L1' && vPhase==='L2') m.state.direction = 1;
-                    else if (uPhase==='L1' && vPhase==='L3') m.state.direction = -1;
-                    else m.state.direction = 1;
+                    m.state.direction = getThreePhaseDirection(uPhase, vPhase, wPhase);
 
                     // Corriente -> Térmicos y Guardamotores
                     components.filter(c => (c instanceof ThermalRelay || c instanceof Guardamotor) && !c.state.tripped).forEach(r => {
@@ -4114,28 +4127,20 @@ function solveCircuit() {
                  
                  if (validPower) {
                      // Check Star: U2, V2, W2 shorted together
-                     // We check if they share a common potential derived from each other?
-                     // Easier: check if they are all connected to the SAME node set in our 'nodes' map?
-                     // 'nodes' map stores voltage potentials. If shorted, they might have specific potential?
-                     // Actually, if they are shorted, they share connectivity.
-                     // But 'nodes' calculation propagates voltage. If U2 is connected to V2, then V2 gets U1's potential!
-                     // So in Star (shorted), U2, V2, W2 will ALL have ALL 3 PHASES (short circuit mixing).
-                     // If we detect MIXED phases on U2/V2/W2, that's a Star Point!
-                     
                      if (hasU2 && hasU2.size > 1 && hasV2 && hasV2.size > 1 && hasW2 && hasW2.size > 1) {
-                         // They are mixing phases -> Short circuit at Neutral Point -> STAR connection working!
                          connection = 'Star';
                          running = true;
                      } 
                      // Check Delta: U1-W2, V1-U2, W1-V2
-                     // U1(L1) connected to W2. W2 has L1.
-                     // V1(L2) connected to U2. U2 has L2.
-                     // W1(L3) connected to V2. V2 has L3.
                      else if (hasW2 && [...hasW2].includes(pU) && 
                               hasU2 && [...hasU2].includes(pV) &&
                               hasV2 && [...hasV2].includes(pW)) {
                          connection = 'Delta';
                          running = true;
+                     }
+
+                     if (running) {
+                         direction = getThreePhaseDirection(pU, pV, pW);
                      }
                  }
              }
@@ -4143,7 +4148,7 @@ function solveCircuit() {
              if (m.state.running !== running || m.state.connection !== connection) {
                  m.state.running = running;
                  m.state.connection = connection;
-                 m.state.direction = 1; // Default
+                 m.state.direction = direction;
                  circuitChanged = true;
              }
         });
