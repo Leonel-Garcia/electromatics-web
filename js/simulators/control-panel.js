@@ -1042,7 +1042,7 @@ class Multimeter {
 class Breaker extends Component {
     constructor(x, y) {
         super('breaker', x, y, 100, 120);
-        this.state = { closed: false };
+        this.state = { closed: false, tripped: false };
         // Pines superiores (Entrada) e inferiores (Salida)
         this.terminals = {
             'L1': {x: 20, y: 10, label: 'L1'}, 'L2': {x: 52, y: 10, label: 'L2'}, 'L3': {x: 84, y: 10, label: 'L3'},
@@ -1056,6 +1056,23 @@ class Breaker extends Component {
             ctx.shadowBlur = 15;
             ctx.drawImage(assets[this.type], this.x, this.y, this.width, this.height);
             ctx.shadowBlur = 0;
+
+            if (this.state.tripped) {
+                // Efecto de advertencia roja sobre la imagen
+                ctx.save();
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+                ctx.fillRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                
+                // Texto de TRIP
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 12px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('TRIPPED', this.x + this.width/2, this.y + this.height - 10);
+                ctx.restore();
+            }
         } else {
             // Fallback vectorial
             ctx.fillStyle = '#475569';
@@ -1065,8 +1082,8 @@ class Breaker extends Component {
         // Indicador LED de estado (pequeño, no cubre la imagen)
         const ledX = this.x + this.width - 15;
         const ledY = this.y + 15;
-        ctx.fillStyle = this.state.closed ? '#22c55e' : '#ef4444';
-        ctx.shadowColor = this.state.closed ? '#22c55e' : '#ef4444';
+        ctx.fillStyle = (this.state.tripped || !this.state.closed) ? '#ef4444' : '#22c55e';
+        ctx.shadowColor = ctx.fillStyle;
         ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.arc(ledX, ledY, 6, 0, Math.PI * 2);
@@ -1078,7 +1095,13 @@ class Breaker extends Component {
     }
     
     
-    toggle() { this.state.closed = !this.state.closed; }
+    toggle() { 
+        if (this.state.tripped) {
+            this.state.tripped = false;
+        } else {
+            this.state.closed = !this.state.closed; 
+        }
+    }
 }
 
 class Contactor extends Component {
@@ -3762,6 +3785,11 @@ function solveCircuit() {
             setNode(p, 'L', 'L1'); setNode(p, 'N', 'N');
         });
 
+        // ==========================================
+        // DETECCIÓN DE CORTOCIRCUITO (Pre-check)
+        // ==========================================
+        let shortCircuitDetected = false;
+
         // 1.2 Propagación Iterativa (Solo voltajes, sin cambiar estados de switches)
         for(let iter=0; iter<10; iter++) {
             let voltageChanged = false;
@@ -3770,7 +3798,7 @@ function solveCircuit() {
             // A. Componentes Interiores (Según estado ACTUAL de switches)
             components.forEach(c => {
                 if (c instanceof Breaker) {
-                    if (c.state.closed) {
+                    if (c.state.closed && !c.state.tripped) {
                         ['L1','L2','L3'].forEach((inT, i) => {
                             const outT = ['T1','T2','T3'][i];
                             if (nodes[`${c.id}_${inT}`]) nodes[`${c.id}_${inT}`].forEach(p => setNode(c, outT, p));
@@ -3990,8 +4018,28 @@ function solveCircuit() {
 
             // Check convergence
             const newNodesCount = Object.values(nodes).reduce((acc, s) => acc + s.size, 0);
+            
+            // Verificación de Cortocircuito durante la propagación
+            for (const key in nodes) {
+                const phases = [...nodes[key]];
+                const activePhases = phases.filter(p => ['L1', 'L2', 'L3', 'N', 'L'].includes(p));
+                if (activePhases.length > 1) {
+                    // Si hay mezcla de potenciales distintos (L1-L2, L1-N, etc)
+                    if (new Set(activePhases.map(p => p === 'L' ? 'L1' : p)).size > 1) {
+                        shortCircuitDetected = true;
+                        break;
+                    }
+                }
+            }
+
+            if (shortCircuitDetected) break;
             if (newNodesCount > prevNodesCount) voltageChanged = true;
             if (!voltageChanged) break; // Voltajes estables
+        }
+
+        if (shortCircuitDetected) {
+            handleShortCircuit();
+            break; // Salir del solver para procesar el cambio
         }
 
         // ==========================================
@@ -4279,6 +4327,80 @@ function solveCircuit() {
         });
         
         stabilityLoop++;
+    }
+}
+
+function handleShortCircuit() {
+    console.warn("!!! CORTOCIRCUITO DETECTADO !!!");
+    
+    // 1. Disparar todos los elementos de protección cerrados
+    components.forEach(c => {
+        if (c instanceof Breaker && c.state.closed) {
+            c.state.closed = false;
+            c.state.tripped = true;
+        }
+        if (c instanceof Guardamotor && c.state.closed) {
+            c.state.closed = false;
+            c.state.tripped = true;
+        }
+    });
+
+    // 2. Mostrar advertencia visual
+    showShortCircuitWarning();
+}
+
+function showShortCircuitWarning() {
+    let warning = document.getElementById('short-circuit-warning');
+    if (!warning) {
+        warning = document.createElement('div');
+        warning.id = 'short-circuit-warning';
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideInDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        `;
+        
+        // Agregar animación si no existe
+        if (!document.getElementById('sim-animations')) {
+            const style = document.createElement('style');
+            style.id = 'sim-animations';
+            style.innerHTML = `
+                @keyframes slideInDown {
+                    from { transform: translate(-50%, -100%); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        warning.innerHTML = `
+            <i class="fas fa-triangle-exclamation fa-2x"></i>
+            <div style="display:flex; flex-direction:column;">
+                <span>¡CORTOCIRCUITO DETECTADO!</span>
+                <span style="font-size:12px; opacity:0.9; font-weight:400;">Protecciones disparadas. Revise el cableado.</span>
+            </div>
+            <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:10px;">OK</button>
+        `;
+        document.body.appendChild(warning);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (warning.parentElement) warning.remove();
+        }, 5000);
     }
 }
 
