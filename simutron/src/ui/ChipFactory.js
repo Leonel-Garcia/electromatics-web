@@ -768,7 +768,7 @@ export class ChipFactory {
         ctx.beginPath();
         comp.channels.ch1.forEach((v, i) => {
             const x = (i / comp.bufferSize) * 140;
-            const y = 35 - (v * (10 / comp.voltsPerDiv[0])); 
+            const y = 35 - (v * (14 / comp.voltsPerDiv[0])) - (comp.offsets[0] * 14); 
             if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
@@ -778,7 +778,7 @@ export class ChipFactory {
         ctx.beginPath();
         comp.channels.ch2.forEach((v, i) => {
             const x = (i / comp.bufferSize) * 140;
-            const y = 35 - (v * (10 / comp.voltsPerDiv[1]));
+            const y = 35 - (v * (14 / comp.voltsPerDiv[1])) - (comp.offsets[1] * 14);
             if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
@@ -960,10 +960,22 @@ export class ChipFactory {
       return { div, display };
     };
 
-    const timeCtrl = createControl('TIMEBASE (ms/div)', comp.timebase, 
-      () => { comp.timebase = Math.max(0.1, comp.timebase - 0.1); timeCtrl.display.textContent = comp.timebase.toFixed(1); },
-      () => { comp.timebase += 0.1; timeCtrl.display.textContent = comp.timebase.toFixed(1); }
+    const timeCtrl = createControl('TIMEBASE (s)', comp.timebase.toFixed(3), 
+      () => { comp.timebase = Math.max(0.001, comp.timebase - 0.05); timeCtrl.display.textContent = comp.timebase.toFixed(3); },
+      () => { comp.timebase += 0.05; timeCtrl.display.textContent = comp.timebase.toFixed(3); }
     );
+    // Add fine control buttons next to timeCtrl
+    const fineTimeRow = document.createElement('div');
+    fineTimeRow.style.cssText = 'display:flex; justify-content:center; gap:5px; margin-top:5px;';
+    const btnFineDec = document.createElement('button');
+    btnFineDec.textContent = 'Fine -'; btnFineDec.style.cssText = 'font-size:10px; padding:2px 5px; background:#e67e22; color:#fff; border:none; border-radius:3px; cursor:pointer;';
+    btnFineDec.onclick = () => { comp.timebase = Math.max(0.001, comp.timebase - 0.001); timeCtrl.display.textContent = comp.timebase.toFixed(3); };
+    const btnFineInc = document.createElement('button');
+    btnFineInc.textContent = 'Fine +'; btnFineInc.style.cssText = 'font-size:10px; padding:2px 5px; background:#f1c40f; color:#fff; border:none; border-radius:3px; cursor:pointer;';
+    btnFineInc.onclick = () => { comp.timebase += 0.001; timeCtrl.display.textContent = comp.timebase.toFixed(3); };
+    fineTimeRow.appendChild(btnFineDec);
+    fineTimeRow.appendChild(btnFineInc);
+    timeCtrl.div.appendChild(fineTimeRow);
     controls.appendChild(timeCtrl.div);
 
     const ch1Ctrl = createControl('CH1 V/DIV', comp.voltsPerDiv[0], 
@@ -973,10 +985,23 @@ export class ChipFactory {
     controls.appendChild(ch1Ctrl.div);
 
     const ch2Ctrl = createControl('CH2 V/DIV', comp.voltsPerDiv[1], 
-      () => { comp.voltsPerDiv[1] = Math.max(0.5, comp.voltsPerDiv[1] - 0.5); ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1); },
-      () => { comp.voltsPerDiv[1] += 0.5; ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1); }
+      () => { comp.voltsPerDiv[1] = Math.max(0.1, comp.voltsPerDiv[1] - 0.1); ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1); },
+      () => { comp.voltsPerDiv[1] += 0.1; ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1); }
     );
     controls.appendChild(ch2Ctrl.div);
+
+    // Vertical Offsets
+    const off1Ctrl = createControl('CH1 OFFSET', comp.offsets[0],
+      () => { comp.offsets[0] = Math.max(-4, comp.offsets[0] - 0.1); off1Ctrl.display.textContent = comp.offsets[0].toFixed(1); },
+      () => { comp.offsets[0] = Math.min(4, comp.offsets[0] + 0.1); off1Ctrl.display.textContent = comp.offsets[0].toFixed(1); }
+    );
+    controls.appendChild(off1Ctrl.div);
+
+    const off2Ctrl = createControl('CH2 OFFSET', comp.offsets[1],
+      () => { comp.offsets[1] = Math.max(-4, comp.offsets[1] - 0.1); off2Ctrl.display.textContent = comp.offsets[1].toFixed(1); },
+      () => { comp.offsets[1] = Math.min(4, comp.offsets[1] + 0.1); off2Ctrl.display.textContent = comp.offsets[1].toFixed(1); }
+    );
+    controls.appendChild(off2Ctrl.div);
 
     container.appendChild(controls);
 
@@ -1031,7 +1056,7 @@ export class ChipFactory {
         mCtx.beginPath();
         comp.channels.ch1.forEach((v, i) => {
             const x = (i / comp.bufferSize) * w;
-            const y = (h/2) - (v * (h / (8 * comp.voltsPerDiv[0])));
+            const y = (h/2) - (v * (h / (8 * comp.voltsPerDiv[0]))) - (comp.offsets[0] * (h/8));
             if (i === 0) mCtx.moveTo(x, y); else mCtx.lineTo(x, y);
         });
         mCtx.stroke();
@@ -1041,7 +1066,7 @@ export class ChipFactory {
         mCtx.beginPath();
         comp.channels.ch2.forEach((v, i) => {
             const x = (i / comp.bufferSize) * w;
-            const y = (h/2) - (v * (h / (8 * comp.voltsPerDiv[1])));
+            const y = (h/2) - (v * (h / (8 * comp.voltsPerDiv[1]))) - (comp.offsets[1] * (h/8));
             if (i === 0) mCtx.moveTo(x, y); else mCtx.lineTo(x, y);
         });
         mCtx.stroke();
