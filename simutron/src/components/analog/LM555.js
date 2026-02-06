@@ -42,6 +42,15 @@ export class LM555 extends Component {
       return this.getPin(this.pinMap[name]);
   }
 
+  // Override getPin to support legacy wire connections (e.g. 'vcc' -> 'p8')
+  getPin(id) {
+    // If id is a semantic name in our map, translate it
+    if (this.pinMap[id]) {
+        return super.getPin(this.pinMap[id]);
+    }
+    return super.getPin(id);
+  }
+
   update(dt) {
     const pinTrig = this.getSemPin('trig');
     const pinThresh = this.getSemPin('thresh');
