@@ -3186,7 +3186,9 @@
       const pinDisch = this.getPin("disch");
       const pinVcc = this.getPin("vcc");
       const pinGnd = this.getPin("gnd");
-      if (!pinVcc.net || !pinGnd.net) return;
+      if (!pinVcc.net || !pinGnd.net) {
+        return;
+      }
       const vcc = pinVcc.getVoltage();
       if (vcc < 2) return;
       let C = 0;
@@ -3242,11 +3244,11 @@
       if (this.vCap !== void 0) {
         const pinTrig = this.getPin("trig");
         const pinThresh = this.getPin("thresh");
-        if (pinTrig.net && !pinTrig.net.isFixed) {
+        if (pinTrig.net) {
           pinTrig.net.voltage = this.vCap;
           pinTrig.net.isFixed = true;
         }
-        if (pinThresh.net && !pinThresh.net.isFixed) {
+        if (pinThresh.net) {
           pinThresh.net.voltage = this.vCap;
           pinThresh.net.isFixed = true;
         }
