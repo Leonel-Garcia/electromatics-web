@@ -832,7 +832,7 @@
       el.style.zIndex = "50";
       const header = document.createElement("div");
       header.style.cssText = "height:20px; background:#2c3e50; border-bottom:1px solid #7f8c8d; display:flex; justify-content:space-between; align-items:center; padding:0 8px; border-radius:4px 4px 0 0;";
-      header.innerHTML = '<span style="color:#bdc3c7; font-size:10px; font-weight:bold; font-family:sans-serif;">OSCILLOSCOPE PRO</span>';
+      header.innerHTML = '<span style="color:#00ff00; font-size:10px; font-weight:bold; font-family:sans-serif;">OSCILLOSCOPE LIVE V2</span>';
       const maxBtn = document.createElement("button");
       maxBtn.innerHTML = "⛶";
       maxBtn.style.cssText = "background:none; border:none; color:#fff; cursor:pointer; font-size:14px; padding:0;";
@@ -843,24 +843,116 @@
       };
       header.appendChild(maxBtn);
       el.appendChild(header);
+      const screenWrap = document.createElement("div");
+      screenWrap.style.position = "relative";
+      screenWrap.style.margin = "6px auto";
+      screenWrap.style.width = "140px";
+      screenWrap.style.height = "70px";
+      el.appendChild(screenWrap);
       const screen = document.createElement("canvas");
       screen.id = `scope-screen-${comp.id}`;
       screen.width = 140;
       screen.height = 70;
-      screen.style.cssText = "background:#050505; margin:6px auto; display:block; border-radius:4px; border:2px solid #1abc9c; box-shadow:inset 0 0 10px #000;";
-      el.appendChild(screen);
+      screen.style.cssText = "background:#050505; width:100%; height:100%; display:block; border-radius:4px; border:2px solid #1abc9c; box-shadow:inset 0 0 10px #000; cursor:ns-resize;";
+      screenWrap.appendChild(screen);
+      let isDragging = false;
+      let startY = 0;
+      let initialOffset1 = 0;
+      let initialOffset2 = 0;
+      screen.onmousedown = (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        e.preventDefault();
+        isDragging = true;
+        startY = e.clientY;
+        initialOffset1 = comp.offsets[0];
+        initialOffset2 = comp.offsets[1];
+        screen.style.cursor = "grabbing";
+        const onMouseMove = (me) => {
+          if (!isDragging) return;
+          const dy = me.clientY - startY;
+          const sensitivity = 0.05;
+          const delta = dy * sensitivity;
+          if (me.shiftKey) {
+            comp.offsets[1] = initialOffset2 - delta;
+          } else {
+            comp.offsets[0] = initialOffset1 - delta;
+          }
+        };
+        const onMouseUp = () => {
+          isDragging = false;
+          screen.style.cursor = "ns-resize";
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      };
       const controls = document.createElement("div");
       controls.style.cssText = "display:flex; justify-content:space-around; padding:2px 10px;";
-      ["CH1", "CH2", "TIME"].forEach((label) => {
+      const knobConfigs = [
+        { label: "CH1", type: "volt", idx: 0, color: "#f1c40f" },
+        { label: "CH2", type: "volt", idx: 1, color: "#3498db" },
+        { label: "TIME", type: "time", idx: null, color: "#bdc3c7" }
+      ];
+      knobConfigs.forEach((cfg) => {
+        const knobWrap = document.createElement("div");
+        knobWrap.style.cssText = "display:flex; flex-direction:column; align-items:center; cursor:pointer;";
+        knobWrap.title = "Click: Zoom In (-), Right-Click: Zoom Out (+)";
         const knob = document.createElement("div");
-        knob.style.cssText = "width:12px; height:12px; border-radius:50%; background:#7f8c8d; border:1px solid #34495e; box-shadow:1px 1px 2px #000;";
+        knob.style.cssText = `width:14px; height:14px; border-radius:50%; background:${cfg.color}; border:2px solid #2c3e50; box-shadow:1px 1px 3px #000; position:relative;`;
+        const line = document.createElement("div");
+        line.style.cssText = "position:absolute; top:2px; left:5px; width:2px; height:5px; background:#000; transform-origin:bottom center;";
+        knob.appendChild(line);
         const lbl = document.createElement("div");
-        lbl.textContent = label;
-        lbl.style.cssText = "font-size:7px; color:#fff; text-align:center; margin-top:1px;";
-        const wrap = document.createElement("div");
-        wrap.appendChild(knob);
-        wrap.appendChild(lbl);
-        controls.appendChild(wrap);
+        lbl.textContent = cfg.label;
+        lbl.style.cssText = "font-size:7px; color:#bdc3c7; margin-top:2px; font-weight:bold;";
+        knobWrap.appendChild(knob);
+        knobWrap.appendChild(lbl);
+        const updateRotation = () => {
+          let val = 0;
+          if (cfg.type === "time") val = comp.timebase;
+          else val = comp.voltsPerDiv[cfg.idx];
+          const rot = Math.log10(val) * 45 % 360;
+          line.style.transform = `rotate(${rot}deg)`;
+        };
+        updateRotation();
+        knobWrap.onmousedown = (e) => {
+          e.stopPropagation();
+        };
+        knobWrap.onclick = (e) => {
+          e.stopPropagation();
+          if (cfg.type === "time") {
+            comp.timebase = Math.max(1e-3, comp.timebase / 2);
+          } else {
+            comp.voltsPerDiv[cfg.idx] = Math.max(0.1, comp.voltsPerDiv[cfg.idx] / 2);
+          }
+          updateRotation();
+        };
+        knobWrap.oncontextmenu = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (cfg.type === "time") {
+            comp.timebase = Math.min(10, comp.timebase * 2);
+          } else {
+            comp.voltsPerDiv[cfg.idx] = Math.min(50, comp.voltsPerDiv[cfg.idx] * 2);
+          }
+          updateRotation();
+        };
+        knobWrap.onwheel = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const dir = e.deltaY > 0 ? 1 : -1;
+          if (cfg.type === "time") {
+            if (dir > 0) comp.timebase *= 1.2;
+            else comp.timebase /= 1.2;
+          } else {
+            if (dir > 0) comp.voltsPerDiv[cfg.idx] *= 1.2;
+            else comp.voltsPerDiv[cfg.idx] /= 1.2;
+          }
+          updateRotation();
+        };
+        controls.appendChild(knobWrap);
       });
       el.appendChild(controls);
       const connectors = [
@@ -876,7 +968,6 @@
       });
       const ctx = screen.getContext("2d");
       const dpr = window.devicePixelRatio || 1;
-      screen.getBoundingClientRect();
       screen.width = 140 * dpr;
       screen.height = 70 * dpr;
       ctx.scale(dpr, dpr);
@@ -908,7 +999,7 @@
         ctx.beginPath();
         comp.channels.ch1.forEach((v, i) => {
           const x = i / comp.bufferSize * 140;
-          const y = 35 - v * (10 / comp.voltsPerDiv[0]);
+          const y = 35 - v * (14 / comp.voltsPerDiv[0]) - comp.offsets[0] * 14;
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
@@ -918,11 +1009,19 @@
         ctx.beginPath();
         comp.channels.ch2.forEach((v, i) => {
           const x = i / comp.bufferSize * 140;
-          const y = 35 - v * (10 / comp.voltsPerDiv[1]);
+          const y = 35 - v * (14 / comp.voltsPerDiv[1]) - comp.offsets[1] * 14;
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
         ctx.stroke();
+        ctx.font = "8px monospace";
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.shadowBlur = 0;
+        ctx.fillText(`T:${(comp.timebase * 1e3).toFixed(1)}ms`, 2, 8);
+        ctx.fillStyle = "#f1c40f";
+        ctx.fillText(`CH1:${comp.voltsPerDiv[0].toFixed(1)}V`, 2, 65);
+        ctx.fillStyle = "#3498db";
+        ctx.fillText(`CH2:${comp.voltsPerDiv[1].toFixed(1)}V`, 50, 65);
         requestAnimationFrame(plot);
       };
       requestAnimationFrame(plot);
@@ -1071,17 +1170,36 @@
         return { div, display };
       };
       const timeCtrl = createControl(
-        "TIMEBASE (ms/div)",
-        comp.timebase,
+        "TIMEBASE (s)",
+        comp.timebase.toFixed(3),
         () => {
-          comp.timebase = Math.max(0.1, comp.timebase - 0.1);
-          timeCtrl.display.textContent = comp.timebase.toFixed(1);
+          comp.timebase = Math.max(1e-3, comp.timebase - 0.05);
+          timeCtrl.display.textContent = comp.timebase.toFixed(3);
         },
         () => {
-          comp.timebase += 0.1;
-          timeCtrl.display.textContent = comp.timebase.toFixed(1);
+          comp.timebase += 0.05;
+          timeCtrl.display.textContent = comp.timebase.toFixed(3);
         }
       );
+      const fineTimeRow = document.createElement("div");
+      fineTimeRow.style.cssText = "display:flex; justify-content:center; gap:5px; margin-top:5px;";
+      const btnFineDec = document.createElement("button");
+      btnFineDec.textContent = "Fine -";
+      btnFineDec.style.cssText = "font-size:10px; padding:2px 5px; background:#e67e22; color:#fff; border:none; border-radius:3px; cursor:pointer;";
+      btnFineDec.onclick = () => {
+        comp.timebase = Math.max(1e-3, comp.timebase - 1e-3);
+        timeCtrl.display.textContent = comp.timebase.toFixed(3);
+      };
+      const btnFineInc = document.createElement("button");
+      btnFineInc.textContent = "Fine +";
+      btnFineInc.style.cssText = "font-size:10px; padding:2px 5px; background:#f1c40f; color:#fff; border:none; border-radius:3px; cursor:pointer;";
+      btnFineInc.onclick = () => {
+        comp.timebase += 1e-3;
+        timeCtrl.display.textContent = comp.timebase.toFixed(3);
+      };
+      fineTimeRow.appendChild(btnFineDec);
+      fineTimeRow.appendChild(btnFineInc);
+      timeCtrl.div.appendChild(fineTimeRow);
       controls.appendChild(timeCtrl.div);
       const ch1Ctrl = createControl(
         "CH1 V/DIV",
@@ -1100,15 +1218,41 @@
         "CH2 V/DIV",
         comp.voltsPerDiv[1],
         () => {
-          comp.voltsPerDiv[1] = Math.max(0.5, comp.voltsPerDiv[1] - 0.5);
+          comp.voltsPerDiv[1] = Math.max(0.1, comp.voltsPerDiv[1] - 0.1);
           ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1);
         },
         () => {
-          comp.voltsPerDiv[1] += 0.5;
+          comp.voltsPerDiv[1] += 0.1;
           ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1);
         }
       );
       controls.appendChild(ch2Ctrl.div);
+      const off1Ctrl = createControl(
+        "CH1 OFFSET",
+        comp.offsets[0],
+        () => {
+          comp.offsets[0] = Math.max(-4, comp.offsets[0] - 0.1);
+          off1Ctrl.display.textContent = comp.offsets[0].toFixed(1);
+        },
+        () => {
+          comp.offsets[0] = Math.min(4, comp.offsets[0] + 0.1);
+          off1Ctrl.display.textContent = comp.offsets[0].toFixed(1);
+        }
+      );
+      controls.appendChild(off1Ctrl.div);
+      const off2Ctrl = createControl(
+        "CH2 OFFSET",
+        comp.offsets[1],
+        () => {
+          comp.offsets[1] = Math.max(-4, comp.offsets[1] - 0.1);
+          off2Ctrl.display.textContent = comp.offsets[1].toFixed(1);
+        },
+        () => {
+          comp.offsets[1] = Math.min(4, comp.offsets[1] + 0.1);
+          off2Ctrl.display.textContent = comp.offsets[1].toFixed(1);
+        }
+      );
+      controls.appendChild(off2Ctrl.div);
       container.appendChild(controls);
       const close = document.createElement("button");
       close.textContent = "✕ ESC";
@@ -1168,7 +1312,7 @@
         mCtx.beginPath();
         comp.channels.ch1.forEach((v, i) => {
           const x = i / comp.bufferSize * w;
-          const y = h / 2 - v * (h / (8 * comp.voltsPerDiv[0]));
+          const y = h / 2 - v * (h / (8 * comp.voltsPerDiv[0])) - comp.offsets[0] * (h / 8);
           if (i === 0) mCtx.moveTo(x, y);
           else mCtx.lineTo(x, y);
         });
@@ -1178,7 +1322,7 @@
         mCtx.beginPath();
         comp.channels.ch2.forEach((v, i) => {
           const x = i / comp.bufferSize * w;
-          const y = h / 2 - v * (h / (8 * comp.voltsPerDiv[1]));
+          const y = h / 2 - v * (h / (8 * comp.voltsPerDiv[1])) - comp.offsets[1] * (h / 8);
           if (i === 0) mCtx.moveTo(x, y);
           else mCtx.lineTo(x, y);
         });
@@ -3232,8 +3376,9 @@
         ch1: new Array(this.bufferSize).fill(0),
         ch2: new Array(this.bufferSize).fill(0)
       };
-      this.timebase = 0.2;
+      this.timebase = 0.1;
       this.voltsPerDiv = [2, 2];
+      this.offsets = [0, 0];
       this.active = true;
       this.isFloating = true;
       this.probes = {
@@ -3242,6 +3387,12 @@
         gnd: { x: 100, y: 100 }
       };
       this.sampleTimer = 0;
+      this.sweepIndex = 0;
+      this.isSweeping = false;
+      this.lastV1 = 0;
+      this.triggerLevel = 0.1;
+      this.autoTriggerTimer = 0;
+      this.autoTriggerTimeout = 0.5;
       this.metadata = { name: "Osciloscopio", description: "Monitor de señales de alta precisión" };
       this.addPin("ch1", "input");
       this.addPin("ch2", "input");
@@ -3250,16 +3401,33 @@
     update(dt) {
       if (!this.active) return;
       const sampleInterval = this.timebase / this.bufferSize;
+      this.autoTriggerTimer += dt;
       this.sampleTimer += dt;
-      if (this.sampleTimer >= sampleInterval) {
-        this.sampleTimer = 0;
+      let samplesTaken = 0;
+      const maxSamples = this.bufferSize;
+      while (this.sampleTimer >= sampleInterval) {
+        this.sampleTimer -= sampleInterval;
+        samplesTaken++;
+        if (samplesTaken > maxSamples) break;
         const ref = this.getPin("gnd").getVoltage();
         const v1 = this.getPin("ch1").getVoltage() - ref;
         const v2 = this.getPin("ch2").getVoltage() - ref;
-        this.channels.ch1.shift();
-        this.channels.ch1.push(v1);
-        this.channels.ch2.shift();
-        this.channels.ch2.push(v2);
+        if (!this.isSweeping) {
+          if (v1 > this.triggerLevel && this.lastV1 <= this.triggerLevel || this.autoTriggerTimer >= this.autoTriggerTimeout) {
+            this.isSweeping = true;
+            this.sweepIndex = 0;
+            this.autoTriggerTimer = 0;
+          }
+        }
+        if (this.isSweeping) {
+          this.channels.ch1[this.sweepIndex] = v1;
+          this.channels.ch2[this.sweepIndex] = v2;
+          this.sweepIndex++;
+          if (this.sweepIndex >= this.bufferSize) {
+            this.isSweeping = false;
+          }
+        }
+        this.lastV1 = v1;
       }
     }
     computeOutputs() {
@@ -3300,7 +3468,8 @@
         "Signal Generator": SignalGenerator,
         "Voltimetro": Voltmeter,
         "Amperimetro": Ammeter,
-        "Oscilloscope": Oscilloscope
+        "Oscilloscope": Oscilloscope,
+        "Osciloscopio": Oscilloscope
       };
       this.interaction.onComponentSelected = (comp) => {
         if (this.isHelpActive) this.schematicManager.show(comp);
@@ -3484,7 +3653,10 @@
             capacitance: comp.capacitance,
             maxVoltage: comp.maxVoltage,
             voltage: comp.voltage,
-            color: comp.color
+            color: comp.color,
+            timebase: comp.timebase,
+            voltsPerDiv: comp.voltsPerDiv,
+            offsets: comp.offsets
           }
         })),
         wires: this.interaction.connections.map((conn) => ({
@@ -3541,6 +3713,9 @@
             if (cData.properties.maxVoltage) comp.maxVoltage = cData.properties.maxVoltage;
             if (cData.properties.voltage) comp.voltage = cData.properties.voltage;
             if (cData.properties.color) comp.color = cData.properties.color;
+            if (cData.properties.timebase) comp.timebase = cData.properties.timebase;
+            if (cData.properties.voltsPerDiv) comp.voltsPerDiv = cData.properties.voltsPerDiv;
+            if (cData.properties.offsets) comp.offsets = cData.properties.offsets;
           }
           this.engine.addComponent(comp);
           const el = this.factory.createVisual(comp);
