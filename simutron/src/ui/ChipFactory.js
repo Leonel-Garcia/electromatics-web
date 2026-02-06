@@ -684,7 +684,7 @@ export class ChipFactory {
     el.style.border = '4px solid #95a5a6';
     el.style.borderRadius = '8px';
     el.style.boxShadow = '10px 10px 30px rgba(0,0,0,0.6)';
-    el.style.cursor = 'grab';
+    el.style.cursor = 'grab'; // Indicates the whole unit is draggable
     el.style.zIndex = '50';
     
     // Header
@@ -704,28 +704,155 @@ export class ChipFactory {
     header.appendChild(maxBtn);
     el.appendChild(header);
 
-    // Screen
+    // Screen Container
+    const screenWrap = document.createElement('div');
+    screenWrap.style.position = 'relative';
+    screenWrap.style.margin = '6px auto';
+    screenWrap.style.width = '140px';
+    screenWrap.style.height = '70px';
+    el.appendChild(screenWrap);
+
+    // Screen Canvas
     const screen = document.createElement('canvas');
     screen.id = `scope-screen-${comp.id}`;
     screen.width = 140; 
     screen.height = 70;
-    screen.style.cssText = 'background:#050505; margin:6px auto; display:block; border-radius:4px; border:2px solid #1abc9c; box-shadow:inset 0 0 10px #000;';
-    el.appendChild(screen);
+    screen.style.cssText = 'background:#050505; width:100%; height:100%; display:block; border-radius:4px; border:2px solid #1abc9c; box-shadow:inset 0 0 10px #000; cursor:ns-resize;';
+    screenWrap.appendChild(screen);
 
-    // Control panel (Basic decorative knobs)
+    // Screen Interaction for Offset (Vertical Mobility)
+    let isDragging = false;
+    let startY = 0;
+    let initialOffset1 = 0;
+    let initialOffset2 = 0;
+
+    screen.onmousedown = (e) => {
+        if (e.button !== 0) return; // Only left click
+        e.stopPropagation(); // Prevent component drag
+        e.preventDefault();
+        isDragging = true;
+        startY = e.clientY;
+        initialOffset1 = comp.offsets[0];
+        initialOffset2 = comp.offsets[1];
+        screen.style.cursor = 'grabbing';
+        
+        const onMouseMove = (me) => {
+            if (!isDragging) return;
+            const dy = me.clientY - startY;
+            // 1 division is approx 14px in small view
+            const sensitivity = 0.05; // divisions per pixel
+            const delta = dy * sensitivity;
+
+            // Dragging DOWN (positive dy) should move trace DOWN (decrease offset val, since +Offset moves trace UP in plot logic)
+            // Logic check: plot y = center - (v/scale) - (offset * px_per_div)
+            // If offset increases, y decreases (goes UP).
+            // So to move trace DOWN (follow mouse), offset must DECREASE.
+            
+            if (me.shiftKey) {
+                // Control CH2
+                comp.offsets[1] = initialOffset2 - delta;
+            } else {
+                // Control CH1
+                comp.offsets[0] = initialOffset1 - delta;
+            }
+        };
+
+        const onMouseUp = () => {
+            isDragging = false;
+            screen.style.cursor = 'ns-resize';
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    };
+    
+
+    // Control panel (Interactive Knobs)
     const controls = document.createElement('div');
     controls.style.cssText = 'display:flex; justify-content:space-around; padding:2px 10px;';
-    ['CH1', 'CH2', 'TIME'].forEach(label => {
+    
+    const knobConfigs = [
+        { label: 'CH1', type: 'volt', idx: 0, color: '#f1c40f' },
+        { label: 'CH2', type: 'volt', idx: 1, color: '#3498db' },
+        { label: 'TIME', type: 'time', idx: null, color: '#bdc3c7' }
+    ];
+
+    knobConfigs.forEach(cfg => {
+      const knobWrap = document.createElement('div');
+      knobWrap.style.cssText = 'display:flex; flex-direction:column; align-items:center; cursor:pointer;';
+      knobWrap.title = 'Click: Zoom In (-), Right-Click: Zoom Out (+)';
+      
       const knob = document.createElement('div');
-      knob.style.cssText = 'width:12px; height:12px; border-radius:50%; background:#7f8c8d; border:1px solid #34495e; box-shadow:1px 1px 2px #000;';
+      knob.style.cssText = `width:14px; height:14px; border-radius:50%; background:${cfg.color}; border:2px solid #2c3e50; box-shadow:1px 1px 3px #000; position:relative;`;
+      
+      // Indicator line
+      const line = document.createElement('div');
+      line.style.cssText = 'position:absolute; top:2px; left:5px; width:2px; height:5px; background:#000; transform-origin:bottom center;';
+      knob.appendChild(line);
+
       const lbl = document.createElement('div');
-      lbl.textContent = label;
-      lbl.style.cssText = 'font-size:7px; color:#fff; text-align:center; margin-top:1px;';
-      const wrap = document.createElement('div');
-      wrap.appendChild(knob);
-      wrap.appendChild(lbl);
-      controls.appendChild(wrap);
+      lbl.textContent = cfg.label;
+      lbl.style.cssText = 'font-size:7px; color:#bdc3c7; margin-top:2px; font-weight:bold;';
+      
+      knobWrap.appendChild(knob);
+      knobWrap.appendChild(lbl);
+      
+      // Knob Logic
+      const updateRotation = () => {
+          // Visual feedback random rotation just to show interaction or based on value
+          let val = 0;
+          if (cfg.type === 'time') val = comp.timebase;
+          else val = comp.voltsPerDiv[cfg.idx];
+          // Mock rotation based on log value
+          const rot = (Math.log10(val) * 45) % 360;
+          line.style.transform = `rotate(${rot}deg)`;
+      };
+      updateRotation();
+
+      knobWrap.onmousedown = (e) => {
+          e.stopPropagation(); // prevent drag start
+      };
+
+      knobWrap.onclick = (e) => {
+          e.stopPropagation();
+          // Click = Zoom In (Decrease scale value)
+          if (cfg.type === 'time') {
+              comp.timebase = Math.max(0.001, comp.timebase / 2);
+          } else {
+              comp.voltsPerDiv[cfg.idx] = Math.max(0.1, comp.voltsPerDiv[cfg.idx] / 2);
+          }
+          updateRotation();
+      };
+
+      knobWrap.oncontextmenu = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // Right Click = Zoom Out (Increase scale value)
+          if (cfg.type === 'time') {
+              comp.timebase = Math.min(10.0, comp.timebase * 2);
+          } else {
+              comp.voltsPerDiv[cfg.idx] = Math.min(50.0, comp.voltsPerDiv[cfg.idx] * 2);
+          }
+           updateRotation();
+      };
+      // Wheel support
+      knobWrap.onwheel = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const dir = e.deltaY > 0 ? 1 : -1; // >0 scroll down -> Zoom Out
+          if (cfg.type === 'time') {
+              if (dir > 0) comp.timebase *= 1.2; else comp.timebase /= 1.2;
+          } else {
+               if (dir > 0) comp.voltsPerDiv[cfg.idx] *= 1.2; else comp.voltsPerDiv[cfg.idx] /= 1.2;
+          }
+          updateRotation();
+      };
+
+      controls.appendChild(knobWrap);
     });
+    
     el.appendChild(controls);
 
     // Terminal connectors on the body (internal)
@@ -745,7 +872,6 @@ export class ChipFactory {
     // Real-time plotting loop inside the component
     const ctx = screen.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    const rect = screen.getBoundingClientRect();
     screen.width = 140 * dpr;
     screen.height = 70 * dpr;
     ctx.scale(dpr, dpr);
@@ -782,6 +908,16 @@ export class ChipFactory {
             if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
+
+        // Indicator overlaid info
+        ctx.font = '8px monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.shadowBlur = 0;
+        ctx.fillText(`T:${(comp.timebase*1000).toFixed(1)}ms`, 2, 8);
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillText(`CH1:${comp.voltsPerDiv[0].toFixed(1)}V`, 2, 65);
+        ctx.fillStyle = '#3498db';
+        ctx.fillText(`CH2:${comp.voltsPerDiv[1].toFixed(1)}V`, 50, 65);
 
         requestAnimationFrame(plot);
     };
