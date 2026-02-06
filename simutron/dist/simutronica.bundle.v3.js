@@ -3187,6 +3187,7 @@
       const pinVcc = this.getPin("vcc");
       const pinGnd = this.getPin("gnd");
       if (!pinVcc.net || !pinGnd.net) {
+        console.warn("LM555: No Power Nets detected");
         return;
       }
       const vcc = pinVcc.getVoltage();
