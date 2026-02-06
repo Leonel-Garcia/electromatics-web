@@ -3166,6 +3166,7 @@
   class LM555 extends Component {
     constructor(id) {
       super(id);
+      console.log(`LM555 Constructor called for ${id}. Logic Version: 2.5 (Fixed)`);
       this.metadata = { name: "LM555", description: "Precision Timer" };
       this.width = 140;
       this.height = 50;
