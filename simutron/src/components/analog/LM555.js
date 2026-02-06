@@ -3,7 +3,7 @@ import { Component } from '../../core/Component.js';
 export class LM555 extends Component {
   constructor(id) {
     super(id);
-    console.log(`LM555 Constructor called for ${id}. Logic Version: 2.5 (Fixed)`);
+    console.log(`LM555 Constructor called for ${id}. Logic Version: 3.0 (Pins Fixed)`);
     this.metadata = { name: 'LM555', description: 'Precision Timer' };
     this.width = 140; 
     this.height = 50;
@@ -11,36 +11,52 @@ export class LM555 extends Component {
     // Standard 8-pin DIP
     // 1: GND, 2: Trigger, 3: Output, 4: Reset
     // 5: Control, 6: Threshold, 7: Discharge, 8: VCC
-    this.addPin('gnd', 'input');      // Pin 1
-    this.addPin('trig', 'input');     // Pin 2
-    this.addPin('out', 'output');     // Pin 3
-    this.addPin('reset', 'input');    // Pin 4
-    this.addPin('cv', 'io');          // Pin 5
-    this.addPin('thresh', 'input');   // Pin 6
-    this.addPin('disch', 'io');       // Pin 7 (Open collector)
-    this.addPin('vcc', 'input');      // Pin 8
+    
+    // Map internal semantic names to their pin IDs for clarity
+    this.pinMap = {
+        gnd: 'p1',
+        trig: 'p2',
+        out: 'p3',
+        reset: 'p4',
+        cv: 'p5',
+        thresh: 'p6',
+        disch: 'p7',
+        vcc: 'p8'
+    };
+
+    // Initialize Pins p1 to p8
+    this.addPin('p1', 'input');   // GND
+    this.addPin('p2', 'input');   // Trigger
+    this.addPin('p3', 'output');  // Output
+    this.addPin('p4', 'input');   // Reset
+    this.addPin('p5', 'io');      // Control
+    this.addPin('p6', 'input');   // Threshold
+    this.addPin('p7', 'io');      // Discharge
+    this.addPin('p8', 'input');   // VCC
 
     this.latch = false;
   }
 
+  // Helper to get pin by semantic name
+  getSemPin(name) {
+      return this.getPin(this.pinMap[name]);
+  }
+
   update(dt) {
-    // 555 Timer "Analogue" Simulation Helper
-    // The digital engine cannot naturally solve the RC charging curve.
-    // We sniff the connected components and simulate vCap internally.
-    
-    const pinTrig = this.getPin('trig');
-    const pinThresh = this.getPin('thresh');
-    const pinDisch = this.getPin('disch');
-    const pinVcc = this.getPin('vcc');
-    const pinGnd = this.getPin('gnd');
+    const pinTrig = this.getSemPin('trig');
+    const pinThresh = this.getSemPin('thresh');
+    const pinDisch = this.getSemPin('disch');
+    const pinVcc = this.getSemPin('vcc');
+    const pinGnd = this.getSemPin('gnd');
 
     // 1. Basic Power Check
     if (!pinVcc.net || !pinGnd.net) {
-        console.warn('LM555: No Power Nets detected');
+        // Silent return if not connected to avoid console spam,
+        // or check once if user expects it to work.
+        // console.warn('LM555: No Power Nets detected');
         return; 
     }
     const vcc = pinVcc.getVoltage();
-    //console.log(`LM555 Input VCC: ${vcc}`);
     if (vcc < 2) return; 
 
     // 2. Identify C (Capacitance)
@@ -57,7 +73,7 @@ export class LM555 extends Component {
         });
     });
 
-    if (C === 0) C = 10e-6; // Robust Default: 10uF so user sees SOMETHING (slow blink)
+    if (C === 0) C = 10e-6; // Robust Default: 10uF
 
     // 3. Identify Resistances (R1, R2)
     let R_pullup = 0; // VCC -> Disch (R1)
@@ -100,40 +116,37 @@ export class LM555 extends Component {
     const alpha = 1 - Math.exp(-dt / tau);
     this.vCap += (targetV - this.vCap) * alpha;
 
-    // Debug every ~1 sec (assuming 60fps called in loop or physics tick)
+    // Debug
     if (Math.random() < 0.005) {
-        console.log(`LM555 [${this.id}] C=${C.toExponential(1)} R1=${R_pullup} R2=${R_inter} vC=${this.vCap.toFixed(2)}`);
+        // console.log(`LM555 [${this.id}] C=${C.toExponential(1)} vC=${this.vCap.toFixed(2)}`);
     }
   }
 
   computeOutputs() {
-    const vcc = this.getPin('vcc').getVoltage();
-    const pinReset = this.getPin('reset');
+    const pinVcc = this.getSemPin('vcc');
+    const pinReset = this.getSemPin('reset');
     
+    // Safety check if VCC pin is valid
+    if (!pinVcc) return;
+    const vcc = pinVcc.getVoltage();
+
     // 5. Drive Nets (Injecting analog voltage)
     if (this.vCap !== undefined) {
-         const pinTrig = this.getPin('trig');
-         const pinThresh = this.getPin('thresh');
+         const pinTrig = this.getSemPin('trig');
+         const pinThresh = this.getSemPin('thresh');
          
-         // FORCE voltage on Trigger Net (Override Resistor's digital high)
-         if (pinTrig.net) {
-             pinTrig.net.setVoltage(this.vCap);
-         }
-         // FORCE voltage on Threshold Net
-         if (pinThresh.net) {
-            pinThresh.net.setVoltage(this.vCap);
-         }
+         if (pinTrig.net) pinTrig.net.setVoltage(this.vCap);
+         if (pinThresh.net) pinThresh.net.setVoltage(this.vCap);
     }
 
     // Logic Inputs
-    let voltageT = this.vCap !== undefined ? this.vCap : this.getPin('thresh').getVoltage();
-    let voltageTr = this.vCap !== undefined ? this.vCap : this.getPin('trig').getVoltage();
+    let voltageT = this.vCap !== undefined ? this.vCap : this.getSemPin('thresh').getVoltage();
+    let voltageTr = this.vCap !== undefined ? this.vCap : this.getSemPin('trig').getVoltage();
     const resetVolts = pinReset.net ? pinReset.getVoltage() : vcc;
 
     // Comparators / Flip-Flop
     if (resetVolts < 0.8) {
       this.latch = false;
-      // Do not force vCap=0. Let R2 discharge it naturally.
     } else {
       if (voltageTr < (vcc / 3.0)) {
         this.latch = true;
@@ -143,13 +156,13 @@ export class LM555 extends Component {
     }
 
     // Output Pin 3
-    const outPin = this.getPin('out');
+    const outPin = this.getSemPin('out');
     if (outPin.net) {
         outPin.net.setVoltage(this.latch ? (vcc - 1.5) : 0.1);
     }
 
     // Discharge Pin 7
-    const dischPin = this.getPin('disch');
+    const dischPin = this.getSemPin('disch');
     if (!this.latch && dischPin.net) {
       dischPin.net.setVoltage(0.1); 
     }
