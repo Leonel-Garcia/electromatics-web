@@ -90,6 +90,9 @@
         this.step(fixedDt);
         this.accumulator -= fixedDt;
       }
+      if (Math.random() < 0.01) {
+        console.log(`Engine Heartbeat: Time=${this.time.toFixed(3)}s. Components=${this.components.size}`);
+      }
       this.animationFrameId = requestAnimationFrame((t) => this.loop(t));
     }
   }
