@@ -2814,7 +2814,7 @@
       const negPin = this.getPin("neg");
       const refVoltage = negPin.getVoltage();
       if (posPin.net) {
-        posPin.net.setVoltage(refVoltage + this.voltage);
+        posPin.net.voltage = refVoltage + this.voltage;
         posPin.net.isFixed = true;
       }
     }
@@ -2828,7 +2828,7 @@
     computeOutputs() {
       const pin = this.getPin("gnd");
       if (pin.net) {
-        pin.net.setVoltage(0);
+        pin.net.voltage = 0;
         pin.net.isFixed = true;
         pin.net.ground = true;
       }
@@ -2971,7 +2971,7 @@
       if (!this.isPowered()) return;
       const pin = this.getPin(pinId);
       if (pin.net) {
-        pin.net.setVoltage(state === 1 ? 5 : 0);
+        pin.net.voltage = state === 1 ? 5 : 0;
         pin.net.isFixed = true;
       }
     }
@@ -3169,28 +3169,55 @@
   class LM555 extends Component {
     constructor(id) {
       super(id);
-      console.log(`LM555 Constructor called for ${id}. Logic Version: 2.5 (Fixed)`);
+      console.log(`LM555 Constructor called for ${id}. Logic Version: 3.0 (Pins Fixed)`);
       this.metadata = { name: "LM555", description: "Precision Timer" };
       this.width = 140;
       this.height = 50;
-      this.addPin("gnd", "input");
-      this.addPin("trig", "input");
-      this.addPin("out", "output");
-      this.addPin("reset", "input");
-      this.addPin("cv", "io");
-      this.addPin("thresh", "input");
-      this.addPin("disch", "io");
-      this.addPin("vcc", "input");
+      this.pinMap = {
+        gnd: "p1",
+        trig: "p2",
+        out: "p3",
+        reset: "p4",
+        cv: "p5",
+        thresh: "p6",
+        disch: "p7",
+        vcc: "p8"
+      };
+      this.addPin("p1", "input");
+      this.addPin("p2", "input");
+      this.addPin("p3", "output");
+      this.addPin("p4", "input");
+      this.addPin("p5", "io");
+      this.addPin("p6", "input");
+      this.addPin("p7", "io");
+      this.addPin("p8", "input");
       this.latch = false;
     }
+    // Helper to get pin by semantic name
+    getSemPin(name) {
+      return this.getPin(this.pinMap[name]);
+    }
+    // Override getPin to support legacy wire connections (e.g. 'vcc' -> 'p8')
+    getPin(id) {
+      if (this.pinMap[id]) {
+        return super.getPin(this.pinMap[id]);
+      }
+      return super.getPin(id);
+    }
     update(dt) {
-      const pinTrig = this.getPin("trig");
-      const pinThresh = this.getPin("thresh");
-      const pinDisch = this.getPin("disch");
-      const pinVcc = this.getPin("vcc");
-      const pinGnd = this.getPin("gnd");
+      const pinTrig = this.getSemPin("trig");
+      const pinThresh = this.getSemPin("thresh");
+      const pinDisch = this.getSemPin("disch");
+      const pinVcc = this.getSemPin("vcc");
+      const pinGnd = this.getSemPin("gnd");
       if (!pinVcc.net || !pinGnd.net) {
-        console.warn("LM555: No Power Nets detected");
+        if (Math.random() < 0.05) {
+          console.warn(
+            `LM555 [${this.id}] Missing Power Connections:`,
+            !pinVcc.net ? "VCC(p8) Disconnected" : "VCC OK",
+            !pinGnd.net ? "GND(p1) Disconnected" : "GND OK"
+          );
+        }
         return;
       }
       const vcc = pinVcc.getVoltage();
@@ -3238,16 +3265,15 @@
       if (tau < 1e-9) tau = 1e-9;
       const alpha = 1 - Math.exp(-dt / tau);
       this.vCap += (targetV - this.vCap) * alpha;
-      if (Math.random() < 5e-3) {
-        console.log(`LM555 [${this.id}] C=${C.toExponential(1)} R1=${R_pullup} R2=${R_inter} vC=${this.vCap.toFixed(2)}`);
-      }
     }
     computeOutputs() {
-      const vcc = this.getPin("vcc").getVoltage();
-      const pinReset = this.getPin("reset");
+      const pinVcc = this.getSemPin("vcc");
+      const pinReset = this.getSemPin("reset");
+      if (!pinVcc) return;
+      const vcc = pinVcc.getVoltage();
       if (this.vCap !== void 0) {
-        const pinTrig = this.getPin("trig");
-        const pinThresh = this.getPin("thresh");
+        const pinTrig = this.getSemPin("trig");
+        const pinThresh = this.getSemPin("thresh");
         if (pinTrig.net) {
           pinTrig.net.voltage = this.vCap;
           pinTrig.net.isFixed = true;
@@ -3257,8 +3283,8 @@
           pinThresh.net.isFixed = true;
         }
       }
-      let voltageT = this.vCap !== void 0 ? this.vCap : this.getPin("thresh").getVoltage();
-      let voltageTr = this.vCap !== void 0 ? this.vCap : this.getPin("trig").getVoltage();
+      let voltageT = this.vCap !== void 0 ? this.vCap : this.getSemPin("thresh").getVoltage();
+      let voltageTr = this.vCap !== void 0 ? this.vCap : this.getSemPin("trig").getVoltage();
       const resetVolts = pinReset.net ? pinReset.getVoltage() : vcc;
       if (resetVolts < 0.8) {
         this.latch = false;
@@ -3269,14 +3295,14 @@
           this.latch = false;
         }
       }
-      const outPin = this.getPin("out");
+      const outPin = this.getSemPin("out");
       if (outPin.net) {
-        outPin.net.setVoltage(this.latch ? vcc - 1.5 : 0.1);
+        outPin.net.voltage = this.latch ? vcc - 1.5 : 0.1;
         outPin.net.isFixed = true;
       }
-      const dischPin = this.getPin("disch");
+      const dischPin = this.getSemPin("disch");
       if (!this.latch && dischPin.net) {
-        dischPin.net.setVoltage(0.1);
+        dischPin.net.voltage = 0.1;
         dischPin.net.isFixed = true;
       }
     }
