@@ -2346,12 +2346,17 @@
           if (hole) {
             const boardNet = this.breadboard.getNetAt(hole.r, hole.c);
             if (boardNet) {
+              if (pin.id === "p8" && comp.metadata.name === "LM555") {
+                console.log(`LM555 p8 found hole ${hole.r}${hole.c} (coord ${absX.toFixed(1)},${absY.toFixed(1)}), net: ${boardNet.id}`);
+              }
               if (pin.net && pin.net !== boardNet) {
                 this.mergeNets(boardNet, pin.net);
               } else {
                 pin.connect(boardNet);
               }
             }
+          } else if (pin.id === "p8" && comp.metadata.name === "LM555") {
+            console.warn(`LM555 p8 FAILED to find hole at ${absX.toFixed(1)}, ${absY.toFixed(1)}`);
           }
         });
       }
@@ -3212,10 +3217,16 @@
       const pinGnd = this.getSemPin("gnd");
       if (!pinVcc.net || !pinGnd.net) {
         if (Math.random() < 0.05) {
+          const getPinStatus = (id) => {
+            const p = this.getPin(id);
+            return p.net ? `${p.net.id}(${p.getVoltage().toFixed(1)}V)` : "NC";
+          };
           console.warn(
-            `LM555 [${this.id}] Missing Power Connections:`,
-            !pinVcc.net ? "VCC(p8) Disconnected" : "VCC OK",
-            !pinGnd.net ? "GND(p1) Disconnected" : "GND OK"
+            `LM555 [${this.id}] Debug Status:`,
+            `VCC(p8): ${getPinStatus("p8")}`,
+            `GND(p1): ${getPinStatus("p1")}`,
+            `TRIG(p2): ${getPinStatus("p2")}`,
+            `THRH(p6): ${getPinStatus("p6")}`
           );
         }
         return;

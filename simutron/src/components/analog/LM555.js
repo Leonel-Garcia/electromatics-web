@@ -62,9 +62,15 @@ export class LM555 extends Component {
     if (!pinVcc.net || !pinGnd.net) {
         // Debugging why power is missing
         if (Math.random() < 0.05) {
-            console.warn(`LM555 [${this.id}] Missing Power Connections:`, 
-                !pinVcc.net ? 'VCC(p8) Disconnected' : 'VCC OK',
-                !pinGnd.net ? 'GND(p1) Disconnected' : 'GND OK'
+            const getPinStatus = (id) => {
+                const p = this.getPin(id);
+                return p.net ? `${p.net.id}(${p.getVoltage().toFixed(1)}V)` : 'NC';
+            };
+            console.warn(`LM555 [${this.id}] Debug Status:`, 
+                `VCC(p8): ${getPinStatus('p8')}`,
+                `GND(p1): ${getPinStatus('p1')}`,
+                `TRIG(p2): ${getPinStatus('p2')}`,
+                `THRH(p6): ${getPinStatus('p6')}`
             );
         }
         return; 
