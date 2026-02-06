@@ -916,19 +916,31 @@
           let val = 0;
           if (cfg.type === "time") val = comp.timebase;
           else val = comp.voltsPerDiv[cfg.idx];
-          const rot = Math.log10(val) * 45 % 360;
+          const rot = Math.log10(val) * 60 % 270;
           line.style.transform = `rotate(${rot}deg)`;
         };
         updateRotation();
-        knobWrap.onmousedown = (e) => {
-          e.stopPropagation();
+        knobWrap.onmousedown = (e) => e.stopPropagation();
+        const standardSequence = [1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500];
+        const getNextVal = (current, dir) => {
+          let bestIdx = 0;
+          let minDiff = Infinity;
+          for (let i = 0; i < standardSequence.length; i++) {
+            let diff = Math.abs(standardSequence[i] - current);
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestIdx = i;
+            }
+          }
+          let nextIdx = Math.max(0, Math.min(standardSequence.length - 1, bestIdx + dir));
+          return standardSequence[nextIdx];
         };
         knobWrap.onclick = (e) => {
           e.stopPropagation();
           if (cfg.type === "time") {
-            comp.timebase = Math.max(1e-3, comp.timebase / 2);
+            comp.timebase = getNextVal(comp.timebase, -1);
           } else {
-            comp.voltsPerDiv[cfg.idx] = Math.max(0.1, comp.voltsPerDiv[cfg.idx] / 2);
+            comp.voltsPerDiv[cfg.idx] = getNextVal(comp.voltsPerDiv[cfg.idx], -1);
           }
           updateRotation();
         };
@@ -936,9 +948,9 @@
           e.preventDefault();
           e.stopPropagation();
           if (cfg.type === "time") {
-            comp.timebase = Math.min(10, comp.timebase * 2);
+            comp.timebase = getNextVal(comp.timebase, 1);
           } else {
-            comp.voltsPerDiv[cfg.idx] = Math.min(50, comp.voltsPerDiv[cfg.idx] * 2);
+            comp.voltsPerDiv[cfg.idx] = getNextVal(comp.voltsPerDiv[cfg.idx], 1);
           }
           updateRotation();
         };
@@ -947,11 +959,9 @@
           e.stopPropagation();
           const dir = e.deltaY > 0 ? 1 : -1;
           if (cfg.type === "time") {
-            if (dir > 0) comp.timebase *= 1.2;
-            else comp.timebase /= 1.2;
+            comp.timebase = getNextVal(comp.timebase, dir);
           } else {
-            if (dir > 0) comp.voltsPerDiv[cfg.idx] *= 1.2;
-            else comp.voltsPerDiv[cfg.idx] /= 1.2;
+            comp.voltsPerDiv[cfg.idx] = getNextVal(comp.voltsPerDiv[cfg.idx], dir);
           }
           updateRotation();
         };
@@ -1020,11 +1030,13 @@
         ctx.font = "8px monospace";
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.shadowBlur = 0;
-        ctx.fillText(`T:${(comp.timebase * 1e3).toFixed(1)}ms`, 2, 8);
+        let tStr = comp.timebase >= 1 ? `${comp.timebase.toFixed(1)}s` : `${(comp.timebase * 1e3).toFixed(0)}ms`;
+        if (comp.timebase < 1e-3) tStr = `${(comp.timebase * 1e6).toFixed(0)}µs`;
+        ctx.fillText(`T:${tStr}`, 2, 8);
         ctx.fillStyle = "#f1c40f";
-        ctx.fillText(`CH1:${comp.voltsPerDiv[0].toFixed(1)}V`, 2, 65);
+        ctx.fillText(`CH1:${comp.voltsPerDiv[0].toFixed(0)}V`, 2, 65);
         ctx.fillStyle = "#3498db";
-        ctx.fillText(`CH2:${comp.voltsPerDiv[1].toFixed(1)}V`, 50, 65);
+        ctx.fillText(`CH2:${comp.voltsPerDiv[1].toFixed(0)}V`, 50, 65);
         requestAnimationFrame(plot);
       };
       requestAnimationFrame(plot);
@@ -1147,7 +1159,37 @@
       container.appendChild(screenWrap);
       const controls = document.createElement("div");
       controls.style.cssText = "height:100px; display:flex; gap:30px; align-items:center; justify-content:center; color:#fff; font-family:monospace; margin-top:20px;";
-      const createControl = (label, val, dec, inc) => {
+      const standardVDiv = [1, 2, 5, 10, 20, 50, 100];
+      const standardTBase = [
+        1e-4,
+        2e-4,
+        5e-4,
+        1e-3,
+        2e-3,
+        5e-3,
+        0.01,
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+        1,
+        2,
+        5
+      ];
+      const getNextVal = (seq, current, dir) => {
+        let bestIdx = 0;
+        let minDiff = Infinity;
+        for (let i = 0; i < seq.length; i++) {
+          let diff = Math.abs(seq[i] - current);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestIdx = i;
+          }
+        }
+        return seq[Math.max(0, Math.min(seq.length - 1, bestIdx + dir))];
+      };
+      const createControl = (label, valGetter, valSetter, seq) => {
         const div = document.createElement("div");
         div.style.textAlign = "center";
         div.innerHTML = `<div style="font-size:12px; color:#bdc3c7; margin-bottom:10px;">${label}</div>`;
@@ -1157,105 +1199,74 @@
         row.style.gap = "10px";
         const btnDec = document.createElement("button");
         btnDec.textContent = "-";
-        btnDec.style.cssText = "width:30px; height:30px; background:#e74c3c; border:none; color:#fff; border-radius:50%; cursor:pointer; font-weight:bold;";
-        btnDec.onclick = dec;
+        btnDec.style.cssText = "width:35px; height:35px; background:#e74c3c; border:none; color:#fff; border-radius:50%; cursor:pointer; font-weight:bold; font-size:18px;";
         const display = document.createElement("div");
-        display.textContent = val;
-        display.style.cssText = "width:100px; font-size:20px; font-weight:bold; color:#0f0; background:#000; padding:5px; border:1px solid #333;";
+        display.style.cssText = "width:120px; font-size:20px; font-weight:bold; color:#0f0; background:#000; padding:8px; border:1px solid #333; border-radius:4px;";
         const btnInc = document.createElement("button");
         btnInc.textContent = "+";
-        btnInc.style.cssText = "width:30px; height:30px; background:#2ecc71; border:none; color:#fff; border-radius:50%; cursor:pointer; font-weight:bold;";
-        btnInc.onclick = inc;
+        btnInc.style.cssText = "width:35px; height:35px; background:#2ecc71; border:none; color:#fff; border-radius:50%; cursor:pointer; font-weight:bold; font-size:18px;";
+        const updateUI = () => {
+          const v = valGetter();
+          let txt = v.toString();
+          if (label.includes("TIMEBASE")) {
+            if (v < 1e-3) txt = (v * 1e6).toFixed(0) + " µs";
+            else if (v < 1) txt = (v * 1e3).toFixed(0) + " ms";
+            else txt = v.toFixed(1) + " s";
+          } else if (label.includes("V/DIV")) {
+            txt = v.toFixed(0) + " V";
+          } else {
+            txt = v.toFixed(1);
+          }
+          display.textContent = txt;
+        };
+        btnDec.onclick = () => {
+          valSetter(getNextVal(seq, valGetter(), -1));
+          updateUI();
+        };
+        btnInc.onclick = () => {
+          valSetter(getNextVal(seq, valGetter(), 1));
+          updateUI();
+        };
+        updateUI();
         row.appendChild(btnDec);
         row.appendChild(display);
         row.appendChild(btnInc);
         div.appendChild(row);
-        return { div, display };
+        return div;
       };
-      const timeCtrl = createControl(
-        "TIMEBASE (s)",
-        comp.timebase.toFixed(3),
-        () => {
-          comp.timebase = Math.max(1e-3, comp.timebase - 0.05);
-          timeCtrl.display.textContent = comp.timebase.toFixed(3);
-        },
-        () => {
-          comp.timebase += 0.05;
-          timeCtrl.display.textContent = comp.timebase.toFixed(3);
-        }
-      );
-      const fineTimeRow = document.createElement("div");
-      fineTimeRow.style.cssText = "display:flex; justify-content:center; gap:5px; margin-top:5px;";
-      const btnFineDec = document.createElement("button");
-      btnFineDec.textContent = "Fine -";
-      btnFineDec.style.cssText = "font-size:10px; padding:2px 5px; background:#e67e22; color:#fff; border:none; border-radius:3px; cursor:pointer;";
-      btnFineDec.onclick = () => {
-        comp.timebase = Math.max(1e-3, comp.timebase - 1e-3);
-        timeCtrl.display.textContent = comp.timebase.toFixed(3);
+      const timeCtrl = createControl("TIMEBASE", () => comp.timebase, (v) => comp.timebase = v, standardTBase);
+      controls.appendChild(timeCtrl);
+      const ch1Ctrl = createControl("CH1 V/DIV", () => comp.voltsPerDiv[0], (v) => comp.voltsPerDiv[0] = v, standardVDiv);
+      controls.appendChild(ch1Ctrl);
+      const ch2Ctrl = createControl("CH2 V/DIV", () => comp.voltsPerDiv[1], (v) => comp.voltsPerDiv[1] = v, standardVDiv);
+      controls.appendChild(ch2Ctrl);
+      const createOffsetCtrl = (label, idx) => {
+        return createControl(label, () => comp.offsets[idx], (v) => comp.offsets[idx] = v, [-4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]);
       };
-      const btnFineInc = document.createElement("button");
-      btnFineInc.textContent = "Fine +";
-      btnFineInc.style.cssText = "font-size:10px; padding:2px 5px; background:#f1c40f; color:#fff; border:none; border-radius:3px; cursor:pointer;";
-      btnFineInc.onclick = () => {
-        comp.timebase += 1e-3;
-        timeCtrl.display.textContent = comp.timebase.toFixed(3);
+      controls.appendChild(createOffsetCtrl("OFFSET CH1", 0));
+      controls.appendChild(createOffsetCtrl("OFFSET CH2", 1));
+      let isDraggingOffset = false;
+      let startY = 0;
+      let initialOffset = 0;
+      let dragChannel = 0;
+      canvas.onmousedown = (e) => {
+        isDraggingOffset = true;
+        startY = e.clientY;
+        dragChannel = e.shiftKey ? 1 : 0;
+        initialOffset = comp.offsets[dragChannel];
+        canvas.style.cursor = "ns-resize";
       };
-      fineTimeRow.appendChild(btnFineDec);
-      fineTimeRow.appendChild(btnFineInc);
-      timeCtrl.div.appendChild(fineTimeRow);
-      controls.appendChild(timeCtrl.div);
-      const ch1Ctrl = createControl(
-        "CH1 V/DIV",
-        comp.voltsPerDiv[0],
-        () => {
-          comp.voltsPerDiv[0] = Math.max(0.5, comp.voltsPerDiv[0] - 0.5);
-          ch1Ctrl.display.textContent = comp.voltsPerDiv[0].toFixed(1);
-        },
-        () => {
-          comp.voltsPerDiv[0] += 0.5;
-          ch1Ctrl.display.textContent = comp.voltsPerDiv[0].toFixed(1);
-        }
-      );
-      controls.appendChild(ch1Ctrl.div);
-      const ch2Ctrl = createControl(
-        "CH2 V/DIV",
-        comp.voltsPerDiv[1],
-        () => {
-          comp.voltsPerDiv[1] = Math.max(0.1, comp.voltsPerDiv[1] - 0.1);
-          ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1);
-        },
-        () => {
-          comp.voltsPerDiv[1] += 0.1;
-          ch2Ctrl.display.textContent = comp.voltsPerDiv[1].toFixed(1);
-        }
-      );
-      controls.appendChild(ch2Ctrl.div);
-      const off1Ctrl = createControl(
-        "CH1 OFFSET",
-        comp.offsets[0],
-        () => {
-          comp.offsets[0] = Math.max(-4, comp.offsets[0] - 0.1);
-          off1Ctrl.display.textContent = comp.offsets[0].toFixed(1);
-        },
-        () => {
-          comp.offsets[0] = Math.min(4, comp.offsets[0] + 0.1);
-          off1Ctrl.display.textContent = comp.offsets[0].toFixed(1);
-        }
-      );
-      controls.appendChild(off1Ctrl.div);
-      const off2Ctrl = createControl(
-        "CH2 OFFSET",
-        comp.offsets[1],
-        () => {
-          comp.offsets[1] = Math.max(-4, comp.offsets[1] - 0.1);
-          off2Ctrl.display.textContent = comp.offsets[1].toFixed(1);
-        },
-        () => {
-          comp.offsets[1] = Math.min(4, comp.offsets[1] + 0.1);
-          off2Ctrl.display.textContent = comp.offsets[1].toFixed(1);
-        }
-      );
-      controls.appendChild(off2Ctrl.div);
+      window.addEventListener("mousemove", (e) => {
+        if (!isDraggingOffset) return;
+        const dy = e.clientY - startY;
+        const h = canvas.height / mDpr;
+        const sensitivity = 8 / h;
+        comp.offsets[dragChannel] = initialOffset - dy * sensitivity;
+      });
+      window.addEventListener("mouseup", () => {
+        isDraggingOffset = false;
+        canvas.style.cursor = "default";
+      });
       container.appendChild(controls);
       const close = document.createElement("button");
       close.textContent = "✕ ESC";
