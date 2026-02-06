@@ -41,7 +41,9 @@ export class IC74xx extends Component {
     if (!this.isPowered()) return;
     const pin = this.getPin(pinId);
     if (pin.net) {
-      pin.net.setVoltage(state === 1 ? 5 : 0);
+      // Force digital driving state
+      pin.net.voltage = state === 1 ? 5 : 0;
+      pin.net.isFixed = true; 
     }
   }
 }

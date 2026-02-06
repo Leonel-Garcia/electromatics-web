@@ -148,8 +148,14 @@ export class LM555 extends Component {
          const pinTrig = this.getSemPin('trig');
          const pinThresh = this.getSemPin('thresh');
          
-         if (pinTrig.net) pinTrig.net.setVoltage(this.vCap);
-         if (pinThresh.net) pinThresh.net.setVoltage(this.vCap);
+         if (pinTrig.net) {
+             pinTrig.net.voltage = this.vCap;
+             pinTrig.net.isFixed = true; 
+         }
+         if (pinThresh.net) {
+             pinThresh.net.voltage = this.vCap;
+             pinThresh.net.isFixed = true; 
+         }
     }
 
     // Logic Inputs
@@ -171,13 +177,17 @@ export class LM555 extends Component {
     // Output Pin 3
     const outPin = this.getSemPin('out');
     if (outPin.net) {
-        outPin.net.setVoltage(this.latch ? (vcc - 1.5) : 0.1);
+        // Active Drive
+        outPin.net.voltage = this.latch ? (vcc - 1.5) : 0.1;
+        outPin.net.isFixed = true;
     }
 
     // Discharge Pin 7
     const dischPin = this.getSemPin('disch');
     if (!this.latch && dischPin.net) {
-      dischPin.net.setVoltage(0.1); 
+      // Aggressive sink
+      dischPin.net.voltage = 0.1;
+      dischPin.net.isFixed = true; 
     }
   }
 
