@@ -690,7 +690,7 @@ export class ChipFactory {
     // Header
     const header = document.createElement('div');
     header.style.cssText = 'height:20px; background:#2c3e50; border-bottom:1px solid #7f8c8d; display:flex; justify-content:space-between; align-items:center; padding:0 8px; border-radius:4px 4px 0 0;';
-    header.innerHTML = '<span style="color:#bdc3c7; font-size:10px; font-weight:bold; font-family:sans-serif;">OSCILLOSCOPE PRO</span>';
+    header.innerHTML = '<span style="color:#00ff00; font-size:10px; font-weight:bold; font-family:sans-serif;">OSCILLOSCOPE LIVE V2</span>';
     
     // Maximize button
     const maxBtn = document.createElement('button');
