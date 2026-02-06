@@ -2877,6 +2877,9 @@
       const vNeg = this.getPin("neg").getVoltage();
       this.voltageAcross = vPos - vNeg;
     }
+    reset() {
+      this.voltageAcross = 0;
+    }
   }
   class LED extends Component {
     constructor(id, color = "red") {
@@ -3246,7 +3249,6 @@
       const resetVolts = pinReset.net ? pinReset.getVoltage() : vcc;
       if (resetVolts < 0.8) {
         this.latch = false;
-        this.vCap = 0;
       } else {
         if (voltageTr < vcc / 3) {
           this.latch = true;
