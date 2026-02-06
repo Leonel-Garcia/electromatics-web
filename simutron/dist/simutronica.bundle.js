@@ -3176,19 +3176,74 @@
       this.addPin("vcc", "input");
       this.latch = false;
     }
+    update(dt) {
+      const pinTrig = this.getPin("trig");
+      const pinThresh = this.getPin("thresh");
+      const pinDisch = this.getPin("disch");
+      const pinVcc = this.getPin("vcc");
+      const pinGnd = this.getPin("gnd");
+      if (!pinVcc.net || !pinGnd.net) return;
+      const vcc = pinVcc.getVoltage();
+      if (vcc < 2) return;
+      let C = 0;
+      const timingNets = new Set([pinTrig.net, pinThresh.net].filter((n) => n));
+      timingNets.forEach((net) => {
+        net.pins.forEach((p) => {
+          if (p.component !== this && p.component.capacitance) {
+            C += p.component.capacitance;
+          }
+        });
+      });
+      if (C === 0) C = 1e-12;
+      let R_pullup = 0;
+      let R_inter = 0;
+      if (pinDisch.net) {
+        pinDisch.net.pins.forEach((p) => {
+          if (p.component !== this && p.component.resistance) {
+            const res = p.component;
+            const otherPin = p.id === "a" ? res.getPin("b") : res.getPin("a");
+            if (otherPin.net) {
+              if (otherPin.net === pinVcc.net) {
+                R_pullup += res.resistance;
+              } else if (timingNets.has(otherPin.net)) {
+                R_inter += res.resistance;
+              }
+            }
+          }
+        });
+      }
+      if (R_pullup === 0) R_pullup = 1e6;
+      if (R_inter === 0) R_inter = 1;
+      if (this.vCap === void 0) this.vCap = 0;
+      let targetV = 0;
+      let tau = 0;
+      if (this.latch) {
+        targetV = vcc;
+        tau = (R_pullup + R_inter) * C;
+      } else {
+        targetV = 0.1;
+        tau = R_inter * C;
+      }
+      const alpha = 1 - Math.exp(-dt / tau);
+      this.vCap += (targetV - this.vCap) * alpha;
+      timingNets.forEach((net) => {
+        net.setVoltage(this.vCap);
+        net.isFixed = true;
+      });
+    }
     computeOutputs() {
       const vcc = this.getPin("vcc").getVoltage();
-      this.getPin("gnd").getVoltage();
-      const trig = this.getPin("trig").getVoltage();
-      const thresh = this.getPin("thresh").getVoltage();
+      let voltageT = this.vCap !== void 0 ? this.vCap : this.getPin("thresh").getVoltage();
+      let voltageTr = this.vCap !== void 0 ? this.vCap : this.getPin("trig").getVoltage();
       const reset = this.getPin("reset").getVoltage();
       if (reset < 1 && this.getPin("reset").net) {
         this.latch = false;
+        this.vCap = 0;
       } else {
-        if (trig < vcc / 3) {
+        if (voltageTr < vcc / 3) {
           this.latch = true;
         }
-        if (thresh > vcc * 2 / 3) {
+        if (voltageT > vcc * 2 / 3) {
           this.latch = false;
         }
       }
@@ -3201,10 +3256,11 @@
       if (!this.latch && dischPin.net) {
         dischPin.net.setVoltage(0.2);
         dischPin.net.isFixed = true;
-      }
+      } else if (this.latch && dischPin.net) ;
     }
     reset() {
       this.latch = false;
+      this.vCap = 0;
     }
   }
   class LM741 extends Component {
