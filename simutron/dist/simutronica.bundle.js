@@ -3192,17 +3192,19 @@
       const timingNets = new Set([pinTrig.net, pinThresh.net].filter((n) => n));
       timingNets.forEach((net) => {
         net.pins.forEach((p) => {
-          if (p.component !== this && p.component.capacitance) {
-            C += p.component.capacitance;
+          if (p.component && p.component !== this) {
+            if (p.component.capacitance) {
+              C += p.component.capacitance;
+            }
           }
         });
       });
-      if (C === 0) C = 1e-12;
+      if (C === 0) C = 1e-5;
       let R_pullup = 0;
       let R_inter = 0;
       if (pinDisch.net) {
         pinDisch.net.pins.forEach((p) => {
-          if (p.component !== this && p.component.resistance) {
+          if (p.component && p.component !== this && p.component.resistance) {
             const res = p.component;
             const otherPin = p.id === "a" ? res.getPin("b") : res.getPin("a");
             if (otherPin.net) {
@@ -3215,8 +3217,8 @@
           }
         });
       }
-      if (R_pullup === 0) R_pullup = 1e6;
-      if (R_inter === 0) R_inter = 1;
+      if (R_pullup === 0) R_pullup = 1e4;
+      if (R_inter === 0) R_inter = 1e3;
       if (this.vCap === void 0) this.vCap = 0;
       let targetV, tau;
       if (this.latch) {
@@ -3226,8 +3228,12 @@
         targetV = 0.1;
         tau = R_inter * C;
       }
+      if (tau < 1e-9) tau = 1e-9;
       const alpha = 1 - Math.exp(-dt / tau);
       this.vCap += (targetV - this.vCap) * alpha;
+      if (Math.random() < 5e-3) {
+        console.log(`LM555 [${this.id}] C=${C.toExponential(1)} R1=${R_pullup} R2=${R_inter} vC=${this.vCap.toFixed(2)}`);
+      }
     }
     computeOutputs() {
       const vcc = this.getPin("vcc").getVoltage();
