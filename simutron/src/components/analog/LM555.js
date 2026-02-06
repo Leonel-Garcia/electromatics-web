@@ -60,9 +60,13 @@ export class LM555 extends Component {
 
     // 1. Basic Power Check
     if (!pinVcc.net || !pinGnd.net) {
-        // Silent return if not connected to avoid console spam,
-        // or check once if user expects it to work.
-        // console.warn('LM555: No Power Nets detected');
+        // Debugging why power is missing
+        if (Math.random() < 0.05) {
+            console.warn(`LM555 [${this.id}] Missing Power Connections:`, 
+                !pinVcc.net ? 'VCC(p8) Disconnected' : 'VCC OK',
+                !pinGnd.net ? 'GND(p1) Disconnected' : 'GND OK'
+            );
+        }
         return; 
     }
     const vcc = pinVcc.getVoltage();
