@@ -3215,8 +3215,7 @@
       if (R_pullup === 0) R_pullup = 1e6;
       if (R_inter === 0) R_inter = 1;
       if (this.vCap === void 0) this.vCap = 0;
-      let targetV = 0;
-      let tau = 0;
+      let targetV, tau;
       if (this.latch) {
         targetV = vcc;
         tau = (R_pullup + R_inter) * C;
@@ -3226,24 +3225,32 @@
       }
       const alpha = 1 - Math.exp(-dt / tau);
       this.vCap += (targetV - this.vCap) * alpha;
-      timingNets.forEach((net) => {
-        net.setVoltage(this.vCap);
-        net.isFixed = true;
-      });
     }
     computeOutputs() {
       const vcc = this.getPin("vcc").getVoltage();
+      const pinReset = this.getPin("reset");
+      if (this.vCap !== void 0) {
+        const pinTrig = this.getPin("trig");
+        const pinThresh = this.getPin("thresh");
+        if (pinTrig.net && !pinTrig.net.isFixed) {
+          pinTrig.net.voltage = this.vCap;
+          pinTrig.net.isFixed = true;
+        }
+        if (pinThresh.net && !pinThresh.net.isFixed) {
+          pinThresh.net.voltage = this.vCap;
+          pinThresh.net.isFixed = true;
+        }
+      }
       let voltageT = this.vCap !== void 0 ? this.vCap : this.getPin("thresh").getVoltage();
       let voltageTr = this.vCap !== void 0 ? this.vCap : this.getPin("trig").getVoltage();
-      const reset = this.getPin("reset").getVoltage();
-      if (reset < 1 && this.getPin("reset").net) {
+      const resetVolts = pinReset.net ? pinReset.getVoltage() : vcc;
+      if (resetVolts < 0.8) {
         this.latch = false;
         this.vCap = 0;
       } else {
         if (voltageTr < vcc / 3) {
           this.latch = true;
-        }
-        if (voltageT > vcc * 2 / 3) {
+        } else if (voltageT > vcc * 2 / 3) {
           this.latch = false;
         }
       }
@@ -3254,9 +3261,9 @@
       }
       const dischPin = this.getPin("disch");
       if (!this.latch && dischPin.net) {
-        dischPin.net.setVoltage(0.2);
+        dischPin.net.setVoltage(0.1);
         dischPin.net.isFixed = true;
-      } else if (this.latch && dischPin.net) ;
+      }
     }
     reset() {
       this.latch = false;
