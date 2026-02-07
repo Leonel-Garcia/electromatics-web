@@ -3099,7 +3099,7 @@
         127,
         127
       ];
-      const p = patterns[val] || 127;
+      const p = patterns[val] !== void 0 ? patterns[val] : 127;
       this.setLogicState("p13", p >> 0 & 1);
       this.setLogicState("p12", p >> 1 & 1);
       this.setLogicState("p11", p >> 2 & 1);
@@ -3111,12 +3111,14 @@
   }
   class IC7490 extends IC74xx {
     constructor(id) {
-      super(id, "90");
+      super(id, "90", 14);
       this.metadata.description = "Decade Counter";
       this.lastClockA = 0;
       this.lastClockB = 0;
       this.countA = 0;
       this.countB = 0;
+      this.vccPin = "p5";
+      this.gndPin = "p10";
     }
     update(dt) {
       const clkA = this.getLogicState("p14");
