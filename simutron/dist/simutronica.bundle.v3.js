@@ -1349,7 +1349,7 @@
     }
     createDualSupply(comp, el) {
       el.style.width = "60px";
-      el.style.height = "65px";
+      el.style.height = "60px";
       el.style.background = "#2c3e50";
       el.style.border = "2px solid #7f8c8d";
       el.style.borderRadius = "6px";
@@ -1359,27 +1359,32 @@
       display.textContent = `±${comp.voltage}V`;
       el.appendChild(display);
       const label = document.createElement("div");
-      label.textContent = "DUAL DC";
-      label.style.cssText = "color:#bdc3c7; font-size:8px; text-align:center; font-weight:bold; margin-top:-2px;";
+      label.textContent = "DUAL DC SOURCE";
+      label.style.cssText = "color:#bdc3c7; font-size:7px; text-align:center; font-weight:bold; margin-top:-2px;";
       el.appendChild(label);
-      const terminals = [
-        { id: "pos", color: "#e74c3c", label: "+", y: 35 },
-        { id: "com", color: "#111", label: "⏚", y: 48 },
-        { id: "neg", color: "#3498db", label: "-", y: 61 }
+      const railTerminals = [
+        { id: "neg", color: "#3498db", label: "-", y: 12 },
+        // Pin 1 (at neg rail y-coord)
+        { id: "pos", color: "#e74c3c", label: "+", y: 32 }
+        // Pin 2 (at pos rail y-coord)
       ];
-      terminals.forEach((t) => {
+      railTerminals.forEach((t) => {
         const dot = document.createElement("div");
-        dot.style.cssText = `position:absolute; right:8px; top:${t.y - 4}px; width:8px; height:8px; border-radius:50%; background:${t.color}; border:1px solid #000; box-shadow:inset 0 0 2px #000;`;
+        dot.style.cssText = `position:absolute; left:4px; top:${t.y - 4}px; width:8px; height:8px; border-radius:50%; background:${t.color}; border:1px solid #000;`;
         el.appendChild(dot);
-        const l = document.createElement("div");
-        l.textContent = t.label;
-        l.style.cssText = `position:absolute; right:18px; top:${t.y - 5}px; color:#fff; font-size:10px; font-weight:bold; pointer-events:none;`;
-        el.appendChild(l);
         const wire = document.createElement("div");
         wire.style.cssText = `position:absolute; left:-12px; top:${t.y - 2}px; width:12px; height:4px; background:#bdc3c7; border:1px solid #7f8c8d; pointer-events:none;`;
         el.appendChild(wire);
         this.addLeg(el, -12, t.y - 3, t.id);
       });
+      const wireCom = document.createElement("div");
+      wireCom.style.cssText = `position:absolute; right:-12px; top:22px; width:12px; height:5px; background:#333; border:1px solid #000; border-radius: 0 2px 2px 0; pointer-events:none;`;
+      el.appendChild(wireCom);
+      this.addLeg(el, 55, 21, "com");
+      const lblCom = document.createElement("div");
+      lblCom.textContent = "COM";
+      lblCom.style.cssText = "position:absolute; right:-5px; top:12px; color:#fff; font-size:9px; font-weight:bold;";
+      el.appendChild(lblCom);
       return el;
     }
   }
@@ -3782,7 +3787,8 @@
       return prefix.replace(/\s+/g, "") + "_" + Math.floor(Math.random() * 1e3);
     }
     addComponent(component) {
-      if (component.metadata.name === "Voltage Source") {
+      const name = component.metadata.name;
+      if (name === "Voltage Source" || name === "Dual Power Supply") {
         component.x = BB_START_X + 9;
         component.y = BB_START_Y - 3 * GRID_SIZE - 12;
       } else {
