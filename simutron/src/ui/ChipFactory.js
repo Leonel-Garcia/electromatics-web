@@ -34,6 +34,8 @@ export class ChipFactory {
       return this.createAmmeter(component, el);
     } else if (name === 'Osciloscopio') {
       return this.createOscilloscope(component, el);
+    } else if (name === 'Dual Power Supply') {
+      return this.createDualSupply(component, el);
     }
     
     // Default fallback
@@ -1260,5 +1262,57 @@ export class ChipFactory {
         requestAnimationFrame(runMPlot);
     };
     runMPlot();
+  }
+
+  createDualSupply(comp, el) {
+      // Professional Bench Dual Supply
+      el.style.width = '60px'; 
+      el.style.height = '65px';
+      el.style.background = '#2c3e50'; // Navy Blue Professional Finish
+      el.style.border = '2px solid #7f8c8d';
+      el.style.borderRadius = '6px';
+      el.style.boxShadow = '3px 3px 8px rgba(0,0,0,0.5)';
+      
+      // LCD / Label Area
+      const display = document.createElement('div');
+      display.style.cssText = 'width:48px; height:20px; background:#1e1e1e; margin:6px auto; border-radius:3px; border:1px solid #444; color:#e74c3c; font-family:monospace; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;';
+      display.textContent = `±${comp.voltage}V`;
+      el.appendChild(display);
+
+      // Label
+      const label = document.createElement('div');
+      label.textContent = 'DUAL DC';
+      label.style.cssText = 'color:#bdc3c7; font-size:8px; text-align:center; font-weight:bold; margin-top:-2px;';
+      el.appendChild(label);
+
+      // Terminals on the body
+      const terminals = [
+        { id: 'pos', color: '#e74c3c', label: '+', y: 35 },
+        { id: 'com', color: '#111', label: '⏚', y: 48 },
+        { id: 'neg', color: '#3498db', label: '-', y: 61 }
+      ];
+
+      terminals.forEach(t => {
+          // Terminal circles on the front face
+          const dot = document.createElement('div');
+          dot.style.cssText = `position:absolute; right:8px; top:${t.y-4}px; width:8px; height:8px; border-radius:50%; background:${t.color}; border:1px solid #000; box-shadow:inset 0 0 2px #000;`;
+          el.appendChild(dot);
+          
+          // Labels for terminals
+          const l = document.createElement('div');
+          l.textContent = t.label;
+          l.style.cssText = `position:absolute; right:18px; top:${t.y-5}px; color:#fff; font-size:10px; font-weight:bold; pointer-events:none;`;
+          el.appendChild(l);
+
+          // Metallic legs sticking out of the left (to connect to rails)
+          const wire = document.createElement('div');
+          wire.style.cssText = `position:absolute; left:-12px; top:${t.y-2}px; width:12px; height:4px; background:#bdc3c7; border:1px solid #7f8c8d; pointer-events:none;`;
+          el.appendChild(wire);
+
+          // Pins (hitboxes)
+          this.addLeg(el, -12, t.y-3, t.id);
+      });
+
+      return el;
   }
 }

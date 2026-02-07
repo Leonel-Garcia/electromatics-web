@@ -296,6 +296,8 @@
         return this.createAmmeter(component, el);
       } else if (name === "Osciloscopio") {
         return this.createOscilloscope(component, el);
+      } else if (name === "Dual Power Supply") {
+        return this.createDualSupply(component, el);
       }
       el.style.width = "100px";
       el.style.height = "50px";
@@ -1344,6 +1346,41 @@
         requestAnimationFrame(runMPlot);
       };
       runMPlot();
+    }
+    createDualSupply(comp, el) {
+      el.style.width = "60px";
+      el.style.height = "65px";
+      el.style.background = "#2c3e50";
+      el.style.border = "2px solid #7f8c8d";
+      el.style.borderRadius = "6px";
+      el.style.boxShadow = "3px 3px 8px rgba(0,0,0,0.5)";
+      const display = document.createElement("div");
+      display.style.cssText = "width:48px; height:20px; background:#1e1e1e; margin:6px auto; border-radius:3px; border:1px solid #444; color:#e74c3c; font-family:monospace; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;";
+      display.textContent = `±${comp.voltage}V`;
+      el.appendChild(display);
+      const label = document.createElement("div");
+      label.textContent = "DUAL DC";
+      label.style.cssText = "color:#bdc3c7; font-size:8px; text-align:center; font-weight:bold; margin-top:-2px;";
+      el.appendChild(label);
+      const terminals = [
+        { id: "pos", color: "#e74c3c", label: "+", y: 35 },
+        { id: "com", color: "#111", label: "⏚", y: 48 },
+        { id: "neg", color: "#3498db", label: "-", y: 61 }
+      ];
+      terminals.forEach((t) => {
+        const dot = document.createElement("div");
+        dot.style.cssText = `position:absolute; right:8px; top:${t.y - 4}px; width:8px; height:8px; border-radius:50%; background:${t.color}; border:1px solid #000; box-shadow:inset 0 0 2px #000;`;
+        el.appendChild(dot);
+        const l = document.createElement("div");
+        l.textContent = t.label;
+        l.style.cssText = `position:absolute; right:18px; top:${t.y - 5}px; color:#fff; font-size:10px; font-weight:bold; pointer-events:none;`;
+        el.appendChild(l);
+        const wire = document.createElement("div");
+        wire.style.cssText = `position:absolute; left:-12px; top:${t.y - 2}px; width:12px; height:4px; background:#bdc3c7; border:1px solid #7f8c8d; pointer-events:none;`;
+        el.appendChild(wire);
+        this.addLeg(el, -12, t.y - 3, t.id);
+      });
+      return el;
     }
   }
   class Interaction {
@@ -3391,6 +3428,33 @@
       });
     }
   }
+  class DualPowerSupply extends Component {
+    constructor(id, voltage = 12) {
+      super(id);
+      this.voltage = voltage;
+      this.metadata = {
+        name: "Dual Power Supply",
+        description: "Professional Bench Supply (±V, COM, -V)"
+      };
+      this.addPin("pos", "output");
+      this.addPin("com", "bidirectional");
+      this.addPin("neg", "output");
+    }
+    computeOutputs() {
+      const posPin = this.getPin("pos");
+      const comPin = this.getPin("com");
+      const negPin = this.getPin("neg");
+      const comVoltage = comPin.getVoltage();
+      if (posPin.net) {
+        posPin.net.voltage = comVoltage + this.voltage;
+        posPin.net.isFixed = true;
+      }
+      if (negPin.net) {
+        negPin.net.voltage = comVoltage - this.voltage;
+        negPin.net.isFixed = true;
+      }
+    }
+  }
   class SignalGenerator extends Component {
     constructor(id) {
       super(id);
@@ -3577,6 +3641,7 @@
       this.schematicManager = new SchematicManager();
       console.log("App: SchematicManager created.");
       this.isHelpActive = false;
+      this.currentCircuitName = "mi_circuito";
       this.compClasses = {
         "Voltage Source": VoltageSource,
         "Ground": Ground,
@@ -3594,10 +3659,10 @@
         "LM741": LM741,
         "7-Segment": SevenSegment,
         "Signal Generator": SignalGenerator,
-        "Voltimetro": Voltmeter,
         "Amperimetro": Ammeter,
         "Oscilloscope": Oscilloscope,
-        "Osciloscopio": Oscilloscope
+        "Osciloscopio": Oscilloscope,
+        "Dual Supply": DualPowerSupply
       };
       this.interaction.onComponentSelected = (comp) => {
         if (this.isHelpActive) this.schematicManager.show(comp);
@@ -3617,6 +3682,7 @@
           name: "Energía y Suministro",
           items: [
             { name: "Fuente de Voltaje", Class: VoltageSource },
+            { name: "Fuente Dual (±V)", Class: DualPowerSupply },
             { name: "Tierra (GND)", Class: Ground },
             { name: "Generador Señal", Class: SignalGenerator }
           ]
@@ -3794,11 +3860,13 @@
           offset: conn.offset
         }))
       };
+      const fileName = window.prompt("Nombre del circuito:", this.currentCircuitName) || this.currentCircuitName;
+      this.currentCircuitName = fileName;
       const blob = new Blob([JSON.stringify(circuitData, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `circuito_${(/* @__PURE__ */ new Date()).getTime()}.json`;
+      a.download = `${fileName.endsWith(".json") ? fileName : fileName + ".json"}`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -3812,6 +3880,7 @@
     async loadCircuit(e) {
       const file = e.target.files[0];
       if (!file) return;
+      this.currentCircuitName = file.name.replace(/\.json$/i, "");
       const text = await file.text();
       const data = JSON.parse(text);
       this.engine.stop();
