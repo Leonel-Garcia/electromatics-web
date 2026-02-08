@@ -1265,17 +1265,18 @@ export class ChipFactory {
   }
 
   createDualSupply(comp, el) {
-      // Professional Bench Dual Supply
-      el.style.width = '60px'; 
-      el.style.height = '60px';
-      el.style.background = '#2c3e50'; // Navy Blue Professional Finish
+      // Professional Modular Dual Supply
+      // Height increased to bridge the gap between rails and main breadboard area
+      el.style.width = '64px'; 
+      el.style.height = '100px';
+      el.style.background = '#2c3e50'; 
       el.style.border = '2px solid #7f8c8d';
       el.style.borderRadius = '6px';
-      el.style.boxShadow = '3px 3px 8px rgba(0,0,0,0.5)';
+      el.style.boxShadow = '3px 3px 10px rgba(0,0,0,0.5)';
       
       // LCD / Label Area
       const display = document.createElement('div');
-      display.style.cssText = 'width:48px; height:20px; background:#1e1e1e; margin:6px auto; border-radius:3px; border:1px solid #444; color:#e74c3c; font-family:monospace; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:bold;';
+      display.style.cssText = 'width:52px; height:24px; background:#1e1e1e; margin:8px auto; border-radius:3px; border:1px solid #444; color:#e74c3c; font-family:monospace; font-size:12px; display:flex; align-items:center; justify-content:center; font-weight:bold;';
       display.textContent = `±${comp.voltage}V`;
       el.appendChild(display);
 
@@ -1285,39 +1286,43 @@ export class ChipFactory {
       label.style.cssText = 'color:#bdc3c7; font-size:7px; text-align:center; font-weight:bold; margin-top:-2px;';
       el.appendChild(label);
 
-      // Layout for Rails (+V and -V)
-      // Spacing 20px (GRID_SIZE) to fit Breadboard Power Bus
-      const railTerminals = [
-        { id: 'neg', color: '#3498db', label: '-', y: 12 }, // Pin 1 (at neg rail y-coord)
-        { id: 'pos', color: '#e74c3c', label: '+', y: 32 }  // Pin 2 (at pos rail y-coord)
+      // Vertical pin layout to bridge Power Bus to Row A
+      // Logic: 
+      // y=12 -> Connects to top-neg (-12V)
+      // y=32 -> Connects to top-pos (+12V)
+      // y=72 -> Connects to Row A (COM/Reference)
+      const terminals = [
+        { id: 'neg', color: '#3498db', label: '-', y: 12 },
+        { id: 'pos', color: '#e74c3c', label: '+', y: 32 },
+        { id: 'com', color: '#ffffff', label: 'COM', y: 72 }
       ];
 
-      railTerminals.forEach(t => {
-          // Terminal dots on the body
+      terminals.forEach(t => {
+          // Internal connection dot
           const dot = document.createElement('div');
-          dot.style.cssText = `position:absolute; left:4px; top:${t.y-4}px; width:8px; height:8px; border-radius:50%; background:${t.color}; border:1px solid #000;`;
+          dot.style.cssText = `position:absolute; left:6px; top:${t.y-4}px; width:8px; height:8px; border-radius:50%; background:${t.color}; border:1px solid #000;`;
           el.appendChild(dot);
           
-          // Metallic legs sticking out to the left (to connect to BB rails)
+          if(t.label !== 'COM') {
+              const sym = document.createElement('div');
+              sym.textContent = t.label;
+              sym.style.cssText = `position:absolute; left:16px; top:${t.y-6}px; color:#fff; font-size:10px; font-weight:bold;`;
+              el.appendChild(sym);
+          } else {
+              const sym = document.createElement('div');
+              sym.textContent = 'COM';
+              sym.style.cssText = `position:absolute; left:16px; top:${t.y-6}px; color:#fff; font-size:8px; font-weight:bold;`;
+              el.appendChild(sym);
+          }
+
+          // Connector wires sticking out to the left
           const wire = document.createElement('div');
-          wire.style.cssText = `position:absolute; left:-12px; top:${t.y-2}px; width:12px; height:4px; background:#bdc3c7; border:1px solid #7f8c8d; pointer-events:none;`;
+          wire.style.cssText = `position:absolute; left:-12px; top:${t.y-2}px; width:12px; height:4px; background:#bdc3c7; border:1px solid #7f8c8d; border-radius:2px 0 0 2px; pointer-events:none;`;
           el.appendChild(wire);
 
-          // Pins (hitboxes) - Exact coordinates for snapping
+          // Connection pins (hitboxes) - Offset for precise hole snapping
           this.addLeg(el, -12, t.y-3, t.id);
       });
-
-      // COM (Common/Ground) Terminal - Located at BOTTOM-RIGHT for easy cabling
-      const wireCom = document.createElement('div');
-      wireCom.style.cssText = `position:absolute; right:-12px; bottom:8px; width:12px; height:6px; background:#333; border:1px solid #111; border-radius: 0 4px 4px 0; pointer-events:none;`;
-      el.appendChild(wireCom);
-      
-      this.addLeg(el, 55, 48, 'com'); // COM Pin hitbox moved to bottom right
-      
-      const lblCom = document.createElement('div');
-      lblCom.textContent = 'COM';
-      lblCom.style.cssText = 'position:absolute; right:2px; bottom:4px; color:#fff; font-size:9px; font-weight:bold; pointer-events:none;';
-      el.appendChild(lblCom);
 
       return el;
   }
