@@ -2825,6 +2825,11 @@
     }
     getSchematicData(name) {
       const specs = {
+        "7400": {
+          title: "SN7400 Quad 2-Input NAND Gate",
+          desc: "Diagrama de pines estándar (DIP-14). Contiene 4 compuertas NAND independientes de 2 entradas. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = NOT (A • B).",
+          image: "simutron/assets/datasheets/7400.png"
+        },
         "7408": {
           title: "SN7408 Quad 2-Input AND Gate",
           desc: "Diagrama de pines estándar (DIP-14). Contiene 4 compuertas AND independientes de 2 entradas. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = A • B.",
@@ -3128,6 +3133,31 @@
         if (Math.random() < 0.01 && (stateA || stateB)) {
           console.log(`Gate [${gate.a}, ${gate.b}] -> ${gate.y}: InA=${stateA} InB=${stateB} Out=${result}`);
         }
+        this.setLogicState(gate.y, result);
+      });
+    }
+  }
+  class IC7400 extends IC74xx {
+    constructor(id) {
+      super(id, "00");
+      this.metadata.description = "Quad 2-Input NAND Gate";
+    }
+    computeOutputs() {
+      if (!this.isPowered()) return;
+      const gates = [
+        { a: "p1", b: "p2", y: "p3" },
+        // Gate 1: Inputs 1,2 -> Out 3
+        { a: "p4", b: "p5", y: "p6" },
+        // Gate 2: Inputs 4,5 -> Out 6
+        { a: "p9", b: "p10", y: "p8" },
+        // Gate 3: Inputs 9,10 -> Out 8
+        { a: "p12", b: "p13", y: "p11" }
+        // Gate 4: Inputs 12,13 -> Out 11
+      ];
+      gates.forEach((gate) => {
+        const stateA = this.getLogicState(gate.a);
+        const stateB = this.getLogicState(gate.b);
+        const result = stateA === 1 && stateB === 1 ? 0 : 1;
         this.setLogicState(gate.y, result);
       });
     }
@@ -3773,6 +3803,7 @@
         "LED": LED,
         "Push Button": PushSwitch,
         "7408": IC7408,
+        "7400": IC7400,
         "7404": IC7404,
         "7432": IC7432,
         "7447": IC7447,
@@ -3879,6 +3910,7 @@
       modal.style.display = "flex";
       const chips = [
         { name: "7408", Class: IC7408, desc: "Quad 2-Input AND Gate" },
+        { name: "7400", Class: IC7400, desc: "Quad 2-Input NAND Gate" },
         { name: "7404", Class: IC7404, desc: "Hex Inverter (NOT)" },
         { name: "7432", Class: IC7432, desc: "Quad 2-Input OR Gate" },
         { name: "7490", Class: IC7490, desc: "Decade Counter (MOD-10)" },

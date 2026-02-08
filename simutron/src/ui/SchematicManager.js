@@ -71,6 +71,11 @@ export class SchematicManager {
 
     getSchematicData(name) {
         const specs = {
+            '7400': {
+                title: 'SN7400 Quad 2-Input NAND Gate',
+                desc: 'Diagrama de pines estándar (DIP-14). Contiene 4 compuertas NAND independientes de 2 entradas. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = NOT (A • B).',
+                image: 'simutron/assets/datasheets/7400.png'
+            },
             '7408': {
                 title: 'SN7408 Quad 2-Input AND Gate',
                 desc: 'Diagrama de pines estándar (DIP-14). Contiene 4 compuertas AND independientes de 2 entradas. Alimentación: Pin 14 (VCC), Pin 7 (GND). Salida Y = A • B.',
