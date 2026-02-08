@@ -3451,31 +3451,46 @@
     constructor(id) {
       super(id);
       this.metadata = { name: "LM741", description: "Operational Amplifier" };
-      this.width = 80;
-      this.height = 50;
-      this.addPin("trim1", "input");
-      this.addPin("in_inv", "input");
-      this.addPin("in_non", "input");
-      this.addPin("v_neg", "input");
-      this.addPin("trim2", "input");
-      this.addPin("out", "output");
-      this.addPin("v_pos", "input");
-      this.addPin("nc", "input");
+      this.pinMap = {
+        trim1: "p1",
+        in_inv: "p2",
+        in_non: "p3",
+        v_neg: "p4",
+        trim2: "p5",
+        out: "p6",
+        v_pos: "p7",
+        nc: "p8"
+      };
+      this.addPin("p1", "input");
+      this.addPin("p2", "input");
+      this.addPin("p3", "input");
+      this.addPin("p4", "input");
+      this.addPin("p5", "input");
+      this.addPin("p6", "output");
+      this.addPin("p7", "input");
+      this.addPin("p8", "input");
       this.gain = 1e5;
     }
+    getSemPin(name) {
+      return this.getPin(this.pinMap[name]);
+    }
     computeOutputs() {
-      const vPos = this.getPin("v_pos").getVoltage();
-      const vNeg = this.getPin("v_neg").getVoltage();
-      const inPos = this.getPin("in_non").getVoltage();
-      const inNeg = this.getPin("in_inv").getVoltage();
+      const pinVPos = this.getSemPin("v_pos");
+      const pinVNeg = this.getSemPin("v_neg");
+      const pinInPos = this.getSemPin("in_non");
+      const pinInNeg = this.getSemPin("in_inv");
+      const vPos = pinVPos.net ? pinVPos.getVoltage() : 15;
+      const vNeg = pinVNeg.net ? pinVNeg.getVoltage() : -15;
+      const inPos = pinInPos.getVoltage();
+      const inNeg = pinInNeg.getVoltage();
       let vOut = this.gain * (inPos - inNeg);
       const upperLimit = vPos - 1.5;
       const lowerLimit = vNeg + 1.5;
       if (vOut > upperLimit) vOut = upperLimit;
       if (vOut < lowerLimit) vOut = lowerLimit;
-      const outPin = this.getPin("out");
+      const outPin = this.getSemPin("out");
       if (outPin.net) {
-        outPin.net.setVoltage(vOut);
+        outPin.net.voltage = vOut;
         outPin.net.isFixed = true;
       }
     }
