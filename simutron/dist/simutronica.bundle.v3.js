@@ -298,6 +298,8 @@
         return this.createOscilloscope(component, el);
       } else if (name === "Dual Power Supply") {
         return this.createDualSupply(component, el);
+      } else if (name === "Potentiometer") {
+        return this.createPotentiometer(component, el);
       }
       el.style.width = "100px";
       el.style.height = "50px";
@@ -1389,6 +1391,35 @@
       });
       return el;
     }
+    createPotentiometer(comp, el) {
+      el.style.width = "42px";
+      el.style.height = "42px";
+      el.style.background = "#3498db";
+      el.style.border = "2px solid #2980b9";
+      el.style.borderRadius = "4px";
+      el.style.boxShadow = "2px 2px 5px rgba(0,0,0,0.3)";
+      const knob = document.createElement("div");
+      knob.id = `pot-knob-${comp.id}`;
+      knob.style.cssText = `position:absolute; left:7px; top:7px; width:24px; height:24px; border-radius:50%; background:#ecf0f1; border:2px solid #bdc3c7; box-shadow:inset 0 0 5px rgba(0,0,0,0.2); transition: transform 0.2s;`;
+      const indicator = document.createElement("div");
+      indicator.style.cssText = "position:absolute; left:50%; top:2px; transform:translateX(-50%); width:3px; height:8px; background:#e74c3c; border-radius:2px;";
+      knob.appendChild(indicator);
+      const angle = comp.value * 270 - 135;
+      knob.style.transform = `rotate(${angle}deg)`;
+      el.appendChild(knob);
+      const pins = [
+        { id: "p1", x: 2, y: 45, label: "A" },
+        { id: "p2", x: 21, y: 45, label: "W" },
+        { id: "p3", x: 40, y: 45, label: "B" }
+      ];
+      pins.forEach((p) => {
+        const wire = document.createElement("div");
+        wire.style.cssText = `position:absolute; left:${p.x - 1}px; top:36px; width:4px; height:12px; background:#bdc3c7; border:1px solid #7f8c8d; border-radius:0 0 2px 2px;`;
+        el.appendChild(wire);
+        this.addLeg(el, p.x - 2, p.y - 3, p.id);
+      });
+      return el;
+    }
   }
   class Interaction {
     constructor(engine, breadboard, containerId) {
@@ -2317,6 +2348,43 @@
         dutyInput.onchange = (e) => comp.dutyCycle = parseFloat(e.target.value);
         dutyRow.appendChild(dutyInput);
         content.appendChild(dutyRow);
+      }
+      if (comp.metadata.name === "Potentiometer") {
+        const resRow = document.createElement("div");
+        resRow.style.marginBottom = "10px";
+        resRow.innerHTML = "<label>Resistencia Total (Ω)</label><br>";
+        const resInput = document.createElement("input");
+        resInput.type = "number";
+        resInput.value = comp.resistance;
+        resInput.style.width = "100%";
+        resInput.style.background = "#333";
+        resInput.style.color = "#fff";
+        resInput.onchange = (e) => {
+          comp.resistance = parseFloat(e.target.value);
+          comp.metadata.description = `${comp.resistance}Ω Pot`;
+        };
+        resRow.appendChild(resInput);
+        content.appendChild(resRow);
+        const knobRow = document.createElement("div");
+        knobRow.innerHTML = `<label>Posición Wiper: ${(comp.value * 100).toFixed(0)}%</label><br>`;
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = 0;
+        slider.max = 1;
+        slider.step = 0.01;
+        slider.value = comp.value;
+        slider.style.width = "100%";
+        slider.oninput = (e) => {
+          comp.value = parseFloat(e.target.value);
+          knobRow.querySelector("label").textContent = `Posición Wiper: ${(comp.value * 100).toFixed(0)}%`;
+          const knob = document.getElementById(`pot-knob-${comp.id}`);
+          if (knob) {
+            const angle = comp.value * 270 - 135;
+            knob.style.transform = `rotate(${angle}deg)`;
+          }
+        };
+        knobRow.appendChild(slider);
+        content.appendChild(knobRow);
       }
       const delBtn = document.createElement("button");
       delBtn.textContent = "Delete Component";
@@ -3462,6 +3530,39 @@
       }
     }
   }
+  class Potentiometer extends Component {
+    constructor(id, resistance = 1e4) {
+      super(id);
+      this.resistance = resistance;
+      this.value = 0.5;
+      this.metadata = {
+        name: "Potentiometer",
+        description: `${resistance}Ω Potentiometer`
+      };
+      this.addPin("p1", "bidirectional");
+      this.addPin("p2", "output");
+      this.addPin("p3", "bidirectional");
+    }
+    computeOutputs() {
+      const pinA = this.getPin("p1");
+      const pinW = this.getPin("p2");
+      const pinB = this.getPin("p3");
+      if (pinA.net && pinB.net && pinA.net !== pinB.net) {
+        if (pinA.net.isFixed && pinB.net.isFixed) {
+          const vA = pinA.getVoltage();
+          const vB = pinB.getVoltage();
+          const vWiper = vA + (vB - vA) * this.value;
+          if (pinW.net) {
+            pinW.net.voltage = vWiper;
+            pinW.net.isFixed = true;
+          }
+        } else if (pinA.net.isFixed && !pinB.net.isFixed) {
+          pinB.net.setVoltage(pinA.getVoltage());
+          pinB.net.isFixed = true;
+        }
+      }
+    }
+  }
   class SignalGenerator extends Component {
     constructor(id) {
       super(id);
@@ -3669,7 +3770,8 @@
         "Amperimetro": Ammeter,
         "Oscilloscope": Oscilloscope,
         "Osciloscopio": Oscilloscope,
-        "Dual Supply": DualPowerSupply
+        "Dual Supply": DualPowerSupply,
+        "Potentiometer": Potentiometer
       };
       this.interaction.onComponentSelected = (comp) => {
         if (this.isHelpActive) this.schematicManager.show(comp);
@@ -3698,6 +3800,7 @@
           name: "Componentes Pasivos",
           items: [
             { name: "Resistencia", Class: Resistor },
+            { name: "Potenciometro", Class: Potentiometer },
             { name: "Capacitor", Class: Capacitor }
           ]
         },

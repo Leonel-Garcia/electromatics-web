@@ -36,6 +36,8 @@ export class ChipFactory {
       return this.createOscilloscope(component, el);
     } else if (name === 'Dual Power Supply') {
       return this.createDualSupply(component, el);
+    } else if (name === 'Potentiometer') {
+      return this.createPotentiometer(component, el);
     }
     
     // Default fallback
@@ -1322,6 +1324,49 @@ export class ChipFactory {
 
           // Connection pins (hitboxes) - Offset for precise hole snapping
           this.addLeg(el, -12, t.y-3, t.id);
+      });
+
+      return el;
+  }
+
+  createPotentiometer(comp, el) {
+      // Classic 3-pin blue potentiometer
+      el.style.width = '42px';
+      el.style.height = '42px';
+      el.style.background = '#3498db'; // Classic Blue
+      el.style.border = '2px solid #2980b9';
+      el.style.borderRadius = '4px';
+      el.style.boxShadow = '2px 2px 5px rgba(0,0,0,0.3)';
+      
+      // Knob (Visual only, controlled via Inspector)
+      const knob = document.createElement('div');
+      knob.id = `pot-knob-${comp.id}`;
+      knob.style.cssText = `position:absolute; left:7px; top:7px; width:24px; height:24px; border-radius:50%; background:#ecf0f1; border:2px solid #bdc3c7; box-shadow:inset 0 0 5px rgba(0,0,0,0.2); transition: transform 0.2s;`;
+      
+      // Rotation indicator on knob
+      const indicator = document.createElement('div');
+      indicator.style.cssText = 'position:absolute; left:50%; top:2px; transform:translateX(-50%); width:3px; height:8px; background:#e74c3c; border-radius:2px;';
+      knob.appendChild(indicator);
+      
+      // Initial rotation based on value
+      const angle = (comp.value * 270) - 135; // Map 0-1 to -135deg to +135deg
+      knob.style.transform = `rotate(${angle}deg)`;
+      
+      el.appendChild(knob);
+
+      // Pins (Spaced to fit 3 generic holes in a row - 20px apart)
+      const pins = [
+        { id: 'p1', x: 2, y: 45, label: 'A' },
+        { id: 'p2', x: 21, y: 45, label: 'W' },
+        { id: 'p3', x: 40, y: 45, label: 'B' }
+      ];
+
+      pins.forEach(p => {
+          // Metallic leg
+          const wire = document.createElement('div');
+          wire.style.cssText = `position:absolute; left:${p.x-1}px; top:36px; width:4px; height:12px; background:#bdc3c7; border:1px solid #7f8c8d; border-radius:0 0 2px 2px;`;
+          el.appendChild(wire);
+          this.addLeg(el, p.x-2, p.y-3, p.id);
       });
 
       return el;
