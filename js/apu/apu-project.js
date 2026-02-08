@@ -459,7 +459,7 @@ class APUProject {
                     <b>Modo Visión PDVSA</b>
                     <p style="font-size:10px; margin:5px 0;">Escaneo detectado. Procesando imágenes para OCR profundo...</p>
                 `;
-                images = await this.pdfToImages(pdf, 8); // PDVSA pliegos can be longer
+                images = await this.pdfToImages(pdf, 5); // Limit to 5 pages for better performance
             }
 
             // 3. Deep Extraction with AI
@@ -499,7 +499,7 @@ class APUProject {
         
         for (let i = 1; i <= numPages; i++) {
             const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 }); // Balance calidad/peso
+            const viewport = page.getViewport({ scale: 1.2 }); // Reduced scale (1.5 -> 1.2)
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.height = viewport.height;
@@ -510,8 +510,8 @@ class APUProject {
                 viewport: viewport
             }).promise;
 
-            // Extraer solo la data base64 (sin el prefijo data:image/jpeg;base64,)
-            const base64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+            // Lower quality (0.7 -> 0.5) to keep payload small
+            const base64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
             images.push(base64);
         }
         return images;

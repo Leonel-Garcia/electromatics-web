@@ -449,7 +449,7 @@ async def generate_content_proxy(request: Request):
                     url, 
                     json=body, 
                     headers={"Content-Type": "application/json"}, 
-                    timeout=30
+                    timeout=90
                 )
                 
                 if google_response.status_code == 200:
