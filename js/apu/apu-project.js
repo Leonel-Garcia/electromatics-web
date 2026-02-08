@@ -28,6 +28,11 @@ class APUProject {
             fileInput.addEventListener('change', (e) => this.handlePdfImport(e));
         }
 
+        const pdvsaInput = document.getElementById('pdvsa-upload');
+        if(pdvsaInput) {
+            pdvsaInput.addEventListener('change', (e) => this.handlePdvsaImport(e));
+        }
+
         // Ensure dates and rates are set on startup
         if (window.apuUI) {
             window.apuUI.setDate();
@@ -380,36 +385,151 @@ class APUProject {
         e.target.value = '';
     }
 
-    /**
-     * Extrae partidas del texto del PDF usando la IA
-     */
+    async handlePdvsaImport(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const zone = document.querySelector('.import-zone');
+        const originalContent = zone.innerHTML;
+
+        // Visual Feedback
+        const tbody = document.getElementById('master-budget-body');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;"><i class="fa-solid fa-microchip fa-spin fa-2x" style="color:#ff9800"></i><br><br><b>INGENIERÍA PDVSA:</b> ElectrIA está realizando un Análisis de Precios Unitarios profundo...</td></tr>';
+        }
+
+        zone.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:#ff9800"></i><br>
+            <b>Escaneando Pliego PDVSA...</b>
+            <p style="font-size:10px; margin:5px 0;">Analizando especificaciones técnicas y tablas de recursos.</p>
+        `;
+
+        try {
+            // Auto-set sector to Oil
+            const sectorEl = document.getElementById('labor-sector');
+            if (sectorEl) {
+                sectorEl.value = 'oil';
+                if (window.apuUI) window.apuUI.setSector('oil');
+            }
+
+            // 1. Configure PDF.js
+            if (typeof pdfjsLib !== 'undefined') {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+
+            // 2. Read PDF text
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                
+                zone.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:#ff9800"></i><br>
+                    <b>Extrayendo Especificaciones...</b>
+                    <p style="font-size:10px; margin:5px 0;">Página ${i} de ${pdf.numPages}</p>
+                `;
+            }
+
+            // 3. Deep Extraction with AI
+            zone.innerHTML = `
+                <i class="fa-solid fa-brain fa-beat-fade" style="font-size:24px; color:#ff9800"></i><br>
+                <b>ElectrIA Correlacionando...</b>
+                <p style="font-size:10px; margin:5px 0;">Vinculando Partidas -> Recursos -> Tiempos.</p>
+            `;
+
+            const partidas = await this.extractPdvsaPartidasWithAI(fullText);
+
+            if (partidas && partidas.length > 0) {
+                this.partidas = partidas;
+                zone.innerHTML = originalContent;
+                this.renderMasterTable();
+                this.renderSidebar();
+                alert(`✅ PROCESAMIENTO PREMIUM COMPLETADO\n\nElectrIA ha extraído ${partidas.length} partidas con sus Análisis de Precios Unitarios (APU) sugeridos basados en el pliego PDVSA.\n\nRevise cada una en la vista de detalle.`);
+            } else {
+                throw new Error('No se pudieron extraer los datos con el análisis avanzado.');
+            }
+
+        } catch (error) {
+            console.error('PDVSA Import Error:', error);
+            zone.innerHTML = originalContent;
+            alert(`❌ Error en Análisis PDVSA:\n\n${error.message}`);
+        }
+
+        e.target.value = '';
+    }
+
     async extractPartidasWithAI(pdfText) {
-        // Limitar el texto para no exceder límites de la API
-        const maxChars = 15000;
+        const prompt = `Eres un experto en presupuestos de ingeniería eléctrica venezolana.
+Analiza este texto extraído de un PDF y genera una lista de partidas.
+REQUERIMIENTOS:
+1. Extrae: código de la partida, descripción, unidad y cantidad.
+2. Formato: [{item, code, description, unit, qty}] JSON puro.
+
+TEXTO:
+${pdfText.substring(0, 15000)}`;
+        return this.callAiAndParse(prompt);
+    }
+
+    async extractPdvsaPartidasWithAI(pdfText) {
+        const maxChars = 20000; // Allow more context for PDVSA
         const truncatedText = pdfText.length > maxChars 
             ? pdfText.substring(0, maxChars) + '\n... [TEXTO TRUNCADO]' 
             : pdfText;
 
-        const prompt = `Eres un experto en presupuestos de ingeniería eléctrica venezolana.
-Analiza este texto extraído de un PDF (posiblemente convertido de Excel) y genera una lista de partidas.
+        const prompt = `Eres un experto senior en licitaciones de PDVSA (Petróleos de Venezuela). 
+Analiza este pliego licitatorio extraído de un PDF. 
 
-TEXTO DEL PDF:
+EL DOCUMENTO CONTIENE GENERALMENTE:
+1. Listado de Partidas (Presupuesto).
+2. Especificaciones Técnicas (ET) que detallan los requisitos de ejecución.
+3. Secciones de Recursos (Personal, Materiales, Equipos).
+
+TAREA:
+Extrae cada partida y genera su APU (Análisis de Precios Unitarios) completo vinculando la información de las ET y los recursos.
+
+REQUERIMIENTOS:
+- Metadata: item, code (si no tiene usa PDV-001...), description, unit, qty.
+- APU Field (apu):
+    - yield: Rendimiento esperado (unidades por día). A menudo sale del "Tiempo de Ejecución".
+    - materials: Array de {desc, unit, qty, price, waste}.
+    - labor: Array de {role, qty, rate}. (Map roles like Capataz, Electricista, Ayudante).
+    - equipment: Array de {desc, qty, val, fac}.
+- Si el documento no da precios, usa 0 (el usuario los completará).
+- Cruza la información: Si la Partida X menciona "uso de grúa" en su ET, incluye la grúa en 'equipment'.
+
+IMPORTANTE: Responde ÚNICAMENTE con un array JSON válido.
+
+TEXTO DEL PLIEGO PDVSA:
 """
 ${truncatedText}
 """
 
-REQUERIMIENTOS:
-1. Extrae: código de la partida, descripción clara, unidad (pto, m, global, pza, etc.) y cantidad.
-2. Si el código no está claro, genera uno incremental tipo "E.001", "E.002", etc.
-3. Si la cantidad no es un número legible, asume 1.
-4. MUY IMPORTANTE: El texto puede estar algo desordenado por la conversión; usa tu inteligencia para rearmar las descripciones lógicas.
-
-RESPONDE SÓLO CON UN ARRAY JSON (sin markdown ni texto extra):
+FORMATO DE RESPUESTA:
 [
-  {"item": 1, "code": "E541.111.111", "description": "Salida de tomacorriente...", "unit": "pto", "qty": 10},
-  ...
+  {
+    "item": 1,
+    "code": "PDV-001",
+    "description": "...",
+    "unit": "...",
+    "qty": 5,
+    "apu": {
+      "yield": 10,
+      "materials": [{"desc": "...", "unit": "...", "qty": 1.05, "price": 0, "waste": 5}],
+      "labor": [{"role": "...", "qty": 1, "rate": 0}],
+      "equipment": [{"desc": "...", "qty": 1, "val": 0, "fac": 0.005}]
+    }
+  }
 ]`;
 
+        // Reuse extraction logic but with different prompt and processing
+        return this.callAiAndParse(prompt);
+    }
+
+    async callAiAndParse(prompt) {
         const maxRetries = 3;
         let retryCount = 0;
 
@@ -428,84 +548,70 @@ RESPONDE SÓLO CON UN ARRAY JSON (sin markdown ni texto extra):
                     })
                 });
 
-                if (!response.ok) {
-                    let errorDetail = "Error desconocido";
-                    try {
-                        const errorData = await response.json();
-                        errorDetail = errorData.detail || response.statusText;
-                    } catch (e) {
-                        errorDetail = response.statusText;
-                    }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-                    if (response.status === 503 && retryCount < maxRetries - 1) {
-                        retryCount++;
-                        console.warn(`Servidor ocupado (503). Reintento ${retryCount}/${maxRetries} en 4 segundos...`);
-                        await new Promise(resolve => setTimeout(resolve, 4000));
-                        continue;
-                    }
-                    throw new Error(`Servidor responde: ${response.status} - ${errorDetail}`);
-                }
-
-                // Manejar respuesta
-                const contentType = response.headers.get('content-type');
+                const data = await response.json();
                 let aiResponse = '';
-
-                if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    if (data.text) {
-                        aiResponse = data.text;
-                    } else if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                        aiResponse = data.candidates[0].content.parts[0].text;
-                    }
-                } else {
-                    // Streaming response
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        aiResponse += decoder.decode(value, { stream: true });
-                    }
+                if (data.text) aiResponse = data.text;
+                else if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                    aiResponse = data.candidates[0].content.parts[0].text;
                 }
 
-                // Limpiar y parsear la respuesta JSON
+                // Cleanup JSON
                 aiResponse = aiResponse.trim();
-                
-                // Remover posibles bloques de código markdown
-                if (aiResponse.startsWith('```json')) {
-                    aiResponse = aiResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-                } else if (aiResponse.startsWith('```')) {
-                    aiResponse = aiResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                if (aiResponse.includes('```')) {
+                    aiResponse = aiResponse.replace(/```json|```/g, '').trim();
                 }
 
-                const partidas = JSON.parse(aiResponse);
+                const partidasRaw = JSON.parse(aiResponse);
                 
-                if (!Array.isArray(partidas)) {
-                    throw new Error('La respuesta de la IA no es un array válido');
-                }
-
-                // Validar y normalizar cada partida
-                return partidas.map((p, index) => ({
+                // Final normalization
+                return partidasRaw.map((p, index) => ({
                     item: p.item || index + 1,
-                    code: p.code || `E.${String(index + 1).padStart(3, '0')}`,
-                    description: p.description || 'Partida sin descripción',
+                    code: p.code || `PDV.${String(index + 1).padStart(3, '0')}`,
+                    description: p.description || 'Sin descripción',
                     unit: p.unit || 'und',
                     qty: parseFloat(p.qty) || 1,
                     unitPrice: 0,
-                    apuData: null
+                    apuData: p.apu ? this.normalizeApuFromAi(p) : null
                 }));
 
             } catch (error) {
-                if (retryCount < maxRetries - 1) {
-                    retryCount++;
-                    console.warn(`Error en intento ${retryCount}. Reintentando...`, error);
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                } else {
-                    console.error('Error extrayendo partidas con IA tras reintentos:', error);
-                    throw new Error(`Error al analizar con IA: ${error.message}`);
-                }
+                retryCount++;
+                if (retryCount >= maxRetries) throw error;
+                await new Promise(r => setTimeout(r, 3000));
             }
         }
+    }
+
+    normalizeApuFromAi(p) {
+        const aiApu = p.apu;
+        // Map AI result to the format expected by apuUI.loadState
+        return {
+            metadata: {
+                description: p.description,
+                code: p.code,
+                unit: p.unit,
+                qty: p.qty,
+                yield: aiApu.yield || 1,
+                obra: this.name,
+                partidaNo: p.item
+            },
+            materials: (aiApu.materials || []).map(m => ({
+                desc: m.desc, unit: m.unit, qty: m.qty, waste: m.waste || 0, price: m.price || 0
+            })),
+            equipment: (aiApu.equipment || []).map(e => ({
+                desc: e.desc, qty: e.qty, val: e.val || 0, fac: e.fac || 0.001
+            })),
+            labor: (aiApu.labor || []).map(l => ({
+                role: l.role, count: l.qty || 1, rate: l.rate || 0
+            })),
+            params: {
+                fcas: 190, // Default PDVSA
+                admin: 15,
+                util: 12   // Default PDVSA Utility
+            }
+        };
     }
 
     async exportMasterPDF() {

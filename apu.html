@@ -319,11 +319,22 @@
                     <i class="fa-solid fa-rotate-left"></i> Nuevo Presupuesto (Reset)
                 </button>
                 
-                <div class="import-zone" onclick="document.getElementById('pdf-upload').click()">
+                <div class="import-zone" id="import-zone-container">
                     <i class="fa-solid fa-file-pdf" style="font-size: 24px; color: #d32f2f;"></i><br>
-                    <b>Importar Presupuesto con IA</b>
-                    <p style="font-size:10px; margin:5px 0;">Sube tu PDF para extraer partidas</p>
+                    <b>Extraer Partidas con IA</b>
+                    <p style="font-size:10px; margin:5px 0;">Sube tu PDF para extraer partidas (Estándar)</p>
+                    <button onclick="document.getElementById('pdf-upload').click()" class="btn-sm" style="width:100%; margin-top:5px; background:#f8f9fa; border:1px solid #ccc;">Seleccionar PDF</button>
                     <input type="file" id="pdf-upload" style="display:none" accept=".pdf">
+                    
+                    <div style="margin-top: 15px; padding: 12px; border: 1px solid #ffe0b2; background: #fffcf5; border-radius: 8px;">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 24px; color: #ff9800; margin-bottom: 5px;"></i><br>
+                        <b style="color: #e65100; font-size: 13px;">Análisis Avanzado PDVSA</b>
+                        <p style="font-size:10px; margin:5px 0 10px 0; line-height: 1.2;">Vincula especificaciones técnicas, personal y materiales automáticamente.</p>
+                        <button onclick="document.getElementById('pdvsa-upload').click()" class="btn-sm" style="width:100%; color:white; border:none; background: linear-gradient(135deg, #f57c00, #e65100); padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(245, 124, 0, 0.3);">
+                            <i class="fa-solid fa-microchip"></i> Procesar Pliego PDVSA
+                        </button>
+                        <input type="file" id="pdvsa-upload" style="display:none" accept=".pdf">
+                    </div>
                 </div>
 
                 <div class="partida-list" id="sidebar-partida-list">
