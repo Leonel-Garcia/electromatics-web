@@ -349,11 +349,29 @@ class APUProject {
                 `;
             }
 
-            if (!fullText.trim()) {
-                throw new Error('El PDF no contiene texto legible. Podría ser un PDF escaneado.');
+            if (!fullText.trim() || fullText.trim().length < 150) {
+                // LIKELY SCANNED - Use Vision OCR
+                zone.innerHTML = `
+                    <i class="fa-solid fa-eye fa-beat-fade" style="font-size:24px; color:var(--electric-blue)"></i><br>
+                    <b>Modo Visión Activado</b>
+                    <p style="font-size:10px; margin:5px 0;">El PDF parece ser un escaneo. ElectrIA está leyendo las imágenes...</p>
+                `;
+                const images = await this.pdfToImages(pdf, 5); // First 5 pages are usually enough
+                const partidas = await this.extractPartidasWithAI("", images);
+                
+                if (partidas && partidas.length > 0) {
+                    this.partidas = partidas;
+                    zone.innerHTML = originalContent;
+                    this.renderMasterTable();
+                    this.renderSidebar();
+                    alert(`✅ Visión IA: Se han extraído ${partidas.length} partidas del escaneo.`);
+                } else {
+                    throw new Error('No se detectaron partidas incluso con el modo visión.');
+                }
+                return;
             }
 
-            // 4. Enviar a ElectrIA para análisis
+            // 4. Enviar a ElectrIA para análisis (TEXT MODE)
             zone.innerHTML = `
                 <i class="fa-solid fa-brain fa-beat-fade" style="font-size:24px; color:var(--safety-orange)"></i><br>
                 <b>ElectrIA analizando...</b>
@@ -417,7 +435,7 @@ class APUProject {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             }
 
-            // 2. Read PDF text
+                // 2. Read PDF text
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
             
@@ -434,14 +452,24 @@ class APUProject {
                 `;
             }
 
+            let images = [];
+            if (!fullText.trim() || fullText.trim().length < 200) {
+                zone.innerHTML = `
+                    <i class="fa-solid fa-eye fa-beat-fade" style="font-size:24px; color:#ff9800"></i><br>
+                    <b>Modo Visión PDVSA</b>
+                    <p style="font-size:10px; margin:5px 0;">Escaneo detectado. Procesando imágenes para OCR profundo...</p>
+                `;
+                images = await this.pdfToImages(pdf, 8); // PDVSA pliegos can be longer
+            }
+
             // 3. Deep Extraction with AI
             zone.innerHTML = `
                 <i class="fa-solid fa-brain fa-beat-fade" style="font-size:24px; color:#ff9800"></i><br>
                 <b>ElectrIA Correlacionando...</b>
-                <p style="font-size:10px; margin:5px 0;">Vinculando Partidas -> Recursos -> Tiempos.</p>
+                <p style="font-size:10px; margin:5px 0;">${images.length > 0 ? "Analizando imágenes con Visión..." : "Vinculando Partidas -> Recursos -> Tiempos."}</p>
             `;
 
-            const partidas = await this.extractPdvsaPartidasWithAI(fullText);
+            const partidas = await this.extractPdvsaPartidasWithAI(fullText, images);
 
             if (partidas && partidas.length > 0) {
                 this.partidas = partidas;
@@ -462,19 +490,53 @@ class APUProject {
         e.target.value = '';
     }
 
-    async extractPartidasWithAI(pdfText) {
-        const prompt = `Eres un experto en presupuestos de ingeniería eléctrica venezolana.
-Analiza este texto extraído de un PDF y genera una lista de partidas.
-REQUERIMIENTOS:
-1. Extrae: código de la partida, descripción, unidad y cantidad.
-2. Formato: [{item, code, description, unit, qty}] JSON puro.
+    /**
+     * Convierte páginas del PDF a imágenes Base64 para OCR Visual con IA
+     */
+    async pdfToImages(pdf, maxPages = 5) {
+        const images = [];
+        const numPages = Math.min(pdf.numPages, maxPages);
+        
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 }); // Balance calidad/peso
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-TEXTO:
-${pdfText.substring(0, 15000)}`;
-        return this.callAiAndParse(prompt);
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            // Extraer solo la data base64 (sin el prefijo data:image/jpeg;base64,)
+            const base64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+            images.push(base64);
+        }
+        return images;
     }
 
-    async extractPdvsaPartidasWithAI(pdfText) {
+    async extractPartidasWithAI(pdfText, images = []) {
+        let textContent = pdfText.substring(0, 15000);
+        let mode = images.length > 0 ? "VISUAL (OCR IA)" : "TEXTO";
+        
+        const prompt = `Eres un experto en presupuestos de ingeniería eléctrica venezolana.
+Analiza este documento (Modo: ${mode}). 
+${images.length > 0 ? "He adjuntado imágenes del escaneo porque el PDF no contiene texto legible." : "He extraído el texto del PDF."}
+
+TAREA: Extrae el listado de partidas.
+REQUERIMIENTOS:
+1. Extrae: código de la partida, descripción, unidad y cantidad.
+2. Si es un escaneo, fíjate bien en las tablas y números.
+3. Formato: [{item, code, description, unit, qty}] JSON puro.
+
+${images.length > 0 ? "" : "TEXTO DEL PDF:\n" + textContent}`;
+
+        return this.callAiAndParse(prompt, images);
+    }
+
+    async extractPdvsaPartidasWithAI(pdfText, images = []) {
         const maxChars = 20000; // Allow more context for PDVSA
         const truncatedText = pdfText.length > maxChars 
             ? pdfText.substring(0, maxChars) + '\n... [TEXTO TRUNCADO]' 
@@ -526,12 +588,23 @@ FORMATO DE RESPUESTA:
 ]`;
 
         // Reuse extraction logic but with different prompt and processing
-        return this.callAiAndParse(prompt);
+        return this.callAiAndParse(prompt, images);
     }
 
-    async callAiAndParse(prompt) {
+    async callAiAndParse(prompt, images = []) {
         const maxRetries = 3;
         let retryCount = 0;
+
+        // Construir el array de partes para la IA (Soporte para Visión)
+        const parts = [{ text: prompt }];
+        images.forEach(imgData => {
+            parts.push({
+                inline_data: {
+                    mime_type: "image/jpeg",
+                    data: imgData
+                }
+            });
+        });
 
         while (retryCount < maxRetries) {
             try {
@@ -543,7 +616,7 @@ FORMATO DE RESPUESTA:
                     body: JSON.stringify({
                         contents: [{
                             role: 'user',
-                            parts: [{ text: prompt }]
+                            parts: parts
                         }]
                     })
                 });
