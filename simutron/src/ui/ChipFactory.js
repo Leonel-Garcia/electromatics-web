@@ -1307,16 +1307,16 @@ export class ChipFactory {
           this.addLeg(el, -12, t.y-3, t.id);
       });
 
-      // COM (Common/Ground) Terminal - Sticking out to the RIGHT for cabling
+      // COM (Common/Ground) Terminal - Located at BOTTOM-RIGHT for easy cabling
       const wireCom = document.createElement('div');
-      wireCom.style.cssText = `position:absolute; right:-12px; top:22px; width:12px; height:5px; background:#333; border:1px solid #000; border-radius: 0 2px 2px 0; pointer-events:none;`;
+      wireCom.style.cssText = `position:absolute; right:-12px; bottom:8px; width:12px; height:6px; background:#333; border:1px solid #111; border-radius: 0 4px 4px 0; pointer-events:none;`;
       el.appendChild(wireCom);
       
-      this.addLeg(el, 55, 21, 'com'); // COM Pin hitbox on the right side
+      this.addLeg(el, 55, 48, 'com'); // COM Pin hitbox moved to bottom right
       
       const lblCom = document.createElement('div');
       lblCom.textContent = 'COM';
-      lblCom.style.cssText = 'position:absolute; right:-5px; top:12px; color:#fff; font-size:9px; font-weight:bold;';
+      lblCom.style.cssText = 'position:absolute; right:2px; bottom:4px; color:#fff; font-size:9px; font-weight:bold; pointer-events:none;';
       el.appendChild(lblCom);
 
       return el;
