@@ -312,34 +312,27 @@
 
             <div id="project-overview-sidebar">
                 <h4 style="margin:0 0 10px 0;"><i class="fa-solid fa-briefcase"></i> Mi Proyecto</h4>
-                <input type="text" id="project-name" class="sheet-input" style="border-bottom:1px solid #ccc; font-weight:bold; margin-bottom:15px;" value="Nuevo Presupuesto Eléctrico">
+                <input type="text" id="project-name" class="sheet-input" style="border-bottom:1px solid #ccc; font-weight:bold; margin-bottom:15px; font-size: 14px;" value="Nuevo Presupuesto Eléctrico">
                 
-                <!-- Botón para iniciar nuevo presupuesto -->
-                <button onclick="apuProject.resetProject()" class="btn-reset-project" style="width:100%; padding:10px; margin-bottom:15px; background: linear-gradient(135deg, #e74c3c, #c0392b); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.3s ease;">
-                    <i class="fa-solid fa-rotate-left"></i> Nuevo Presupuesto (Reset)
-                </button>
-                
-                <div class="import-zone" id="import-zone-container">
-                    <i class="fa-solid fa-file-pdf" style="font-size: 24px; color: #d32f2f;"></i><br>
-                    <b>Extraer Partidas con IA</b>
-                    <p style="font-size:10px; margin:5px 0;">Sube tu PDF para extraer partidas</p>
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="document.getElementById('pdf-upload').click()" class="btn-sm" style="flex:1; background:#f8f9fa; border:1px solid #ccc;">
-                            <i class="fa-solid fa-file-upload"></i> Subir PDF
-                        </button>
-                        <button onclick="apuProject.showJsonPasteModal()" class="btn-sm" style="flex:1; color:#e65100; border:1px solid #e65100; background: #fff8f0;">
-                            <i class="fa-solid fa-paste"></i> Pegar Gem
-                        </button>
-                    </div>
-                    <input type="file" id="pdf-upload" style="display:none" accept=".pdf">
-                </div>
-                </div>
-
-                <div class="partida-list" id="sidebar-partida-list">
+                <div class="partida-list" id="sidebar-partida-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background: #fff;">
                     <!-- Partidas extracted by IA appear here -->
                 </div>
 
-                <button class="btn-add-row" style="margin-top:10px" onclick="apuProject.addEmptyPartida()">+ Añadir Partida Manual</button>
+                <div style="display:flex; gap:5px; margin-bottom: 20px;">
+                    <button class="btn-sm" style="flex:1;" onclick="apuProject.addEmptyPartida()">
+                        <i class="fa-solid fa-plus"></i> Manual
+                    </button>
+                    <button onclick="apuProject.showJsonPasteModal()" class="btn-sm" style="flex:1; color:#e06c00; border:1px solid #ff9800; background: #fff8f0;">
+                                <i class="fa-solid fa-paste"></i> Pegar Gem
+                    </button>
+                </div>
+
+                <div class="import-zone" id="import-zone-container" style="padding: 10px; border-style: dashed; border-width: 1px;">
+                    <i class="fa-solid fa-file-pdf" style="font-size: 18px; color: #d32f2f;"></i>
+                    <b style="font-size: 11px;">Importar PDF con IA</b>
+                    <button onclick="document.getElementById('pdf-upload').click()" class="btn-sm" style="display:block; width:100%; margin-top:5px; font-size:10px;">Seleccionar</button>
+                    <input type="file" id="pdf-upload" style="display:none" accept=".pdf">
+                </div>
             </div>
 
 
@@ -363,24 +356,34 @@
                 </select>
             </div>
 
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; font-weight:bold; font-size:11px;">Tasa BCV (Bs/$)</label>
-                <div style="display:flex; gap:5px; align-items:center;">
-                <input type="text" id="exchange-rate" value="367,30" class="form-control text-center fw-bold" style="max-width: 120px; font-size: 1.1rem; border-color: #0d6efd; color: #0d6efd;">
-                    <button onclick="apuUI.fetchExchangeRate()" class="btn-sm" style="padding: 5px 8px;" title="Actualizar Tasa">
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                    </button>
+            <div style="margin-bottom: 10px;">
+                <label style="display:block; font-weight:bold; font-size:10px; color:#666;">FCAS Global (%)</label>
+                <input type="number" id="global-fcas" value="250" class="form-control" style="width:100%; height:30px; font-size:12px;" oninput="apuProject.updateGlobalParams()">
+            </div>
+
+            <hr style="margin: 20px 0;">
+
+            <!-- Technical & Export Footer -->
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+                <div style="margin-bottom: 10px;">
+                    <label style="display:block; font-weight:bold; font-size:11px;">Tasa BCV (Bs/$)</label>
+                    <div style="display:flex; gap:5px; align-items:center;">
+                        <input type="text" id="exchange-rate" value="36,73" class="form-control text-center fw-bold" style="max-width: 100px; font-size: 1rem; border-color: #0d6efd; color: #0d6efd; height:35px;">
+                        <button onclick="apuUI.fetchExchangeRate()" class="btn-sm" style="padding: 5px 8px; flex:1" title="Actualizar Tasa">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; font-weight:bold; font-size:11px;">FCAS Global (%)</label>
-                <input type="number" id="global-fcas" value="250" class="form-control" style="width:100%" oninput="apuProject.updateGlobalParams()">
-            </div>
+                <button onclick="apuProject.exportMasterPDF()" class="btn-primary" style="width:100%; padding:10px; margin-bottom:10px; font-size:12px;">
+                    <i class="fa-solid fa-file-pdf"></i> Descargar Presupuesto PDF
+                </button>
 
-            <button onclick="apuProject.exportMasterPDF()" class="btn-primary" style="width:100%; padding:12px; margin-bottom:10px;">
-                <i class="fa-solid fa-file-pdf"></i> PDF Presupuesto Completo
-            </button>
+                <!-- Botón para iniciar nuevo presupuesto -->
+                <button onclick="apuProject.resetProject()" class="btn-sm" style="width:100%; padding:8px; background: #fff; border: 1px solid #dc3545; color:#dc3545; border-radius:6px; cursor:pointer; font-weight:bold; font-size:10px;">
+                    <i class="fa-solid fa-trash-can"></i> Limpiar / Reset
+                </button>
+            </div>
         </div>
 
         <!-- Main Content Area -->
