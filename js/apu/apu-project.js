@@ -253,20 +253,20 @@ class APUProject {
             grandTotal += totalDisplay;
             
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${p.item}</td>
-                <td><b>${p.code}</b></td>
-                <td>${p.description}</td>
-                <td style="text-align:center">${p.unit}</td>
-                <td style="text-align:center">${p.qty}</td>
-                <td style="text-align:right">${symbol} ${unitPriceDisplay.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td style="text-align:right"><b>${symbol} ${totalDisplay.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b></td>
-                <td style="text-align:center">
-                    <button class="btn-sm" onclick="apuProject.editPartida(${index})"><i class="fa-solid fa-pen-to-square"></i> APU</button>
-                    <button class="btn-sm btn-danger" onclick="apuProject.deletePartida(${index})" style="margin-left:5px;"><i class="fa-solid fa-trash"></i></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+        tr.innerHTML = `
+            <td style="text-align:center">${p.item}</td>
+            <td style="text-align:center"><b>${p.code}</b></td>
+            <td style="text-align:left; padding-left:15px;">${p.description}</td>
+            <td style="text-align:center">${p.unit}</td>
+            <td style="text-align:center">${p.qty}</td>
+            <td style="text-align:right">${symbol} ${unitPriceDisplay.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td style="text-align:right"><b>${symbol} ${totalDisplay.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b></td>
+            <td style="text-align:center">
+                <button class="btn-sm" onclick="apuProject.editPartida(${index})"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn-sm btn-danger" onclick="apuProject.deletePartida(${index})" style="margin-left:5px;"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
         });
         document.getElementById('project-total').innerText = `${symbol} ${grandTotal.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
