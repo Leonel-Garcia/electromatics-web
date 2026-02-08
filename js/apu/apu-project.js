@@ -658,17 +658,17 @@ FORMATO DE RESPUESTA:
     }
 
     normalizeApuFromAi(p) {
-        const aiApu = p.apu;
-        // Map AI result to the format expected by apuUI.loadState
+        // ... (existing logic)
+        const aiApu = p.apu || {};
         return {
             metadata: {
-                description: p.description,
-                code: p.code,
-                unit: p.unit,
-                qty: p.qty,
+                description: p.description || '',
+                code: p.code || '',
+                unit: p.unit || 'und',
+                qty: p.qty || '1.00',
                 yield: aiApu.yield || 1,
                 obra: this.name,
-                partidaNo: p.item
+                partidaNo: p.item || 1
             },
             materials: (aiApu.materials || []).map(m => ({
                 desc: m.desc, unit: m.unit, qty: m.qty, waste: m.waste || 0, price: m.price || 0
@@ -682,9 +682,62 @@ FORMATO DE RESPUESTA:
             params: {
                 fcas: 190, // Default PDVSA
                 admin: 15,
-                util: 12   // Default PDVSA Utility
+                util: 12   
             }
         };
+    }
+
+    /**
+     * Muestra un modal simple para pegar el JSON generado por el Gem
+     */
+    showJsonPasteModal() {
+        const json = prompt("Pega aquí el código JSON generado por tu Gem de Gemini:");
+        if (!json) return;
+
+        try {
+            // Limpiar posibles backticks de markdown si el usuario copió todo el bloque
+            let cleanJson = json.trim();
+            if (cleanJson.startsWith('```')) {
+                cleanJson = cleanJson.replace(/```json|```/g, '').trim();
+            }
+
+            const data = JSON.parse(cleanJson);
+            if (!Array.isArray(data)) {
+                alert("Error: El JSON debe ser un array de partidas.");
+                return;
+            }
+
+            this.importJsonData(data);
+        } catch (e) {
+            console.error("JSON Paste error:", e);
+            alert("Error al procesar el JSON. Asegúrate de que sea un formato válido.");
+        }
+    }
+
+    importJsonData(data) {
+        // Normalizar cada partida
+        const newPartidas = data.map((p, index) => ({
+            item: p.item || index + 1,
+            code: p.code || `PDV.${String(index + 1).padStart(3, '0')}`,
+            description: p.description || 'Sin descripción',
+            unit: p.unit || 'und',
+            qty: parseFloat(p.qty) || 1,
+            unitPrice: 0,
+            apuData: p.apu ? this.normalizeApuFromAi(p) : null
+        }));
+
+        this.partidas = newPartidas;
+        this.renderMasterTable();
+        this.renderSidebar();
+        
+        // Auto-switch to Oil sector
+        const sectorEl = document.getElementById('labor-sector');
+        if (sectorEl) {
+            sectorEl.value = 'oil';
+            if (window.apuUI) window.apuUI.setSector('oil');
+        }
+
+        alert(`✅ ¡Éxito! Se han importado ${newPartidas.length} partidas desde tu Gem.`);
     }
 
     async exportMasterPDF() {
