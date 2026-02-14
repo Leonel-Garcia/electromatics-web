@@ -2290,6 +2290,68 @@ class AlternatingRelay extends Component {
     }
 }
 
+class ControlTransformer extends Component {
+    constructor(x, y) {
+        super('transformer', x, y, 120, 100);
+        this.terminals = {
+            'H1': { x: 20, y: 10, label: 'H1' }, 'H2': { x: 45, y: 10, label: 'H2' },
+            'H3': { x: 75, y: 10, label: 'H3' }, 'H4': { x: 100, y: 10, label: 'H4' },
+            'X1': { x: 20, y: 90, label: 'X1' }, 'X2': { x: 45, y: 90, label: 'X2' },
+            'X3': { x: 75, y: 90, label: 'X3' }, 'X4': { x: 100, y: 90, label: 'X4' }
+        };
+        this.state = {
+            primaryV: 480,
+            secondaryV: 120,
+            active: false,
+            config: 'H1-H4_X1-X2' 
+        };
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.roundRect(this.x, this.y, this.width, this.height, 8);
+        ctx.fill();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(this.x + 15, this.y + 30, this.width - 30, 40);
+        
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 3;
+        for(let i=0; i<6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(this.x + 25 + i*13, this.y + 35);
+            ctx.lineTo(this.x + 25 + i*13, this.y + 65);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('CONTROL XFMR', this.x + this.width/2, this.y + 53);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '8px Inter';
+        ctx.fillText(`${this.state.primaryV}V`, this.x + this.width/2, this.y + 25);
+        ctx.fillText(`${this.state.secondaryV}V`, this.x + this.width/2, this.y + 82);
+
+        ctx.fillStyle = this.state.active ? '#22c55e' : '#475569';
+        if(this.state.active) {
+            ctx.shadowColor = '#22c55e';
+            ctx.shadowBlur = 10;
+        }
+        ctx.beginPath();
+        ctx.arc(this.x + this.width - 15, this.y + 50, 4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+
+        this.drawTerminals(ctx);
+    }
+}
+
 class FloatSwitch extends Component {
     constructor(x, y) {
         super('float-switch', x, y, 70, 50);
@@ -3097,6 +3159,25 @@ function setupEventListeners() {
             }
         }
 
+        // Transformador de Control (XFMR)
+        const transformerControls = document.getElementById('transformer-controls');
+        if (transformerControls) {
+            if (component instanceof ControlTransformer) {
+                transformerControls.style.display = 'block';
+                const selectSec = document.getElementById('select-xfmr-sec');
+                if (selectSec) {
+                    selectSec.value = component.state.secondaryV || 120;
+                    selectSec.onchange = (e) => {
+                        component.state.secondaryV = parseInt(e.target.value);
+                        // Reset connections on change
+                        draw();
+                    };
+                }
+            } else {
+                transformerControls.style.display = 'none';
+            }
+        }
+
         // Motor Controls
         const motorControls = document.getElementById('motor-controls');
         if (motorControls) {
@@ -3320,6 +3401,7 @@ function addComponent(type, x, y, skipHistory = false) {
         case 'pressure-switch': c = new PressureSwitch(x, y); break;
         case 'guardamotor': c = new Guardamotor(x, y); break;
         case 'supervisor': c = new ThreePhaseMonitor(x, y); break;
+        case 'transformer': c = new ControlTransformer(x, y); break;
         case 'dahlander-motor':
         case 'dahlander': c = new DahlanderMotor(x, y); break;
         default: return;
@@ -3991,6 +4073,31 @@ function solveCircuit() {
                         const nc = `${c.id}_NC`;
                         if (nodes[com]) nodes[com].forEach(p => setNode(c, 'NC', p));
                         if (nodes[nc]) nodes[nc].forEach(p => setNode(c, 'COM', p));
+                    }
+                }
+                
+                if (c instanceof ControlTransformer) {
+                    const h1P = nodes[`${c.id}_H1`], h4P = nodes[`${c.id}_H4`];
+                    if (h1P && h1P.size && h4P && h4P.size) {
+                        const p1 = [...h1P][0], p2 = [...h4P][0];
+                        if (p1 !== p2 && !['N', 'PE'].includes(p1) && !['N', 'PE'].includes(p2)) {
+                            c.state.active = true;
+                            // Generar voltajes basados en selección
+                            const secL = `SEC_${c.id}_L1`;
+                            const secN = c.state.secondaryV == 240 ? `SEC_${c.id}_L2` : `SEC_${c.id}_N`;
+                            
+                            setNode(c, 'X1', secL);
+                            if (c.state.secondaryV == 120) {
+                                setNode(c, 'X2', secN);
+                            } else {
+                                // 240V usually uses X1 and X4 in many industrial control transformers
+                                setNode(c, 'X4', secN);
+                            }
+                        } else {
+                            c.state.active = false;
+                        }
+                    } else {
+                        c.state.active = false;
                     }
                 }
             });
