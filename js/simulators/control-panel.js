@@ -1821,8 +1821,9 @@ class Motor6T extends Component {
                     }
                     window.motorAudio.start();
                 }
-                // Podríamos variar el tono según conexión, pero por ahora mantendremos 1.0 para estabilidad
-                window.motorAudio.setPitch(1.0);
+                // Variar tono según conexión: Estrella = tono bajo (arranque), Delta = tono nominal
+                const pitch = this.state.connection === 'Star' ? 0.7 : 1.0;
+                window.motorAudio.setPitch(pitch);
             } else {
                 if (window.motorAudio.isPlaying) {
                     const others = window.components.filter(c => c.id !== this.id && c.state && c.state.running);
@@ -1865,8 +1866,11 @@ class Motor6T extends Component {
             const rotorRadius = 30;
             const numSegments = 8;
             
+            // Velocidad diferenciada: Estrella = arranque lento (~58%), Delta = velocidad nominal
+            const speedMultiplier = this.state.connection === 'Star' ? 0.04 : 0.08;
+            
             // Actualizar ángulo
-            this.state.angle += 0.08 * this.state.direction;
+            this.state.angle += speedMultiplier * this.state.direction;
             
             ctx.save();
             ctx.translate(centerX, centerY);
@@ -1921,6 +1925,11 @@ class Motor6T extends Component {
             ctx.stroke();
             ctx.restore();
             
+            // RPM según conexión (Star = reducida, Delta = nominal)
+            const displayRPM = this.state.connection === 'Star' 
+                ? Math.round(this.state.rpm * 0.58) 
+                : this.state.rpm;
+            
             // Indicador de conexión (Star/Delta) y dirección
             ctx.fillStyle = '#fbbf24';
             ctx.font = 'bold 11px Inter';
@@ -1934,7 +1943,7 @@ class Motor6T extends Component {
 
             ctx.textAlign = 'left';
             ctx.fillText(`${this.state.hp}HP ${this.state.voltage}V`, this.x + 100, this.y + 110);
-            ctx.fillText(`${this.state.nominalCurrent}A ${this.state.rpm}RPM`, this.x + 100, this.y + 125);
+            ctx.fillText(`${this.state.nominalCurrent}A ${displayRPM}RPM`, this.x + 100, this.y + 125);
         }
         
         this.drawTerminals(ctx);
@@ -4168,21 +4177,40 @@ function solveCircuit() {
              let running = false;
              let direction = 1;
 
-             // Check Input Power (U1, V1, W1)
-             if (hasU1 && hasU1.size && hasV1 && hasV1.size && hasW1 && hasW1.size) {
-                 const pU = [...hasU1][0], pV = [...hasV1][0], pW = [...hasW1][0];
-                 const validPower = (pU!==pV && pV!==pW && pU!==pW);
+             // Check Input Power (U1, V1, W1) - need 3 distinct grid phases
+             const getGridPhases = (nodeSet) => {
+                 if (!nodeSet || nodeSet.size === 0) return [];
+                 return [...nodeSet].filter(p => ['L1', 'L2', 'L3'].includes(p));
+             };
+
+             const phasesU1 = getGridPhases(hasU1);
+             const phasesV1 = getGridPhases(hasV1);
+             const phasesW1 = getGridPhases(hasW1);
+
+             if (phasesU1.length > 0 && phasesV1.length > 0 && phasesW1.length > 0) {
+                 const pU = phasesU1[0], pV = phasesV1[0], pW = phasesW1[0];
+                 const validPower = (pU !== pV && pV !== pW && pU !== pW);
                  
                  if (validPower) {
-                     // Check Star: U2, V2, W2 shorted together
-                     if (hasU2 && hasU2.size > 1 && hasV2 && hasV2.size > 1 && hasW2 && hasW2.size > 1) {
-                         connection = 'Star';
-                         running = true;
-                     } 
+                     // Check Star: U2, V2, W2 must share at least one common node
+                     // (they are shorted together to form the star neutral point)
+                     if (hasU2 && hasU2.size > 0 && hasV2 && hasV2.size > 0 && hasW2 && hasW2.size > 0) {
+                         // Find common nodes among all three terminals
+                         const commonNodes = [...hasU2].filter(n => hasV2.has(n) && hasW2.has(n));
+                         // Exclude grid phases from common nodes (they shouldn't be phase-shorted)
+                         const validCommon = commonNodes.filter(n => !['L1', 'L2', 'L3', 'N', 'PE'].includes(n));
+                         
+                         if (validCommon.length > 0) {
+                             connection = 'Star';
+                             running = true;
+                         }
+                     }
+                     
                      // Check Delta: U1-W2, V1-U2, W1-V2
-                     else if (hasW2 && [...hasW2].includes(pU) && 
-                              hasU2 && [...hasU2].includes(pV) &&
-                              hasV2 && [...hasV2].includes(pW)) {
+                     // (each bottom terminal receives the same phase as its opposite top terminal)
+                     if (!running && hasW2 && hasW2.has(pU) && 
+                                     hasU2 && hasU2.has(pV) &&
+                                     hasV2 && hasV2.has(pW)) {
                          connection = 'Delta';
                          running = true;
                      }
