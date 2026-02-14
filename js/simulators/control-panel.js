@@ -738,7 +738,16 @@ class Multimeter {
         const ph1 = [...p1][0], ph2 = [...p2][0];
         
         const getInstVal = (ph) => {
-            if (ph === 'N') return 0;
+            if (ph === 'N' || ph.includes('_N')) return 0;
+            // Transformer Secondary Handling
+            if (ph.includes('SEC_')) {
+                // Determine if it's L1 or L2
+                if (ph.endsWith('_L1')) return 120; // Internal reference for 120V relative to N
+                if (ph.endsWith('_L2')) return 240; // Internal reference for 240V relative to L1 or N?
+                // Actually, if we are measuring L1-L2 (240) vs L1-N (120)
+                // Let's simplify: if it's L1, it's 120V phase.
+                return 120;
+            }
             let sKey = ph;
             if (ph === 'L1' && !shifts.L1 && shifts.L) sKey = 'L'; // Map Mono to L
             return vBase * (shifts[sKey] || 1);
@@ -746,6 +755,20 @@ class Multimeter {
 
         const v1 = getInstVal(ph1);
         const v2 = getInstVal(ph2);
+
+        // Transformer Secondary Special case
+        if (ph1.includes('SEC_') && ph2.includes('SEC_')) {
+            // L1(120) and L2(120, phase shifted) -> 240
+            if ((ph1.endsWith('_L1') && ph2.endsWith('_L2')) || (ph1.endsWith('_L2') && ph2.endsWith('_L1'))) return 240;
+            return 0;
+        }
+        if (ph1.includes('SEC_') || ph2.includes('SEC_')) {
+            const secPh = ph1.includes('SEC_') ? ph1 : ph2;
+            const otherPh = ph1.includes('SEC_') ? ph2 : ph1;
+            // SEC_L1 to SEC_N -> 120
+            if (otherPh.includes('_N') || otherPh === 'N') return 120;
+            return 0;
+        }
 
         // Diferencia Neutral - Fase
         if ((ph1 === 'N' && ph2 !== 'N') || (ph2 === 'N' && ph1 !== 'N')) {
@@ -2294,8 +2317,7 @@ class ControlTransformer extends Component {
     constructor(x, y) {
         super('transformer', x, y, 120, 100);
         this.terminals = {
-            'H1': { x: 20, y: 10, label: 'H1' }, 'H2': { x: 45, y: 10, label: 'H2' },
-            'H3': { x: 75, y: 10, label: 'H3' }, 'H4': { x: 100, y: 10, label: 'H4' },
+            'H1': { x: 35, y: 10, label: 'H1' }, 'H2': { x: 85, y: 10, label: 'H2' },
             'X1': { x: 20, y: 90, label: 'X1' }, 'X2': { x: 45, y: 90, label: 'X2' },
             'X3': { x: 75, y: 90, label: 'X3' }, 'X4': { x: 100, y: 90, label: 'X4' }
         };
@@ -2303,7 +2325,7 @@ class ControlTransformer extends Component {
             primaryV: 480,
             secondaryV: 120,
             active: false,
-            config: 'H1-H4_X1-X2' 
+            config: 'H1-H2_X1-X2' 
         };
     }
 
@@ -2335,7 +2357,8 @@ class ControlTransformer extends Component {
         ctx.fillText('CONTROL XFMR', this.x + this.width/2, this.y + 53);
         ctx.fillStyle = '#94a3b8';
         ctx.font = '8px Inter';
-        ctx.fillText(`${this.state.primaryV}V`, this.x + this.width/2, this.y + 25);
+        ctx.fillText(`${this.state.primaryV}V`, 35 + this.x, this.y + 25);
+        ctx.fillText(`${this.state.primaryV}V`, 85 + this.x, this.y + 25);
         ctx.fillText(`${this.state.secondaryV}V`, this.x + this.width/2, this.y + 82);
 
         ctx.fillStyle = this.state.active ? '#22c55e' : '#475569';
@@ -4077,10 +4100,12 @@ function solveCircuit() {
                 }
                 
                 if (c instanceof ControlTransformer) {
-                    const h1P = nodes[`${c.id}_H1`], h4P = nodes[`${c.id}_H4`];
-                    if (h1P && h1P.size && h4P && h4P.size) {
-                        const p1 = [...h1P][0], p2 = [...h4P][0];
-                        if (p1 !== p2 && !['N', 'PE'].includes(p1) && !['N', 'PE'].includes(p2)) {
+                    const h1P = nodes[`${c.id}_H1`], h2P = nodes[`${c.id}_H2`];
+                    if (h1P && h1P.size && h2P && h2P.size) {
+                        const p1 = [...h1P][0], p2 = [...h2P][0];
+                        // Detectar si hay diferencia de potencial real entre H1 y H2
+                        // Evitamos N o PE en el primario si se asume alimentación L-L (o L-N 480V lo cual es raro, pero el punto es que no sean el mismo nodo)
+                        if (p1 !== p2 && !['PE'].includes(p1) && !['PE'].includes(p2)) {
                             c.state.active = true;
                             // Generar voltajes basados en selección
                             const secL = `SEC_${c.id}_L1`;
@@ -4090,7 +4115,7 @@ function solveCircuit() {
                             if (c.state.secondaryV == 120) {
                                 setNode(c, 'X2', secN);
                             } else {
-                                // 240V usually uses X1 and X4 in many industrial control transformers
+                                // 240V uses X1 and X4
                                 setNode(c, 'X4', secN);
                             }
                         } else {
