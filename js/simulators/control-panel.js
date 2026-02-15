@@ -758,15 +758,22 @@ class Multimeter {
 
         // Transformer Secondary Special case
         if (ph1.includes('SEC_') && ph2.includes('SEC_')) {
-            // L1(120) and L2(120, phase shifted) -> 240
-            if ((ph1.endsWith('_L1') && ph2.endsWith('_L2')) || (ph1.endsWith('_L2') && ph2.endsWith('_L1'))) return 240;
+            const id1 = ph1.split('_')[1];
+            const id2 = ph2.split('_')[1];
+            
+            if (id1 === id2) { // Must be from same transformer
+                // L1-L2 -> 240V
+                if ((ph1.endsWith('_L1') && ph2.endsWith('_L2')) || (ph1.endsWith('_L2') && ph2.endsWith('_L1'))) return 240;
+                // L1-N or L2-N -> 120V
+                if (ph1.endsWith('_N') || ph2.endsWith('_N')) return 120;
+            }
             return 0;
         }
         if (ph1.includes('SEC_') || ph2.includes('SEC_')) {
             const secPh = ph1.includes('SEC_') ? ph1 : ph2;
             const otherPh = ph1.includes('SEC_') ? ph2 : ph1;
-            // SEC_L1 to SEC_N -> 120
-            if (otherPh.includes('_N') || otherPh === 'N') return 120;
+            // SEC_L1 to source N -> 120V
+            if (otherPh.includes('_N') || otherPh === 'N' || otherPh === 'PE') return 120;
             return 0;
         }
 
@@ -4115,8 +4122,8 @@ function solveCircuit() {
                             if (c.state.secondaryV == 120) {
                                 setNode(c, 'X2', secN);
                             } else {
-                                // 240V uses X1 and X4
-                                setNode(c, 'X4', secN);
+                                // many industrial transformers use X1 and X3 for 240V
+                                setNode(c, 'X3', secN);
                             }
                         } else {
                             c.state.active = false;
