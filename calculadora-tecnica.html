@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Eléctrica Profesional | Electromatics</title>
+    <meta name="description" content="Calculadora técnica profesional para parámetros eléctricos: potencia, corriente, voltaje y más. Soporte monofásico y trifásico.">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .calc-wrapper {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .calc-card {
+            background: rgba(22, 31, 41, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calc-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--electric-blue), var(--safety-orange));
+        }
+
+        .calc-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .calc-header h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .calc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group-premium {
+            margin-bottom: 25px;
+        }
+
+        .input-group-premium label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--electric-blue);
+            font-size: 18px;
+        }
+
+        .input-premium {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 15px 12px 45px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .input-premium:focus {
+            outline: none;
+            border-color: var(--electric-blue);
+            background: rgba(0, 229, 255, 0.05);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+        }
+
+        .select-premium {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 15px;
+            color: #fff;
+            font-size: 16px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .results-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 40px;
+            border-left: 5px solid var(--electric-blue);
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .result-value {
+            color: var(--electric-blue);
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .result-unit {
+            font-size: 14px;
+            margin-left: 5px;
+            color: var(--text-secondary);
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 5px;
+            border-radius: 50px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 50px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--electric-blue);
+            color: #000;
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .type-chip {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .type-chip.active {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+
+        .type-chip i {
+            display: block;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics.com.ve</span>
+            </a>
+            <button class="mobile-nav-toggle"><i class="fa-solid fa-bars"></i></button>
+            <div class="desktop-nav">
+                <a href="index.html">Inicio</a>
+                <a href="calculos-electricos.html">Cálculos</a>
+                <a href="electro-info.html" class="active">Tecno-Info</a>
+                <a href="calculadora.html" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px;">App IA</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="calc-wrapper">
+        <div style="margin-bottom: 20px;">
+            <a href="electro-info.html" class="btn btn-secondary" style="padding: 10px 20px; font-size: 14px;">
+                <i class="fa-solid fa-arrow-left"></i> Volver a Tecno-Info
+            </a>
+        </div>
+        
+        <div class="calc-card animate-fadeInUp">
+            <div class="calc-header">
+                <h1>Calculadora Técnica <span class="text-gradient-blue">Electromatics</span></h1>
+                <p>Herramienta profesional para el dimensionamiento y validación rápida.</p>
+            </div>
+
+            <!-- Selector de Fase -->
+            <div class="type-selector">
+                <div class="type-chip active" id="type-monofasico" onclick="TechCalc.setSystem('1Phase')">
+                    <i class="fa-solid fa-circle"></i>
+                    Monofásico (1φ)
+                </div>
+                <div class="type-chip" id="type-trifasico" onclick="TechCalc.setSystem('3Phase')">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    Trifásico (3φ)
+                </div>
+            </div>
+
+            <!-- Selector de Modo con Rejilla para más opciones -->
+            <div class="mode-toggle" style="flex-wrap: wrap; height: auto; border-radius: 15px; margin-bottom: 35px;">
+                <button class="mode-btn active" data-mode="AMPS" onclick="TechCalc.setMode('AMPS')">Corriente</button>
+                <button class="mode-btn" data-mode="POWER" onclick="TechCalc.setMode('POWER')">Potencia</button>
+                <button class="mode-btn" data-mode="VOLTAGE" onclick="TechCalc.setMode('VOLTAGE')">Voltaje</button>
+                <button class="mode-btn" data-mode="RESISTANCE" onclick="TechCalc.setMode('RESISTANCE')">Resistencia</button>
+                <button class="mode-btn" data-mode="VDROP" onclick="TechCalc.setMode('VDROP')">Caída Tensión</button>
+            </div>
+
+            <div class="calc-grid">
+                <!-- Inputs Dinámicos -->
+                <div id="inputs-container">
+                    <!-- Los inputs cargarán dinámicamente según el modo -->
+                </div>
+
+                <!-- Parámetros Comunes -->
+                <div>
+                    <div class="input-group-premium">
+                        <label>Factor de Potencia (cos φ)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <input type="number" id="input-fp" class="input-premium" value="0.85" step="0.01" min="0" max="1">
+                        </div>
+                        <small style="color: #666; font-size: 11px;">Rango sugerido: 0.8 a 0.95</small>
+                    </div>
+
+                    <div id="efficiency-group" class="input-group-premium">
+                        <label>Eficiencia (%)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-gauge-high"></i>
+                            <input type="number" id="input-eff" class="input-premium" value="90" step="1" min="1" max="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-panel">
+                <div class="result-item">
+                    <span class="result-label" id="result-label-1">Corriente (I):</span>
+                    <div>
+                        <span class="result-value" id="val-primary">0.00</span>
+                        <span class="result-unit" id="unit-primary">A</span>
+                    </div>
+                </div>
+                <div class="result-item">
+                    <span class="result-label" id="result-label-2">Potencia Aparente (S):</span>
+                    <div>
+                        <span class="result-value" id="val-secondary">0.00</span>
+                        <span class="result-unit" id="unit-secondary">kVA</span>
+                    </div>
+                </div>
+                <div id="extra-result" class="result-item" style="display: none;">
+                    <span class="result-label">Carga Total (P):</span>
+                    <div>
+                        <span class="result-value" id="val-extra">0.00</span>
+                        <span class="result-unit" id="unit-extra">W</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+                <p style="font-size: 12px; color: #555;">
+                    <i class="fa-solid fa-circle-info"></i> Dimensionamiento basado en estándares ANSI/IEEE y CEN 200:2009.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container" style="text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 40px;">
+            <p>&copy; 2025 Electromatics.com.ve - Innovación en Ingeniería Eléctrica</p>
+        </div>
+    </footer>
+
+    <script src="js/tech-calculator.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>
