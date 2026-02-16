@@ -305,32 +305,7 @@
   }
 
   // ================================================
-  // 9. RESPONSIVE MOBILE MENU ENHANCEMENT
-  // ================================================
-  function enhanceMobileMenu() {
-    const toggle = document.querySelector('.mobile-nav-toggle');
-    const nav = document.querySelector('.desktop-nav');
-    
-    if (toggle && nav) {
-      toggle.addEventListener('click', () => {
-        nav.classList.toggle('active');
-        toggle.querySelector('i').classList.toggle('fa-bars');
-        toggle.querySelector('i').classList.toggle('fa-times');
-      });
-
-      // Cerrar menú al hacer click fuera
-      document.addEventListener('click', (e) => {
-        if (!toggle.contains(e.target) && !nav.contains(e.target)) {
-          nav.classList.remove('active');
-          toggle.querySelector('i').classList.add('fa-bars');
-          toggle.querySelector('i').classList.remove('fa-times');
-        }
-      });
-    }
-  }
-
-  // ================================================
-  // 10. INICIALIZAR TODO
+  // 9. INICIALIZAR TODO
   // ================================================
   function init() {
     // Esperar a que el DOM esté listo
@@ -349,7 +324,7 @@
     initSuggestionChipEffects();
     initSmoothScroll();
     enhanceSendButton();
-    enhanceMobileMenu();
+    // enhanceMobileMenu(); // Eliminar para evitar conflicto con ui.js
 
     console.log('✨ Efectos premium cargados exitosamente');
   }
