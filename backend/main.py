@@ -179,6 +179,10 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
             detail="Please verify your email before logging in",
         )
     
+    # Increment visit count
+    user.visit_count = (user.visit_count or 0) + 1
+    db.commit()
+    
     access_token = auth.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -376,12 +380,23 @@ def delete_user(
 
 
 @app.post("/analytics/visit")
-def record_visit(visit: schemas.VisitCreate, db: Session = Depends(database.get_db), current_user_token: str = None):
-    # Try to identify user from token if present (optional)
+async def record_visit(request: Request, visit: schemas.VisitCreate, db: Session = Depends(database.get_db)):
+    # Try to identify user from Authorization header if present
     user_id = None
-    if current_user_token:
-        # Simple decode user - in prod use proper dependecy but this is a tracking pixel essentially
-        pass 
+    try:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            email = auth.get_user_from_token(token)
+            if email:
+                user = db.query(models.User).filter(models.User.email == email).first()
+                if user:
+                    user_id = user.id
+                    # Increment visit_count on each page visit (new session/page load)
+                    user.visit_count = (user.visit_count or 0) + 1
+                    db.commit()
+    except Exception as e:
+        logger.warning(f"Failed to identify user in record_visit: {e}")
 
     new_visit = models.PageVisit(
         session_id=visit.session_id,

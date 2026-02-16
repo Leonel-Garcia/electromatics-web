@@ -80,11 +80,17 @@ const Analytics = {
             // Check if API_BASE_URL is defined (from config.js), else use default
             const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:8001';
             
+            const token = localStorage.getItem('access_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${apiUrl}/analytics/visit`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: headers,
                 body: JSON.stringify({
                     path: window.location.pathname,
                     session_id: Analytics.sessionId

@@ -70,6 +70,14 @@ def run_migrations(engine):
                 except Exception as e:
                     logger.error(f"Failed to add created_at: {e}")
             
+            # 7. visit_count
+            if "visit_count" not in columns:
+                try:
+                    logger.info("Migrating: Adding visit_count column")
+                    conn.execute(text("ALTER TABLE users ADD COLUMN visit_count INTEGER DEFAULT 0"))
+                except Exception as e:
+                    logger.error(f"Failed to add visit_count: {e}")
+            
             # Ensure no NULL created_at
             try:
                 # Use COALESCE or simple UPDATE depending on DB support, 

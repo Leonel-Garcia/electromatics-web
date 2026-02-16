@@ -249,7 +249,14 @@ const AdminDashboard = {
                     <td>${user.full_name || 'N/A'}</td>
                     <td>${regDate}</td>
                     <td><span class="status-badge ${user.is_premium ? 'status-verified' : 'status-pending'}">${user.is_premium ? 'Sí' : 'No'}</span></td>
-                    <td><span class="status-badge ${user.email_verified ? 'status-verified' : 'status-pending'}">${user.email_verified ? 'Sí' : 'No'}</span></td>
+                    <td>
+                        <span class="status-badge ${user.email_verified ? 'status-verified' : 'status-pending'}">
+                            ${user.email_verified ? 'Sí' : 'No'}
+                        </span>
+                        <div style="font-size: 11px; margin-top: 5px; color: var(--text-secondary);" title="Total de interacciones/visitas">
+                            <i class="fa-solid fa-chart-line" style="font-size: 10px;"></i> ${user.visit_count || 0} vis.
+                        </div>
+                    </td>
                     <td style="color: ${user.is_admin ? '#FFD700' : '#fff'}; font-weight: ${user.is_admin ? 'bold' : 'normal'};">${user.is_admin ? 'Admin' : 'User'}</td>
                     <td>
                         <button onclick="AdminDashboard.modal.openEdit(${user.id})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" title="Editar">

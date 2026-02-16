@@ -15,6 +15,7 @@ class User(Base):
     email_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True)
     verification_token_expires = Column(DateTime, nullable=True)
+    visit_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class PageVisit(Base):

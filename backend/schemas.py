@@ -19,6 +19,7 @@ class User(UserBase):
     is_premium: bool
     is_admin: bool
     email_verified: bool
+    visit_count: int = 0
     created_at: Optional[datetime] = None
 
     class Config:
