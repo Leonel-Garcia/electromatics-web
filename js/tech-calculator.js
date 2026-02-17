@@ -2,6 +2,7 @@ const TechCalc = {
     state: {
         system: '1Phase', // '1Phase' or '3Phase'
         mode: 'AMPS',     // 'AMPS', 'POWER', 'VOLTAGE', 'RESISTANCE', 'VDROP'
+        connection: 'Star', // 'Star' or 'Delta'
         powerUnit: 'kW'    // 'W', 'kW', 'HP'
     },
 
@@ -15,6 +16,14 @@ const TechCalc = {
         this.state.system = system;
         document.getElementById('type-monofasico').classList.toggle('active', system === '1Phase');
         document.getElementById('type-trifasico').classList.toggle('active', system === '3Phase');
+        this.renderInputs();
+        this.calculate();
+    },
+
+    setConnection(conn) {
+        this.state.connection = conn;
+        document.getElementById('conn-star')?.classList.toggle('active', conn === 'Star');
+        document.getElementById('conn-delta')?.classList.toggle('active', conn === 'Delta');
         this.calculate();
     },
 
@@ -32,7 +41,20 @@ const TechCalc = {
         const container = document.getElementById('inputs-container');
         container.innerHTML = '';
         
-        // Common Input: Voltage (except when calculating voltage)
+        // Connection Selector (Only for 3-phase)
+        let connectionMarkup = '';
+        if (this.state.system === '3Phase') {
+            connectionMarkup = `
+                <div class="input-group-premium">
+                    <label>Tipo de Conexión</label>
+                    <div class="mode-toggle" style="margin-bottom: 15px; background: rgba(0,0,0,0.2);">
+                        <button class="mode-btn ${this.state.connection === 'Star' ? 'active' : ''}" id="conn-star" onclick="TechCalc.setConnection('Star')" style="font-size: 13px;">Estrella (Y)</button>
+                        <button class="mode-btn ${this.state.connection === 'Delta' ? 'active' : ''}" id="conn-delta" onclick="TechCalc.setConnection('Delta')" style="font-size: 13px;">Delta (Δ)</button>
+                    </div>
+                </div>`;
+        }
+
+        // Common Input: Voltage
         const voltageInput = `
             <div class="input-group-premium">
                 <label>Voltaje de Línea (V)</label>
@@ -45,7 +67,7 @@ const TechCalc = {
         // Common Input: Amps
         const ampsInput = `
             <div class="input-group-premium">
-                <label>Corriente (A)</label>
+                <label>Corriente de Línea (A)</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-gauge"></i>
                     <input type="number" id="input-amps" class="input-premium" value="40" step="any">
@@ -71,20 +93,20 @@ const TechCalc = {
 
         switch(this.state.mode) {
             case 'AMPS':
-                container.innerHTML = powerInput + voltageInput;
-                this.updateLabels('Corriente (I)', 'A', 'Potencia Aparente (S)', 'kVA');
+                container.innerHTML = connectionMarkup + powerInput + voltageInput;
+                this.updateLabels('Corriente Línea (IL)', 'A', 'Potencia Aparente (S)', 'kVA');
                 break;
             case 'POWER':
-                container.innerHTML = ampsInput + voltageInput;
+                container.innerHTML = connectionMarkup + ampsInput + voltageInput;
                 this.updateLabels('Potencia Real (P)', 'kW', 'Potencia Aparente (S)', 'kVA');
                 break;
             case 'VOLTAGE':
-                container.innerHTML = powerInput + ampsInput;
-                this.updateLabels('Voltaje Requerido (V)', 'V', 'Potencia Aparente (S)', 'kVA');
+                container.innerHTML = connectionMarkup + powerInput + ampsInput;
+                this.updateLabels('Voltaje Línea (VL)', 'V', 'Potencia Aparente (S)', 'kVA');
                 break;
             case 'RESISTANCE':
-                container.innerHTML = voltageInput + ampsInput;
-                this.updateLabels('Resistencia (R)', 'Ω', 'Potencia Total (P)', 'kW');
+                container.innerHTML = connectionMarkup + voltageInput + ampsInput;
+                this.updateLabels('Resist. Fase (Rph)', 'Ω', 'Potencia Total (P)', 'kW');
                 break;
             case 'VDROP':
                 container.innerHTML = ampsInput + `
@@ -164,16 +186,25 @@ const TechCalc = {
                 }
                 break;
             case 'RESISTANCE':
-                if (I > 0) {
-                    res1 = V / I; // Simplificado Ley de Ohm por fase
+                if (I > 0 && V > 0) {
+                    if (this.state.system === '1Phase') {
+                        res1 = V / I;
+                    } else {
+                        // Trifásico: R de fase depende de conexión
+                        if (this.state.connection === 'Star') {
+                            // Rph = (VL / sqrt3) / IL
+                            res1 = V / (sqrt3 * I);
+                        } else {
+                            // Rph = VL / (IL / sqrt3) = (sqrt3 * VL) / IL
+                            res1 = (sqrt3 * V) / I;
+                        }
+                    }
                     res2 = (V * I * factor * FP * Eff) / 1000;
                 }
                 break;
             case 'VDROP':
                 const dist = parseFloat(document.getElementById('input-dist').value) || 0;
                 const mm2 = parseFloat(document.getElementById('input-wire').value) || 1;
-                // Formula: ΔV = (2 * rho * L * I) / S para Monofasico
-                // Formula: ΔV = (sqrt3 * rho * L * I) / S para Trifasico
                 const k = this.state.system === '1Phase' ? 2 : sqrt3;
                 res1 = (k * rho * dist * I) / mm2;
                 res2 = V > 0 ? (res1 / V) * 100 : 0;
