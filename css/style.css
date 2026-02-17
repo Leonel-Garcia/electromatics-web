@@ -28,6 +28,15 @@
   --border-color: #30363d;
   --shadow-color: rgba(0, 0, 0, 0.4);
   --glass-bg: rgba(22, 31, 41, 0.95);
+  --gradient-brand: linear-gradient(90deg, var(--electric-blue), var(--safety-orange));
+}
+
+.text-gradient-brand {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 body {
@@ -644,6 +653,11 @@ main {
   font-size: 48px;
   line-height: 1.2;
   margin-bottom: 20px;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 .section-title p {
@@ -657,6 +671,11 @@ main {
     font-size: 48px;
     margin-bottom: 20px;
     line-height: 1.2;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
 .hero-content p {

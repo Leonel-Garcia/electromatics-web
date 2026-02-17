@@ -148,9 +148,13 @@
         }
 
         .result-value {
-            color: var(--electric-blue);
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
             font-size: 24px;
             font-weight: 800;
+            display: inline-block;
         }
 
         .result-unit {
@@ -240,7 +244,7 @@
         
         <div class="calc-card animate-fadeInUp">
             <div class="calc-header">
-                <h1>Calculadora Técnica <span class="text-gradient-blue">Electromatics</span></h1>
+                <h1 class="text-gradient-brand">Calculadora Técnica Electromatics</h1>
                 <p>Herramienta profesional para el dimensionamiento y validación rápida.</p>
             </div>
 
