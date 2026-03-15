@@ -1456,9 +1456,9 @@
         const pinLabel = document.createElement("div");
         pinLabel.textContent = pinIds[i].toUpperCase();
         pinLabel.style.position = "absolute";
-        pinLabel.style.left = `${x}px`;
+        pinLabel.style.left = `${x - 2}px`;
         pinLabel.style.top = "10px";
-        pinLabel.style.fontSize = "8px";
+        pinLabel.style.fontSize = "10px";
         pinLabel.style.color = "#eee";
         pinLabel.style.fontWeight = "bold";
         pinLabel.style.fontFamily = "monospace";
