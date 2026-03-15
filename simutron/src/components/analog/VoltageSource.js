@@ -25,6 +25,11 @@ export class VoltageSource extends Component {
       // Force the net to reference + voltage (Override passive locks)
       posPin.net.voltage = refVoltage + this.voltage;
       posPin.net.isFixed = true; 
+      posPin.net.hasSourcePath = true;
+    }
+
+    if (negPin.net) {
+      negPin.net.hasGroundPath = true;
     }
   }
 }

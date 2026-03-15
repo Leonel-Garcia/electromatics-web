@@ -44,6 +44,8 @@ export class IC74xx extends Component {
       // Force digital driving state
       pin.net.voltage = state === 1 ? 5 : 0;
       pin.net.isFixed = true; 
+      if (state === 1) pin.net.hasSourcePath = true;
+      else pin.net.hasGroundPath = true;
     }
   }
 }

@@ -58,8 +58,10 @@
       for (const net of this.nets) {
         net.voltage = 0;
         net.isFixed = false;
+        net.hasSourcePath = false;
+        net.hasGroundPath = false;
       }
-      const MAX_PASSES = 10;
+      const MAX_PASSES = 20;
       for (let i = 0; i < MAX_PASSES; i++) {
         let changed = false;
         for (const component of this.components) {
@@ -102,6 +104,8 @@
       this.pins = /* @__PURE__ */ new Set();
       this.voltage = 0;
       this.isFixed = false;
+      this.hasSourcePath = false;
+      this.hasGroundPath = false;
       this.color = "#111";
     }
     addPin(pin) {
@@ -3002,6 +3006,10 @@
       if (posPin.net) {
         posPin.net.voltage = refVoltage + this.voltage;
         posPin.net.isFixed = true;
+        posPin.net.hasSourcePath = true;
+      }
+      if (negPin.net) {
+        negPin.net.hasGroundPath = true;
       }
     }
   }
@@ -3017,6 +3025,7 @@
         pin.net.voltage = 0;
         pin.net.isFixed = true;
         pin.net.ground = true;
+        pin.net.hasGroundPath = true;
       }
     }
   }
@@ -3041,6 +3050,10 @@
           pinA.net.setVoltage(vB);
           pinA.net.isFixed = true;
         }
+        if (pinA.net.hasSourcePath) pinB.net.hasSourcePath = true;
+        if (pinB.net.hasSourcePath) pinA.net.hasSourcePath = true;
+        if (pinA.net.hasGroundPath) pinB.net.hasGroundPath = true;
+        if (pinB.net.hasGroundPath) pinA.net.hasGroundPath = true;
       }
     }
   }
@@ -3093,11 +3106,11 @@
       }
       const vA = pinA.getVoltage();
       const vK = pinK.getVoltage();
-      const isConnA = pinA.net.isFixed || pinA.net.pins.size > 1;
-      const isConnK = pinK.net.isFixed || pinK.net.pins.size > 1;
       const threshold = this.forwardVoltage;
-      this.isOn = isConnA && isConnK && vA - vK >= threshold;
+      this.isOn = pinA.net.hasSourcePath && pinK.net.hasGroundPath && vA - vK >= threshold;
       if (this.isOn) {
+        pinK.net.hasSourcePath = true;
+        pinA.net.hasGroundPath = true;
         if (pinA.net.isFixed && !pinK.net.isFixed) {
           pinK.net.setVoltage(vA - threshold);
           pinK.net.isFixed = true;
@@ -3141,6 +3154,10 @@
         } else if (pinA.net.isFixed && pinB.net.isFixed) {
           pinB.net.setVoltage(pinA.net.voltage);
         }
+        if (pinA.net.hasSourcePath) pinB.net.hasSourcePath = true;
+        if (pinB.net.hasSourcePath) pinA.net.hasSourcePath = true;
+        if (pinA.net.hasGroundPath) pinB.net.hasGroundPath = true;
+        if (pinB.net.hasGroundPath) pinA.net.hasGroundPath = true;
       }
     }
     reset() {
@@ -3183,6 +3200,8 @@
       if (pin.net) {
         pin.net.voltage = state === 1 ? 5 : 0;
         pin.net.isFixed = true;
+        if (state === 1) pin.net.hasSourcePath = true;
+        else pin.net.hasGroundPath = true;
       }
     }
   }
@@ -3518,8 +3537,10 @@
     computeOutputs() {
       if (this.engine && !this.engine.isRunning) return;
       const pinVcc = this.getSemPin("vcc");
+      const pinGnd = this.getSemPin("gnd");
       const pinReset = this.getSemPin("reset");
-      if (!pinVcc) return;
+      if (!pinVcc.net || !pinGnd.net) return;
+      if (!pinVcc.net.hasSourcePath || !pinGnd.net.hasGroundPath) return;
       const vcc = pinVcc.getVoltage();
       if (this.vCap !== void 0) {
         const pinTrig = this.getSemPin("trig");
@@ -3527,10 +3548,14 @@
         if (pinTrig.net) {
           pinTrig.net.voltage = this.vCap;
           pinTrig.net.isFixed = true;
+          pinTrig.net.hasSourcePath = true;
+          pinTrig.net.hasGroundPath = true;
         }
         if (pinThresh.net) {
           pinThresh.net.voltage = this.vCap;
           pinThresh.net.isFixed = true;
+          pinThresh.net.hasSourcePath = true;
+          pinThresh.net.hasGroundPath = true;
         }
       }
       let voltageT = this.vCap !== void 0 ? this.vCap : this.getSemPin("thresh").getVoltage();
@@ -3549,6 +3574,8 @@
       if (outPin.net) {
         outPin.net.voltage = this.latch ? vcc - 1.5 : 0.1;
         outPin.net.isFixed = true;
+        if (this.latch) outPin.net.hasSourcePath = true;
+        else outPin.net.hasGroundPath = true;
       }
       const dischPin = this.getSemPin("disch");
       if (!this.latch && dischPin.net) {
@@ -3608,6 +3635,12 @@
       if (outPin.net) {
         outPin.net.voltage = vOut;
         outPin.net.isFixed = true;
+        if (pinVPos.net && pinVPos.net.hasSourcePath) {
+          if (vOut > 1) outPin.net.hasSourcePath = true;
+        }
+        if (pinVNeg.net && pinVNeg.net.hasGroundPath) {
+          if (vOut < -1 || vOut < 1 && pinVNeg.getVoltage() <= 0) outPin.net.hasGroundPath = true;
+        }
       }
     }
   }
@@ -3622,15 +3655,16 @@
     computeOutputs() {
       const vcc1 = this.getPin("vcc1");
       const vcc2 = this.getPin("vcc2");
+      const hasSource = vcc1.net && vcc1.net.hasSourcePath || vcc2.net && vcc2.net.hasSourcePath;
       const vcc = Math.max(vcc1.getVoltage(), vcc2.getVoltage());
-      const isPowered = vcc > 3;
+      const isPowered = hasSource && vcc > 3;
       const segments = ["a", "b", "c", "d", "e", "f", "g", "dp"];
       segments.forEach((seg) => {
         const pin = this.getPin(seg);
         const v = pin.getVoltage();
-        const isConnected = pin.net && pin.net.pins.size > 1;
+        const hasGround = pin.net && pin.net.hasGroundPath;
         const isLow = v < 1;
-        this.states[seg] = isPowered && isConnected && isLow ? 1 : 0;
+        this.states[seg] = isPowered && hasGround && isLow ? 1 : 0;
       });
     }
   }
@@ -3655,10 +3689,15 @@
       if (posPin.net) {
         posPin.net.voltage = comVoltage + this.voltage;
         posPin.net.isFixed = true;
+        posPin.net.hasSourcePath = true;
       }
       if (negPin.net) {
         negPin.net.voltage = comVoltage - this.voltage;
         negPin.net.isFixed = true;
+        negPin.net.hasGroundPath = true;
+      }
+      if (comPin.net) {
+        comPin.net.hasGroundPath = true;
       }
     }
   }
@@ -3692,6 +3731,11 @@
           pinB.net.setVoltage(pinA.getVoltage());
           pinB.net.isFixed = true;
         }
+        const nets = [pinA.net, pinW.net, pinB.net].filter((n) => n !== null);
+        const hasSrc = nets.some((n) => n.hasSourcePath);
+        const hasGnd = nets.some((n) => n.hasGroundPath);
+        if (hasSrc) nets.forEach((n) => n.hasSourcePath = true);
+        if (hasGnd) nets.forEach((n) => n.hasGroundPath = true);
       }
     }
   }
@@ -3733,6 +3777,10 @@
       if (outPin.net) {
         outPin.net.setVoltage(refVoltage + voltage);
         outPin.net.isFixed = true;
+        outPin.net.hasSourcePath = true;
+      }
+      if (comPin.net) {
+        comPin.net.hasGroundPath = true;
       }
     }
   }
@@ -3787,8 +3835,19 @@
       const pinA = this.getPin("a");
       const pinB = this.getPin("b");
       if (pinA.net && pinB.net) {
-        const v = pinA.getVoltage();
-        pinB.net.setVoltage(v);
+        const vA = pinA.getVoltage();
+        const vB = pinB.getVoltage();
+        if (pinA.net.isFixed && !pinB.net.isFixed) {
+          pinB.net.setVoltage(vA);
+          pinB.net.isFixed = true;
+        } else if (!pinA.net.isFixed && pinB.net.isFixed) {
+          pinA.net.setVoltage(vB);
+          pinA.net.isFixed = true;
+        }
+        if (pinA.net.hasSourcePath) pinB.net.hasSourcePath = true;
+        if (pinB.net.hasSourcePath) pinA.net.hasSourcePath = true;
+        if (pinA.net.hasGroundPath) pinB.net.hasGroundPath = true;
+        if (pinB.net.hasGroundPath) pinA.net.hasGroundPath = true;
       }
     }
     update() {
@@ -3883,15 +3942,19 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vB - vE >= 0.6 && pinB.net.isFixed && pinC.net.pins.size > 1 && pinE.net.pins.size > 1;
+        this.isOn = vB - vE >= 0.6 && pinB.net.hasSourcePath && pinB.net.isFixed;
         if (this.isOn) {
+          if (pinC.net.hasSourcePath) pinE.net.hasSourcePath = true;
+          if (pinE.net.hasSourcePath) pinC.net.hasSourcePath = true;
+          if (pinC.net.hasGroundPath) pinE.net.hasGroundPath = true;
+          if (pinE.net.hasGroundPath) pinC.net.hasGroundPath = true;
           if (pinC.net.isFixed && !pinE.net.isFixed) {
             pinE.net.setVoltage(Math.max(vE, vC - 0.2));
             pinE.net.isFixed = true;
           } else if (!pinC.net.isFixed && pinE.net.isFixed) {
             pinC.net.setVoltage(Math.max(vC, vE + 0.2));
             pinC.net.isFixed = true;
-          } else if (pinC.net.isFixed && pinE.net.isFixed && vC > vE) ;
+          }
         }
       }
     }
@@ -3916,8 +3979,12 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vE - vB >= 0.6 && pinB.net.isFixed && pinE.net.isFixed && pinC.net.pins.size > 1;
+        this.isOn = vE - vB >= 0.6 && pinB.net.hasGroundPath && pinE.net.hasSourcePath && pinE.net.isFixed;
         if (this.isOn) {
+          if (pinE.net.hasSourcePath) pinC.net.hasSourcePath = true;
+          if (pinC.net.hasSourcePath) pinE.net.hasSourcePath = true;
+          if (pinE.net.hasGroundPath) pinC.net.hasGroundPath = true;
+          if (pinC.net.hasGroundPath) pinE.net.hasGroundPath = true;
           if (pinE.net.isFixed && !pinC.net.isFixed) {
             pinC.net.setVoltage(Math.min(vC, vE - 0.2));
             pinC.net.isFixed = true;

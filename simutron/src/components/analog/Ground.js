@@ -13,6 +13,7 @@ export class Ground extends Component {
       pin.net.voltage = 0;
       pin.net.isFixed = true;
       pin.net.ground = true; // Helper for UI
+      pin.net.hasGroundPath = true;
     }
   }
 }

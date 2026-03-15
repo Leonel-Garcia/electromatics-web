@@ -145,10 +145,13 @@ export class LM555 extends Component {
     if (this.engine && !this.engine.isRunning) return;
 
     const pinVcc = this.getSemPin('vcc');
+    const pinGnd = this.getSemPin('gnd');
     const pinReset = this.getSemPin('reset');
     
-    // Safety check if VCC pin is valid
-    if (!pinVcc) return;
+    // Safety check if VCC/GND pins are valid and reachable
+    if (!pinVcc.net || !pinGnd.net) return;
+    if (!pinVcc.net.hasSourcePath || !pinGnd.net.hasGroundPath) return;
+
     const vcc = pinVcc.getVoltage();
 
     // 5. Drive Nets (Injecting analog voltage)
@@ -159,10 +162,15 @@ export class LM555 extends Component {
          if (pinTrig.net) {
              pinTrig.net.voltage = this.vCap;
              pinTrig.net.isFixed = true; 
+             // Timing pins propagate reachability from VCC/GND through internal divider/discharge
+             pinTrig.net.hasSourcePath = true; 
+             pinTrig.net.hasGroundPath = true;
          }
          if (pinThresh.net) {
              pinThresh.net.voltage = this.vCap;
              pinThresh.net.isFixed = true; 
+             pinThresh.net.hasSourcePath = true;
+             pinThresh.net.hasGroundPath = true;
          }
     }
 
@@ -188,6 +196,8 @@ export class LM555 extends Component {
         // Active Drive
         outPin.net.voltage = this.latch ? (vcc - 1.5) : 0.1;
         outPin.net.isFixed = true;
+        if (this.latch) outPin.net.hasSourcePath = true;
+        else outPin.net.hasGroundPath = true;
     }
 
     // Discharge Pin 7
