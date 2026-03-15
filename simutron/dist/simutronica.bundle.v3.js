@@ -300,6 +300,10 @@
         return this.createDualSupply(component, el);
       } else if (name === "Potentiometer") {
         return this.createPotentiometer(component, el);
+      } else if (name === "Transistor NPN") {
+        return this.createTransistor(component, el, "NPN");
+      } else if (name === "Transistor PNP") {
+        return this.createTransistor(component, el, "PNP");
       }
       el.style.width = "100px";
       el.style.height = "50px";
@@ -1418,6 +1422,37 @@
         el.appendChild(wire);
         this.addLeg(el, p.x - 2, p.y - 3, p.id);
       });
+      return el;
+    }
+    createTransistor(comp, el, type) {
+      el.style.width = "40px";
+      el.style.height = "20px";
+      const body = document.createElement("div");
+      body.style.position = "absolute";
+      body.style.left = "0px";
+      body.style.width = "40px";
+      body.style.height = "15px";
+      body.style.background = "#222";
+      body.style.borderRadius = "15px 15px 0 0";
+      body.style.border = "1px solid #111";
+      body.style.boxShadow = "inset 0 2px 5px rgba(255,255,255,0.2), 2px 2px 5px rgba(0,0,0,0.5)";
+      el.appendChild(body);
+      const label = document.createElement("div");
+      label.textContent = type;
+      label.style.color = "#fff";
+      label.style.fontSize = "8px";
+      label.style.textAlign = "center";
+      label.style.marginTop = "4px";
+      label.style.fontFamily = '"JetBrains Mono", monospace';
+      body.appendChild(label);
+      const pinIds = type === "NPN" ? ["c", "b", "e"] : ["e", "b", "c"];
+      for (let i = 0; i < 3; i++) {
+        const x = i * 20 - 5;
+        const wire = document.createElement("div");
+        wire.style.cssText = `position:absolute; left:${x + 3}px; top:12px; width:4px; height:20px; background:linear-gradient(to right, #999, #eee, #999); border:1px solid #7f8c8d; border-radius:0 0 2px 2px;`;
+        el.appendChild(wire);
+        this.addLeg(el, x + 2, 28, pinIds[i]);
+      }
       return el;
     }
   }
@@ -3778,6 +3813,66 @@
     computeOutputs() {
     }
   }
+  class TransistorNPN extends Component {
+    constructor(id) {
+      super(id);
+      this.metadata = { name: "Transistor NPN", description: "NPN Bipolar Junction Transistor" };
+      this.addPin("c", "bidirectional");
+      this.addPin("b", "input");
+      this.addPin("e", "bidirectional");
+      this.isOn = false;
+    }
+    computeOutputs() {
+      const pinC = this.getPin("c");
+      const pinB = this.getPin("b");
+      const pinE = this.getPin("e");
+      if (pinB.net && pinE.net && pinC.net) {
+        const vB = pinB.getVoltage();
+        const vE = pinE.getVoltage();
+        const vC = pinC.getVoltage();
+        this.isOn = vB - vE >= 0.6;
+        if (this.isOn) {
+          if (pinC.net.isFixed && !pinE.net.isFixed) {
+            pinE.net.setVoltage(Math.max(vE, vC - 0.2));
+            pinE.net.isFixed = true;
+          } else if (!pinC.net.isFixed && pinE.net.isFixed) {
+            pinC.net.setVoltage(Math.max(vC, vE + 0.2));
+            pinC.net.isFixed = true;
+          } else if (pinC.net.isFixed && pinE.net.isFixed && vC > vE) ;
+        }
+      }
+    }
+  }
+  class TransistorPNP extends Component {
+    constructor(id) {
+      super(id);
+      this.metadata = { name: "Transistor PNP", description: "PNP Bipolar Junction Transistor" };
+      this.addPin("e", "bidirectional");
+      this.addPin("b", "input");
+      this.addPin("c", "bidirectional");
+      this.isOn = false;
+    }
+    computeOutputs() {
+      const pinE = this.getPin("e");
+      const pinB = this.getPin("b");
+      const pinC = this.getPin("c");
+      if (pinB.net && pinE.net && pinC.net) {
+        const vB = pinB.getVoltage();
+        const vE = pinE.getVoltage();
+        const vC = pinC.getVoltage();
+        this.isOn = vE - vB >= 0.6;
+        if (this.isOn) {
+          if (pinE.net.isFixed && !pinC.net.isFixed) {
+            pinC.net.setVoltage(Math.min(vC, vE - 0.2));
+            pinC.net.isFixed = true;
+          } else if (!pinE.net.isFixed && pinC.net.isFixed) {
+            pinE.net.setVoltage(Math.min(vE, vC + 0.2));
+            pinE.net.isFixed = true;
+          }
+        }
+      }
+    }
+  }
   class App {
     constructor() {
       console.log("App: Initializing...");
@@ -3817,7 +3912,9 @@
         "Oscilloscope": Oscilloscope,
         "Osciloscopio": Oscilloscope,
         "Dual Supply": DualPowerSupply,
-        "Potentiometer": Potentiometer
+        "Potentiometer": Potentiometer,
+        "Transistor NPN": TransistorNPN,
+        "Transistor PNP": TransistorPNP
       };
       this.interaction.onComponentSelected = (comp) => {
         if (this.isHelpActive) this.schematicManager.show(comp);
@@ -3847,7 +3944,9 @@
           items: [
             { name: "Resistencia", Class: Resistor },
             { name: "Potenciometro", Class: Potentiometer },
-            { name: "Capacitor", Class: Capacitor }
+            { name: "Capacitor", Class: Capacitor },
+            { name: "Transistor NPN", Class: TransistorNPN },
+            { name: "Transistor PNP", Class: TransistorPNP }
           ]
         },
         {
