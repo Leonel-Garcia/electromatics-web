@@ -3077,9 +3077,16 @@
       this.addPin("cathode", "input");
     }
     update(dt) {
-      const vA = this.getPin("anode").getVoltage();
-      const vK = this.getPin("cathode").getVoltage();
-      this.isOn = vA - vK > this.forwardVoltage;
+      const pinA = this.getPin("anode");
+      const pinK = this.getPin("cathode");
+      if (!pinA.net || !pinK.net) {
+        this.isOn = false;
+        return;
+      }
+      const vA = pinA.getVoltage();
+      const vK = pinK.getVoltage();
+      const isDriven = pinA.net.isFixed || pinK.net.isFixed;
+      this.isOn = isDriven && vA - vK > this.forwardVoltage;
     }
     reset() {
       this.isOn = false;
