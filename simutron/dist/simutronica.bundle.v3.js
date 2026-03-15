@@ -1456,9 +1456,9 @@
         const pinLabel = document.createElement("div");
         pinLabel.textContent = pinIds[i].toUpperCase();
         pinLabel.style.position = "absolute";
-        pinLabel.style.left = `${x - 2}px`;
-        pinLabel.style.top = "10px";
-        pinLabel.style.fontSize = "10px";
+        pinLabel.style.left = `${x - 5}px`;
+        pinLabel.style.top = "4px";
+        pinLabel.style.fontSize = "12px";
         pinLabel.style.color = "#eee";
         pinLabel.style.fontWeight = "bold";
         pinLabel.style.fontFamily = "monospace";
@@ -1936,6 +1936,8 @@
       const rect = el.getBoundingClientRect();
       this.dragOffset.x = e.clientX - rect.left;
       this.dragOffset.y = e.clientY - rect.top;
+      el.style.zIndex = "1000";
+      el.style.cursor = "grabbing";
       comp.pins.forEach((pin) => {
         if (pin.net) {
           const isBoardNet = Array.from(this.breadboard.holes.values()).includes(pin.net);
@@ -2036,6 +2038,8 @@
       }
       if (this.dragItem) {
         const { comp, el } = this.dragItem;
+        el.style.zIndex = comp.isFloating ? "50" : "";
+        el.style.cursor = "grab";
         this.snapComponent(comp, el);
         this.dragItem = null;
         this.rebuildTopology();
