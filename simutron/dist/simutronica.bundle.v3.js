@@ -3080,7 +3080,11 @@
       this.addPin("anode", "input");
       this.addPin("cathode", "input");
     }
-    update(dt) {
+    computeOutputs() {
+      if (this.engine && !this.engine.isRunning) {
+        this.isOn = false;
+        return;
+      }
       const pinA = this.getPin("anode");
       const pinK = this.getPin("cathode");
       if (!pinA.net || !pinK.net) {
@@ -3089,8 +3093,21 @@
       }
       const vA = pinA.getVoltage();
       const vK = pinK.getVoltage();
-      const isDriven = pinA.net.isFixed && pinK.net.isFixed;
-      this.isOn = isDriven && vA - vK > this.forwardVoltage;
+      const isConnA = pinA.net.isFixed || pinA.net.pins.size > 1;
+      const isConnK = pinK.net.isFixed || pinK.net.pins.size > 1;
+      const threshold = this.forwardVoltage;
+      this.isOn = isConnA && isConnK && vA - vK >= threshold;
+      if (this.isOn) {
+        if (pinA.net.isFixed && !pinK.net.isFixed) {
+          pinK.net.setVoltage(vA - threshold);
+          pinK.net.isFixed = true;
+        } else if (!pinA.net.isFixed && pinK.net.isFixed) {
+          pinA.net.setVoltage(vK + threshold);
+          pinA.net.isFixed = true;
+        }
+      }
+    }
+    update(dt) {
     }
     reset() {
       this.isOn = false;
@@ -3866,7 +3883,7 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vB - vE >= 0.6 && pinB.net && pinB.net.isFixed;
+        this.isOn = vB - vE >= 0.6 && pinB.net.isFixed && pinC.net.pins.size > 1 && pinE.net.pins.size > 1;
         if (this.isOn) {
           if (pinC.net.isFixed && !pinE.net.isFixed) {
             pinE.net.setVoltage(Math.max(vE, vC - 0.2));
@@ -3899,7 +3916,7 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vE - vB >= 0.6 && pinB.net.isFixed && pinE.net.isFixed;
+        this.isOn = vE - vB >= 0.6 && pinB.net.isFixed && pinE.net.isFixed && pinC.net.pins.size > 1;
         if (this.isOn) {
           if (pinE.net.isFixed && !pinC.net.isFixed) {
             pinC.net.setVoltage(Math.min(vC, vE - 0.2));
