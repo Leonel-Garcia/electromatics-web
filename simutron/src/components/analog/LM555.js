@@ -142,6 +142,8 @@ export class LM555 extends Component {
   }
 
   computeOutputs() {
+    if (this.engine && !this.engine.isRunning) return;
+
     const pinVcc = this.getSemPin('vcc');
     const pinReset = this.getSemPin('reset');
     

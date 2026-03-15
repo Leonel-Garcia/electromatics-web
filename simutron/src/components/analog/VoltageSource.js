@@ -13,6 +13,8 @@ export class VoltageSource extends Component {
   }
 
   computeOutputs() {
+    if (this.engine && !this.engine.isRunning) return;
+    
     const posPin = this.getPin('pos');
     const negPin = this.getPin('neg');
 

@@ -2991,6 +2991,7 @@
       this.addPin("neg", "input");
     }
     computeOutputs() {
+      if (this.engine && !this.engine.isRunning) return;
       const posPin = this.getPin("pos");
       const negPin = this.getPin("neg");
       const refVoltage = negPin.getVoltage();
@@ -3342,6 +3343,12 @@
       this.setLogicState("p8", this.countB >> 1 & 1);
       this.setLogicState("p11", this.countB >> 2 & 1);
     }
+    reset() {
+      this.countA = 0;
+      this.countB = 0;
+      this.lastClockA = 0;
+      this.lastClockB = 0;
+    }
   }
   class IC74283 extends IC74xx {
     constructor(id) {
@@ -3481,6 +3488,7 @@
       this.vCap += (targetV - this.vCap) * alpha;
     }
     computeOutputs() {
+      if (this.engine && !this.engine.isRunning) return;
       const pinVcc = this.getSemPin("vcc");
       const pinReset = this.getSemPin("reset");
       if (!pinVcc) return;
@@ -3553,12 +3561,14 @@
       return this.getPin(this.pinMap[name]);
     }
     computeOutputs() {
+      if (this.engine && !this.engine.isRunning) return;
       const pinVPos = this.getSemPin("v_pos");
       const pinVNeg = this.getSemPin("v_neg");
       const pinInPos = this.getSemPin("in_non");
       const pinInNeg = this.getSemPin("in_inv");
-      const vPos = pinVPos.net ? pinVPos.getVoltage() : 15;
-      const vNeg = pinVNeg.net ? pinVNeg.getVoltage() : -15;
+      const isRunning = this.engine && this.engine.isRunning;
+      const vPos = pinVPos.net ? pinVPos.getVoltage() : isRunning ? 15 : 0;
+      const vNeg = pinVNeg.net ? pinVNeg.getVoltage() : isRunning ? -15 : 0;
       const inPos = pinInPos.getVoltage();
       const inNeg = pinInNeg.getVoltage();
       let vOut = this.gain * (inPos - inNeg);
@@ -3609,6 +3619,7 @@
       this.addPin("neg", "output");
     }
     computeOutputs() {
+      if (this.engine && !this.engine.isRunning) return;
       const posPin = this.getPin("pos");
       const comPin = this.getPin("com");
       const negPin = this.getPin("neg");
@@ -3677,6 +3688,7 @@
       this.addPin("com", "input");
     }
     computeOutputs() {
+      if (this.engine && !this.engine.isRunning) return;
       const outPin = this.getPin("out");
       const comPin = this.getPin("com");
       const refVoltage = comPin.getVoltage();
@@ -3843,7 +3855,7 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vB - vE >= 0.6;
+        this.isOn = vB - vE >= 0.6 && pinB.net && pinB.net.isFixed;
         if (this.isOn) {
           if (pinC.net.isFixed && !pinE.net.isFixed) {
             pinE.net.setVoltage(Math.max(vE, vC - 0.2));
@@ -3854,6 +3866,9 @@
           } else if (pinC.net.isFixed && pinE.net.isFixed && vC > vE) ;
         }
       }
+    }
+    reset() {
+      this.isOn = false;
     }
   }
   class TransistorPNP extends Component {
@@ -3873,7 +3888,7 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vE - vB >= 0.6;
+        this.isOn = vE - vB >= 0.6 && pinB.net.isFixed && pinE.net.isFixed;
         if (this.isOn) {
           if (pinE.net.isFixed && !pinC.net.isFixed) {
             pinC.net.setVoltage(Math.min(vC, vE - 0.2));
@@ -3884,6 +3899,9 @@
           }
         }
       }
+    }
+    reset() {
+      this.isOn = false;
     }
   }
   class App {
