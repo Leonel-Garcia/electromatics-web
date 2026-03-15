@@ -393,12 +393,14 @@
         }
       };
       btn.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
         btn.style.transform = "translateY(2px)";
         btn.style.boxShadow = "0 1px 0 #800";
         comp.press();
         triggerUpdate();
       });
       btn.addEventListener("mouseup", (e) => {
+        e.stopPropagation();
         btn.style.transform = "translateY(0)";
         btn.style.boxShadow = "0 3px 0 #800";
         comp.release();
