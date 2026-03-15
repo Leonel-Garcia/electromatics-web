@@ -1425,13 +1425,14 @@
       return el;
     }
     createTransistor(comp, el, type) {
-      el.style.width = "40px";
-      el.style.height = "20px";
+      el.style.width = "46px";
+      el.style.height = "36px";
       const body = document.createElement("div");
       body.style.position = "absolute";
-      body.style.left = "0px";
-      body.style.width = "40px";
-      body.style.height = "15px";
+      body.style.left = "-6px";
+      body.style.top = "0px";
+      body.style.width = "54px";
+      body.style.height = "20px";
       body.style.background = "#222";
       body.style.borderRadius = "15px 15px 0 0";
       body.style.border = "1px solid #111";
@@ -1440,18 +1441,30 @@
       const label = document.createElement("div");
       label.textContent = type;
       label.style.color = "#fff";
-      label.style.fontSize = "8px";
+      label.style.fontSize = "9px";
       label.style.textAlign = "center";
-      label.style.marginTop = "4px";
+      label.style.marginTop = "2px";
+      label.style.fontWeight = "bold";
       label.style.fontFamily = '"JetBrains Mono", monospace';
       body.appendChild(label);
-      const pinIds = type === "NPN" ? ["c", "b", "e"] : ["e", "b", "c"];
+      const pinIds = ["e", "b", "c"];
       for (let i = 0; i < 3; i++) {
-        const x = i * 20 - 5;
+        const x = i * 20;
         const wire = document.createElement("div");
-        wire.style.cssText = `position:absolute; left:${x + 3}px; top:12px; width:4px; height:20px; background:linear-gradient(to right, #999, #eee, #999); border:1px solid #7f8c8d; border-radius:0 0 2px 2px;`;
+        wire.style.cssText = `position:absolute; left:${x + 1}px; top:18px; width:4px; height:15px; background:linear-gradient(to right, #999, #eee, #999); border:1px solid #7f8c8d; border-radius:0 0 2px 2px;`;
         el.appendChild(wire);
-        this.addLeg(el, x + 2, 28, pinIds[i]);
+        const pinLabel = document.createElement("div");
+        pinLabel.textContent = pinIds[i].toUpperCase();
+        pinLabel.style.position = "absolute";
+        pinLabel.style.left = `${x}px`;
+        pinLabel.style.top = "10px";
+        pinLabel.style.fontSize = "8px";
+        pinLabel.style.color = "#eee";
+        pinLabel.style.fontWeight = "bold";
+        pinLabel.style.fontFamily = "monospace";
+        pinLabel.style.pointerEvents = "none";
+        el.appendChild(pinLabel);
+        this.addLeg(el, x, 33, pinIds[i]);
       }
       return el;
     }
