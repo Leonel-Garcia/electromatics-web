@@ -85,6 +85,7 @@ const TechCalc = {
                     </div>
                     <select id="select-unit" class="select-premium" style="flex: 1;">
                         <option value="kW">kW</option>
+                        <option value="kVA">kVA</option>
                         <option value="HP">HP</option>
                         <option value="W">W</option>
                     </select>
@@ -160,6 +161,7 @@ const TechCalc = {
             const pVal = parseFloat(document.getElementById('input-power')?.value) || 0;
             const unit = document.getElementById('select-unit')?.value;
             if (unit === 'kW') return pVal * 1000;
+            if (unit === 'kVA') return pVal * 1000 * FP * Eff;
             if (unit === 'HP') return pVal * 745.7;
             return pVal;
         };
