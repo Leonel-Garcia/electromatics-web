@@ -3089,7 +3089,7 @@
       }
       const vA = pinA.getVoltage();
       const vK = pinK.getVoltage();
-      const isDriven = pinA.net.isFixed || pinK.net.isFixed;
+      const isDriven = pinA.net.isFixed && pinK.net.isFixed;
       this.isOn = isDriven && vA - vK > this.forwardVoltage;
     }
     reset() {
