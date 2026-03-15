@@ -271,6 +271,8 @@
       el.id = `view-${component.id}`;
       el.style.left = `${component.x}px`;
       el.style.top = `${component.y}px`;
+      el.style.userSelect = "none";
+      el.style.WebkitUserSelect = "none";
       const name = component.metadata.name;
       if (name.startsWith("74") || name.startsWith("LM")) {
         return this.createDIPChip(component, el);
@@ -387,14 +389,12 @@
         }
       };
       btn.addEventListener("mousedown", (e) => {
-        e.stopPropagation();
         btn.style.transform = "translateY(2px)";
         btn.style.boxShadow = "0 1px 0 #800";
         comp.press();
         triggerUpdate();
       });
       btn.addEventListener("mouseup", (e) => {
-        e.stopPropagation();
         btn.style.transform = "translateY(0)";
         btn.style.boxShadow = "0 3px 0 #800";
         comp.release();

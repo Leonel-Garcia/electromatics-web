@@ -7,6 +7,8 @@ export class ChipFactory {
     el.id = `view-${component.id}`;
     el.style.left = `${component.x}px`;
     el.style.top = `${component.y}px`;
+    el.style.userSelect = 'none';
+    el.style.WebkitUserSelect = 'none';
 
     // Visual Styling based on type
     const name = component.metadata.name;
@@ -148,14 +150,14 @@ export class ChipFactory {
     };
 
     btn.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
+        // removed stopPropagation to allow dragging
         btn.style.transform = 'translateY(2px)';
         btn.style.boxShadow = '0 1px 0 #800';
         comp.press();
         triggerUpdate();
     });
     btn.addEventListener('mouseup', (e) => {
-        e.stopPropagation();
+        // removed stopPropagation to allow clicking
         btn.style.transform = 'translateY(0)';
         btn.style.boxShadow = '0 3px 0 #800';
         comp.release();
