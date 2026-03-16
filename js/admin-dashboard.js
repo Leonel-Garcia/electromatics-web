@@ -397,7 +397,61 @@ const AdminDashboard = {
             }
         },
 
+        getRenderedTemplate(title, message) {
+            // Frontend replica of the backend template for preview
+            return `
+                <div style="font-family: 'Inter', Arial, sans-serif; background-color: #0b1116; color: #ffffff; padding: 40px; margin: 0; min-height: 100%;">
+                    <div style="max-width: 600px; margin: 0 auto; background: #161f29; border: 1px solid #00e5ff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <div style="background: linear-gradient(135deg, #00e5ff, #0066ff); padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #000; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Electromatics</h1>
+                            <p style="margin: 5px 0 0 0; color: #000; font-weight: bold; opacity: 0.8;">Potenciado por ElectrIA</p>
+                        </div>
+                        <div style="padding: 40px; line-height: 1.6;">
+                            <div style="display: flex; align-items: center; margin-bottom: 25px;">
+                                <img src="https://electromatics-web.onrender.com/images/electria-avatar.png" alt="ElectrIA" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #ff6d00; margin-right: 15px; background: #0b1116;">
+                                <h2 style="margin: 0; color: #00e5ff;">${title}</h2>
+                            </div>
+                            <p style="font-size: 16px; color: #b0b8c1;">Hola, [Nombre del Usuario],</p>
+                            <div style="color: #ffffff; font-size: 16px;">
+                                ${message.replace(/\n/g, '<br>')}
+                            </div>
+                            <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #2d3a49; display: flex; align-items: center;">
+                                <img src="https://electromatics-web.onrender.com/images/electria-avatar.png" alt="ElectrIA" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ff6d00; margin-right: 15px;">
+                                <div>
+                                    <strong style="color: #ff6d00; font-size: 16px;">ElectrIA</strong><br>
+                                    <span style="font-size: 13px; color: #7a869a;">Agente de Inteligencia Artificial de Electromatics</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background: #0b1116; padding: 20px; text-align: center; font-size: 12px; color: #5a667a;">
+                            &copy; 2026 Electromatics. Todos los derechos reservados.<br>
+                            Innovación Eléctrica bajo Norma Fondonorma 200-2009.
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+
+        showPreview() {
+            const subject = document.getElementById('broadcast-subject').value;
+            const message = document.getElementById('broadcast-message').value;
+
+            if (!subject || !message) {
+                AdminDashboard.helpers.showToast('Escribe algo para previsualizar', 'warning');
+                return;
+            }
+
+            const container = document.getElementById('email-preview-container');
+            container.innerHTML = this.getRenderedTemplate(subject, message);
+            document.getElementById('previewEmailModal').style.display = 'flex';
+        },
+
+        closePreview() {
+            document.getElementById('previewEmailModal').style.display = 'none';
+        },
+
         async sendBroadcast() {
+            this.closePreview(); // Close preview if open
             const subject = document.getElementById('broadcast-subject').value;
             const message = document.getElementById('broadcast-message').value;
             const target = document.getElementById('broadcast-target').value;
@@ -429,7 +483,7 @@ const AdminDashboard = {
             } catch (error) {
                 AdminDashboard.helpers.showToast(`Error al enviar: ${error.message}`, 'error');
                 document.getElementById('btn-broadcast-app').disabled = false;
-                document.getElementById('btn-broadcast-app').innerHTML = '<i class="fa-solid fa-rocket"></i> Enviar vía Aplicación';
+                document.getElementById('btn-broadcast-app').innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Emitir vía ElectrIA';
             }
         },
 
@@ -607,6 +661,7 @@ const AdminDashboard = {
 
         // Messaging
         document.getElementById('btn-broadcast-app').addEventListener('click', () => this.messaging.sendBroadcast());
+        document.getElementById('btn-preview-broadcast').addEventListener('click', () => this.messaging.showPreview());
         document.getElementById('btn-copy-bcc').addEventListener('click', () => this.messaging.copyBCC());
 
         // Modal
@@ -615,8 +670,12 @@ const AdminDashboard = {
         // Close modal on outside click
         window.onclick = (event) => {
             const modal = document.getElementById('editUserModal');
+            const previewModal = document.getElementById('previewEmailModal');
             if (event.target === modal) {
                 modal.style.display = 'none';
+            }
+            if (event.target === previewModal) {
+                previewModal.style.display = 'none';
             }
         };
     }

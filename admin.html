@@ -221,9 +221,14 @@
                                 <option value="admin">Equipo Administrativo</option>
                             </select>
                         </div>
-                        <button id="btn-broadcast-app" class="btn btn-primary" style="width: 100%; border-radius: 50px;">
-                            <i class="fa-solid fa-satellite-dish"></i> Emitir a través de ElectrIA
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btn-preview-broadcast" class="btn btn-secondary" style="flex: 1; border-radius: 50px;">
+                                <i class="fa-solid fa-eye"></i> Vista Previa
+                            </button>
+                            <button id="btn-broadcast-app" class="btn btn-primary" style="flex: 2; border-radius: 50px;">
+                                <i class="fa-solid fa-satellite-dish"></i> Emitir vía ElectrIA
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Clientes Externos -->
@@ -389,6 +394,20 @@
                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Preview Email Modal -->
+    <div id="previewEmailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px; padding: 0; overflow: hidden; border: none;">
+            <span class="close-modal" onclick="AdminDashboard.messaging.closePreview()" style="top: 10px; right: 20px; z-index: 1001; background: rgba(0,0,0,0.5); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">&times;</span>
+            <div id="email-preview-container" style="height: 80vh; overflow-y: auto; background: #0b1116;">
+                <!-- HTML Template will be injected here -->
+            </div>
+            <div style="padding: 15px; background: var(--medium-bg-hex); text-align: right; border-top: 1px solid var(--border-color);">
+                <button onclick="AdminDashboard.messaging.closePreview()" class="btn btn-secondary">Cerrar Vista Previa</button>
+                <button onclick="AdminDashboard.messaging.sendBroadcast()" class="btn btn-primary" style="margin-left: 10px;">Confirmar y Enviar</button>
+            </div>
         </div>
     </div>
 

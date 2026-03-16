@@ -1,11 +1,14 @@
 """
 Email Service Module
 Handles email sending for verification and notifications
-Currently in DEVELOPMENT MODE - tokens are logged to console instead of sent via email
 """
 import secrets
+import smtplib
 from datetime import datetime, timedelta
 from typing import Optional
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -15,10 +18,21 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Email service for sending verification and notification emails"""
     
-    def __init__(self, development_mode: bool = True):
-        self.development_mode = development_mode
-        self.sender_email = "electromatics.info@gmail.com"
+    def __init__(self):
+        # Environment configuration
+        self.sender_email = os.getenv("SMTP_EMAIL", "electromatics.info@gmail.com")
+        self.sender_password = os.getenv("SMTP_PASSWORD")
+        self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.sender_name = "ElectrIA (Electromatics)"
+        
+        # If no password is provided, we stay in simulation mode
+        self.development_mode = not bool(self.sender_password)
+        
+        if self.development_mode:
+            logger.warning("⚠️ MODO SIMULACIÓN: SMTP_PASSWORD no configurado. Los correos se loguearán en consola.")
+        else:
+            logger.info(f"✅ SMTP configurado para: {self.sender_email}")
         
     def generate_verification_token(self) -> str:
         """Generate a secure random verification token"""
@@ -76,10 +90,31 @@ class EmailService:
         </html>
         """
 
+    def send_email(self, recipient: str, subject: str, html_content: str) -> bool:
+        """Core method to send real email using SMTP"""
+        if self.development_mode:
+            logger.info(f"📧 [SIMULADO] Para: {recipient} | Asunto: {subject}")
+            return True
+
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = f"{self.sender_name} <{self.sender_email}>"
+            msg['To'] = recipient
+            msg['Subject'] = subject
+            
+            msg.attach(MIMEText(html_content, 'html'))
+            
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.sender_email, self.sender_password)
+                server.send_message(msg)
+            
+            return True
+        except Exception as e:
+            logger.error(f"❌ Error enviando email a {recipient}: {str(e)}")
+            return False
+
     def send_verification_email(self, email: str, token: str, user_name: Optional[str] = None) -> bool:
-        """
-        Send verification email using ElectrIA template
-        """
         title = "Verificación de Cuenta"
         content = f"""
             ¡Bienvenido a la comunidad de Electromatics! Estoy aquí para asistirte en tus cálculos y validaciones eléctricas.
@@ -87,44 +122,16 @@ class EmailService:
             Para comenzar a utilizar todas mis funciones, por favor verifica tu cuenta haciendo clic en el siguiente enlace:
             <br><br>
             <a href="http://localhost:8000/verify?token={token}" style="display: inline-block; background: #00e5ff; color: #000; padding: 12px 25px; border-radius: 10px; text-decoration: none; font-weight: bold;">Verificar mi Cuenta</a>
-            <br><br>
-            Si el botón no funciona, copia y pega este enlace: <br>
-            <span style="color: #00e5ff;">http://localhost:8000/verify?token={token}</span>
         """
-        
         html_content = self.get_electria_template(title, content, user_name)
-        
-        if self.development_mode:
-            logger.info("=" * 80)
-            logger.info(f"📧 TRANSMISIÓN (ElectrIA)")
-            logger.info(f"From: {self.sender_name} <{self.sender_email}>")
-            logger.info(f"To: {email}")
-            logger.info(f"Subject: {title}")
-            logger.info("-" * 80)
-            logger.info(f"Preview (HTML snippet): {html_content[:200]}...")
-            logger.info("=" * 80)
-            return True
-        return False
+        return self.send_email(email, title, html_content)
 
     def send_broadcast_email(self, email: str, subject: str, message: str, user_name: Optional[str] = None) -> bool:
-        """
-        Send a general broadcast or notification email from ElectrIA
-        """
-        html_content = self.get_electria_template(subject, message, user_name)
-        
-        if self.development_mode:
-            logger.info(f"📢 BROADCAST (ElectrIA) from {self.sender_email} to {email}: {subject}")
-            logger.info(f"Message preview: {message[:100]}...")
-            return True
-        return False
-
-    def send_password_reset_email(self, email: str, token: str) -> bool:
-        """Send password reset email (for future implementation)"""
-        if self.development_mode:
-            logger.info(f"Password Reset Token for {email}: {token}")
-            return True
-        return False
+        # Convert simple line breaks to <br> if needed
+        formatted_message = message.replace('\n', '<br>')
+        html_content = self.get_electria_template(subject, formatted_message, user_name)
+        return self.send_email(email, subject, html_content)
 
 
 # Global email service instance
-email_service = EmailService(development_mode=True)
+email_service = EmailService()
