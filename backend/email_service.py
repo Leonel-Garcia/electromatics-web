@@ -45,9 +45,7 @@ class EmailService:
                     <!-- Content -->
                     <div style="padding: 40px; line-height: 1.6;">
                         <div style="display: flex; align-items: center; margin-bottom: 25px;">
-                            <div style="width: 50px; height: 50px; background: #ff6d00; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                                <span style="font-size: 24px;">🤖</span>
-                            </div>
+                            <img src="https://electromatics-web.onrender.com/images/electria-avatar.png" alt="ElectrIA" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #ff6d00; margin-right: 15px; background: #0b1116;">
                             <h2 style="margin: 0; color: #00e5ff;">{title}</h2>
                         </div>
                         
