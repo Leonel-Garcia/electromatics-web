@@ -57,10 +57,12 @@ class EmailService:
                             {content}
                         </div>
                         
-                        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #2d3a49; font-size: 14px; color: #7a869a;">
-                            Atentamente,<br>
-                            <strong style="color: #ff6d00;">ElectrIA</strong><br>
-                            Agente de Inteligencia Artificial de Electromatics
+                        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #2d3a49; display: flex; align-items: center;">
+                            <img src="https://electromatics-web.onrender.com/images/electria-avatar.png" alt="ElectrIA" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ff6d00; margin-right: 15px;">
+                            <div>
+                                <strong style="color: #ff6d00; font-size: 16px;">ElectrIA</strong><br>
+                                <span style="font-size: 13px; color: #7a869a;">Agente de Inteligencia Artificial de Electromatics</span>
+                            </div>
                         </div>
                     </div>
                     

@@ -377,6 +377,26 @@ const AdminDashboard = {
     // MESSAGING CENTER
     // ========================================================================
     messaging: {
+        templates: {
+            welcome: {
+                subject: "¡Bienvenido a Electromatics! La ingeniería eléctrica del futuro ya está aquí.",
+                body: `¡Es un placer saludarte! Soy <b>ElectrIA</b>, el agente de inteligencia artificial de <b>Electromatics</b>, y desde este momento seré tu mano derecha en cada proyecto.<br><br>Mi misión es potenciar tu productividad mediante cálculos precisos y validaciones técnicas automatizadas. A partir de ahora, tienes acceso a herramientas diseñadas para ingenieros que no se conforman con lo convencional:<br><br><ul><li><b>Cálculos Inteligentes:</b> Resultados instantáneos bajo normas internacionales.</li><li><b>Gestión de Proyectos:</b> Organiza tus cuadros de carga y análisis de forma centralizada.</li><li><b>Asistencia 24/7:</b> Estoy aquí para resolver dudas técnicas y optimizar tus diseños en tiempo real.</li></ul><br>Estoy lista para comenzar a trabajar contigo. ¿Qué proyecto tenemos hoy en la mesa?`
+            },
+            features: {
+                subject: "¡Nuevas Capacidades! He actualizado mis algoritmos para servirte mejor.",
+                body: `¡Hola! Como tu asistente IA, mi aprendizaje nunca se detiene. Hoy quiero compartir contigo las nuevas herramientas que he implementado para llevar la calidad de tus entregas a un nivel superior:<br><br>1. <b>Exportación Excel Avanzada:</b> Combinación inteligente de celdas para circuitos multi-polares, asegurando una lectura técnica impecable.<br>2. <b>Reportes PDF Profesionales:</b> Encabezados repetitivos automáticos para conservar la identidad de tu proyecto en cada página.<br>3. <b>Optimización de Jerarquía:</b> Reposicionamiento de interruptores principales para facilitar la revisión técnica.<br><br>Estas mejoras ya están disponibles en tu panel de control. Te invito a probar la nueva precisión de mis cálculos hoy mismo.`
+            }
+        },
+
+        loadTemplate(type) {
+            const template = this.templates[type];
+            if (template) {
+                document.getElementById('broadcast-subject').value = template.subject;
+                document.getElementById('broadcast-message').value = template.body;
+                AdminDashboard.helpers.showToast(`Plantilla de ${type} cargada`, 'info');
+            }
+        },
+
         async sendBroadcast() {
             const subject = document.getElementById('broadcast-subject').value;
             const message = document.getElementById('broadcast-message').value;
@@ -553,6 +573,17 @@ const AdminDashboard = {
 
             // Load all users
             await this.users.loadAll();
+
+            // Status indication for ElectrIA messaging
+            const messageHeader = document.querySelector('h2 > .fa-paper-plane').parentElement;
+            if (messageHeader) {
+                const badge = document.createElement('span');
+                badge.className = 'status-badge status-verified';
+                badge.style.marginLeft = '15px';
+                badge.style.fontSize = '10px';
+                badge.innerHTML = '<i class="fa-solid fa-bolt"></i> ElectrIA Activa';
+                messageHeader.appendChild(badge);
+            }
 
             // Setup event listeners
             this.setupEventListeners();
