@@ -406,18 +406,20 @@ def broadcast_message(
     if not users:
         return {"success": False, "message": "No users found for this target"}
     
-    # Send emails (using email service which currently logs in Dev Mode)
+    # Send emails (using email service with ElectrIA template)
     success_count = 0
     for user in users:
-        # In this implementation, we simulate sending or use the email_service
-        # Since email_service currently only has verification, we'll log it here
-        logger.info(f"📢 BROADCAST to {user.email}: {broadcast.subject}")
-        # if email_service.send_broadcast(...): success_count += 1
-        success_count += 1
+        if email_service.send_broadcast_email(
+            email=user.email,
+            subject=broadcast.subject,
+            message=broadcast.message,
+            user_name=user.full_name
+        ):
+            success_count += 1
     
     return {
         "success": True, 
-        "message": f"Mensaje enviado exitosamente a {success_count} usuarios.",
+        "message": f"Mensaje de ElectrIA enviado exitosamente a {success_count} usuarios.",
         "count": success_count
     }
 

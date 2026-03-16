@@ -189,27 +189,32 @@
                     <i class="fa-solid fa-paper-plane"></i> Centro de Mensajería Masiva
                 </h2>
                 <div class="user-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                    <!-- Redacción -->
+                    <!-- Redacción con ElectrIA -->
                     <div style="background: rgba(0, 229, 255, 0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(0, 229, 255, 0.2);">
-                        <h4 style="margin-bottom: 15px; color: var(--safety-orange);">Redactar Comunicado</h4>
+                        <h4 style="margin-bottom: 5px; color: var(--safety-orange);">
+                            <i class="fa-solid fa-robot"></i> ElectrIA Outreach
+                        </h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">
+                            Los mensajes serán enviados bajo la identidad de la IA de Electromatics.
+                        </p>
                         <div class="form-group">
-                            <label class="form-label">Asunto</label>
-                            <input type="text" id="broadcast-subject" class="form-input" placeholder="Ej: Nueva actualización de la Norma Fondonorma">
+                            <label class="form-label">Asunto del Comunicado</label>
+                            <input type="text" id="broadcast-subject" class="form-input" placeholder="Ej: Nueva actualización técnica disponible">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Mensaje</label>
-                            <textarea id="broadcast-message" class="form-input" rows="5" placeholder="Escribe tu mensaje aquí..."></textarea>
+                            <label class="form-label">Cuerpo del Mensaje</label>
+                            <textarea id="broadcast-message" class="form-input" rows="5" placeholder="Escribe el contenido del mensaje..."></textarea>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Destinatarios</label>
+                            <label class="form-label">Segmento de Usuarios</label>
                             <select id="broadcast-target" class="form-input">
-                                <option value="all">Todos los Usuarios</option>
-                                <option value="premium">Solo Premium</option>
-                                <option value="admin">Solo Administradores</option>
+                                <option value="all">Toda la Comunidad</option>
+                                <option value="premium">Usuarios Premium</option>
+                                <option value="admin">Equipo Administrativo</option>
                             </select>
                         </div>
-                        <button id="btn-broadcast-app" class="btn btn-primary" style="width: 100%;">
-                            <i class="fa-solid fa-rocket"></i> Enviar vía Aplicación
+                        <button id="btn-broadcast-app" class="btn btn-primary" style="width: 100%; border-radius: 50px;">
+                            <i class="fa-solid fa-satellite-dish"></i> Emitir a través de ElectrIA
                         </button>
                     </div>
 
