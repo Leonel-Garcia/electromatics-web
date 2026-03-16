@@ -182,6 +182,61 @@
                     <div class="stat-label">Activos (5m)</div>
                 </div>
             </div>
+            
+            <!-- Centro de Mensajería Masiva -->
+            <div style="margin-bottom: 40px; animation: fadeInUp 0.6s ease forwards;">
+                <h2 style="color: var(--electric-blue); margin-bottom: 20px;">
+                    <i class="fa-solid fa-paper-plane"></i> Centro de Mensajería Masiva
+                </h2>
+                <div class="user-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <!-- Redacción -->
+                    <div style="background: rgba(0, 229, 255, 0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(0, 229, 255, 0.2);">
+                        <h4 style="margin-bottom: 15px; color: var(--safety-orange);">Redactar Comunicado</h4>
+                        <div class="form-group">
+                            <label class="form-label">Asunto</label>
+                            <input type="text" id="broadcast-subject" class="form-input" placeholder="Ej: Nueva actualización de la Norma Fondonorma">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mensaje</label>
+                            <textarea id="broadcast-message" class="form-input" rows="5" placeholder="Escribe tu mensaje aquí..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Destinatarios</label>
+                            <select id="broadcast-target" class="form-input">
+                                <option value="all">Todos los Usuarios</option>
+                                <option value="premium">Solo Premium</option>
+                                <option value="admin">Solo Administradores</option>
+                            </select>
+                        </div>
+                        <button id="btn-broadcast-app" class="btn btn-primary" style="width: 100%;">
+                            <i class="fa-solid fa-rocket"></i> Enviar vía Aplicación
+                        </button>
+                    </div>
+
+                    <!-- Clientes Externos -->
+                    <div style="background: rgba(255, 109, 0, 0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(255, 109, 0, 0.2);">
+                        <h4 style="margin-bottom: 15px; color: var(--safety-orange);">Enviar desde tu Correo</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                            Usa estos accesos directos para abrir tu cliente de correo profesional con la lista de usuarios precargada en <strong>BCC (Copia Oculta)</strong> para proteger la privacidad.
+                        </p>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button onclick="AdminDashboard.messaging.openExternal('gmail')" class="btn btn-secondary" style="justify-content: flex-start; background: rgba(0,0,0,0.3);">
+                                <i class="fa-brands fa-google" style="color: #EA4335;"></i> Abrir en Gmail
+                            </button>
+                            <button onclick="AdminDashboard.messaging.openExternal('outlook')" class="btn btn-secondary" style="justify-content: flex-start; background: rgba(0,0,0,0.3);">
+                                <i class="fa-solid fa-envelope-open-text" style="color: #0078D4;"></i> Abrir en Outlook
+                            </button>
+                            <button onclick="AdminDashboard.messaging.openExternal('default')" class="btn btn-secondary" style="justify-content: flex-start; background: rgba(0,0,0,0.3);">
+                                <i class="fa-solid fa-envelope"></i> Usar Cliente Predeterminado
+                            </button>
+                            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+                            <button id="btn-copy-bcc" class="btn btn-secondary" style="justify-content: flex-start;">
+                                <i class="fa-solid fa-users-line"></i> Copiar Lista para BCC
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
                 <!-- Top Pages -->

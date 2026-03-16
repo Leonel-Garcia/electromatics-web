@@ -57,3 +57,8 @@ class UsersList(BaseModel):
     skip: int
     limit: int
     users: list[User]
+
+class BroadcastRequest(BaseModel):
+    subject: str
+    message: str
+    target: str # 'all', 'premium', 'admin'

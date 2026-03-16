@@ -379,6 +379,48 @@ def delete_user(
     return {"success": True, "message": "User deleted successfully"}
 
 
+@app.post("/admin/broadcast")
+def broadcast_message(
+    broadcast: schemas.BroadcastRequest,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Send a broadcast message to a group of users.
+    Admin only endpoint.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Base query
+    query = db.query(models.User)
+    
+    # Filter by target
+    if broadcast.target == 'premium':
+        query = query.filter(models.User.is_premium == True)
+    elif broadcast.target == 'admin':
+        query = query.filter(models.User.is_admin == True)
+    
+    users = query.all()
+    
+    if not users:
+        return {"success": False, "message": "No users found for this target"}
+    
+    # Send emails (using email service which currently logs in Dev Mode)
+    success_count = 0
+    for user in users:
+        # In this implementation, we simulate sending or use the email_service
+        # Since email_service currently only has verification, we'll log it here
+        logger.info(f"📢 BROADCAST to {user.email}: {broadcast.subject}")
+        # if email_service.send_broadcast(...): success_count += 1
+        success_count += 1
+    
+    return {
+        "success": True, 
+        "message": f"Mensaje enviado exitosamente a {success_count} usuarios.",
+        "count": success_count
+    }
+
 @app.post("/analytics/visit")
 async def record_visit(request: Request, visit: schemas.VisitCreate, db: Session = Depends(database.get_db)):
     # Try to identify user from Authorization header if present

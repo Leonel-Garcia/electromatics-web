@@ -374,6 +374,93 @@ const AdminDashboard = {
     },
 
     // ========================================================================
+    // MESSAGING CENTER
+    // ========================================================================
+    messaging: {
+        async sendBroadcast() {
+            const subject = document.getElementById('broadcast-subject').value;
+            const message = document.getElementById('broadcast-message').value;
+            const target = document.getElementById('broadcast-target').value;
+
+            if (!subject || !message) {
+                AdminDashboard.helpers.showToast('Por favor completa el asunto y el mensaje', 'warning');
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('btn-broadcast-app');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+                const response = await AdminDashboard.helpers.apiRequest('/admin/broadcast', {
+                    method: 'POST',
+                    body: JSON.stringify({ subject, message, target })
+                });
+
+                AdminDashboard.helpers.showToast(response.message, 'success');
+                
+                // Reset form
+                document.getElementById('broadcast-subject').value = '';
+                document.getElementById('broadcast-message').value = '';
+                
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            } catch (error) {
+                AdminDashboard.helpers.showToast(`Error al enviar: ${error.message}`, 'error');
+                document.getElementById('btn-broadcast-app').disabled = false;
+                document.getElementById('btn-broadcast-app').innerHTML = '<i class="fa-solid fa-rocket"></i> Enviar vía Aplicación';
+            }
+        },
+
+        async openExternal(provider) {
+            try {
+                const target = document.getElementById('broadcast-target').value;
+                const subject = encodeURIComponent(document.getElementById('broadcast-subject').value || 'Comunicado de Electromatics');
+                const body = encodeURIComponent(document.getElementById('broadcast-message').value || '');
+                
+                // Get emails based on target
+                let endpoint = '/admin/users?skip=0&limit=10000';
+                const data = await AdminDashboard.helpers.apiRequest(endpoint);
+                
+                let users = data.users;
+                if (target === 'premium') users = users.filter(u => u.is_premium);
+                if (target === 'admin') users = users.filter(u => u.is_admin);
+
+                const bccList = users.map(u => u.email).join(',');
+
+                if (provider === 'gmail') {
+                    window.open(`https://mail.google.com/mail/?view=cm&fs=1&bcc=${bccList}&su=${subject}&body=${body}`, '_blank');
+                } else if (provider === 'outlook') {
+                    window.open(`https://outlook.live.com/owa/?path=/mail/action/compose&bcc=${bccList}&subject=${subject}&body=${body}`, '_blank');
+                } else {
+                    window.location.href = `mailto:?bcc=${bccList}&subject=${subject}&body=${body}`;
+                }
+            } catch (error) {
+                AdminDashboard.helpers.showToast('Error al preparar correos', 'error');
+            }
+        },
+
+        async copyBCC() {
+            try {
+                const target = document.getElementById('broadcast-target').value;
+                const data = await AdminDashboard.helpers.apiRequest('/admin/users?skip=0&limit=10000');
+                
+                let users = data.users;
+                if (target === 'premium') users = users.filter(u => u.is_premium);
+                if (target === 'admin') users = users.filter(u => u.is_admin);
+
+                const bccList = users.map(u => u.email).join('; ');
+                await navigator.clipboard.writeText(bccList);
+                
+                AdminDashboard.helpers.showToast(`Copiados ${users.length} emails para BCC`, 'success');
+            } catch (error) {
+                AdminDashboard.helpers.showToast('Error al copiar lista', 'error');
+            }
+        }
+    },
+
+    // ========================================================================
     // MODAL MANAGEMENT
     // ========================================================================
 
@@ -486,6 +573,10 @@ const AdminDashboard = {
         // Export
         document.getElementById('btn-export-csv').addEventListener('click', this.export.downloadCSV);
         document.getElementById('btn-copy-emails').addEventListener('click', this.export.copyEmails);
+
+        // Messaging
+        document.getElementById('btn-broadcast-app').addEventListener('click', () => this.messaging.sendBroadcast());
+        document.getElementById('btn-copy-bcc').addEventListener('click', () => this.messaging.copyBCC());
 
         // Modal
         document.getElementById('editUserForm').addEventListener('submit', this.modal.handleSubmit);
