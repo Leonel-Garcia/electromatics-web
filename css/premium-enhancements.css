@@ -288,6 +288,20 @@
   }
 }
 
+@keyframes pulsing-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 109, 0, 0.7); border-color: var(--safety-orange); }
+  50% { box-shadow: 0 0 20px 10px rgba(0, 229, 255, 0.4); border-color: var(--electric-blue); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 109, 0, 0); border-color: var(--safety-orange); }
+}
+
+@keyframes vibrant-training-pulse {
+  0% { transform: scale(1); background: rgba(255, 109, 0, 0.1); }
+  25% { background: rgba(0, 229, 255, 0.15); }
+  50% { transform: scale(1.03); background: rgba(255, 109, 0, 0.2); }
+  75% { background: rgba(0, 229, 255, 0.15); }
+  100% { transform: scale(1); background: rgba(255, 109, 0, 0.1); }
+}
+
 /* Clases de Animación */
 .animate-fadeInUp {
   animation: fadeInUp 0.6s var(--transition-smooth) forwards;
