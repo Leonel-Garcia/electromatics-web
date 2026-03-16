@@ -419,7 +419,7 @@ def broadcast_message(
     
     return {
         "success": True, 
-        "message": f"Mensaje de ElectrIA enviado exitosamente a {success_count} usuarios.",
+        "message": f"Mensaje de ElectrIA enviado desde {email_service.sender_email} exitosamente a {success_count} usuarios.",
         "count": success_count
     }
 

@@ -17,6 +17,8 @@ class EmailService:
     
     def __init__(self, development_mode: bool = True):
         self.development_mode = development_mode
+        self.sender_email = "electromatics.info@gmail.com"
+        self.sender_name = "ElectrIA (Electromatics)"
         
     def generate_verification_token(self) -> str:
         """Generate a secure random verification token"""
@@ -92,7 +94,10 @@ class EmailService:
         
         if self.development_mode:
             logger.info("=" * 80)
-            logger.info(f"📧 EMAIL BROADCAST (ElectrIA): {title} to {email}")
+            logger.info(f"📧 TRANSMISIÓN (ElectrIA)")
+            logger.info(f"From: {self.sender_name} <{self.sender_email}>")
+            logger.info(f"To: {email}")
+            logger.info(f"Subject: {title}")
             logger.info("-" * 80)
             logger.info(f"Preview (HTML snippet): {html_content[:200]}...")
             logger.info("=" * 80)
@@ -106,7 +111,7 @@ class EmailService:
         html_content = self.get_electria_template(subject, message, user_name)
         
         if self.development_mode:
-            logger.info(f"📢 BROADCAST (ElectrIA) to {email}: {subject}")
+            logger.info(f"📢 BROADCAST (ElectrIA) from {self.sender_email} to {email}: {subject}")
             logger.info(f"Message preview: {message[:100]}...")
             return True
         return False
