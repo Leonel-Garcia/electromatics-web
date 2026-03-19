@@ -1,3 +1,10 @@
+import os
+import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file FIRST
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -8,19 +15,13 @@ from datetime import datetime, timedelta
 import models, schemas, auth, database
 from email_service import email_service
 import requests
-import os
 import pydantic
 import migrations
 import json
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 app = FastAPI()
 

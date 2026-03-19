@@ -10,6 +10,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables early
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +23,7 @@ class EmailService:
     """Email service for sending verification and notification emails"""
     
     def __init__(self):
-        # Environment configuration
+        # Reiniciar variables de entorno para asegurar que tenemos las últimas después de load_dotenv
         self.sender_email = os.getenv("SMTP_EMAIL", "electromatics.info@gmail.com")
         self.sender_password = os.getenv("SMTP_PASSWORD")
         self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
