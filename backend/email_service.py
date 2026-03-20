@@ -108,10 +108,18 @@ class EmailService:
             
             msg.attach(MIMEText(html_content, 'html'))
             
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.sender_email, self.sender_password)
-                server.send_message(msg)
+            # Use SSL for port 465 or regular SMTP with TLS for other ports (like 587)
+            if self.smtp_port == 465:
+                logger.info(f"📧 Usando SMTP_SSL en puerto 465 para {recipient}")
+                with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
+                    server.login(self.sender_email, self.sender_password)
+                    server.send_message(msg)
+            else:
+                logger.info(f"📧 Usando SMTP regular en puerto {self.smtp_port} para {recipient}")
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                    server.starttls()
+                    server.login(self.sender_email, self.sender_password)
+                    server.send_message(msg)
             
             return True
         except Exception as e:
