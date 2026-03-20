@@ -404,9 +404,16 @@
             <div id="email-preview-container" style="height: 80vh; overflow-y: auto; background: #0b1116;">
                 <!-- HTML Template will be injected here -->
             </div>
-            <div style="padding: 15px; background: var(--medium-bg-hex); text-align: right; border-top: 1px solid var(--border-color);">
-                <button onclick="AdminDashboard.messaging.closePreview()" class="btn btn-secondary">Cerrar Vista Previa</button>
-                <button onclick="AdminDashboard.messaging.sendBroadcast()" class="btn btn-primary" style="margin-left: 10px;">Confirmar y Enviar</button>
+            <div style="padding: 15px; background: var(--medium-bg-hex); text-align: right; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <button id="btn-copy-html" class="btn btn-secondary" style="background: rgba(0, 229, 255, 0.1); border-color: var(--electric-blue);">
+                    <i class="fa-solid fa-code"></i> Copiar Código HTML
+                </button>
+                <div>
+                    <button onclick="AdminDashboard.messaging.closePreview()" class="btn btn-secondary">Cerrar</button>
+                    <button id="btn-confirm-send" onclick="AdminDashboard.messaging.sendBroadcast()" class="btn btn-primary" style="margin-left: 10px;">
+                        <i class="fa-solid fa-paper-plane"></i> Confirmar y Enviar
+                    </button>
+                </div>
             </div>
         </div>
     </div>

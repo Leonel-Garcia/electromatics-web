@@ -442,12 +442,31 @@ const AdminDashboard = {
             }
 
             const container = document.getElementById('email-preview-container');
-            container.innerHTML = this.getRenderedTemplate(subject, message);
-            document.getElementById('previewEmailModal').style.display = 'flex';
+            const htmlContent = this.getRenderedTemplate(subject, message);
+            container.innerHTML = htmlContent;
+            
+            // Configurar botón de copiar
+            const copyBtn = document.getElementById('btn-copy-html');
+            if (copyBtn) {
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(htmlContent).then(() => {
+                        const originalText = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> ¡Copiado!';
+                        copyBtn.style.background = "rgba(76, 175, 80, 0.2)";
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                            copyBtn.style.background = "";
+                        }, 2000);
+                    });
+                };
+            }
+            
+            const modal = document.getElementById('previewEmailModal');
+            modal.classList.add('active');
         },
 
         closePreview() {
-            document.getElementById('previewEmailModal').style.display = 'none';
+            document.getElementById('previewEmailModal').classList.remove('active');
         },
 
         async sendBroadcast() {
