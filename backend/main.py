@@ -544,6 +544,22 @@ async def generate_content_proxy(request: Request):
         logger.error(f"🚫 Error inesperado en ElectrIA: {str(e)}")
         return JSONResponse(status_code=500, content={"detail": str(e)})
 
+@app.get("/health/email")
+def check_email_health():
+    """
+    Health check endpoint to verify SMTP configuration for emails.
+    """
+    is_operational = not email_service.development_mode
+    
+    return {
+        "status": "operational" if is_operational else "simulation_mode",
+        "sender": email_service.sender_email,
+        "smtp_server": f"{email_service.smtp_server}:{email_service.smtp_port}",
+        "authenticated": bool(email_service.sender_password),
+        "development_mode": email_service.development_mode,
+        "message": "Emails are LIVE" if is_operational else "EMAILS IN SIMULATION MODE - Check SMTP_PASSWORD"
+    }
+
 @app.get("/health/ai")
 def check_ai_health():
     """
