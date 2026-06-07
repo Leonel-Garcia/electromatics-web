@@ -666,16 +666,16 @@ def get_bcv_rate():
             import re
             html_content = bcv_resp.text
             
-            # Pattern 1: Standard ID 'dolar' with strong tag
-            match = re.search(r'id=["\']dolar["\'].*?strong>\s*([\d,.]+)\s*<', html_content, re.DOTALL | re.IGNORECASE)
+            # Pattern 1: Standard ID 'dolar' with strong tag (handling classes/attributes in strong)
+            match = re.search(r'id=["\']dolar["\'].*?strong[^>]*>\s*([\d,.]+)\s*<', html_content, re.DOTALL | re.IGNORECASE)
             
             # Pattern 2: Search for USD text near a number
             if not match:
-                match = re.search(r'USD.*?strong>\s*([\d,.]+)\s*<', html_content, re.DOTALL | re.IGNORECASE)
+                match = re.search(r'USD.*?strong[^>]*>\s*([\d,.]+)\s*<', html_content, re.DOTALL | re.IGNORECASE)
             
-            # Pattern 3: Look for strong tags with rate-like values (50-500 range for current BCV)
+            # Pattern 3: Look for strong tags with rate-like values (50-1000 range for current BCV)
             if not match:
-                potentials = re.findall(r'strong>\s*([\d]{2,3},[\d]+)\s*<', html_content)
+                potentials = re.findall(r'strong[^>]*>\s*([\d]{1,4},[\d]+)\s*<', html_content)
                 if potentials:
                     # BCV order is EUR, CNY, TRY, RUB, USD (USD is usually last)
                     rate_str = potentials[-1].replace(',', '.')
@@ -703,12 +703,12 @@ def get_bcv_rate():
 
     # Source 4: Hardcoded Fallback (last resort, needs manual update when all APIs fail)
     # IMPORTANT: Update this value periodically when APIs are unavailable
-    # Last Manual Update: 29-Jan-2026
-    current_fixed_rate = 367.30  # Updated to current BCV rate
+    # Last Manual Update: 07-Jun-2026
+    current_fixed_rate = 567.68  # Updated to current BCV rate
     logger.warning(f"⚠️ Todas las APIs fallaron, usando tasa de respaldo: {current_fixed_rate}. Errores: {errors_log}")
     return {
         "rate": current_fixed_rate,
-        "source": "Sistema Electromatics (Respaldo 29-Ene-2026)",
+        "source": "Sistema Electromatics (Respaldo 07-Jun-2026)",
         "updated_at": datetime.utcnow().isoformat(),
         "warning": "Tasa de respaldo - APIs no disponibles temporalmente"
     }
