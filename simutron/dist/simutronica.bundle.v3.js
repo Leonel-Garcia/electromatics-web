@@ -3037,6 +3037,7 @@
     constructor(id, resistance = 1e3) {
       super(id);
       this.resistance = resistance;
+      this.current = 0;
       this.metadata = { name: "Resistor", description: `${resistance}Ω` };
       this.addPin("a", "bidirectional");
       this.addPin("b", "bidirectional");
@@ -3047,12 +3048,18 @@
       if (pinA.net && pinB.net && pinA.net !== pinB.net) {
         const vA = pinA.getVoltage();
         const vB = pinB.getVoltage();
-        if (pinA.net.isFixed && !pinB.net.isFixed) {
+        if (pinA.net.isFixed && pinB.net.isFixed) {
+          this.current = (vA - vB) / this.resistance;
+        } else if (pinA.net.isFixed && !pinB.net.isFixed) {
           pinB.net.setVoltage(vA);
           pinB.net.isFixed = true;
+          this.current = (vA - vB) / this.resistance;
         } else if (!pinA.net.isFixed && pinB.net.isFixed) {
           pinA.net.setVoltage(vB);
           pinA.net.isFixed = true;
+          this.current = (vA - vB) / this.resistance;
+        } else {
+          this.current = 0;
         }
         if (pinA.net.hasSourcePath) pinB.net.hasSourcePath = true;
         if (pinB.net.hasSourcePath) pinA.net.hasSourcePath = true;
@@ -3066,7 +3073,9 @@
       super(id);
       this.capacitance = capacitance;
       this.maxVoltage = maxVoltage;
+      this.charge = 0;
       this.voltageAcross = 0;
+      this.current = 0;
       this.metadata = {
         name: "Capacitor",
         description: "Electrolytic Capacitor",
@@ -3079,12 +3088,43 @@
       this.addPin("neg", "bidirectional");
     }
     update(dt) {
-      const vPos = this.getPin("pos").getVoltage();
-      const vNeg = this.getPin("neg").getVoltage();
-      this.voltageAcross = vPos - vNeg;
+      const pinPos = this.getPin("pos");
+      const pinNeg = this.getPin("neg");
+      if (!pinPos.net || !pinNeg.net) return;
+      const vPos = pinPos.net.voltage;
+      const vNeg = pinNeg.net.voltage;
+      const vExternal = vPos - vNeg;
+      const vCap = this.charge / this.capacitance;
+      const vDiff = vExternal - vCap;
+      const Rimplicit = 100;
+      const current = vDiff / Rimplicit;
+      this.charge += current * dt;
+      const maxCharge = this.capacitance * this.maxVoltage;
+      this.charge = Math.max(-maxCharge, Math.min(maxCharge, this.charge));
+      this.voltageAcross = this.charge / this.capacitance;
+      this.current = current;
+    }
+    computeOutputs() {
+      const pinPos = this.getPin("pos");
+      const pinNeg = this.getPin("neg");
+      if (!pinPos.net || !pinNeg.net) return;
+      const vCap = this.charge / this.capacitance;
+      if (pinNeg.net.isFixed && !pinPos.net.isFixed) {
+        pinPos.net.voltage = pinNeg.net.voltage + vCap;
+        pinPos.net.isFixed = true;
+      } else if (pinPos.net.isFixed && !pinNeg.net.isFixed) {
+        pinNeg.net.voltage = pinPos.net.voltage - vCap;
+        pinNeg.net.isFixed = true;
+      }
+      if (pinPos.net.hasSourcePath) pinNeg.net.hasSourcePath = true;
+      if (pinNeg.net.hasSourcePath) pinPos.net.hasSourcePath = true;
+      if (pinPos.net.hasGroundPath) pinNeg.net.hasGroundPath = true;
+      if (pinNeg.net.hasGroundPath) pinPos.net.hasGroundPath = true;
     }
     reset() {
+      this.charge = 0;
       this.voltageAcross = 0;
+      this.current = 0;
     }
   }
   class LED extends Component {
@@ -3937,6 +3977,8 @@
       this.addPin("b", "input");
       this.addPin("e", "bidirectional");
       this.isOn = false;
+      this.vBE_threshold = 0.6;
+      this.vCE_sat = 0.2;
     }
     computeOutputs() {
       const pinC = this.getPin("c");
@@ -3946,20 +3988,23 @@
         const vB = pinB.getVoltage();
         const vE = pinE.getVoltage();
         const vC = pinC.getVoltage();
-        this.isOn = vB - vE >= 0.6 && pinB.net.hasSourcePath;
+        const vBE = vB - vE;
+        this.isOn = vBE >= this.vBE_threshold;
         if (this.isOn) {
           if (pinE.net.hasSourcePath) pinC.net.hasSourcePath = true;
           if (pinC.net.hasSourcePath) pinE.net.hasSourcePath = true;
           if (pinE.net.hasGroundPath) pinC.net.hasGroundPath = true;
           if (pinC.net.hasGroundPath) pinE.net.hasGroundPath = true;
           if (pinE.net.isFixed && !pinC.net.isFixed) {
-            pinC.net.setVoltage(vE + 0.2);
+            pinC.net.voltage = vE + this.vCE_sat;
             pinC.net.isFixed = true;
           } else if (!pinE.net.isFixed && pinC.net.isFixed) {
-            pinE.net.setVoltage(vC - 0.2);
+            pinE.net.voltage = vC - this.vCE_sat;
             pinE.net.isFixed = true;
           }
         }
+        if (pinE.net.hasGroundPath) pinB.net.hasGroundPath = true;
+        if (pinB.net.hasSourcePath) pinE.net.hasSourcePath = true;
       }
     }
     reset() {
