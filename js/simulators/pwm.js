@@ -387,30 +387,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const vPlot = new Float32Array(ptsCount);
         const iPlot = new Float32Array(ptsCount);
         
-        // Interpolar los datos históricos para mapear cada píxel horizontal de forma continua
+        // Escaneo lineal eficiente sin copiar arrays.
+        // Recorremos el ring buffer en orden cronológico (desde ringBufferPtr hacia adelante).
+        // Como los tiempos objetivo (tTarget) son monótonamente crecientes y el buffer
+        // linealizado también lo es, avanzamos un solo puntero sin retroceder: O(ptsCount + bufferSize).
+        let bufCursor = 0; // posición dentro del recorrido linealizado
+        
         for (let col = 0; col < ptsCount; col++) {
-            let tTarget = startSimTime + (col / ptsCount) * timeWindow;
+            const tTarget = startSimTime + (col / ptsCount) * timeWindow;
             
-            // Buscar los dos índices más cercanos en el buffer para interpolar
-            let bestIdx = -1;
-            let minDist = Infinity;
-            
-            // Buscamos secuencialmente en el historial
-            for (let i = 0; i < ringBufferSize; i++) {
-                let diff = Math.abs(timeHistory[i] - tTarget);
-                if (diff < minDist) {
-                    minDist = diff;
-                    bestIdx = i;
+            // Avanzar el cursor mientras el siguiente punto esté más cerca del objetivo
+            while (bufCursor < ringBufferSize - 1) {
+                const curIdx = (ringBufferPtr + bufCursor) % ringBufferSize;
+                const nextIdx = (ringBufferPtr + bufCursor + 1) % ringBufferSize;
+                
+                if (Math.abs(timeHistory[nextIdx] - tTarget) < Math.abs(timeHistory[curIdx] - tTarget)) {
+                    bufCursor++;
+                } else {
+                    break;
                 }
             }
             
-            if (bestIdx !== -1) {
-                vPlot[col] = vHistory[bestIdx];
-                iPlot[col] = iHistory[bestIdx];
-            } else {
-                vPlot[col] = 0.0;
-                iPlot[col] = 0.0;
-            }
+            const bestIdx = (ringBufferPtr + bufCursor) % ringBufferSize;
+            vPlot[col] = vHistory[bestIdx];
+            iPlot[col] = iHistory[bestIdx];
         }
         
         // CONFIGURACIÓN DE GLOW Y EFECTOS DE FÓSFORO CRT
