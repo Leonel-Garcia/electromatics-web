@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de PWM - Electromatics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <link rel="stylesheet" href="css/premium-enhancements.css?v=1.0">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .sim-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .controls-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+        }
+
+        .visualization-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .chart-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            position: relative;
+            height: 400px;
+        }
+
+        .demo-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .demo-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slider-group {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 15px;
+        }
+
+        .slider-value {
+            color: var(--safety-orange);
+            font-family: monospace;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #2c3e50;
+            border-radius: 5px;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--safety-orange);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .metric-card {
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .metric-val {
+            font-weight: 700;
+            font-family: monospace;
+            font-size: 15px;
+        }
+
+        @media (max-width: 900px) {
+            .sim-container {
+                grid-template-columns: 1fr;
+            }
+            .demo-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <nav class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Electromatics Logo" style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                <span>Electromatics.com.ve</span>
+            </a>
+            <div class="desktop-nav">
+                <div class="nav-dropdown">
+                    <a class="dropdown-trigger" href="index.html">Inicio <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 5px;"></i></a>
+                    <div class="dropdown-content">
+                        <a href="que-es-electromatics.html">Qué es</a>
+                        <a href="para-quien-es.html">Para quién</a>
+                    </div>
+                </div>
+                <a href="calculos-electricos.html">Cálculos</a>
+                <a href="normativa-electrica.html">Normativa</a>
+                <a href="simuladores.html" class="active">Simuladores</a>
+                <a href="electronica.html">Electrónica</a>
+                <a href="formacion.html">Formación</a>
+                <a href="electro-info.html">Tecno-Info</a>
+                <a href="museo.html">Museo</a>
+                <a href="apu.html">Presupuestos</a>
+                <a href="calculadora.html">App IA</a>
+                <a href="#" id="login-btn" class="btn btn-primary" style="padding: 6px 16px; margin-left: 20px; font-size: 14px">Acceder</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <a href="simuladores.html" style="color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; margin-bottom: 20px;">
+            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Volver al Laboratorio
+        </a>
+
+        <div class="section-title">
+            <h1 class="text-gradient-brand">Simulador de Modulación por Ancho de Pulsos (PWM)</h1>
+            <p>Explora cómo variar el ciclo de trabajo de una señal de alta frecuencia controla el voltaje promedio y la potencia entregada a una carga.</p>
+        </div>
+
+        <div class="sim-container">
+            <!-- Controls -->
+            <div class="controls-panel">
+                <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Parámetros de Entrada</h3>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Ciclo de Trabajo (Duty Cycle)</span>
+                        <span><span id="val-duty" class="slider-value">50</span>%</span>
+                    </div>
+                    <input type="range" id="duty" min="0" max="100" step="1" value="50">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Frecuencia del PWM</span>
+                        <span id="val-freq" class="slider-value">500 Hz</span>
+                    </div>
+                    <input type="range" id="freq" min="10" max="5000" step="10" value="500">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Voltaje de Alimentación (Vin)</span>
+                        <span><span id="val-voltage" class="slider-value">12.0</span> V</span>
+                    </div>
+                    <input type="range" id="voltage" min="1" max="24" step="0.5" value="12">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="load-type" style="font-weight: 600; color: #fff; margin-bottom: 8px;">Tipo de Carga Simulada</label>
+                    <select id="load-type" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; padding: 10px;">
+                        <option value="motor" selected>Motor DC (Carga Inductiva - L/R)</option>
+                        <option value="led">Diodo LED (Carga Resistiva - R)</option>
+                    </select>
+                </div>
+
+                <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Variables de Salida</h3>
+                
+                <div class="metric-card">
+                    <span class="metric-title">Voltaje Promedio (Vavg)</span>
+                    <span id="metric-vavg" class="metric-val" style="color: #4caf50">6.00 V</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Voltaje Eficaz (Vrms)</span>
+                    <span id="metric-vrms" class="metric-val" style="color: #ffb74d">8.49 V</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Corriente Instantánea</span>
+                    <span id="metric-iavg" class="metric-val" style="color: var(--electric-blue)">0.00 A</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Rizado de Corriente</span>
+                    <span id="metric-ripple" class="metric-val" style="color: #ff5252">0.00 A</span>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button id="reset-sim" class="btn btn-secondary full-width">
+                        <i class="fa-solid fa-rotate-right"></i> Reiniciar Simulación
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualizer Panel -->
+            <div class="visualization-panel">
+                <!-- Oscilloscope -->
+                <div class="chart-panel">
+                    <h4 style="position: absolute; top: 10px; left: 20px; z-index: 10; margin: 0; color: #fff; font-size: 14px;">
+                        <i class="fa-solid fa-wave-square" style="color: var(--safety-orange); margin-right: 8px;"></i> Osciloscopio Digital (Voltaje y Corriente)
+                    </h4>
+                    <canvas id="oscCanvas" width="800" height="350" style="width: 100%; height: 100%; border-radius: 8px;"></canvas>
+                </div>
+
+                <!-- Interactive App Demos -->
+                <div class="demo-panel">
+                    <!-- LED brightness demo card -->
+                    <div id="led-card-container" class="demo-card" style="display: none;">
+                        <h4 style="margin-bottom: 15px; font-size: 16px;">
+                            <i class="fa-regular fa-lightbulb" style="color: var(--safety-orange); margin-right: 8px;"></i>
+                            Carga Resistiva: Diodo LED
+                        </h4>
+                        <canvas id="ledCanvas" width="200" height="150" style="max-height: 150px;"></canvas>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px; line-height: 1.4;">
+                            A bajas frecuencias, el ojo humano percibe el parpadeo físico. A altas frecuencias (> 60 Hz), la persistencia de visión integra el brillo haciéndolo parecer continuo y proporcional al Duty Cycle.
+                        </p>
+                    </div>
+
+                    <!-- Motor speed control demo card -->
+                    <div id="motor-card-container" class="demo-card" style="grid-column: span 2;">
+                        <h4 style="margin-bottom: 15px; font-size: 16px;">
+                            <i class="fa-solid fa-fan" style="color: var(--electric-blue); margin-right: 8px;"></i>
+                            Carga Inductiva: Motor DC con Diodo de Libre Circulación
+                        </h4>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 30px; width: 100%;">
+                            <canvas id="motorCanvas" width="200" height="160" style="max-height: 160px;"></canvas>
+                            <div style="text-align: left; max-width: 320px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <h5 style="color: var(--electric-blue); margin-bottom: 8px; font-size: 14px;">Comportamiento L/R</h5>
+                                <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                                    Debido a la inductancia de los devanados, la corriente no puede cambiar instantáneamente. Durante el estado ON, la corriente sube exponencialmente cargando el campo magnético. Durante el estado OFF, el campo magnético se descarga a través del diodo de libre circulación (freewheeling). Esto crea un <strong>rizado de corriente</strong> triangular.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theory Section -->
+        <section style="margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 40px;">
+            <h2 style="margin-bottom: 30px; font-size: 28px;">Fundamentos de la Modulación por <span style="color: var(--safety-orange);">Ancho de Pulsos (PWM)</span></h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <!-- Conceptos -->
+                <div>
+                    <h3 style="color: var(--electric-blue); margin-bottom: 15px;">¿Qué es la Modulación PWM?</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        La **Modulación por Ancho de Pulsos (PWM)** es una técnica utilizada para transmitir señales analógicas o controlar la potencia entregada a dispositivos eléctricos utilizando una señal completamente digital (ON/OFF). Al variar la relación entre el tiempo encendido ($T_{on}$) y el período total de la señal ($T$), podemos ajustar el voltaje promedio de forma lineal sin las pérdidas de energía por calor que ocurren con reguladores lineales.
+                    </p>
+
+                    <div style="background: var(--card-bg); padding: 20px; border-radius: 8px; border-left: 4px solid var(--safety-orange); margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 10px; color: var(--text-primary);">Ecuaciones del Modelo Matemático</h4>
+                        <div style="font-family: 'Courier New', monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; color: #fff; font-size: 14px; line-height: 1.6;">
+                            <div id="formula-d" style="margin-bottom: 8px; color: var(--electric-blue);">D = 50%</div>
+                            <div id="formula-vavg" style="margin-bottom: 8px;">V<sub>prom</sub> = D &times; V<sub>in</sub> = 6.00 V</div>
+                            <div id="formula-vrms" style="margin-bottom: 8px;">V<sub>rms</sub> = &radic;D &times; V<sub>in</sub> = 8.49 V</div>
+                            <div id="formula-pavg">P<sub>prom</sub> = D &times; V<sub>in</sub><sup>2</sup> / R</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explicación de Aplicaciones -->
+                <div>
+                    <h3 style="color: var(--electric-blue); margin-bottom: 15px;">Aplicaciones Prácticas y Ventajas</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #00E676; margin-bottom: 5px;"><i class="fa-solid fa-gauge-high" style="margin-right: 8px;"></i>Alta Eficiencia de Conversión</h4>
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            En un transistor operando en régimen lineal se disipa mucha potencia como calor ($P = V_{CE} \times I$). En cambio, al usar PWM, el transistor idealmente actúa como un interruptor cerrado (voltaje casi cero) o abierto (corriente cero). En ambos estados la potencia disipada por el transistor es mínima, alcanzando eficiencias superiores al 90%.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #2196F3; margin-bottom: 5px;"><i class="fa-solid fa-fan" style="margin-right: 8px;"></i>Control de Velocidad en Motores DC</h4>
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            Al alimentar un motor con PWM, el voltaje promedio controla directamente la velocidad rotacional sin disminuir el torque de arranque en bajas revoluciones, a diferencia de lo que ocurriría si simplemente bajáramos el voltaje continuo de forma resistiva.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #FFC107; margin-bottom: 5px;"><i class="fa-solid fa-bolt" style="margin-right: 8px;"></i>Convertidores Buck y Boost</h4>
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            El PWM es el corazón de las fuentes conmutadas. Combinado con un filtro pasabajos de segundo orden (Inductor y Capacitor), el PWM se transforma de vuelta en un voltaje continuo suave y regulado con alta precisión.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+          <div class="footer-content">
+            <div class="footer-info">
+              <h3>Electromatics.com.ve</h3>
+              <p>Innovación en Ingeniería Eléctrica y Automatización.</p>
+              <div style="margin-top: 20px">
+                <a href="https://youtube.com/@leonelgarcia4464" target="_blank" style="margin-right: 15px; font-size: 20px; color: #FF0000;"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://wa.me/5841658371322" target="_blank" style="margin-right: 15px; font-size: 20px; color: #25D366;"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="https://tiktok.com/@electrum69" target="_blank" style="margin-right: 15px; font-size: 20px; color: #000000;"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://www.linkedin.com/in/leonel-garcía-0a1293b6" target="_blank" style="font-size: 20px; color: #0077b5;"><i class="fa-brands fa-linkedin"></i></a>
+              </div>
+            </div>
+            <div class="footer-links">
+                <h4>Plataforma</h4>
+                <a href="calculadora.html">Calculadora IA</a>
+                <a href="normativa-electrica.html">Normativa 200-2009</a>
+                <a href="uso-responsable-ia.html">Uso Responsable IA</a>
+                <a href="formacion.html">Formación Técnica</a>
+                <a href="proyectos.html">Proyectos</a>
+            </div>
+            <div class="footer-links">
+                <h4>Empresa</h4>
+                <a href="que-es-electromatics.html">Qué es Electromatics</a>
+                <a href="para-quien-es.html">Para quién es</a>
+                <a href="calculos-electricos.html">Servicios de Cálculo</a>
+                <a href="contacto.html">Contacto</a>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p style="margin-bottom: 10px; color: var(--text-secondary); opacity: 0.8; font-size: 14px;">
+                Electromatics es una plataforma de apoyo al cálculo eléctrico. La responsabilidad técnica del uso de la información corresponde al usuario.
+            </p>
+            <p>&copy; 2025 Electromatics.com.ve. Todos los derechos reservados.</p>
+          </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/simple-auth.js"></script>
+    <script src="js/simulator-auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             SimulatorAuth.init();
+        });
+    </script>
+    <script src="js/simulators/pwm.js?v=1.0"></script>
+    <script src="js/premium-interactions.js?v=1.0"></script>
+</body>
+</html>
