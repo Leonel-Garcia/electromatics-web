@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(loop);
     }
     
-    // Reconstrucción del trazo mediante trigger sincronizado
+    // Visualización estática de ciclos completos con cálculo matemático
     function drawOscilloscope() {
         const w = oscCanvas.width;
         const h = oscCanvas.height;
@@ -282,10 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Dimensiones útiles del osciloscopio
         const gridCols = 10;
         const gridRows = 8;
-        const startX = 50; // Margen para la escala vertical
+        const startX = 50;
         const startY = 10;
         const endX = w - 20;
-        const endY = h - 30; // Margen inferior para la escala horizontal
+        const endY = h - 30;
         
         const plotWidth = endX - startX;
         const plotHeight = endY - startY;
@@ -294,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
         oscCtx.strokeStyle = '#0e2417';
         oscCtx.lineWidth = 1;
         
-        // Líneas verticales
         for (let c = 0; c <= gridCols; c++) {
             let x = startX + (c / gridCols) * plotWidth;
             oscCtx.beginPath();
@@ -303,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
             oscCtx.stroke();
         }
         
-        // Líneas horizontales
         for (let r = 0; r <= gridRows; r++) {
             let y = startY + (r / gridRows) * plotHeight;
             oscCtx.beginPath();
@@ -312,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             oscCtx.stroke();
         }
         
-        // Ejes centrales con marcas más gruesas (Ticks)
+        // Ejes centrales con marcas más gruesas
         oscCtx.strokeStyle = '#1e462f';
         oscCtx.lineWidth = 1.5;
         const midX = startX + 0.5 * plotWidth;
@@ -325,12 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
         oscCtx.lineTo(endX, midY);
         oscCtx.stroke();
         
-        // Dibujar ticks menores a lo largo de los ejes centrales
+        // Ticks menores
         oscCtx.strokeStyle = '#1e462f';
         oscCtx.lineWidth = 1;
         const tickSize = 4;
         
-        // Ticks en eje central horizontal
         for (let c = 0; c <= gridCols * 5; c++) {
             let x = startX + (c / (gridCols * 5)) * plotWidth;
             oscCtx.beginPath();
@@ -339,7 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
             oscCtx.stroke();
         }
         
-        // Ticks en eje central vertical
         for (let r = 0; r <= gridRows * 5; r++) {
             let y = startY + (r / (gridRows * 5)) * plotHeight;
             oscCtx.beginPath();
@@ -348,148 +344,206 @@ document.addEventListener('DOMContentLoaded', () => {
             oscCtx.stroke();
         }
         
-        // ANÁLISIS DEL TRIGGER (Disparo)
-        // Ventana total de tiempo visible = 10 divisiones * timebase
-        const timeWindow = (gridCols * timebaseMs) / 1000.0; // en segundos
+        // ═══════════════════════════════════════════════════════
+        // CÁLCULO MATEMÁTICO ESTÁTICO DE FORMAS DE ONDA
+        // ═══════════════════════════════════════════════════════
+        const period = 1.0 / frequency;
+        const numCycles = 2; // Siempre 2 ciclos completos
+        const totalDisplayTime = numCycles * period;
         
-        // Buscar un evento de Trigger (flanco de subida en canal de voltaje)
-        // El trigger se ubica en el centro de la pantalla (tiempo = 0 en el centro) o a la izquierda.
-        // Vamos a ubicar el trigger en el primer tercio de la pantalla (x = startX + 10% del ancho) para ver mejor la fase de subida.
-        let triggerIndex = -1;
-        const halfWindow = timeWindow * 0.1; // ventana de pre-trigger
+        // Usar timebase para auto-ajustar la escala de tiempo por división
+        const autoTimebaseMs = (totalDisplayTime / gridCols) * 1000;
         
-        // Buscamos un flanco ascendente de voltaje en el buffer
-        // Empezamos buscando hacia atrás desde el dato más nuevo
-        const searchRange = Math.min(ringBufferSize - 2, 6000);
-        for (let i = 50; i < searchRange; i++) {
-            let idx = (ringBufferPtr - 1 - i + ringBufferSize) % ringBufferSize;
-            let idxPrev = (idx - 1 + ringBufferSize) % ringBufferSize;
+        // Mini-simulación para alcanzar estado estable en cargas inductivas
+        // Simulamos 8 períodos de calentamiento + 2 períodos para visualizar
+        const warmupPeriods = 8;
+        const totalSimTime = (warmupPeriods + numCycles) * period;
+        const simSteps = 4000;
+        const simDt = totalSimTime / simSteps;
+        
+        // Determinar cuántos pasos corresponden a los últimos 2 períodos
+        const displayStartTime = warmupPeriods * period;
+        const displayStepsCount = Math.round((numCycles * period / totalSimTime) * simSteps);
+        const displayStartStep = simSteps - displayStepsCount;
+        
+        const vData = new Float32Array(displayStepsCount);
+        const iData = new Float32Array(displayStepsCount);
+        
+        let simI = 0.0;
+        let simSpeed = 0.0;
+        let simEb = 0.0;
+        let displayIdx = 0;
+        
+        for (let step = 0; step < simSteps; step++) {
+            const t = step * simDt;
+            const tInPeriod = t % period;
+            const isOn = tInPeriod < (duty * period);
+            const v = isOn ? voltage : 0.0;
             
-            // Flanco ascendente: pasa de menos del 10% del voltaje al canal Vin
-            if (vHistory[idx] > (voltage * 0.8) && vHistory[idxPrev] < (voltage * 0.2)) {
-                triggerIndex = idx;
-                break; // Encontrado el más reciente
-            }
-        }
-        
-        // Si no se encuentra flanco (por ejemplo, Duty = 0% o 100%), tomamos una referencia fija de tiempo
-        let startSimTime = 0.0;
-        if (triggerIndex !== -1) {
-            startSimTime = timeHistory[triggerIndex] - halfWindow;
-        } else {
-            // Fallback: mostrar los datos más recientes
-            let latestIdx = (ringBufferPtr - 1 + ringBufferSize) % ringBufferSize;
-            startSimTime = timeHistory[latestIdx] - timeWindow;
-        }
-        
-        // OBTENER PUNTOS A TRAZAR
-        const ptsCount = plotWidth;
-        const vPlot = new Float32Array(ptsCount);
-        const iPlot = new Float32Array(ptsCount);
-        
-        // Escaneo lineal eficiente sin copiar arrays.
-        // Recorremos el ring buffer en orden cronológico (desde ringBufferPtr hacia adelante).
-        // Como los tiempos objetivo (tTarget) son monótonamente crecientes y el buffer
-        // linealizado también lo es, avanzamos un solo puntero sin retroceder: O(ptsCount + bufferSize).
-        let bufCursor = 0; // posición dentro del recorrido linealizado
-        
-        for (let col = 0; col < ptsCount; col++) {
-            const tTarget = startSimTime + (col / ptsCount) * timeWindow;
-            
-            // Avanzar el cursor mientras el siguiente punto esté más cerca del objetivo
-            while (bufCursor < ringBufferSize - 1) {
-                const curIdx = (ringBufferPtr + bufCursor) % ringBufferSize;
-                const nextIdx = (ringBufferPtr + bufCursor + 1) % ringBufferSize;
+            if (loadType === 'led') {
+                simI = v / R_led;
+            } else {
+                simEb = Ke * simSpeed;
+                const didt = (v - R_motor * simI - simEb) / L_motor;
+                simI += didt * simDt;
+                if (simI < 0) simI = 0;
                 
-                if (Math.abs(timeHistory[nextIdx] - tTarget) < Math.abs(timeHistory[curIdx] - tTarget)) {
-                    bufCursor++;
-                } else {
-                    break;
-                }
+                const torqueM = Kt * simI;
+                const net = torqueM - B_friction * simSpeed - (simSpeed > 0.1 ? LoadTorque : 0);
+                simSpeed += (net / J_inertia) * simDt;
+                if (simSpeed < 0) simSpeed = 0;
             }
             
-            const bestIdx = (ringBufferPtr + bufCursor) % ringBufferSize;
-            vPlot[col] = vHistory[bestIdx];
-            iPlot[col] = iHistory[bestIdx];
+            if (step >= displayStartStep) {
+                vData[displayIdx] = v;
+                iData[displayIdx] = simI;
+                displayIdx++;
+            }
         }
         
-        // CONFIGURACIÓN DE GLOW Y EFECTOS DE FÓSFORO CRT
+        // Funciones de conversión a coordenadas de pantalla
+        const pixelsPerVolt = (plotHeight / gridRows) / ch1Scale;
+        const pixelsPerAmp = (plotHeight / gridRows) / ch2Scale;
+        
+        // Función para mapear un índice de datos a una coordenada X
+        function dataToX(idx) {
+            return startX + (idx / displayStepsCount) * plotWidth;
+        }
+        
+        // ═══════════════════════════════════════════════════════
+        // DIBUJAR ÁREA DE VOLTAJE PROMEDIO (sombreado)
+        // ═══════════════════════════════════════════════════════
+        const vavg = duty * voltage;
+        const yAvg = midY - ch1OffsetY - (vavg * pixelsPerVolt);
+        const yZero = midY - ch1OffsetY; // línea de 0V
+        
+        // Sombrear el área entre 0V y Vavg para mostrar visualmente la energía promedio
+        const clampedYAvg = Math.max(startY, Math.min(endY, yAvg));
+        const clampedYZero = Math.max(startY, Math.min(endY, yZero));
+        
+        oscCtx.fillStyle = 'rgba(76, 175, 80, 0.08)';
+        oscCtx.fillRect(startX, Math.min(clampedYAvg, clampedYZero), plotWidth, Math.abs(clampedYAvg - clampedYZero));
+        
+        // ═══════════════════════════════════════════════════════
+        // TRAZADO CANAL 1: VOLTAJE PWM (Fósforo Naranja)
+        // ═══════════════════════════════════════════════════════
         oscCtx.save();
         oscCtx.shadowBlur = 6;
-        
-        // Trazado Canal 1: Voltaje (Fósforo Naranja)
         oscCtx.shadowColor = '#ff6d00';
         oscCtx.strokeStyle = '#ff6d00';
         oscCtx.lineWidth = 2.5;
         oscCtx.beginPath();
-        for (let col = 0; col < ptsCount; col++) {
-            let valV = vPlot[col];
-            // Conversión: midY es el cero del canal, desplazado por ch1OffsetY.
-            // 1 división vertical = (plotHeight / gridRows) píxeles.
-            let pixelsPerVolt = (plotHeight / gridRows) / ch1Scale;
-            let x = startX + col;
-            let y = midY - ch1OffsetY - (valV * pixelsPerVolt);
-            
-            // Limitar dentro del marco del osciloscopio
+        
+        for (let i = 0; i < displayStepsCount; i++) {
+            let x = dataToX(i);
+            let y = midY - ch1OffsetY - (vData[i] * pixelsPerVolt);
             y = Math.max(startY, Math.min(endY, y));
             
-            if (col === 0) oscCtx.moveTo(x, y);
+            if (i === 0) oscCtx.moveTo(x, y);
             else oscCtx.lineTo(x, y);
         }
         oscCtx.stroke();
         
-        // Trazado Canal 2: Corriente (Fósforo Celeste/Cian)
+        // ═══════════════════════════════════════════════════════
+        // TRAZADO CANAL 2: CORRIENTE (Fósforo Cian)
+        // ═══════════════════════════════════════════════════════
         oscCtx.shadowColor = '#00e5ff';
         oscCtx.strokeStyle = '#00e5ff';
         oscCtx.lineWidth = 2.5;
         oscCtx.beginPath();
-        for (let col = 0; col < ptsCount; col++) {
-            let valI = iPlot[col];
-            let pixelsPerAmp = (plotHeight / gridRows) / ch2Scale;
-            let x = startX + col;
-            let y = midY - ch2OffsetY - (valI * pixelsPerAmp);
-            
+        
+        for (let i = 0; i < displayStepsCount; i++) {
+            let x = dataToX(i);
+            let y = midY - ch2OffsetY - (iData[i] * pixelsPerAmp);
             y = Math.max(startY, Math.min(endY, y));
             
-            if (col === 0) oscCtx.moveTo(x, y);
+            if (i === 0) oscCtx.moveTo(x, y);
             else oscCtx.lineTo(x, y);
         }
         oscCtx.stroke();
+        oscCtx.restore();
         
-        oscCtx.restore(); // Desactivar shadowBlur para el texto y rejilla
+        // ═══════════════════════════════════════════════════════
+        // LÍNEA DE VOLTAJE PROMEDIO (Vavg) — prominente
+        // ═══════════════════════════════════════════════════════
+        if (clampedYAvg >= startY && clampedYAvg <= endY) {
+            // Línea punteada gruesa verde
+            oscCtx.save();
+            oscCtx.strokeStyle = '#4caf50';
+            oscCtx.lineWidth = 2;
+            oscCtx.setLineDash([8, 5]);
+            oscCtx.shadowBlur = 4;
+            oscCtx.shadowColor = '#4caf50';
+            oscCtx.beginPath();
+            oscCtx.moveTo(startX, clampedYAvg);
+            oscCtx.lineTo(endX, clampedYAvg);
+            oscCtx.stroke();
+            oscCtx.restore();
+            
+            // Etiqueta Vavg con fondo
+            const labelText = `Vprom = ${vavg.toFixed(2)} V`;
+            oscCtx.font = 'bold 12px monospace';
+            const labelWidth = oscCtx.measureText(labelText).width;
+            
+            // Fondo de la etiqueta
+            const labelX = endX - labelWidth - 18;
+            const labelY = clampedYAvg - 10;
+            oscCtx.fillStyle = 'rgba(6, 10, 13, 0.85)';
+            oscCtx.fillRect(labelX - 5, labelY - 12, labelWidth + 10, 18);
+            oscCtx.strokeStyle = '#4caf50';
+            oscCtx.lineWidth = 1;
+            oscCtx.setLineDash([]);
+            oscCtx.strokeRect(labelX - 5, labelY - 12, labelWidth + 10, 18);
+            
+            // Texto
+            oscCtx.fillStyle = '#4caf50';
+            oscCtx.fillText(labelText, labelX, labelY);
+        }
         
-        // Línea del promedio de voltaje canal 1
-        const vavg = duty * voltage;
-        let pPerVolt = (plotHeight / gridRows) / ch1Scale;
-        let yAvg = midY - ch1OffsetY - (vavg * pPerVolt);
-        yAvg = Math.max(startY, Math.min(endY, yAvg));
+        // ═══════════════════════════════════════════════════════
+        // MARCADORES DE TIEMPO EN EL EJE HORIZONTAL
+        // ═══════════════════════════════════════════════════════
+        oscCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        oscCtx.font = '10px monospace';
+        oscCtx.textAlign = 'center';
         
-        oscCtx.strokeStyle = 'rgba(76, 175, 80, 0.6)';
-        oscCtx.lineWidth = 1;
-        oscCtx.setLineDash([4, 4]);
-        oscCtx.beginPath();
-        oscCtx.moveTo(startX, yAvg);
-        oscCtx.lineTo(endX, yAvg);
-        oscCtx.stroke();
-        oscCtx.setLineDash([]);
+        for (let c = 0; c <= gridCols; c++) {
+            let x = startX + (c / gridCols) * plotWidth;
+            let tMs = (c / gridCols) * totalDisplayTime * 1000;
+            oscCtx.fillText(tMs.toFixed(1) + 'ms', x, endY + 15);
+        }
         
-        // LEYENDAS Y ESTADÍSTICAS EN PANTALLA (Estilo interfaz Tektronix/DSO)
+        // Marcadores verticales de escala (V)
+        oscCtx.textAlign = 'right';
+        for (let r = 0; r <= gridRows; r++) {
+            let y = startY + (r / gridRows) * plotHeight;
+            let vVal = (gridRows / 2 - r) * ch1Scale + (ch1OffsetY / (plotHeight / gridRows)) * ch1Scale;
+            oscCtx.fillStyle = 'rgba(255, 109, 0, 0.5)';
+            oscCtx.fillText(vVal.toFixed(1) + 'V', startX - 5, y + 4);
+        }
+        oscCtx.textAlign = 'left';
+        
+        // ═══════════════════════════════════════════════════════
+        // BARRA DE ESTADO INFERIOR (Estilo Tektronix/DSO)
+        // ═══════════════════════════════════════════════════════
         oscCtx.fillStyle = 'rgba(255, 255, 255, 0.75)';
         oscCtx.font = '11px monospace';
         
-        // Panel superior
+        oscCtx.fillStyle = '#ff6d00';
         oscCtx.fillText(`CH1: ${ch1Scale}V/div`, startX + 15, h - 12);
         oscCtx.fillStyle = '#00e5ff';
-        oscCtx.fillText(`CH2: ${ch2Scale}A/div`, startX + 150, h - 12);
-        oscCtx.fillStyle = '#ff6d00';
-        oscCtx.fillText(`M: ${timebaseMs.toFixed(1)}ms`, startX + 280, h - 12);
+        oscCtx.fillText(`CH2: ${ch2Scale.toFixed(1)}A/div`, startX + 140, h - 12);
+        oscCtx.fillStyle = '#ffffff';
+        oscCtx.fillText(`T: ${(period * 1000).toFixed(2)}ms`, startX + 270, h - 12);
+        oscCtx.fillStyle = '#ffb74d';
+        oscCtx.fillText(`f: ${frequency >= 1000 ? (frequency/1000).toFixed(1)+'kHz' : frequency+'Hz'}`, startX + 390, h - 12);
         
         oscCtx.fillStyle = '#4caf50';
         oscCtx.fillText(`Vavg: ${vavg.toFixed(2)}V`, endX - 180, h - 12);
         
-        // Estado de Disparo (Trigger)
-        oscCtx.fillStyle = triggerIndex !== -1 ? '#00e676' : '#ff5252';
-        oscCtx.fillText(triggerIndex !== -1 ? 'TRIG\'D' : 'AUTO', endX - 70, h - 12);
+        // Indicador de modo estático
+        oscCtx.fillStyle = '#00e676';
+        oscCtx.fillText(`2 CICLOS`, endX - 70, h - 12);
     }
     
     // Dibujo del LED
