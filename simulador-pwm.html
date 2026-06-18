@@ -222,6 +222,48 @@
                     </select>
                 </div>
 
+                <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Ajustes del Osciloscopio</h3>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Base de Tiempo</span>
+                        <span id="val-timebase" class="slider-value">1.0 ms/div</span>
+                    </div>
+                    <input type="range" id="timebase" min="0.1" max="10.0" step="0.1" value="1.0">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Sensibilidad Ch1 (V/div)</span>
+                        <span id="val-ch1-scale" class="slider-value">5 V</span>
+                    </div>
+                    <input type="range" id="ch1-scale" min="1" max="10" step="1" value="5">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Sensibilidad Ch2 (A/div)</span>
+                        <span id="val-ch2-scale" class="slider-value">1.0 A</span>
+                    </div>
+                    <input type="range" id="ch2-scale" min="0.1" max="2.0" step="0.1" value="1.0">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Posición Vertical Ch1</span>
+                        <span id="val-ch1-pos" class="slider-value">0 px</span>
+                    </div>
+                    <input type="range" id="ch1-pos" min="-100" max="100" step="5" value="0">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Posición Vertical Ch2</span>
+                        <span id="val-ch2-pos" class="slider-value">0 px</span>
+                    </div>
+                    <input type="range" id="ch2-pos" min="-100" max="100" step="5" value="0">
+                </div>
+
                 <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Variables de Salida</h3>
                 
                 <div class="metric-card">
