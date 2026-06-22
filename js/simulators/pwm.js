@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startX = 50;
         const startY = 10;
         const endX = w - 20;
-        const endY = h - 30;
+        const endY = h - 45;
         
         const plotWidth = endX - startX;
         const plotHeight = endY - startY;
@@ -526,24 +526,34 @@ document.addEventListener('DOMContentLoaded', () => {
         // ═══════════════════════════════════════════════════════
         // BARRA DE ESTADO INFERIOR (Estilo Tektronix/DSO)
         // ═══════════════════════════════════════════════════════
-        oscCtx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        // Dibujar fondo oscuro y borde superior de la barra de estado
+        oscCtx.fillStyle = 'rgba(8, 14, 20, 0.9)';
+        oscCtx.fillRect(0, h - 25, w, 25);
+        oscCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        oscCtx.lineWidth = 1;
+        oscCtx.beginPath();
+        oscCtx.moveTo(0, h - 25);
+        oscCtx.lineTo(w, h - 25);
+        oscCtx.stroke();
+
+        oscCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         oscCtx.font = '11px monospace';
         
         oscCtx.fillStyle = '#ff6d00';
-        oscCtx.fillText(`CH1: ${ch1Scale}V/div`, startX + 15, h - 12);
+        oscCtx.fillText(`CH1: ${ch1Scale}V/div`, startX + 15, h - 9);
         oscCtx.fillStyle = '#00e5ff';
-        oscCtx.fillText(`CH2: ${ch2Scale.toFixed(1)}A/div`, startX + 140, h - 12);
+        oscCtx.fillText(`CH2: ${ch2Scale.toFixed(1)}A/div`, startX + 140, h - 9);
         oscCtx.fillStyle = '#ffffff';
-        oscCtx.fillText(`T: ${(period * 1000).toFixed(2)}ms`, startX + 270, h - 12);
+        oscCtx.fillText(`T: ${(period * 1000).toFixed(2)}ms`, startX + 270, h - 9);
         oscCtx.fillStyle = '#ffb74d';
-        oscCtx.fillText(`f: ${frequency >= 1000 ? (frequency/1000).toFixed(1)+'kHz' : frequency+'Hz'}`, startX + 390, h - 12);
+        oscCtx.fillText(`f: ${frequency >= 1000 ? (frequency/1000).toFixed(1)+'kHz' : frequency+'Hz'}`, startX + 390, h - 9);
         
         oscCtx.fillStyle = '#4caf50';
-        oscCtx.fillText(`Vavg: ${vavg.toFixed(2)}V`, endX - 180, h - 12);
+        oscCtx.fillText(`Vavg: ${vavg.toFixed(2)}V`, endX - 180, h - 9);
         
         // Indicador de modo estático
         oscCtx.fillStyle = '#00e676';
-        oscCtx.fillText(`2 CICLOS`, endX - 70, h - 12);
+        oscCtx.fillText(`2 CICLOS`, endX - 70, h - 9);
     }
     
     // Dibujo del LED
