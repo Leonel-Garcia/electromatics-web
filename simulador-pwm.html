@@ -13,7 +13,7 @@
     <style>
         .sim-container {
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 300px 1fr;
             gap: 30px;
             margin-top: 30px;
         }
@@ -33,14 +33,116 @@
             gap: 25px;
         }
 
+        /* --- Oscilloscope panel --- */
         .chart-panel {
             background: var(--card-bg);
-            padding: 25px;
+            padding: 20px 20px 15px 20px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
             box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .osc-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .osc-header h4 {
+            margin: 0;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .osc-canvas-wrapper {
             position: relative;
-            height: 400px;
+            width: 100%;
+            height: 280px;
+        }
+
+        .osc-canvas-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            display: block;
+        }
+
+        /* --- Oscilloscope inline controls bar --- */
+        .osc-controls-bar {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            align-items: end;
+        }
+
+        .osc-ctrl-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .osc-ctrl-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .osc-ctrl-label .osc-ctrl-val {
+            color: var(--safety-orange);
+            font-family: monospace;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .osc-ctrl-group input[type="range"] {
+            width: 100%;
+            height: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .osc-ctrl-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--safety-orange);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .osc-ctrl-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+            box-shadow: 0 0 6px rgba(255,110,0,0.6);
+        }
+
+        /* Ch1 = orange, Ch2 = blue */
+        .osc-ctrl-group.ch1 input[type="range"]::-webkit-slider-thumb { background: var(--safety-orange); }
+        .osc-ctrl-group.ch2 input[type="range"]::-webkit-slider-thumb { background: var(--electric-blue, #29b6f6); }
+        .osc-ctrl-group.ch1 .osc-ctrl-val { color: var(--safety-orange); }
+        .osc-ctrl-group.ch2 .osc-ctrl-val { color: var(--electric-blue, #29b6f6); }
+
+        .osc-ctrl-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.08);
+            align-self: stretch;
+            margin: 0 2px;
         }
 
         .demo-panel {
@@ -70,17 +172,18 @@
             overflow: hidden;
         }
 
+        /* --- Sidebar sliders --- */
         .slider-group {
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
 
         .slider-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #ffffff;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .slider-value {
@@ -113,26 +216,45 @@
             transform: scale(1.2);
         }
 
+        /* --- Metrics cards (bigger, more prominent) --- */
         .metric-card {
-            background: rgba(255,255,255,0.03);
-            padding: 12px;
-            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            padding: 16px 14px;
+            border-radius: 10px;
             margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            transition: background 0.2s;
+        }
+
+        .metric-card:hover {
+            background: rgba(255,255,255,0.07);
         }
 
         .metric-title {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
         .metric-val {
-            font-weight: 700;
+            font-weight: 800;
             font-family: monospace;
-            font-size: 15px;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .metric-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        @media (max-width: 1100px) {
+            .osc-controls-bar {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         @media (max-width: 900px) {
@@ -141,6 +263,9 @@
             }
             .demo-panel {
                 grid-template-columns: 1fr;
+            }
+            .osc-controls-bar {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -222,65 +347,27 @@
                     </select>
                 </div>
 
-                <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Ajustes del Osciloscopio</h3>
-                
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <span>Base de Tiempo</span>
-                        <span id="val-timebase" class="slider-value">1.0 ms/div</span>
-                    </div>
-                    <input type="range" id="timebase" min="0.1" max="10.0" step="0.1" value="1.0">
-                </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <span>Sensibilidad Ch1 (V/div)</span>
-                        <span id="val-ch1-scale" class="slider-value">5 V</span>
-                    </div>
-                    <input type="range" id="ch1-scale" min="1" max="10" step="1" value="5">
-                </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <span>Sensibilidad Ch2 (A/div)</span>
-                        <span id="val-ch2-scale" class="slider-value">1.0 A</span>
-                    </div>
-                    <input type="range" id="ch2-scale" min="0.1" max="2.0" step="0.1" value="1.0">
-                </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <span>Posición Vertical Ch1</span>
-                        <span id="val-ch1-pos" class="slider-value">0 px</span>
-                    </div>
-                    <input type="range" id="ch1-pos" min="-100" max="100" step="5" value="0">
-                </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <span>Posición Vertical Ch2</span>
-                        <span id="val-ch2-pos" class="slider-value">0 px</span>
-                    </div>
-                    <input type="range" id="ch2-pos" min="-100" max="100" step="5" value="0">
-                </div>
-
                 <h3 style="margin: 30px 0 15px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Variables de Salida</h3>
                 
                 <div class="metric-card">
-                    <span class="metric-title">Voltaje Promedio (Vavg)</span>
-                    <span id="metric-vavg" class="metric-val" style="color: #4caf50">6.00 V</span>
+                    <div class="metric-title">Voltaje Promedio (Vavg)</div>
+                    <div id="metric-vavg" class="metric-val" style="color: #4caf50">6.00 V</div>
+                    <div class="metric-sub">D &times; V<sub>in</sub></div>
                 </div>
                 <div class="metric-card">
-                    <span class="metric-title">Voltaje Eficaz (Vrms)</span>
-                    <span id="metric-vrms" class="metric-val" style="color: #ffb74d">8.49 V</span>
+                    <div class="metric-title">Voltaje Eficaz (Vrms)</div>
+                    <div id="metric-vrms" class="metric-val" style="color: #ffb74d">8.49 V</div>
+                    <div class="metric-sub">&radic;D &times; V<sub>in</sub></div>
                 </div>
                 <div class="metric-card">
-                    <span class="metric-title">Corriente Instantánea</span>
-                    <span id="metric-iavg" class="metric-val" style="color: var(--electric-blue)">0.00 A</span>
+                    <div class="metric-title">Corriente Instantánea</div>
+                    <div id="metric-iavg" class="metric-val" style="color: var(--electric-blue)">0.00 A</div>
+                    <div class="metric-sub">Promedio en carga</div>
                 </div>
                 <div class="metric-card">
-                    <span class="metric-title">Rizado de Corriente</span>
-                    <span id="metric-ripple" class="metric-val" style="color: #ff5252">0.00 A</span>
+                    <div class="metric-title">Rizado de Corriente (&Delta;I)</div>
+                    <div id="metric-ripple" class="metric-val" style="color: #ff5252">0.00 A</div>
+                    <div class="metric-sub">Pico a pico</div>
                 </div>
 
                 <div style="margin-top: 30px;">
@@ -294,10 +381,64 @@
             <div class="visualization-panel">
                 <!-- Oscilloscope -->
                 <div class="chart-panel">
-                    <h4 style="position: absolute; top: 10px; left: 20px; z-index: 10; margin: 0; color: #fff; font-size: 14px;">
-                        <i class="fa-solid fa-wave-square" style="color: var(--safety-orange); margin-right: 8px;"></i> Osciloscopio Digital (Voltaje y Corriente)
-                    </h4>
-                    <canvas id="oscCanvas" width="800" height="350" style="width: 100%; height: 100%; border-radius: 8px;"></canvas>
+                    <!-- Header -->
+                    <div class="osc-header">
+                        <i class="fa-solid fa-wave-square" style="color: var(--safety-orange);"></i>
+                        <h4>Osciloscopio Digital (Voltaje y Corriente)</h4>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div class="osc-canvas-wrapper">
+                        <canvas id="oscCanvas" width="800" height="280"></canvas>
+                    </div>
+
+                    <!-- Inline oscilloscope controls -->
+                    <div class="osc-controls-bar">
+                        <!-- Base de Tiempo -->
+                        <div class="osc-ctrl-group">
+                            <div class="osc-ctrl-label">
+                                <span><i class="fa-solid fa-ruler-horizontal" style="margin-right:4px;"></i>Base de Tiempo</span>
+                                <span id="val-timebase" class="osc-ctrl-val">1.0 ms/div</span>
+                            </div>
+                            <input type="range" id="timebase" min="0.1" max="10.0" step="0.1" value="1.0">
+                        </div>
+
+                        <!-- Ch1 Sensibilidad -->
+                        <div class="osc-ctrl-group ch1">
+                            <div class="osc-ctrl-label">
+                                <span style="color: var(--safety-orange);">&#9632; Ch1 V/div</span>
+                                <span id="val-ch1-scale" class="osc-ctrl-val">5 V</span>
+                            </div>
+                            <input type="range" id="ch1-scale" min="1" max="10" step="1" value="5">
+                        </div>
+
+                        <!-- Ch2 Sensibilidad -->
+                        <div class="osc-ctrl-group ch2">
+                            <div class="osc-ctrl-label">
+                                <span style="color: var(--electric-blue, #29b6f6);">&#9632; Ch2 A/div</span>
+                                <span id="val-ch2-scale" class="osc-ctrl-val">1.0 A</span>
+                            </div>
+                            <input type="range" id="ch2-scale" min="0.1" max="2.0" step="0.1" value="1.0">
+                        </div>
+
+                        <!-- Ch1 Posición vertical -->
+                        <div class="osc-ctrl-group ch1">
+                            <div class="osc-ctrl-label">
+                                <span style="color: var(--safety-orange);">&#9650; Pos. Ch1</span>
+                                <span id="val-ch1-pos" class="osc-ctrl-val">0 px</span>
+                            </div>
+                            <input type="range" id="ch1-pos" min="-100" max="100" step="5" value="0">
+                        </div>
+
+                        <!-- Ch2 Posición vertical -->
+                        <div class="osc-ctrl-group ch2">
+                            <div class="osc-ctrl-label">
+                                <span style="color: var(--electric-blue, #29b6f6);">&#9650; Pos. Ch2</span>
+                                <span id="val-ch2-pos" class="osc-ctrl-val">0 px</span>
+                            </div>
+                            <input type="range" id="ch2-pos" min="-100" max="100" step="5" value="0">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Interactive App Demos -->
